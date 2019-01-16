@@ -9,7 +9,7 @@
  * rights grant found at http://polymer.github.io/PATENTS.txt
  */
 
-import { html, render } from '../../../lit-html.js';
+import { html, render } from '../../client/node_modules/lit-html/lit-html.js';
 import {benchmark} from '../../client/lib/index.js';
 
 console.log('recurse benchmark');

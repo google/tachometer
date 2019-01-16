@@ -27,8 +27,8 @@ import websockify = require('koa-websocket');
 import commandLineArgs = require('command-line-args');
 import { promisify } from 'util';
 
-const util = require('util');
-const exec = util.promisify(require('child_process').exec);
+//const util = require('util');
+//const exec = util.promisify(require('child_process').exec);
 
 interface Run {
   id: string;
@@ -76,6 +76,7 @@ interface RunData {
   };
 }
 
+/**
 const getGitInfo = async () => {
   try {
     const { stdout, stderr } = await exec('git', ['rev-parse', 'HEAD']);
@@ -84,9 +85,10 @@ const getGitInfo = async () => {
     console.error(e);
   }
 };
+*/
 
 const getRunData = async (name: string, benchmarkResults: BenchmarkResult[]): Promise<RunData> => {
-  getGitInfo();
+  //getGitInfo();
   const battery = (await systeminformation.battery()) as any as {
     hasbattery: boolean,
     acconnected: boolean,
@@ -161,7 +163,7 @@ class Runner {
     const app = websockify(new Koa());
 
     // Serve the benchmark client static files
-    const benchmarkClientDir = path.resolve(__dirname, '../../../');
+    const benchmarkClientDir = path.resolve(__dirname, '../../');
     app.use(mount('/client/lit-html/', serve(benchmarkClientDir, {
       index: 'index.html',
     })));
@@ -202,7 +204,7 @@ class Runner {
 
   async openBenchmarkInBrowser (name: string, id: string) {
     const port = (this.server.address() as AddressInfo).port;
-    const url = `http://localhost:${port}/client/lit-html/benchmark/benchmarks/${name}/index.html?id=${id}`;
+    const url = `http://localhost:${port}/client/lit-html/benchmarks/${name}/index.html?id=${id}`;
     await this.driver.get(url);
   }
 
@@ -228,11 +230,12 @@ class Runner {
 
 
 const saveRun = async (benchmarkName: string, newData: any) => {
-  // console.log(process.cwd());
+  const filename = path.resolve(
+    __dirname, '..', '..', 'benchmarks', benchmarkName, 'runs.json');
   let data: any;
   let contents: string|undefined;
   try {
-    contents = await fs.readFile(`./benchmark/benchmarks/${benchmarkName}/runs.json`, 'utf-8');
+    contents = await fs.readFile(filename, 'utf-8');
   } catch (e) {
   }
   if (contents !== undefined && contents.trim() !== '') {
@@ -245,7 +248,7 @@ const saveRun = async (benchmarkName: string, newData: any) => {
     data.runs = [];
   }
   data.runs.push(newData);
-  fs.writeFile(`./benchmark/benchmarks/${benchmarkName}/runs.json`, JSON.stringify(data));
+  fs.writeFile(filename, JSON.stringify(data));
 };
 
 const run = async (name: string) => {
