@@ -19,23 +19,24 @@
     "@types/koa-mount": "^3.0.1",
     "@types/koa-router": "^7.0.28",
     "@types/koa-static": "^4.0.0",
-    "@types/koa-websocket": "^2.1.2",
+    "@types/koa-websocket": "^5.0.3",
     "@types/launchpad": "^0.6.0",
     "@types/selenium-webdriver": "^3.0.10",
     "@types/systeminformation": "^3.23.0",
+    "chromedriver": "^2.45.0",
     "command-line-args": "^5.0.2",
-    "fs-extra": "^6.0.1",
+    "fs-extra": "^7.0.1",
     "koa": "^2.5.1",
-    "koa-mount": "^3.0.0",
+    "koa-mount": "^4.0.0",
     "koa-router": "^7.4.0",
-    "koa-static": "^4.0.3",
-    "koa-websocket": "^4.1.0",
+    "koa-static": "^5.0.0",
+    "koa-websocket": "^5.0.1",
     "launchpad": "^0.7.0",
     "selenium-webdriver": "^4.0.0-alpha.1",
     "source-map-support": "^0.5.6",
     "systeminformation": "^3.42.0"
   },
   "devDependencies": {
-    "typescript": "^3.0.3"
+    "typescript": "^3.2.0"
   }
 }

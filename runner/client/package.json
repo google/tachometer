@@ -14,7 +14,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "typescript": "^3.0.3"
+    "typescript": "^3.2.0"
   },
   "dependencies": {
     "lit-html": "^1.0.0-rc.2"
