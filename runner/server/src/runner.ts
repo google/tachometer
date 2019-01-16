@@ -12,7 +12,7 @@
 require('source-map-support').install();
 require('chromedriver');
 
-import { AddressInfo, Server } from 'net';
+import {AddressInfo, Server} from 'net';
 import * as path from 'path';
 import * as fs from 'fs-extra';
 
@@ -25,10 +25,10 @@ import Router = require('koa-router');
 import serve = require('koa-static');
 import websockify = require('koa-websocket');
 import commandLineArgs = require('command-line-args');
-import { promisify } from 'util';
+import {promisify} from 'util';
 
-//const util = require('util');
-//const exec = util.promisify(require('child_process').exec);
+// const util = require('util');
+// const exec = util.promisify(require('child_process').exec);
 
 interface Run {
   id: string;
@@ -87,8 +87,9 @@ const getGitInfo = async () => {
 };
 */
 
-const getRunData = async (name: string, benchmarkResults: BenchmarkResult[]): Promise<RunData> => {
-  //getGitInfo();
+const getRunData = async(
+    name: string, benchmarkResults: BenchmarkResult[]): Promise<RunData> => {
+  // getGitInfo();
   const battery = (await systeminformation.battery()) as any as {
     hasbattery: boolean,
     acconnected: boolean,
@@ -140,7 +141,6 @@ class Deferred<T> {
 }
 
 class Runner {
-
   static async create() {
     // Create a function to open a browser window for the benchmark
     const driver = await new Builder().forBrowser('chrome').build();
@@ -165,8 +165,8 @@ class Runner {
     // Serve the benchmark client static files
     const benchmarkClientDir = path.resolve(__dirname, '../../');
     app.use(mount('/client/lit-html/', serve(benchmarkClientDir, {
-      index: 'index.html',
-    })));
+                    index: 'index.html',
+                  })));
 
     // Set up WebSocket handler for the browser to send results to
     const wsRouter = new Router();
@@ -202,9 +202,10 @@ class Runner {
     console.log(`lit-html benchmark server listening at ${port}`);
   }
 
-  async openBenchmarkInBrowser (name: string, id: string) {
+  async openBenchmarkInBrowser(name: string, id: string) {
     const port = (this.server.address() as AddressInfo).port;
-    const url = `http://localhost:${port}/client/lit-html/benchmarks/${name}/index.html?id=${id}`;
+    const url = `http://localhost:${port}/client/lit-html/benchmarks/${
+        name}/index.html?id=${id}`;
     await this.driver.get(url);
   }
 
@@ -231,7 +232,7 @@ class Runner {
 
 const saveRun = async (benchmarkName: string, newData: any) => {
   const filename = path.resolve(
-    __dirname, '..', '..', 'benchmarks', benchmarkName, 'runs.json');
+      __dirname, '..', '..', 'benchmarks', benchmarkName, 'runs.json');
   let data: any;
   let contents: string|undefined;
   try {
@@ -262,9 +263,9 @@ const run = async (name: string) => {
 };
 
 const optionDefinitions: commandLineArgs.OptionDefinition[] = [
-  { name: 'name', type: String, defaultOption: true },
-  { name: 'save', alias: 'S', type: Boolean},
-  { name: 'verbose', alias: 'v', type: Boolean },
+  {name: 'name', type: String, defaultOption: true},
+  {name: 'save', alias: 'S', type: Boolean},
+  {name: 'verbose', alias: 'v', type: Boolean},
 ];
 const args = commandLineArgs(optionDefinitions);
 console.log({args});

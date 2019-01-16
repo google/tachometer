@@ -5,7 +5,7 @@
   "description": "Benchmarks for lit-html",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "format": "find runner/{server,client}/src -name \"*.ts\" | xargs clang-format --style=file -i"
   },
   "repository": {
     "type": "git",
@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/PolymerLabs/lit-benchmarks/issues"
   },
-  "homepage": "https://github.com/PolymerLabs/lit-benchmarks#readme"
+  "homepage": "https://github.com/PolymerLabs/lit-benchmarks#readme",
+  "devDependencies": {
+    "clang-format": "^1.2.4"
+  }
 }

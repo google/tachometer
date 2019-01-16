@@ -38,9 +38,9 @@ const runBenchmarks = async () => {
     type: 'result',
     id,
     benchmarks: benchmarks.map((b) => ({
-      name: b.name,
-      runs: b.runs,
-    }))
+                                 name: b.name,
+                                 runs: b.runs,
+                               }))
   }));
 };
 
@@ -69,4 +69,3 @@ socket.addEventListener('close', (event) => {
 socket.addEventListener('message', (event) => {
   console.log('Message from server ', event.data);
 });
-
