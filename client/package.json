@@ -1,19 +1,29 @@
 {
-  "name": "client",
+  "name": "lit-benchmarks-client",
+  "private": true,
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "lit-html benchmarks client library",
+  "main": "lib/index.js",
   "directories": {
     "lib": "lib"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc"
+    "build": "tsc && npm run lint",
+    "lint": "tslint --project . --format stylish",
+    "format": "find src -name \"*.ts\" | xargs clang-format --style=file -i"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PolymerLabs/lit-benchmarks.git"
+  },
+  "author": "The Polymer Project Authors",
+  "license": "BSD-3-Clause",
+  "bugs": {
+    "url": "https://github.com/PolymerLabs/lit-benchmarks/issues"
+  },
   "devDependencies": {
+    "clang-format": "^1.2.4",
+    "tslint": "^5.12.1",
     "typescript": "^3.2.0"
   },
   "dependencies": {

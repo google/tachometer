@@ -90,10 +90,7 @@ const getGitInfo = async () => {
 const getRunData = async(
     name: string, benchmarkResults: BenchmarkResult[]): Promise<RunData> => {
   // getGitInfo();
-  const battery = (await systeminformation.battery()) as any as {
-    hasbattery: boolean,
-    acconnected: boolean,
-  };
+  const battery = await systeminformation.battery();
   const cpu = await systeminformation.cpu();
   const currentLoad = await systeminformation.currentLoad();
   const memory = await systeminformation.mem();
@@ -230,10 +227,10 @@ class Runner {
 }
 
 
-const saveRun = async (benchmarkName: string, newData: any) => {
+const saveRun = async (benchmarkName: string, newData: RunData) => {
   const filename = path.resolve(
       __dirname, '..', '..', 'benchmarks', benchmarkName, 'runs.json');
-  let data: any;
+  let data: {runs: RunData[]}|undefined;
   let contents: string|undefined;
   try {
     contents = await fs.readFile(filename, 'utf-8');
@@ -243,7 +240,7 @@ const saveRun = async (benchmarkName: string, newData: any) => {
     data = JSON.parse(contents);
   }
   if (data === undefined) {
-    data = {};
+    data = {runs: []};
   }
   if (data.runs === undefined) {
     data.runs = [];

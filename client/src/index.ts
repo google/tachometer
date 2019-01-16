@@ -11,7 +11,7 @@
 
 interface BenchmarkInfo {
   name: string;
-  run(): unknown;
+  run(): Promise<unknown>|unknown;
   runs: number[];
 }
 
@@ -27,7 +27,7 @@ const runBenchmarks = async () => {
     // TODO: run each benchmark multiple times
     const start = performance.now();
     const result = benchmark.run();
-    if (result && typeof (result as any).then === 'function') {
+    if (result && result instanceof Promise) {
       await result;
     }
     const end = performance.now();

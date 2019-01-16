@@ -1,17 +1,27 @@
 {
-  "name": "server",
+  "name": "lit-benchmarks-server",
+  "private": true,
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "lit-html benchmarks server/runner",
+  "main": "lib/runner.js",
   "directories": {
     "lib": "lib"
   },
   "scripts": {
-    "build": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc && npm run lint",
+    "lint": "tslint --project . --format stylish",
+    "format": "find src -name \"*.ts\" | xargs clang-format --style=file -i"
   },
-  "author": "",
-  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PolymerLabs/lit-benchmarks.git"
+  },
+  "author": "The Polymer Project Authors",
+  "license": "BSD-3-Clause",
+  "bugs": {
+    "url": "https://github.com/PolymerLabs/lit-benchmarks/issues"
+  },
+  "homepage": "https://github.com/PolymerLabs/lit-benchmarks#readme",
   "dependencies": {
     "@types/command-line-args": "^5.0.0",
     "@types/fs-extra": "^5.0.3",
@@ -20,7 +30,6 @@
     "@types/koa-router": "^7.0.28",
     "@types/koa-static": "^4.0.0",
     "@types/koa-websocket": "^5.0.3",
-    "@types/launchpad": "^0.6.0",
     "@types/selenium-webdriver": "^3.0.10",
     "@types/systeminformation": "^3.23.0",
     "chromedriver": "^2.45.0",
@@ -31,12 +40,13 @@
     "koa-router": "^7.4.0",
     "koa-static": "^5.0.0",
     "koa-websocket": "^5.0.1",
-    "launchpad": "^0.7.0",
     "selenium-webdriver": "^4.0.0-alpha.1",
     "source-map-support": "^0.5.6",
     "systeminformation": "^3.42.0"
   },
   "devDependencies": {
+    "clang-format": "^1.2.4",
+    "tslint": "^5.12.1",
     "typescript": "^3.2.0"
   }
 }
