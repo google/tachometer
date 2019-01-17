@@ -263,7 +263,7 @@ async function run(spec: BenchmarkSpec) {
   console.log({data});
   await saveRun(`${spec.implementation}-${spec.benchmark}`, data);
   runner.stop();
-};
+}
 
 const optDefs: commandLineArgs.OptionDefinition[] = [
   {
@@ -323,6 +323,6 @@ async function main() {
   for (const spec of specs) {
     await run(spec);
   }
-};
+}
 
 main();
