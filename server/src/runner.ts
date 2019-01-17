@@ -15,6 +15,7 @@ require('chromedriver');
 import {AddressInfo, Server} from 'net';
 import * as path from 'path';
 import * as fs from 'fs-extra';
+import {BenchmarkSpec} from './types.js';
 
 import {Builder, WebDriver} from 'selenium-webdriver';
 import * as systeminformation from 'systeminformation';
@@ -24,20 +25,12 @@ import mount = require('koa-mount');
 import Router = require('koa-router');
 import serve = require('koa-static');
 import websockify = require('koa-websocket');
-import commandLineArgs = require('command-line-args');
-import commandLineUsage = require('command-line-usage');
 import {promisify} from 'util';
 
 const repoRoot = path.resolve(__dirname, '..', '..');
 
 // const util = require('util');
 // const exec = util.promisify(require('child_process').exec);
-
-interface BenchmarkSpec {
-  benchmark: string;
-  implementation: string;
-  urlPath: string;
-}
 
 interface Run {
   id: string;
@@ -254,7 +247,7 @@ const saveRun = async (benchmarkName: string, newData: RunData) => {
   fs.writeFile(filename, JSON.stringify(data));
 };
 
-async function run(spec: BenchmarkSpec) {
+export async function run(spec: BenchmarkSpec) {
   console.log(`Running benchmark ${spec.implementation}/${spec.benchmark}`);
   const runner = await Runner.create();
   const results = await runner.runBenchmark(spec);
@@ -265,76 +258,3 @@ async function run(spec: BenchmarkSpec) {
   await saveRun(`${spec.implementation}-${spec.benchmark}`, data);
   runner.stop();
 }
-
-const optDefs: commandLineUsage.OptionDefinition[] = [
-  {
-    name: 'help',
-    description: 'Show this documentation',
-    type: Boolean,
-    defaultValue: false,
-  },
-  {
-    name: 'benchmark',
-    description: 'Which benchmarks to run',
-    alias: 'b',
-    type: String,
-    defaultValue: '*',
-  },
-  {
-    name: 'implementation',
-    description: 'Which implementations to run',
-    alias: 'i',
-    type: String,
-    defaultValue: 'lit-html',
-  },
-];
-
-interface Opts {
-  help: boolean;
-  benchmark: string;
-  implementation: string;
-}
-
-async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
-  const specs = [];
-  let impls;
-  if (opts.implementation === '*') {
-    impls = await fs.readdir(path.join(repoRoot, 'benchmarks'));
-  } else {
-    impls = opts.implementation.split(',');
-  }
-  for (const implementation of impls) {
-    const dir = path.join(repoRoot, 'benchmarks', implementation);
-    let benchmarks;
-    if (opts.benchmark === '*') {
-      benchmarks = await fs.readdir(dir);
-    } else {
-      benchmarks = opts.benchmark.split(',');
-    }
-    for (const benchmark of benchmarks) {
-      specs.push({
-        benchmark,
-        implementation,
-        urlPath: `/benchmarks/${implementation}/${benchmark}/index.html`,
-      });
-    }
-  }
-  return specs;
-}
-
-async function main() {
-  const opts = commandLineArgs(optDefs) as Opts;
-  if (opts.help) {
-    console.log(commandLineUsage([{
-      header: 'lit-benchmarks-runner',
-      optionList: optDefs,
-    }]));
-    return;
-  }
-  const specs = await specsFromOpts(opts);
-  for (const spec of specs) {
-    await run(spec);
-  }
-}
-
-main();

@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "description": "lit-html benchmarks server/runner",
-  "main": "lib/runner.js",
+  "main": "lib/cli.js",
   "directories": {
     "lib": "lib"
   },
