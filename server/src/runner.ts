@@ -27,12 +27,20 @@ import websockify = require('koa-websocket');
 import commandLineArgs = require('command-line-args');
 import {promisify} from 'util';
 
+const repoRoot = path.resolve(__dirname, '..', '..');
+
 // const util = require('util');
 // const exec = util.promisify(require('child_process').exec);
 
+interface BenchmarkSpec {
+  benchmark: string;
+  implementation: string;
+  urlPath: string;
+}
+
 interface Run {
   id: string;
-  name: string;
+  spec: BenchmarkSpec;
   deferred: Deferred<BenchmarkResult[]>;
 }
 
@@ -160,10 +168,7 @@ class Runner {
     const app = websockify(new Koa());
 
     // Serve the benchmark client static files
-    const benchmarkClientDir = path.resolve(__dirname, '../../');
-    app.use(mount('/client/lit-html/', serve(benchmarkClientDir, {
-                    index: 'index.html',
-                  })));
+    app.use(mount('/', serve(repoRoot, {index: 'index.html'})));
 
     // Set up WebSocket handler for the browser to send results to
     const wsRouter = new Router();
@@ -199,22 +204,21 @@ class Runner {
     console.log(`lit-html benchmark server listening at ${port}`);
   }
 
-  async openBenchmarkInBrowser(name: string, id: string) {
+  async openBenchmarkInBrowser(run: Run) {
     const port = (this.server.address() as AddressInfo).port;
-    const url = `http://localhost:${port}/client/lit-html/benchmarks/${
-        name}/index.html?id=${id}`;
-    await this.driver.get(url);
+    const urlPath = `http://localhost:${port}${run.spec.urlPath}?id=${run.id}`;
+    await this.driver.get(urlPath);
   }
 
-  async runBenchmark(name: string): Promise<BenchmarkResult[]> {
+  async runBenchmark(spec: BenchmarkSpec): Promise<BenchmarkResult[]> {
     const id = (this.currentRunId++).toString();
     const run: Run = {
       id,
-      name,
+      spec,
       deferred: new Deferred(),
     };
     this.pendingRuns.set(id, run);
-    await this.openBenchmarkInBrowser(name, id);
+    await this.openBenchmarkInBrowser(run);
     return run.deferred.promise;
   }
 
@@ -249,21 +253,76 @@ const saveRun = async (benchmarkName: string, newData: RunData) => {
   fs.writeFile(filename, JSON.stringify(data));
 };
 
-const run = async (name: string) => {
+async function run(spec: BenchmarkSpec) {
+  console.log(`Running benchmark ${spec.implementation}/${spec.benchmark}`);
   const runner = await Runner.create();
-  const results = await runner.runBenchmark(name);
+  const results = await runner.runBenchmark(spec);
   console.log(JSON.stringify(results));
-  const data = await getRunData(name, results);
+  const data =
+      await getRunData(`${spec.implementation}-${spec.benchmark}`, results);
   console.log({data});
-  await saveRun(name, data);
+  await saveRun(`${spec.implementation}-${spec.benchmark}`, data);
   runner.stop();
 };
 
-const optionDefinitions: commandLineArgs.OptionDefinition[] = [
-  {name: 'name', type: String, defaultOption: true},
-  {name: 'save', alias: 'S', type: Boolean},
-  {name: 'verbose', alias: 'v', type: Boolean},
+const optDefs: commandLineArgs.OptionDefinition[] = [
+  {
+    name: 'benchmark',
+    type: String,
+    defaultValue: '*',
+    defaultOption: true,
+  },
+  {
+    name: 'implementation',
+    type: String,
+    defaultValue: 'lit-html',
+  },
+  {
+    name: 'save',
+    type: Boolean,
+    defaultValue: false,
+  },
 ];
-const args = commandLineArgs(optionDefinitions);
-console.log({args});
-run('recurse');
+
+interface Opts {
+  benchmark: string;
+  implementation: string;
+  save: boolean;
+}
+
+async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
+  const specs = [];
+  let impls;
+  if (opts.implementation === '*') {
+    impls = await fs.readdir(path.join(repoRoot, 'benchmarks'));
+  } else {
+    impls = opts.implementation.split(',');
+  }
+  for (const implementation of impls) {
+    const dir = path.join(repoRoot, 'benchmarks', implementation);
+    let benchmarks;
+    if (opts.benchmark === '*') {
+      benchmarks = await fs.readdir(dir);
+    } else {
+      benchmarks = opts.benchmark.split(',');
+    }
+    for (const benchmark of benchmarks) {
+      specs.push({
+        benchmark,
+        implementation,
+        urlPath: `/benchmarks/${implementation}/${benchmark}/index.html`,
+      });
+    }
+  }
+  return specs;
+}
+
+async function main() {
+  const opts = commandLineArgs(optDefs) as Opts;
+  const specs = await specsFromOpts(opts);
+  for (const spec of specs) {
+    await run(spec);
+  }
+};
+
+main();
