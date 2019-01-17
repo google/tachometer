@@ -25,6 +25,7 @@ import Router = require('koa-router');
 import serve = require('koa-static');
 import websockify = require('koa-websocket');
 import commandLineArgs = require('command-line-args');
+import commandLineUsage = require('command-line-usage');
 import {promisify} from 'util';
 
 const repoRoot = path.resolve(__dirname, '..', '..');
@@ -265,29 +266,33 @@ async function run(spec: BenchmarkSpec) {
   runner.stop();
 }
 
-const optDefs: commandLineArgs.OptionDefinition[] = [
+const optDefs: commandLineUsage.OptionDefinition[] = [
+  {
+    name: 'help',
+    description: 'Show this documentation',
+    type: Boolean,
+    defaultValue: false,
+  },
   {
     name: 'benchmark',
+    description: 'Which benchmarks to run',
+    alias: 'b',
     type: String,
     defaultValue: '*',
-    defaultOption: true,
   },
   {
     name: 'implementation',
+    description: 'Which implementations to run',
+    alias: 'i',
     type: String,
     defaultValue: 'lit-html',
-  },
-  {
-    name: 'save',
-    type: Boolean,
-    defaultValue: false,
   },
 ];
 
 interface Opts {
+  help: boolean;
   benchmark: string;
   implementation: string;
-  save: boolean;
 }
 
 async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
@@ -319,6 +324,13 @@ async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
 
 async function main() {
   const opts = commandLineArgs(optDefs) as Opts;
+  if (opts.help) {
+    console.log(commandLineUsage([{
+      header: 'lit-benchmarks-runner',
+      optionList: optDefs,
+    }]));
+    return;
+  }
   const specs = await specsFromOpts(opts);
   for (const spec of specs) {
     await run(spec);
