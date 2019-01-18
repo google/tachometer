@@ -33,7 +33,8 @@ export function updateTime(container, curSystem, newTime) {
       return formattedTime;
     });
     const average = round(
-        systemRenderTimes.reduce((a, b) => a + b, 0) / systemRenderTimes.length);
+        systemRenderTimes.reduce((a, b) => a + b, 0) /
+        systemRenderTimes.length);
 
     const midPoint = (systemRenderTimes.length / 2) | 0;
     const median = systemRenderTimes[midPoint];

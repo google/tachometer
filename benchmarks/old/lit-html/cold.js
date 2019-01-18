@@ -1,7 +1,7 @@
-import { updateTime } from './timemanager.js';
+import {updateTime} from './timemanager.js';
 
 const coldFrame = document.querySelector('#cold');
-const recurseSrc = "./recurse.html";
+const recurseSrc = './recurse.html';
 
 coldFrame.src = recurseSrc;
 
@@ -29,17 +29,19 @@ function waitPostMessage() {
 
 function bench(sys) {
   return new Promise((r) => {
-    coldFrame.onload = r;
-    coldFrame.src = recurseSrc;
-  }).then(() => {
-    setSystem(sys);
+           coldFrame.onload = r;
+           coldFrame.src = recurseSrc;
+         })
+      .then(() => {
+        setSystem(sys);
 
-    coldFrame.contentWindow.bench();
-    return waitPostMessage();
-  }).then(() => {
-    const renderTimes = coldFrame.contentWindow.renderTimes[sys];
-    updateTime(document.querySelector('#results'), sys, renderTimes[0]);
-  });
+        coldFrame.contentWindow.bench();
+        return waitPostMessage();
+      })
+      .then(() => {
+        const renderTimes = coldFrame.contentWindow.renderTimes[sys];
+        updateTime(document.querySelector('#results'), sys, renderTimes[0]);
+      });
 }
 
 async function runBench(sys, n) {

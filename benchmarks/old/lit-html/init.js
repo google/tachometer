@@ -1,4 +1,4 @@
-import { updateTime } from './timemanager.js';
+import {updateTime} from './timemanager.js';
 
 function genXChildData(depth) {
   let xChild = {};
