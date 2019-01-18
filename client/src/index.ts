@@ -25,18 +25,27 @@ const runBenchmarks = async () => {
   console.log(`Running ${benchmarks.length} benchmarks`);
   for (const benchmark of benchmarks) {
     // TODO: run each benchmark multiple times
-    requestAnimationFrame(async () => {
-      const start = performance.now();
-      const result = benchmark.run();
-      if (result && result instanceof Promise) {
-        await result;
-      }
-      setTimeout(() => {
-        const end = performance.now();
-        const runtime = end - start;
-        benchmark.runs.push(runtime);
-      }, 0);
+    const done = new Promise((resolve, reject) => {
+      requestAnimationFrame(async () => {
+        const start = performance.now();
+        try {
+          const result = benchmark.run();
+          if (result instanceof Promise) {
+            await result;
+          }
+        } catch (e) {
+          reject(e);
+          return;
+        }
+        setTimeout(() => {
+          const end = performance.now();
+          const runtime = end - start;
+          benchmark.runs.push(runtime);
+          resolve();
+        }, 0);
+      });
     });
+    await done;
   }
   socket.send(JSON.stringify({
     type: 'result',
