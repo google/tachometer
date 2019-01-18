@@ -1,4 +1,28 @@
-import {init} from './init.js';
+/**
+ * @license
+ * Copyright (c) 2017 The Polymer Project Authors. All rights reserved.
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt The complete set of authors may be found
+ * at http://polymer.github.io/AUTHORS.txt The complete set of contributors may
+ * be found at http://polymer.github.io/CONTRIBUTORS.txt Code distributed by
+ * Google as part of the polymer project is also subject to an additional IP
+ * rights grant found at http://polymer.github.io/PATENTS.txt
+ */
+
+import {registerBenchmark} from '../../../client/lib/index.js';
+
+registerBenchmark('idom', () => {
+  const data = genXChildData(500);
+  draw(document.body, data, 'hello');
+});
+
+const genXChildData = (depth) => {
+  let xChild = {};
+  while (depth--) {
+    xChild = {xChild};
+  }
+  return xChild;
+};
 
 IncrementalDOM.attributes[IncrementalDOM.symbols['default']] = function(
     el, name, value) {
@@ -12,8 +36,9 @@ IncrementalDOM.attributes[IncrementalDOM.symbols['default']] = function(
 };
 
 const idom = IncrementalDOM;
-const open = idom.elementOpen, close = idom.elementClose, text = idom.text;
-
+const open = idom.elementOpen;
+const close = idom.elementClose;
+const text = idom.text;
 
 function renderBox(title, id, content) {
   open('div');
@@ -47,5 +72,3 @@ function renderXChild(data, string, depth = 0) {
 function draw(container, data, string, depth = 0) {
   idom.patch(container, () => {renderXChild(data, string, depth)});
 }
-
-init('idom', draw);

@@ -14,9 +14,7 @@ import {html, render} from '../node_modules/lit-html/lit-html.js';
 
 registerBenchmark('recurse', () => {
   const data = genXChildData(500);
-  const container = document.createElement('div');
-  document.body.appendChild(container);
-  draw(container, data, 'hello');
+  draw(document.body, data, 'hello');
 });
 
 const genXChildData = (depth) => {
