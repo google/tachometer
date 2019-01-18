@@ -61,11 +61,20 @@ interface Opts {
   implementation: string;
 }
 
+const ignoreFiles = new Set([
+  'node_modules',
+  'package.json',
+  'package-lock.json',
+  // TODO(aomarks) Remove after old files removed.
+  'old',
+]);
+
 async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
   const specs = [];
   let impls;
   if (opts.implementation === '*') {
     impls = await fs.readdir(path.join(repoRoot, 'benchmarks'));
+    impls = impls.filter((dir) => !ignoreFiles.has(dir));
   } else {
     impls = opts.implementation.split(',');
   }
@@ -74,6 +83,7 @@ async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
     let benchmarks;
     if (opts.benchmark === '*') {
       benchmarks = await fs.readdir(dir);
+      benchmarks = benchmarks.filter((dir) => !ignoreFiles.has(dir));
     } else {
       benchmarks = opts.benchmark.split(',');
     }

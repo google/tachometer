@@ -1,13 +1,9 @@
 {
-  "name": "lit-benchmarks-benchmarks",
+  "name": "lit-benchmarks-lit-html",
   "private": true,
   "version": "1.0.0",
   "description": "Benchmarks for lit-html",
   "main": "index.js",
-  "scripts": {
-    "postinstall": "(cd lit-html && npm install)",
-    "format": "find . -name node_modules -prune -o -name \"*.js\" -print | xargs clang-format --style=file -i"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/PolymerLabs/lit-benchmarks.git"
@@ -19,6 +15,6 @@
   },
   "homepage": "https://github.com/PolymerLabs/lit-benchmarks#readme",
   "dependencies": {
-    "clang-format": "^1.2.4"
+    "lit-html": "^1.0.0-rc.2"
   }
 }

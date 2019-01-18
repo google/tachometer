@@ -6,7 +6,7 @@
   "main": "index.js",
   "scripts": {
     "postinstall": "(cd server && npm install) && (cd client && npm install) && (cd benchmarks && npm install)",
-    "benchmarks": "npm run build && node server/lib/runner.js",
+    "benchmarks": "npm run build && node server/lib/cli.js",
     "build": "(cd server && npm run build) && (cd client && npm run build)",
     "format": "(cd server && npm run format) && (cd client && npm run format) && (cd benchmarks && npm run format)"
   },

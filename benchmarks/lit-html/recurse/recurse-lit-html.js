@@ -10,7 +10,7 @@
  */
 
 import {benchmark} from '../../../client/lib/index.js';
-import {html, render} from '../../../client/node_modules/lit-html/lit-html.js';
+import {html, render} from '../node_modules/lit-html/lit-html.js';
 
 console.log('recurse benchmark');
 
