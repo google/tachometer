@@ -17,7 +17,7 @@ interface BenchmarkInfo {
 
 const benchmarks: BenchmarkInfo[] = [];
 
-export const benchmark = (name: string, run: () => unknown) => {
+export const registerBenchmark = (name: string, run: () => unknown) => {
   benchmarks.push({name, run, runs: []});
 };
 
@@ -25,22 +25,23 @@ const runBenchmarks = async () => {
   console.log(`Running ${benchmarks.length} benchmarks`);
   for (const benchmark of benchmarks) {
     // TODO: run each benchmark multiple times
-    const start = performance.now();
-    const result = benchmark.run();
-    if (result && result instanceof Promise) {
-      await result;
-    }
-    const end = performance.now();
-    const runtime = end - start;
-    benchmark.runs.push(runtime);
+    requestAnimationFrame(async () => {
+      const start = performance.now();
+      const result = benchmark.run();
+      if (result && result instanceof Promise) {
+        await result;
+      }
+      setTimeout(() => {
+        const end = performance.now();
+        const runtime = end - start;
+        benchmark.runs.push(runtime);
+      }, 0);
+    });
   }
   socket.send(JSON.stringify({
     type: 'result',
     id,
-    benchmarks: benchmarks.map((b) => ({
-                                 name: b.name,
-                                 runs: b.runs,
-                               }))
+    benchmarks: benchmarks.map((b) => ({name: b.name, runs: b.runs}))
   }));
 };
 

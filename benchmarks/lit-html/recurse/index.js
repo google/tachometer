@@ -9,31 +9,23 @@
  * rights grant found at http://polymer.github.io/PATENTS.txt
  */
 
-import {benchmark} from '../../../client/lib/index.js';
+import {registerBenchmark} from '../../../client/lib/index.js';
 import {html, render} from '../node_modules/lit-html/lit-html.js';
 
-console.log('recurse benchmark');
+registerBenchmark('recurse', () => {
+  const data = genXChildData(500);
+  const container = document.createElement('div');
+  document.body.appendChild(container);
+  draw(container, data, 'hello');
+});
 
-const run =
-    (depth = 500) => {
-      const data = genXChildData(depth);
-      const container = document.createElement('div');
-      document.body.appendChild(container);
-      return new Promise((resolve, _reject) => {
-        requestAnimationFrame(() => {
-          const start = performance.now();
-          draw(container, data, 'hello');
-          setTimeout(() => {
-            const end = performance.now();
-            const result = end - start;
-            document.body.removeChild(container);
-            resolve(result);
-          }, 0);
-        });
-      });
-    }
-
-benchmark('recurse', run);
+const genXChildData = (depth) => {
+  let xChild = {};
+  while (depth--) {
+    xChild = {xChild};
+  }
+  return xChild;
+};
 
 const renderBox = (title, id, content) => html`
   <div>
@@ -61,11 +53,3 @@ const renderXChild = (data, string, depth = 0) => {
 
 const draw = (container, data, string, depth = 0) =>
     render(renderXChild(data, string, depth), container);
-
-const genXChildData = (depth) => {
-  let xChild = {};
-  while (depth--) {
-    xChild = {xChild};
-  }
-  return xChild;
-};
