@@ -47,35 +47,19 @@ const runBenchmarks = async () => {
     });
     await done;
   }
-  socket.send(JSON.stringify({
-    type: 'result',
-    id,
-    benchmarks: benchmarks.map((b) => ({name: b.name, runs: b.runs}))
-  }));
+  await fetch('/submitResults', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      id,
+      benchmarks: benchmarks.map((b) => ({name: b.name, runs: b.runs})),
+    }),
+  });
 };
 
 const urlParams = new URLSearchParams(window.location.search);
 const id = urlParams.get('id');
 
-const base = new URL(document.baseURI!);
-let socket!: WebSocket;
-
-try {
-  socket = new WebSocket(`ws://${base.host}/test`);
-} catch (error) {
-  console.error(error);
-}
-
-socket.addEventListener('open', () => {
-  console.log('Control socket opened');
-  socket.send(JSON.stringify({type: 'start', id}));
-  runBenchmarks();
-});
-
-socket.addEventListener('close', (event) => {
-  console.log('Control socket closed', event.code);
-});
-
-socket.addEventListener('message', (event) => {
-  console.log('Message from server ', event.data);
-});
+setTimeout(() => runBenchmarks(), 0);

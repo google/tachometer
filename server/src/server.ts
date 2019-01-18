@@ -13,9 +13,8 @@ import * as net from 'net';
 
 import Koa = require('koa');
 import mount = require('koa-mount');
-import Router = require('koa-router');
 import serve = require('koa-static');
-import websockify = require('koa-websocket');
+import bodyParser = require('koa-bodyparser');
 
 import {Deferred, BenchmarkSpec, BenchmarkResult, Run} from './types';
 
@@ -31,16 +30,12 @@ export class Server {
   private readonly pendingRuns = new Map<string, Run>();
 
   constructor(root: string, port: number = 0) {
-    const app = websockify(new Koa());
+    const app = new Koa();
+    app.use(bodyParser());
+    app.use(mount('/submitResults', this.submitResults.bind(this)));
     app.use(mount('/', serve(root, {index: 'index.html'})));
     this.server = app.listen(port);
     const address = (this.server.address() as net.AddressInfo);
-
-    const wsRouter = new Router();
-    wsRouter.all('/test', async (context) => {
-      context.websocket.on('message', this.onWebsocketMessage.bind(this));
-    });
-    app.ws.use(wsRouter.routes());
 
     let host = address.address;
     if (address.family === 'IPv6') {
@@ -72,23 +67,13 @@ export class Server {
     });
   }
 
-  private async onWebsocketMessage(message: string) {
-    const data = JSON.parse(message);
-    // Simple diagnostic that the client code loaded correctly
-    if (data.type === 'start') {
+  private async submitResults(ctx: Koa.Context) {
+    const data = ctx.request.body;
+    const runObject = this.pendingRuns.get(data.id);
+    if (runObject === undefined) {
+      console.error('unknown run', data.id);
       return;
     }
-
-    if (data.type === 'result') {
-      const runObject = this.pendingRuns.get(data.id);
-      if (runObject === undefined) {
-        console.error('unknown run', data.id);
-        return;
-      }
-      runObject.deferred.resolve(data.benchmarks);
-      return;
-    }
-
-    console.log('unknown message', data);
+    runObject.deferred.resolve(data.benchmarks);
   }
 }
