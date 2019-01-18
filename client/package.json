@@ -8,7 +8,7 @@
     "lib": "lib"
   },
   "scripts": {
-    "build": "tsc && npm run lint",
+    "build": "rm -rf lib && tsc && npm run lint",
     "lint": "tslint --project . --format stylish",
     "format": "find src -name \"*.ts\" | xargs clang-format --style=file -i"
   },
