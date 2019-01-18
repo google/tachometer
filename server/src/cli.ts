@@ -14,6 +14,7 @@ require('chromedriver');
 
 import * as fs from 'fs-extra';
 import * as path from 'path';
+import * as table from 'table';
 
 import {Builder} from 'selenium-webdriver';
 import commandLineArgs = require('command-line-args');
@@ -21,7 +22,7 @@ import commandLineUsage = require('command-line-usage');
 
 import {BenchmarkSpec, RunData} from './types';
 import {Server} from './server';
-import {getRunData} from './system';
+// import {getRunData} from './system';
 
 const repoRoot = path.resolve(__dirname, '..', '..');
 
@@ -98,7 +99,7 @@ async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
   return specs;
 }
 
-async function saveRun(benchmarkName: string, newData: RunData) {
+export async function saveRun(benchmarkName: string, newData: RunData) {
   const filename = path.resolve(
       __dirname, '..', '..', 'benchmarks', benchmarkName, 'runs.json');
   let data: {runs: RunData[]}|undefined;
@@ -129,21 +130,31 @@ async function main() {
     }]));
     return;
   }
+
   const specs = await specsFromOpts(opts);
   const server = new Server(repoRoot, opts.port);
   const driver = await new Builder().forBrowser('chrome').build();
+
+  const tableData: string[][] = [];
   for (const spec of specs) {
     console.log(
         `Running benchmark ${spec.benchmark} in ${spec.implementation}`);
     const run = server.runBenchmark(spec);
-    console.log(`Opening ${run.url}`);
     await driver.get(run.url);
     const results = await run.results;
-    const fullName = `${spec.implementation}-${spec.benchmark}`;
-    const runData = await getRunData(fullName, results);
-    console.log(JSON.stringify(runData, null, 2));
-    await saveRun(fullName, runData);
+    // const fullName = `${spec.implementation}-${spec.benchmark}`;
+    // const runData = await getRunData(fullName, results);
+    // await saveRun(fullName, runData);
+    tableData.push([
+      spec.benchmark,
+      spec.implementation,
+      `${results[0].runs[0].toFixed(3)} ms`,
+    ]);
   }
+
+  console.log();
+  console.log(table.table(tableData));
+
   await Promise.all([
     driver.close(),
     server.close(),

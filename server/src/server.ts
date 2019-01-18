@@ -76,13 +76,10 @@ export class Server {
     const data = JSON.parse(message);
     // Simple diagnostic that the client code loaded correctly
     if (data.type === 'start') {
-      console.log(`Benchmark running: ${
-          JSON.stringify(this.pendingRuns.get(data.id), null, 2)}`);
       return;
     }
 
     if (data.type === 'result') {
-      console.log(`Benchmark complete: ${data.id}`);
       const runObject = this.pendingRuns.get(data.id);
       if (runObject === undefined) {
         console.error('unknown run', data.id);
