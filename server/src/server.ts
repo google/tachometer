@@ -9,6 +9,7 @@
  * rights grant found at http://polymer.github.io/PATENTS.txt
  */
 
+import * as http from 'http';
 import * as net from 'net';
 
 import Koa = require('koa');
@@ -29,14 +30,26 @@ export class Server {
   private currentRunId = 0;
   private readonly pendingRuns = new Map<string, Run>();
 
-  constructor(root: string, port: number = 0) {
+  static start(opts: {host: string, port: number, rootDir: string}):
+      Promise<Server> {
+    return new Promise((resolve) => {
+      const server = http.createServer();
+      server.listen(
+          {host: opts.host, port: opts.port},
+          () => resolve(new Server(server, opts.rootDir)));
+    });
+  }
+
+  constructor(server: http.Server, rootDir: string) {
+    this.server = server;
+
     const app = new Koa();
     app.use(bodyParser());
     app.use(mount('/submitResults', this.submitResults.bind(this)));
-    app.use(mount('/', serve(root, {index: 'index.html'})));
-    this.server = app.listen(port);
-    const address = (this.server.address() as net.AddressInfo);
+    app.use(mount('/', serve(rootDir, {index: 'index.html'})));
+    this.server.on('request', app.callback());
 
+    const address = (this.server.address() as net.AddressInfo);
     let host = address.address;
     if (address.family === 'IPv6') {
       host = `[${host}]`;

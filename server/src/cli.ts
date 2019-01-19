@@ -34,8 +34,14 @@ const optDefs: commandLineUsage.OptionDefinition[] = [
     defaultValue: false,
   },
   {
+    name: 'host',
+    description: 'Which host to run on',
+    type: String,
+    defaultValue: '127.0.0.1',
+  },
+  {
     name: 'port',
-    description: 'Which port to run on',
+    description: 'Which port to run on (0 for random free)',
     type: Number,
     defaultValue: '0',
   },
@@ -57,6 +63,7 @@ const optDefs: commandLineUsage.OptionDefinition[] = [
 
 interface Opts {
   help: boolean;
+  host: string;
   port: number;
   benchmark: string;
   implementation: string;
@@ -132,7 +139,11 @@ async function main() {
   }
 
   const specs = await specsFromOpts(opts);
-  const server = new Server(repoRoot, opts.port);
+  const server = await Server.start({
+    host: opts.host,
+    port: opts.port,
+    rootDir: repoRoot,
+  });
   const driver = await new Builder().forBrowser('chrome').build();
 
   const tableData: string[][] = [];
