@@ -40,7 +40,6 @@ const renderXChild = (data, string, depth = 0) => {
           ${renderSimpleText(string)}
           ${renderBox('Data Text: ', 'data-text', data ? data.text : undefined)}
           ${renderBox('depth: ', 'depth', depth.toString())}
-          ${
         renderXChild(
             data && data.xChild ? data.xChild : undefined, string, depth + 1)}
         </div>

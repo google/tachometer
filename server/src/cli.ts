@@ -170,7 +170,7 @@ async function main() {
     console.log('Results will appear below:');
     console.log();
     const stream = table.createStream({
-      columnCount: 1,
+      columnCount: 3,
       columnDefault: {
         width: 15,
       },
@@ -178,8 +178,11 @@ async function main() {
     (async function() {
       for await (const result of server.streamResults()) {
         // TODO(aomarks) Upstream this type to DT, it's wrong.
-        (stream.write as unknown as (cols: string[]) =>
-             void)([`${result[0].runs[0].toFixed(3)} ms`]);
+        (stream.write as unknown as (cols: string[]) => void)([
+          result.browser.name,
+          result.browser.version,
+          `${result.ms.toFixed(3)} ms`,
+        ]);
       }
     })();
 
@@ -191,14 +194,16 @@ async function main() {
           `Running benchmark ${spec.benchmark} in ${spec.implementation}`);
       const run = server.runBenchmark(spec);
       await driver.get(run.url);
-      const results = await run.results;
+      const result = await run.result;
       // const fullName = `${spec.implementation}-${spec.benchmark}`;
       // const runData = await getRunData(fullName, results);
       // await saveRun(fullName, runData);
       tableData.push([
         spec.benchmark,
         spec.implementation,
-        `${results[0].runs[0].toFixed(3)} ms`,
+        result.browser.name,
+        result.browser.version,
+        `${result.ms.toFixed(3)} ms`,
       ]);
     }
 

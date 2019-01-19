@@ -18,12 +18,17 @@ export interface BenchmarkSpec {
 export interface Run {
   id: string;
   spec: BenchmarkSpec;
-  deferred: Deferred<BenchmarkResult[]>;
+  deferred: Deferred<Result>;
 }
 
 export interface BenchmarkResult {
   name: string;
   runs: number[];
+}
+
+export interface Result {
+  ms: number;
+  browser: {name: string, version: string};
 }
 
 export interface RunData {

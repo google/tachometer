@@ -16,8 +16,9 @@ import Koa = require('koa');
 import mount = require('koa-mount');
 import serve = require('koa-static');
 import bodyParser = require('koa-bodyparser');
+import {UAParser} from 'ua-parser-js';
 
-import {Deferred, BenchmarkSpec, BenchmarkResult, Run} from './types';
+import {Deferred, BenchmarkSpec, BenchmarkResult, Result, Run} from './types';
 
 export class Server {
   readonly url: string;
@@ -29,7 +30,7 @@ export class Server {
   // multiple clients eventually.
   private currentRunId = 0;
   private readonly pendingRuns = new Map<string, Run>();
-  private resultSubmitted = new Deferred<BenchmarkResult[]>();
+  private resultSubmitted = new Deferred<Result>();
 
   static start(opts: {host: string, port: number, rootDir: string}):
       Promise<Server> {
@@ -58,18 +59,17 @@ export class Server {
     this.url = `http://${host}:${address.port}`;
   }
 
-  runBenchmark(spec: BenchmarkSpec):
-      {url: string, results: Promise<BenchmarkResult[]>} {
+  runBenchmark(spec: BenchmarkSpec): {url: string, result: Promise<Result>} {
     const id = (this.currentRunId++).toString();
-    const run: Run = {id, spec, deferred: new Deferred()};
+    const run: Run = {id, spec, deferred: new Deferred<Result>()};
     this.pendingRuns.set(id, run);
     return {
       url: `${this.url}${spec.urlPath}?id=${id}`,
-      results: run.deferred.promise,
+      result: run.deferred.promise,
     };
   }
 
-  async * streamResults(): AsyncIterableIterator<BenchmarkResult[]> {
+  async * streamResults(): AsyncIterableIterator<Result> {
     while (true) {
       yield await this.resultSubmitted.promise;
     }
@@ -88,15 +88,26 @@ export class Server {
   }
 
   private async submitResults(ctx: Koa.Context) {
-    const data = ctx.request.body;
-    this.resultSubmitted.resolve(data.benchmarks);
+    const data = ctx.request.body as {
+      id: string | undefined | null,
+      benchmarks: BenchmarkResult[],
+    };
+    const browser = new UAParser(ctx.headers['user-agent']).getBrowser();
+    const result = {
+      ms: data.benchmarks[0].runs[0],
+      browser: {
+        name: browser.name || '',
+        version: browser.version || '',
+      },
+    };
+    this.resultSubmitted.resolve(result);
     this.resultSubmitted = new Deferred();
     if (data.id != null) {
       const pendingRun = this.pendingRuns.get(data.id);
       if (pendingRun === undefined) {
         console.error('unknown run', data.id);
       } else {
-        pendingRun.deferred.resolve(data.benchmarks);
+        pendingRun.deferred.resolve(result);
       }
     }
   }
