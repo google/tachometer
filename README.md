@@ -27,3 +27,9 @@ npm run benchmarks -- --implementation=* --benchmarks=*
 ```sh
 npm run benchmarks -- --implementation=incremental-dom --benchmarks=recurse
 ```
+
+### Run benchmarks manually and log all results
+
+```sh
+npm run benchmarks -- --manual
+```

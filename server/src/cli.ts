@@ -59,6 +59,13 @@ const optDefs: commandLineUsage.OptionDefinition[] = [
     type: String,
     defaultValue: 'lit-html',
   },
+  {
+    name: 'manual',
+    description: 'Don\'t launch browsers, just show URLs and collect results.',
+    alias: 'm',
+    type: Boolean,
+    defaultValue: false,
+  },
 ];
 
 interface Opts {
@@ -67,6 +74,7 @@ interface Opts {
   port: number;
   benchmark: string;
   implementation: string;
+  manual: boolean;
 }
 
 const ignoreFiles = new Set([
@@ -99,7 +107,7 @@ async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
       specs.push({
         benchmark,
         implementation,
-        urlPath: `/benchmarks/${implementation}/${benchmark}/index.html`,
+        urlPath: `/benchmarks/${implementation}/${benchmark}/`,
       });
     }
   }
@@ -144,32 +152,64 @@ async function main() {
     port: opts.port,
     rootDir: repoRoot,
   });
-  const driver = await new Builder().forBrowser('chrome').build();
 
-  const tableData: string[][] = [];
-  for (const spec of specs) {
-    console.log(
-        `Running benchmark ${spec.benchmark} in ${spec.implementation}`);
-    const run = server.runBenchmark(spec);
-    await driver.get(run.url);
-    const results = await run.results;
-    // const fullName = `${spec.implementation}-${spec.benchmark}`;
-    // const runData = await getRunData(fullName, results);
-    // await saveRun(fullName, runData);
-    tableData.push([
-      spec.benchmark,
-      spec.implementation,
-      `${results[0].runs[0].toFixed(3)} ms`,
+  if (opts.manual === true) {
+    const urlTable: string[][] = [];
+    for (const spec of specs) {
+      urlTable.push([
+        spec.benchmark,
+        spec.implementation,
+        `${server.url}${spec.urlPath}`,
+      ]);
+    }
+    console.log();
+    console.log('Visit these URLs in any browser:');
+    console.log();
+    console.log(table.table(urlTable));
+
+    console.log('Results will appear below:');
+    console.log();
+    const stream = table.createStream({
+      columnCount: 1,
+      columnDefault: {
+        width: 15,
+      },
+    });
+    (async function() {
+      for await (const result of server.streamResults()) {
+        // TODO(aomarks) Upstream this type to DT, it's wrong.
+        (stream.write as unknown as (cols: string[]) =>
+             void)([`${result[0].runs[0].toFixed(3)} ms`]);
+      }
+    })();
+
+  } else {
+    const driver = await new Builder().forBrowser('chrome').build();
+    const tableData: string[][] = [];
+    for (const spec of specs) {
+      console.log(
+          `Running benchmark ${spec.benchmark} in ${spec.implementation}`);
+      const run = server.runBenchmark(spec);
+      await driver.get(run.url);
+      const results = await run.results;
+      // const fullName = `${spec.implementation}-${spec.benchmark}`;
+      // const runData = await getRunData(fullName, results);
+      // await saveRun(fullName, runData);
+      tableData.push([
+        spec.benchmark,
+        spec.implementation,
+        `${results[0].runs[0].toFixed(3)} ms`,
+      ]);
+    }
+
+    console.log();
+    console.log(table.table(tableData));
+
+    await Promise.all([
+      driver.close(),
+      server.close(),
     ]);
   }
-
-  console.log();
-  console.log(table.table(tableData));
-
-  await Promise.all([
-    driver.close(),
-    server.close(),
-  ]);
 }
 
 main();

@@ -20,8 +20,8 @@ import bodyParser = require('koa-bodyparser');
 import {Deferred, BenchmarkSpec, BenchmarkResult, Run} from './types';
 
 export class Server {
+  readonly url: string;
   private readonly server: net.Server;
-  private readonly url: string;
 
   // Even though we're running benchmarks in series, we give each run an id and
   // make sure that we associate result messages with the correct run. This
@@ -29,6 +29,7 @@ export class Server {
   // multiple clients eventually.
   private currentRunId = 0;
   private readonly pendingRuns = new Map<string, Run>();
+  private resultSubmitted = new Deferred<BenchmarkResult[]>();
 
   static start(opts: {host: string, port: number, rootDir: string}):
       Promise<Server> {
@@ -68,6 +69,12 @@ export class Server {
     };
   }
 
+  async * streamResults(): AsyncIterableIterator<BenchmarkResult[]> {
+    while (true) {
+      yield await this.resultSubmitted.promise;
+    }
+  }
+
   async close() {
     return new Promise((resolve, reject) => {
       this.server.close((error: unknown) => {
@@ -82,11 +89,15 @@ export class Server {
 
   private async submitResults(ctx: Koa.Context) {
     const data = ctx.request.body;
-    const runObject = this.pendingRuns.get(data.id);
-    if (runObject === undefined) {
-      console.error('unknown run', data.id);
-      return;
+    this.resultSubmitted.resolve(data.benchmarks);
+    this.resultSubmitted = new Deferred();
+    if (data.id != null) {
+      const pendingRun = this.pendingRuns.get(data.id);
+      if (pendingRun === undefined) {
+        console.error('unknown run', data.id);
+      } else {
+        pendingRun.deferred.resolve(data.benchmarks);
+      }
     }
-    runObject.deferred.resolve(data.benchmarks);
   }
 }
