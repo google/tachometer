@@ -9,65 +9,71 @@
  * rights grant found at http://polymer.github.io/PATENTS.txt
  */
 
-export interface BenchmarkSpec {
-  benchmark: string;
-  implementation: string;
-  urlPath: string;
-}
-
-export interface Run {
-  id: string;
-  spec: BenchmarkSpec;
-  deferred: Deferred<Result>;
-}
-
-export interface BenchmarkResult {
-  name: string;
-  runs: number[];
-}
-
-export interface Result {
-  ms: number;
-  browser: {name: string, version: string};
-}
-
-export interface RunData {
-  name: string;
-  date: Date;
-  benchmarks: BenchmarkResult[];
-  cpu: {
-    manufacturer: string,
-    model: string,
-    family: string,
-    speed: string,
-    cores: number,
-  };
-  load: {
-    average: number,
-    current: number,
-  };
-  battery: {
-    hasBattery: boolean,
-    connected: boolean,
-  };
-  memory: {
-    total: number,
-    free: number,
-    used: number,
-    active: number,
-    available: number,
-  };
-}
-
 export class Deferred<T> {
   readonly promise: Promise<T>;
   resolve!: (value: T) => void;
   reject!: (error: Error) => void;
 
   constructor() {
-    this.promise = new Promise<T>((res, rej) => {
-      this.resolve = res;
-      this.reject = rej;
+    this.promise = new Promise<T>((resolve, reject) => {
+      this.resolve = resolve;
+      this.reject = reject;
     });
   }
+}
+
+/** A specification of a benchmark to run. */
+export interface BenchmarkSpec {
+  benchmark: string;
+  implementation: string;
+  numIterations: number;
+}
+
+export interface BenchmarkResponse {
+  runId?: string;
+  urlPath: string;
+  iterationMillis: number[];
+}
+
+export interface BenchmarkResult {
+  runId: string|undefined;
+  benchmark: string;
+  implementation: string;
+  iterationMillis: number[];
+  browser: {name: string, version: string};
+}
+
+export interface PendingBenchmark {
+  id: string;
+  spec: BenchmarkSpec;
+  deferred: Deferred<BenchmarkResult>;
+}
+
+export interface BenchmarkSession {
+  benchmarks: BenchmarkResult[];
+  date: Date;
+  system: {
+    cpu: {
+      manufacturer: string,
+      model: string,
+      family: string,
+      speed: string,
+      cores: number,
+    };
+    load: {
+      average: number,
+      current: number,
+    };
+    battery: {
+      hasBattery: boolean,
+      connected: boolean,
+    };
+    memory: {
+      total: number,
+      free: number,
+      used: number,
+      active: number,
+      available: number,
+    };
+  };
 }

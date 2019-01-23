@@ -9,27 +9,24 @@
  * rights grant found at http://polymer.github.io/PATENTS.txt
  */
 
-interface BenchmarkInfo {
-  name: string;
-  run(): Promise<unknown>|unknown;
-  runs: number[];
-}
+const url = new URL(window.location.href);
+const runId = url.searchParams.get('runId') || undefined;
+const numIterations = Number(url.searchParams.get('numIterations')) || 1;
 
-const benchmarks: BenchmarkInfo[] = [];
+let benchmarkFn: () => Promise<unknown>| unknown;
+let iterationMillis: number[];
 
-export const registerBenchmark = (name: string, run: () => unknown) => {
-  benchmarks.push({name, run, runs: []});
-};
+export const registerBenchmark = (fn: () => unknown) => benchmarkFn = fn;
 
 const runBenchmarks = async () => {
-  console.log(`Running ${benchmarks.length} benchmarks`);
-  for (const benchmark of benchmarks) {
-    // TODO: run each benchmark multiple times
+  iterationMillis = [];
+  for (let i = 0; i < numIterations; i++) {
+    console.log(`Running benchmark ${i + 1}/${numIterations}`);
     const done = new Promise((resolve, reject) => {
       requestAnimationFrame(async () => {
         const start = performance.now();
         try {
-          const result = benchmark.run();
+          const result = benchmarkFn();
           if (result instanceof Promise) {
             await result;
           }
@@ -40,7 +37,7 @@ const runBenchmarks = async () => {
         setTimeout(() => {
           const end = performance.now();
           const runtime = end - start;
-          benchmark.runs.push(runtime);
+          iterationMillis.push(runtime);
           resolve();
         }, 0);
       });
@@ -53,13 +50,11 @@ const runBenchmarks = async () => {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      id,
-      benchmarks: benchmarks.map((b) => ({name: b.name, runs: b.runs})),
+      runId,
+      iterationMillis,
+      urlPath: url.pathname,
     }),
   });
 };
-
-const urlParams = new URLSearchParams(window.location.search);
-const id = urlParams.get('id');
 
 setTimeout(() => runBenchmarks(), 0);

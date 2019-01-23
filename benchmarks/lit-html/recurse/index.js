@@ -12,7 +12,7 @@
 import {registerBenchmark} from '../../../client/lib/index.js';
 import {html, render} from '../node_modules/lit-html/lit-html.js';
 
-registerBenchmark('recurse', () => {
+registerBenchmark(() => {
   const data = genXChildData(500);
   draw(document.body, data, 'hello');
 });

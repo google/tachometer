@@ -20,7 +20,7 @@ import {Builder} from 'selenium-webdriver';
 import commandLineArgs = require('command-line-args');
 import commandLineUsage = require('command-line-usage');
 
-import {BenchmarkSpec, RunData} from './types';
+import {BenchmarkResult, BenchmarkSpec, BenchmarkSession} from './types';
 import {Server} from './server';
 // import {getRunData} from './system';
 
@@ -60,6 +60,13 @@ const optDefs: commandLineUsage.OptionDefinition[] = [
     defaultValue: 'lit-html',
   },
   {
+    name: 'numIterations',
+    description: 'How many times to run each benchmark',
+    alias: 'n',
+    type: Number,
+    defaultValue: 10,
+  },
+  {
     name: 'manual',
     description: 'Don\'t launch browsers, just show URLs and collect results.',
     alias: 'm',
@@ -74,6 +81,7 @@ interface Opts {
   port: number;
   benchmark: string;
   implementation: string;
+  numIterations: number;
   manual: boolean;
 }
 
@@ -84,7 +92,7 @@ const ignoreFiles = new Set([
 ]);
 
 async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
-  const specs = [];
+  const specs: BenchmarkSpec[] = [];
   let impls;
   if (opts.implementation === '*') {
     impls = await fs.readdir(path.join(repoRoot, 'benchmarks'));
@@ -105,17 +113,18 @@ async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
       specs.push({
         benchmark,
         implementation,
-        urlPath: `/benchmarks/${implementation}/${benchmark}/`,
+        numIterations: opts.numIterations,
       });
     }
   }
   return specs;
 }
 
-export async function saveRun(benchmarkName: string, newData: RunData) {
+export async function saveRun(
+    benchmarkName: string, session: BenchmarkSession) {
   const filename = path.resolve(
       __dirname, '..', '..', 'benchmarks', benchmarkName, 'runs.json');
-  let data: {runs: RunData[]}|undefined;
+  let data: {sessions: BenchmarkSession[]}|undefined;
   let contents: string|undefined;
   try {
     contents = await fs.readFile(filename, 'utf-8');
@@ -125,13 +134,26 @@ export async function saveRun(benchmarkName: string, newData: RunData) {
     data = JSON.parse(contents);
   }
   if (data === undefined) {
-    data = {runs: []};
+    data = {sessions: []};
   }
-  if (data.runs === undefined) {
-    data.runs = [];
+  if (data.sessions === undefined) {
+    data.sessions = [];
   }
-  data.runs.push(newData);
+  data.sessions.push(session);
   fs.writeFile(filename, JSON.stringify(data));
+}
+
+function formatResultRow(result: BenchmarkResult): string[] {
+  const sum = result.iterationMillis.reduce((acc, cur) => acc + cur);
+  const len = result.iterationMillis.length;
+  const avg = sum / len;
+  return [
+    result.benchmark,
+    result.implementation,
+    result.browser.name,
+    result.browser.version,
+    `${avg.toFixed(3)} ms (${len})`,
+  ];
 }
 
 async function main() {
@@ -157,7 +179,7 @@ async function main() {
       urlTable.push([
         spec.benchmark,
         spec.implementation,
-        `${server.url}${spec.urlPath}`,
+        server.specUrl(spec),
       ]);
     }
     console.log();
@@ -168,7 +190,7 @@ async function main() {
     console.log('Results will appear below:');
     console.log();
     const stream = table.createStream({
-      columnCount: 3,
+      columnCount: 5,
       columnDefault: {
         width: 15,
       },
@@ -176,11 +198,8 @@ async function main() {
     (async function() {
       for await (const result of server.streamResults()) {
         // TODO(aomarks) Upstream this type to DT, it's wrong.
-        (stream.write as unknown as (cols: string[]) => void)([
-          result.browser.name,
-          result.browser.version,
-          `${result.ms.toFixed(3)} ms`,
-        ]);
+        (stream.write as unknown as (cols: string[]) =>
+             void)(formatResultRow(result));
       }
     })();
 
@@ -196,13 +215,7 @@ async function main() {
       // const fullName = `${spec.implementation}-${spec.benchmark}`;
       // const runData = await getRunData(fullName, results);
       // await saveRun(fullName, runData);
-      tableData.push([
-        spec.benchmark,
-        spec.implementation,
-        result.browser.name,
-        result.browser.version,
-        `${result.ms.toFixed(3)} ms`,
-      ]);
+      tableData.push(formatResultRow(result));
     }
 
     console.log();

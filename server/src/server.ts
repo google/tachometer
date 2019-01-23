@@ -18,7 +18,7 @@ import serve = require('koa-static');
 import bodyParser = require('koa-bodyparser');
 import {UAParser} from 'ua-parser-js';
 
-import {Deferred, BenchmarkSpec, BenchmarkResult, Result, Run} from './types';
+import {BenchmarkResponse, Deferred, BenchmarkSpec, BenchmarkResult, PendingBenchmark} from './types';
 
 export class Server {
   readonly url: string;
@@ -29,8 +29,8 @@ export class Server {
   // prevents any spurrious race conditions and enables one runner to launch
   // multiple clients eventually.
   private currentRunId = 0;
-  private readonly pendingRuns = new Map<string, Run>();
-  private resultSubmitted = new Deferred<Result>();
+  private readonly pendingRuns = new Map<string, PendingBenchmark>();
+  private resultSubmitted = new Deferred<BenchmarkResult>();
 
   static start(opts: {host: string, port: number, rootDir: string}):
       Promise<Server> {
@@ -59,17 +59,28 @@ export class Server {
     this.url = `http://${host}:${address.port}`;
   }
 
-  runBenchmark(spec: BenchmarkSpec): {url: string, result: Promise<Result>} {
+  runBenchmark(spec: BenchmarkSpec):
+      {url: string, result: Promise<BenchmarkResult>} {
     const id = (this.currentRunId++).toString();
-    const run: Run = {id, spec, deferred: new Deferred<Result>()};
+    const run: PendingBenchmark = {
+      id,
+      spec,
+      deferred: new Deferred<BenchmarkResult>()
+    };
     this.pendingRuns.set(id, run);
     return {
-      url: `${this.url}${spec.urlPath}?id=${id}`,
+      url: this.specUrl(spec, id),
       result: run.deferred.promise,
     };
   }
 
-  async * streamResults(): AsyncIterableIterator<Result> {
+  specUrl(spec: BenchmarkSpec, id?: string): string {
+    return `${this.url}/benchmarks/${spec.implementation}/${spec.benchmark}/` +
+        `?numIterations=${spec.numIterations}` +
+        (id !== undefined ? `&runId=${id}` : '');
+  }
+
+  async * streamResults(): AsyncIterableIterator<BenchmarkResult> {
     while (true) {
       yield await this.resultSubmitted.promise;
     }
@@ -88,13 +99,22 @@ export class Server {
   }
 
   private async submitResults(ctx: Koa.Context) {
-    const data = ctx.request.body as {
-      id: string | undefined | null,
-      benchmarks: BenchmarkResult[],
-    };
+    const response = ctx.request.body as BenchmarkResponse;
     const browser = new UAParser(ctx.headers['user-agent']).getBrowser();
-    const result = {
-      ms: data.benchmarks[0].runs[0],
+    const urlParts = response.urlPath.split('/').filter((part) => part !== '');
+    let benchmark, implementation;
+    if (urlParts[urlParts.length - 1].includes('.')) {
+      benchmark = urlParts[urlParts.length - 3];
+      implementation = urlParts[urlParts.length - 2];
+    } else {
+      benchmark = urlParts[urlParts.length - 2];
+      implementation = urlParts[urlParts.length - 1];
+    }
+    const result: BenchmarkResult = {
+      runId: response.runId,
+      benchmark,
+      implementation,
+      iterationMillis: response.iterationMillis,
       browser: {
         name: browser.name || '',
         version: browser.version || '',
@@ -102,10 +122,10 @@ export class Server {
     };
     this.resultSubmitted.resolve(result);
     this.resultSubmitted = new Deferred();
-    if (data.id != null) {
-      const pendingRun = this.pendingRuns.get(data.id);
+    if (response.runId !== undefined) {
+      const pendingRun = this.pendingRuns.get(response.runId);
       if (pendingRun === undefined) {
-        console.error('unknown run', data.id);
+        console.error('unknown run', response.runId);
       } else {
         pendingRun.deferred.resolve(result);
       }
