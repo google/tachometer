@@ -81,8 +81,6 @@ const ignoreFiles = new Set([
   'node_modules',
   'package.json',
   'package-lock.json',
-  // TODO(aomarks) Remove after old files removed.
-  'old',
 ]);
 
 async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
