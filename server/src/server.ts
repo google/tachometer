@@ -76,8 +76,7 @@ export class Server {
 
   specUrl(spec: BenchmarkSpec, id?: string): string {
     return `${this.url}/benchmarks/${spec.implementation}/${spec.benchmark}/` +
-        `?numIterations=${spec.numIterations}` +
-        (id !== undefined ? `&runId=${id}` : '');
+        `?trials=${spec.trials}` + (id !== undefined ? `&runId=${id}` : '');
   }
 
   async * streamResults(): AsyncIterableIterator<BenchmarkResult> {
@@ -114,7 +113,7 @@ export class Server {
       runId: response.runId,
       benchmark,
       implementation,
-      iterationMillis: response.iterationMillis,
+      millis: response.millis,
       browser: {
         name: browser.name || '',
         version: browser.version || '',

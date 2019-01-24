@@ -60,9 +60,9 @@ const optDefs: commandLineUsage.OptionDefinition[] = [
     defaultValue: 'lit-html',
   },
   {
-    name: 'numIterations',
+    name: 'trials',
     description: 'How many times to run each benchmark',
-    alias: 'n',
+    alias: 't',
     type: Number,
     defaultValue: 10,
   },
@@ -81,7 +81,7 @@ interface Opts {
   port: number;
   benchmark: string;
   implementation: string;
-  numIterations: number;
+  trials: number;
   manual: boolean;
 }
 
@@ -113,7 +113,7 @@ async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
       specs.push({
         benchmark,
         implementation,
-        numIterations: opts.numIterations,
+        trials: opts.trials,
       });
     }
   }
@@ -181,7 +181,7 @@ const tableColumns: {[key: string]: table.ColumnConfig} = {
 };
 
 function formatResultRow(result: BenchmarkResult): string[] {
-  const millis = result.iterationMillis;
+  const millis = result.millis;
   const len = millis.length;
   const sum = millis.reduce((acc, cur) => acc + cur);
   const avg = sum / len;
@@ -205,6 +205,10 @@ async function main() {
       optionList: optDefs,
     }]));
     return;
+  }
+
+  if (opts.trials <= 0) {
+    throw new Error('--trials must be > 0');
   }
 
   const specs = await specsFromOpts(opts);

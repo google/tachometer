@@ -26,20 +26,21 @@ export class Deferred<T> {
 export interface BenchmarkSpec {
   benchmark: string;
   implementation: string;
-  numIterations: number;
+  trials: number;
 }
 
+// Note: sync with client/src/index.ts
 export interface BenchmarkResponse {
   runId?: string;
   urlPath: string;
-  iterationMillis: number[];
+  millis: number[];
 }
 
 export interface BenchmarkResult {
   runId: string|undefined;
   benchmark: string;
   implementation: string;
-  iterationMillis: number[];
+  millis: number[];
   browser: {name: string, version: string};
 }
 

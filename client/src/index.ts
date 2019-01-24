@@ -9,19 +9,26 @@
  * rights grant found at http://polymer.github.io/PATENTS.txt
  */
 
+// Note: sync with server/src/types.ts
+interface BenchmarkResponse {
+  runId?: string;
+  urlPath: string;
+  millis: number[];
+}
+
 const url = new URL(window.location.href);
 const runId = url.searchParams.get('runId') || undefined;
-const numIterations = Number(url.searchParams.get('numIterations')) || 1;
+const trials = Number(url.searchParams.get('trials')) || 1;
 
 let benchmarkFn: () => Promise<unknown>| unknown;
-let iterationMillis: number[];
+let millis: number[];
 
 export const registerBenchmark = (fn: () => unknown) => benchmarkFn = fn;
 
 const runBenchmarks = async () => {
-  iterationMillis = [];
-  for (let i = 0; i < numIterations; i++) {
-    console.log(`Running benchmark ${i + 1}/${numIterations}`);
+  millis = [];
+  for (let i = 0; i < trials; i++) {
+    console.log(`Running benchmark ${i + 1}/${trials}`);
     const done = new Promise((resolve, reject) => {
       requestAnimationFrame(async () => {
         const start = performance.now();
@@ -37,23 +44,24 @@ const runBenchmarks = async () => {
         setTimeout(() => {
           const end = performance.now();
           const runtime = end - start;
-          iterationMillis.push(runtime);
+          millis.push(runtime);
           resolve();
         }, 0);
       });
     });
     await done;
   }
+  const response: BenchmarkResponse = {
+    runId,
+    millis,
+    urlPath: url.pathname,
+  };
   await fetch('/submitResults', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      runId,
-      iterationMillis,
-      urlPath: url.pathname,
-    }),
+    body: JSON.stringify(response),
   });
 };
 

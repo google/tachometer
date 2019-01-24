@@ -32,7 +32,7 @@ Flag                      | Default     | Description
 `--port`                  | `0`         | Which port to run on (`0` for random free)
 `--benchmark` / `-b`      | `*`         | Which benchmarks to run (`*` for all)
 `--implementation` / `-i` | `lit-html`  | Which implementations to run (`*` for all)
-`--numIterations` / `-n`  | `10`        | How many times to run each benchmark
+`--trials` / `-t`         | `10`        | How many times to run each benchmark
 `--manual` / `-m`         | `false`     | Don't run automatically, just show URLs and collect results
 
 ### Automatic mode
