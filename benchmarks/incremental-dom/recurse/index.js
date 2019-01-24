@@ -21,10 +21,6 @@ const genXChildData = (depth) => {
 
 const data = genXChildData(500);
 
-registerBenchmark(() => {
-  draw(document.body, data, 'hello');
-});
-
 IncrementalDOM.attributes[IncrementalDOM.symbols['default']] = function(
     el, name, value) {
   const isProperty = name[name.length - 1] != '$';
@@ -59,17 +55,21 @@ function renderSimpleText(string) {
 }
 
 function renderXChild(data, string, depth = 0) {
-  if (data) {
-    open('div');
-    renderSimpleText(string);
-    renderBox('Data Text: ', 'data-text', data ? data.text : undefined);
-    renderBox('depth: ', 'depth', depth);
-    renderXChild(
-        data && data.xChild ? data.xChild : undefined, string, depth + 1);
-    close('div');
+  if (!data) {
+    return;
   }
+  open('div');
+  renderSimpleText(string);
+  renderBox('Data Text: ', 'data-text', data.text);
+  renderBox('depth: ', 'depth', depth);
+  renderXChild(data.xChild ? data.xChild : undefined, string, depth + 1);
+  close('div');
 }
 
 function draw(container, data, string, depth = 0) {
   idom.patch(container, () => {renderXChild(data, string, depth)});
 }
+
+registerBenchmark(() => {
+  draw(document.body, data, 'hello');
+});

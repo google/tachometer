@@ -22,33 +22,32 @@ const genXChildData = (depth) => {
 
 const data = genXChildData(500);
 
-registerBenchmark(() => {
-  draw(document.body, data, 'hello');
-});
-
 const renderBox = (title, id, content) => html`
   <div>
     <span>${title}</span>
     <span id=${id}>${content}</span>
-  </div>`;
+  </div>
+`;
 
 const renderSimpleText = (string) => renderBox('Simple Text: ', 'text', string);
 
 const renderXChild = (data, string, depth = 0) => {
-  if (data) {
-    return html`
-        <div>
-          ${renderSimpleText(string)}
-          ${renderBox('Data Text: ', 'data-text', data ? data.text : undefined)}
-          ${renderBox('depth: ', 'depth', depth.toString())}
-        ${
-        renderXChild(
-            data && data.xChild ? data.xChild : undefined, string, depth + 1)}
-        </div>
-    `;
+  if (!data) {
+    return;
   }
-  return;
+  return html`
+    <div>
+      ${renderSimpleText(string)}
+      ${renderBox('Data Text: ', 'data-text', data.text)}
+      ${renderBox('depth: ', 'depth', depth.toString())}
+      ${renderXChild(data.xChild ? data.xChild : undefined, string, depth + 1)}
+    </div>
+  `;
 };
 
 const draw = (container, data, string, depth = 0) =>
     render(renderXChild(data, string, depth), container);
+
+registerBenchmark(() => {
+  draw(document.body, data, 'hello');
+});

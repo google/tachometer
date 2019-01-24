@@ -21,10 +21,6 @@ const genXChildData = (depth) => {
 
 const data = genXChildData(500);
 
-registerBenchmark(() => {
-  draw(document.body, data, 'hello');
-});
-
 const h = snabbdom.h;
 const patch = snabbdom.init([]);
 
@@ -42,15 +38,15 @@ function renderSimpleText(string) {
 }
 
 function renderXChild(data, string, depth = 0) {
-  if (data) {
-    return h('div', [
-      renderSimpleText(string),
-      renderBox('Data Text: ', 'data-text', data ? data.text : undefined),
-      renderBox('depth: ', 'depth', depth),
-      renderXChild(
-          data && data.xChild ? data.xChild : undefined, string, depth + 1),
-    ]);
+  if (!data) {
+    return;
   }
+  return h('div', [
+    renderSimpleText(string),
+    renderBox('Data Text: ', 'data-text', data.text),
+    renderBox('depth: ', 'depth', depth),
+    renderXChild(data.xChild ? data.xChild : undefined, string, depth + 1),
+  ]);
 }
 
 function draw(container, data, string, depth = 0) {
@@ -63,3 +59,7 @@ function draw(container, data, string, depth = 0) {
   patch(vnodeOrContainer, newVnode);
   vnode = newVnode;
 }
+
+registerBenchmark(() => {
+  draw(document.body, data, 'hello');
+});
