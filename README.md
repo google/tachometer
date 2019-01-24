@@ -10,7 +10,6 @@ implementations.
 - [Flags](#flags)
 - [Automatic mode](#automatic-mode)
 - [Manual mode](#manual-mode)
-- [Output](#output)
 - [Adding benchmarks](#adding-benchmarks)
 - [Example commands](#example-commands)
 
@@ -50,8 +49,6 @@ printed on the terminal, and the server will listen indefinitely. Visiting any
 of these URLs in any browser (or any other valid benchmark URL on the host) will
 run the benchmark, report the results back to the server, and print them to the
 terminal.
-
-### Output
 
 ### Adding benchmarks
 
