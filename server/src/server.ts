@@ -129,5 +129,6 @@ export class Server {
         pendingRun.deferred.resolve(result);
       }
     }
+    ctx.body = 'ok';
   }
 }
