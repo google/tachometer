@@ -185,7 +185,7 @@ function formatResultRow(result: BenchmarkResult): string[] {
   const len = millis.length;
   const sum = millis.reduce((acc, cur) => acc + cur);
   const avg = sum / len;
-  const worst = millis.reduce((acc, cur) => cur > acc ? cur : acc);
+  const worst = Math.max(...millis);
   return [
     result.benchmark,
     result.implementation,
