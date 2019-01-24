@@ -19,10 +19,10 @@ import * as table from 'table';
 import {Builder} from 'selenium-webdriver';
 import commandLineArgs = require('command-line-args');
 import commandLineUsage = require('command-line-usage');
+import ansi = require('ansi-escape-sequences');
 
 import {BenchmarkResult, BenchmarkSpec, BenchmarkSession} from './types';
 import {Server} from './server';
-// import {getRunData} from './system';
 
 const repoRoot = path.resolve(__dirname, '..', '..');
 
@@ -143,16 +143,57 @@ export async function saveRun(
   fs.writeFile(filename, JSON.stringify(data));
 }
 
+const tableHeaders = [
+  'Benchmark',       // 0
+  'Implementation',  // 1
+  'Browser',         // 2
+  '(Version)',       // 3
+  'Trials',          // 4
+  'Worst (ms)',      // 5
+  'Avg (ms)',        // 6
+].map((header) => ansi.format(`[bold]{${header}}`));
+
+const tableColumns: {[key: string]: table.ColumnConfig} = {
+  0: {
+    width: 10,
+  },
+  1: {
+    width: 15,
+  },
+  2: {
+    width: 8,
+  },
+  3: {
+    width: 12,
+  },
+  4: {
+    alignment: 'center',
+    width: 6,
+  },
+  5: {
+    alignment: 'right',
+    width: 10,
+  },
+  6: {
+    alignment: 'right',
+    width: 8,
+  },
+};
+
 function formatResultRow(result: BenchmarkResult): string[] {
-  const sum = result.iterationMillis.reduce((acc, cur) => acc + cur);
-  const len = result.iterationMillis.length;
+  const millis = result.iterationMillis;
+  const len = millis.length;
+  const sum = millis.reduce((acc, cur) => acc + cur);
   const avg = sum / len;
+  const worst = millis.reduce((acc, cur) => cur > acc ? cur : acc);
   return [
     result.benchmark,
     result.implementation,
     result.browser.name,
     result.browser.version,
-    `${avg.toFixed(3)} ms (${len})`,
+    len.toString(),
+    worst.toFixed(3),
+    avg.toFixed(3),
   ];
 }
 
@@ -190,22 +231,25 @@ async function main() {
     console.log('Results will appear below:');
     console.log();
     const stream = table.createStream({
-      columnCount: 5,
+      columnCount: tableHeaders.length,
+      columns: tableColumns,
       columnDefault: {
-        width: 15,
+        width: 18,
       },
     });
+    // TODO(aomarks) Upstream this type to DT, it's wrong.
+    const streamWrite = stream.write as unknown as (cols: string[]) => void;
+    streamWrite(tableHeaders);
     (async function() {
       for await (const result of server.streamResults()) {
-        // TODO(aomarks) Upstream this type to DT, it's wrong.
-        (stream.write as unknown as (cols: string[]) =>
-             void)(formatResultRow(result));
+        streamWrite(formatResultRow(result));
       }
     })();
 
   } else {
     const driver = await new Builder().forBrowser('chrome').build();
     const tableData: string[][] = [];
+    tableData.push(tableHeaders);
     for (const spec of specs) {
       console.log(
           `Running benchmark ${spec.benchmark} in ${spec.implementation}`);
@@ -219,7 +263,7 @@ async function main() {
     }
 
     console.log();
-    console.log(table.table(tableData));
+    console.log(table.table(tableData, {columns: tableColumns}));
 
     await Promise.all([
       driver.close(),

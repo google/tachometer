@@ -104,11 +104,11 @@ export class Server {
     const urlParts = response.urlPath.split('/').filter((part) => part !== '');
     let benchmark, implementation;
     if (urlParts[urlParts.length - 1].includes('.')) {
-      benchmark = urlParts[urlParts.length - 3];
-      implementation = urlParts[urlParts.length - 2];
-    } else {
       benchmark = urlParts[urlParts.length - 2];
-      implementation = urlParts[urlParts.length - 1];
+      implementation = urlParts[urlParts.length - 3];
+    } else {
+      benchmark = urlParts[urlParts.length - 1];
+      implementation = urlParts[urlParts.length - 2];
     }
     const result: BenchmarkResult = {
       runId: response.runId,
