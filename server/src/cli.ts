@@ -29,7 +29,7 @@ const repoRoot = path.resolve(__dirname, '..', '..');
 const optDefs: commandLineUsage.OptionDefinition[] = [
   {
     name: 'help',
-    description: 'Show this documentation',
+    description: 'Show documentation',
     type: Boolean,
     defaultValue: false,
   },
@@ -47,14 +47,14 @@ const optDefs: commandLineUsage.OptionDefinition[] = [
   },
   {
     name: 'benchmark',
-    description: 'Which benchmarks to run',
+    description: 'Which benchmarks to run (* for all)',
     alias: 'b',
     type: String,
     defaultValue: '*',
   },
   {
     name: 'implementation',
-    description: 'Which implementations to run',
+    description: 'Which implementations to run (* for all)',
     alias: 'i',
     type: String,
     defaultValue: 'lit-html',
@@ -68,7 +68,7 @@ const optDefs: commandLineUsage.OptionDefinition[] = [
   },
   {
     name: 'manual',
-    description: 'Don\'t launch browsers, just show URLs and collect results.',
+    description: 'Don\'t run automatically, just show URLs and collect results',
     alias: 'm',
     type: Boolean,
     defaultValue: false,
