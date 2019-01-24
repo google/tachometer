@@ -12,11 +12,6 @@
 import {registerBenchmark} from '../../../client/lib/index.js';
 import {html, render} from '../node_modules/lit-html/lit-html.js';
 
-registerBenchmark(() => {
-  const data = genXChildData(500);
-  draw(document.body, data, 'hello');
-});
-
 const genXChildData = (depth) => {
   let xChild = {};
   while (depth--) {
@@ -24,6 +19,12 @@ const genXChildData = (depth) => {
   }
   return xChild;
 };
+
+const data = genXChildData(500);
+
+registerBenchmark(() => {
+  draw(document.body, data, 'hello');
+});
 
 const renderBox = (title, id, content) => html`
   <div>

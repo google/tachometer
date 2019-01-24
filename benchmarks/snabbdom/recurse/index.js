@@ -11,11 +11,6 @@
 
 import {registerBenchmark} from '../../../client/lib/index.js';
 
-registerBenchmark(() => {
-  const data = genXChildData(500);
-  draw(document.body, data, 'hello');
-});
-
 const genXChildData = (depth) => {
   let xChild = {};
   while (depth--) {
@@ -23,6 +18,12 @@ const genXChildData = (depth) => {
   }
   return xChild;
 };
+
+const data = genXChildData(500);
+
+registerBenchmark(() => {
+  draw(document.body, data, 'hello');
+});
 
 const h = snabbdom.h;
 const patch = snabbdom.init([]);
