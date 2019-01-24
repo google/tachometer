@@ -8,6 +8,7 @@
     "lib": "lib"
   },
   "scripts": {
+    "prepare": "npm run build",
     "build": "rm -rf lib && tsc && npm run lint",
     "lint": "tslint --project . --format stylish",
     "format": "find src -name \"*.ts\" | xargs clang-format --style=file -i"
