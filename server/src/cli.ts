@@ -11,6 +11,7 @@
 
 require('source-map-support').install();
 require('chromedriver');
+require('geckodriver');
 
 import * as fs from 'fs-extra';
 import * as path from 'path';
@@ -25,6 +26,11 @@ import {BenchmarkResult, BenchmarkSpec, BenchmarkSession} from './types';
 import {Server} from './server';
 
 const repoRoot = path.resolve(__dirname, '..', '..');
+
+const validBrowsers = new Set([
+  'chrome',
+  'firefox',
+]);
 
 const optDefs: commandLineUsage.OptionDefinition[] = [
   {
@@ -46,9 +52,9 @@ const optDefs: commandLineUsage.OptionDefinition[] = [
     defaultValue: '0',
   },
   {
-    name: 'benchmark',
+    name: 'name',
     description: 'Which benchmarks to run (* for all)',
-    alias: 'b',
+    alias: 'n',
     type: String,
     defaultValue: '*',
   },
@@ -58,6 +64,14 @@ const optDefs: commandLineUsage.OptionDefinition[] = [
     alias: 'i',
     type: String,
     defaultValue: 'lit-html',
+  },
+  {
+    name: 'browser',
+    description: 'Which browsers to launch in automatic mode, ' +
+        `comma-delimited (${[...validBrowsers].join(' ,')})`,
+    alias: 'b',
+    type: String,
+    defaultValue: 'chrome',
   },
   {
     name: 'trials',
@@ -79,8 +93,9 @@ interface Opts {
   help: boolean;
   host: string;
   port: number;
-  benchmark: string;
+  name: string;
   implementation: string;
+  browser: string;
   trials: number;
   manual: boolean;
 }
@@ -103,15 +118,15 @@ async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
   for (const implementation of impls) {
     const dir = path.join(repoRoot, 'benchmarks', implementation);
     let benchmarks;
-    if (opts.benchmark === '*') {
+    if (opts.name === '*') {
       benchmarks = await fs.readdir(dir);
       benchmarks = benchmarks.filter((dir) => !ignoreFiles.has(dir));
     } else {
-      benchmarks = opts.benchmark.split(',');
+      benchmarks = opts.name.split(',');
     }
-    for (const benchmark of benchmarks) {
+    for (const name of benchmarks) {
       specs.push({
-        benchmark,
+        name,
         implementation,
         trials: opts.trials,
       });
@@ -187,7 +202,7 @@ function formatResultRow(result: BenchmarkResult): string[] {
   const avg = sum / len;
   const worst = Math.max(...millis);
   return [
-    result.benchmark,
+    result.name,
     result.implementation,
     result.browser.name,
     result.browser.version,
@@ -222,7 +237,7 @@ async function main() {
     const urlTable: string[][] = [];
     for (const spec of specs) {
       urlTable.push([
-        spec.benchmark,
+        spec.name,
         spec.implementation,
         server.specUrl(spec),
       ]);
@@ -251,29 +266,41 @@ async function main() {
     })();
 
   } else {
-    const driver = await new Builder().forBrowser('chrome').build();
-    const tableData: string[][] = [];
-    tableData.push(tableHeaders);
-    for (const spec of specs) {
-      console.log(
-          `Running benchmark ${spec.benchmark} in ${spec.implementation}`);
-      const run = server.runBenchmark(spec);
-      await driver.get(run.url);
-      const result = await run.result;
-      // const fullName = `${spec.implementation}-${spec.benchmark}`;
-      // const runData = await getRunData(fullName, results);
-      // await saveRun(fullName, runData);
-      tableData.push(formatResultRow(result));
+    const browsers = new Set(
+        opts.browser.replace(/\s+/, '').split(',').filter((b) => b !== ''));
+    if (browsers.size === 0) {
+      throw new Error('At least one --browser must be specified');
+    }
+    for (const b of browsers) {
+      if (validBrowsers.has(b) === false) {
+        throw new Error(`Unknown --browser '${b}'`);
+      }
     }
 
-    console.log();
-    console.log(table.table(tableData, {columns: tableColumns}));
+    const tableData: string[][] = [];
+    tableData.push(tableHeaders);
+    for (const browser of browsers) {
+      console.log(`Launching ${browser}`);
+      const driver = await new Builder().forBrowser(browser).build();
+      for (const spec of specs) {
+        console.log(
+            `    Running benchmark ${spec.name} in ${spec.implementation}`);
+        const run = server.runBenchmark(spec);
+        await driver.get(run.url);
+        const result = await run.result;
+        // const fullName = `${spec.implementation}-${spec.benchmark}`;
+        // const runData = await getRunData(fullName, results);
+        // await saveRun(fullName, runData);
+        tableData.push(formatResultRow(result));
+      }
+      console.log();
+      await driver.close();
+    }
 
-    await Promise.all([
-      driver.close(),
-      server.close(),
-    ]);
+    console.log(table.table(tableData, {columns: tableColumns}));
   }
+
+  await server.close();
 }
 
 main();

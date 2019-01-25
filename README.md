@@ -29,8 +29,9 @@ Flag                      | Default     | Description
 `--help`                  | `false`     | Show documentation
 `--host`                  | `127.0.0.1` | Which host to run on
 `--port`                  | `0`         | Which port to run on (`0` for random free)
-`--benchmark` / `-b`      | `*`         | Which benchmarks to run (`*` for all)
+`--name` / `-n`           | `*`         | Which benchmarks to run (`*` for all)
 `--implementation` / `-i` | `lit-html`  | Which implementations to run (`*` for all)
+`--browser` / `-b`        | `chrome`    | Which browsers to launch in automatic mode, comma-delimited (chrome, firefox)
 `--trials` / `-t`         | `10`        | How many times to run each benchmark
 `--manual` / `-m`         | `false`     | Don't run automatically, just show URLs and collect results
 

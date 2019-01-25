@@ -75,7 +75,7 @@ export class Server {
   }
 
   specUrl(spec: BenchmarkSpec, id?: string): string {
-    return `${this.url}/benchmarks/${spec.implementation}/${spec.benchmark}/` +
+    return `${this.url}/benchmarks/${spec.implementation}/${spec.name}/` +
         `?trials=${spec.trials}` + (id !== undefined ? `&runId=${id}` : '');
   }
 
@@ -101,17 +101,17 @@ export class Server {
     const response = ctx.request.body as BenchmarkResponse;
     const browser = new UAParser(ctx.headers['user-agent']).getBrowser();
     const urlParts = response.urlPath.split('/').filter((part) => part !== '');
-    let benchmark, implementation;
+    let name, implementation;
     if (urlParts[urlParts.length - 1].includes('.')) {
-      benchmark = urlParts[urlParts.length - 2];
+      name = urlParts[urlParts.length - 2];
       implementation = urlParts[urlParts.length - 3];
     } else {
-      benchmark = urlParts[urlParts.length - 1];
+      name = urlParts[urlParts.length - 1];
       implementation = urlParts[urlParts.length - 2];
     }
     const result: BenchmarkResult = {
       runId: response.runId,
-      benchmark,
+      name,
       implementation,
       millis: response.millis,
       browser: {

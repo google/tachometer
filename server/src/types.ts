@@ -24,7 +24,7 @@ export class Deferred<T> {
 
 /** A specification of a benchmark to run. */
 export interface BenchmarkSpec {
-  benchmark: string;
+  name: string;
   implementation: string;
   trials: number;
 }
@@ -38,7 +38,7 @@ export interface BenchmarkResponse {
 
 export interface BenchmarkResult {
   runId: string|undefined;
-  benchmark: string;
+  name: string;
   implementation: string;
   millis: number[];
   browser: {name: string, version: string};
