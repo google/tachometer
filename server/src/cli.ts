@@ -299,11 +299,10 @@ async function main() {
       ...results.map(formatResultRow),
     ];
     console.log(table.table(tableData, {columns: tableColumns}));
-  }
-
-  await server.close();
-  if (saveStream !== undefined) {
-    saveStream.end();
+    if (saveStream !== undefined) {
+      saveStream.end();
+    }
+    await server.close();
   }
 }
 
