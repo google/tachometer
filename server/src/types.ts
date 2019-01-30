@@ -52,7 +52,7 @@ export interface PendingBenchmark {
 
 export interface BenchmarkSession {
   benchmarks: BenchmarkResult[];
-  date: Date;
+  datetime: string;  // YYYY-MM-DDTHH:mm:ss.sssZ
   system: {
     cpu: {
       manufacturer: string,

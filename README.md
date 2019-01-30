@@ -10,6 +10,7 @@ implementations.
 - [Flags](#flags)
 - [Automatic mode](#automatic-mode)
 - [Manual mode](#manual-mode)
+- [Saving data](#saving-data)
 - [Adding benchmarks](#adding-benchmarks)
 - [Example commands](#example-commands)
 
@@ -34,6 +35,7 @@ Flag                      | Default     | Description
 `--browser` / `-b`        | `chrome`    | Which browsers to launch in automatic mode, comma-delimited (chrome, firefox)
 `--trials` / `-t`         | `10`        | How many times to run each benchmark
 `--manual` / `-m`         | `false`     | Don't run automatically, just show URLs and collect results
+`--save` / `-s`           |             | Save benchmark JSON data to this file
 
 ### Automatic mode
 
@@ -50,6 +52,20 @@ printed on the terminal, and the server will listen indefinitely. Visiting any
 of these URLs in any browser (or any other valid benchmark URL on the host) will
 run the benchmark, report the results back to the server, and print them to the
 terminal.
+
+### Saving data
+
+Use the `--save <filename>` flag to save benchmarking results to a file. If the
+file does not exist it will be created, otherwise it will be created.
+
+The file format is one line per *session*, where a session is a JSON-encoded
+[`BenchmarkSession`](https://github.com/PolymerLabs/lit-benchmarks/blob/master/server/src/types.ts)
+object which contains an array of millisecond benchmark results along with
+timestamp and system information.
+
+In automatic mode, a single session will be appended after all benchmarks have
+completed. In manual mode, a new session will be appended every time a benchmark
+finishes.
 
 ### Adding benchmarks
 

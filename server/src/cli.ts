@@ -13,7 +13,7 @@ require('source-map-support').install();
 require('chromedriver');
 require('geckodriver');
 
-import * as fs from 'fs-extra';
+import * as fsExtra from 'fs-extra';
 import * as path from 'path';
 import * as table from 'table';
 
@@ -22,7 +22,8 @@ import commandLineArgs = require('command-line-args');
 import commandLineUsage = require('command-line-usage');
 import ansi = require('ansi-escape-sequences');
 
-import {BenchmarkResult, BenchmarkSpec, BenchmarkSession} from './types';
+import {makeSession} from './session';
+import {BenchmarkResult, BenchmarkSpec} from './types';
 import {Server} from './server';
 
 const repoRoot = path.resolve(__dirname, '..', '..');
@@ -87,6 +88,13 @@ const optDefs: commandLineUsage.OptionDefinition[] = [
     type: Boolean,
     defaultValue: false,
   },
+  {
+    name: 'save',
+    description: 'Save benchmark JSON data to this file',
+    alias: 's',
+    type: String,
+    defaultValue: '',
+  },
 ];
 
 interface Opts {
@@ -98,6 +106,7 @@ interface Opts {
   browser: string;
   trials: number;
   manual: boolean;
+  save: string;
 }
 
 const ignoreFiles = new Set([
@@ -110,7 +119,7 @@ async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
   const specs: BenchmarkSpec[] = [];
   let impls;
   if (opts.implementation === '*') {
-    impls = await fs.readdir(path.join(repoRoot, 'benchmarks'));
+    impls = await fsExtra.readdir(path.join(repoRoot, 'benchmarks'));
     impls = impls.filter((dir) => !ignoreFiles.has(dir));
   } else {
     impls = opts.implementation.split(',');
@@ -119,7 +128,7 @@ async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
     const dir = path.join(repoRoot, 'benchmarks', implementation);
     let benchmarks;
     if (opts.name === '*') {
-      benchmarks = await fs.readdir(dir);
+      benchmarks = await fsExtra.readdir(dir);
       benchmarks = benchmarks.filter((dir) => !ignoreFiles.has(dir));
     } else {
       benchmarks = opts.name.split(',');
@@ -133,29 +142,6 @@ async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
     }
   }
   return specs;
-}
-
-export async function saveRun(
-    benchmarkName: string, session: BenchmarkSession) {
-  const filename = path.resolve(
-      __dirname, '..', '..', 'benchmarks', benchmarkName, 'runs.json');
-  let data: {sessions: BenchmarkSession[]}|undefined;
-  let contents: string|undefined;
-  try {
-    contents = await fs.readFile(filename, 'utf-8');
-  } catch (e) {
-  }
-  if (contents !== undefined && contents.trim() !== '') {
-    data = JSON.parse(contents);
-  }
-  if (data === undefined) {
-    data = {sessions: []};
-  }
-  if (data.sessions === undefined) {
-    data.sessions = [];
-  }
-  data.sessions.push(session);
-  fs.writeFile(filename, JSON.stringify(data));
 }
 
 const tableHeaders = [
@@ -233,6 +219,11 @@ async function main() {
     rootDir: repoRoot,
   });
 
+  let saveStream;
+  if (opts.save) {
+    saveStream = await fsExtra.createWriteStream(opts.save, {flags: 'a'});
+  }
+
   if (opts.manual === true) {
     const urlTable: string[][] = [];
     for (const spec of specs) {
@@ -262,6 +253,11 @@ async function main() {
     (async function() {
       for await (const result of server.streamResults()) {
         streamWrite(formatResultRow(result));
+        if (saveStream !== undefined) {
+          const session = await makeSession([result]);
+          saveStream.write(JSON.stringify(session));
+          saveStream.write('\n');
+        }
       }
     })();
 
@@ -277,8 +273,7 @@ async function main() {
       }
     }
 
-    const tableData: string[][] = [];
-    tableData.push(tableHeaders);
+    const results: BenchmarkResult[] = [];
     for (const browser of browsers) {
       console.log(`Launching ${browser}`);
       const driver = await new Builder().forBrowser(browser).build();
@@ -287,20 +282,29 @@ async function main() {
             `    Running benchmark ${spec.name} in ${spec.implementation}`);
         const run = server.runBenchmark(spec);
         await driver.get(run.url);
-        const result = await run.result;
-        // const fullName = `${spec.implementation}-${spec.benchmark}`;
-        // const runData = await getRunData(fullName, results);
-        // await saveRun(fullName, runData);
-        tableData.push(formatResultRow(result));
+        results.push(await run.result);
       }
       console.log();
       await driver.close();
     }
 
+    if (saveStream !== undefined) {
+      const session = await makeSession(results);
+      saveStream.write(JSON.stringify(session));
+      saveStream.write('\n');
+    }
+
+    const tableData = [
+      tableHeaders,
+      ...results.map(formatResultRow),
+    ];
     console.log(table.table(tableData, {columns: tableColumns}));
   }
 
   await server.close();
+  if (saveStream !== undefined) {
+    saveStream.end();
+  }
 }
 
 main();

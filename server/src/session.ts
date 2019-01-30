@@ -12,7 +12,7 @@
 import * as systeminformation from 'systeminformation';
 import {BenchmarkResult, BenchmarkSession} from './types';
 
-export async function getRunData(benchmarkResults: BenchmarkResult[]):
+export async function makeSession(results: BenchmarkResult[]):
     Promise<BenchmarkSession> {
   // TODO Add git info.
   const battery = await systeminformation.battery();
@@ -20,8 +20,8 @@ export async function getRunData(benchmarkResults: BenchmarkResult[]):
   const currentLoad = await systeminformation.currentLoad();
   const memory = await systeminformation.mem();
   return {
-    benchmarks: benchmarkResults,
-    date: new Date(),
+    benchmarks: results,
+    datetime: new Date().toISOString(),
     system: {
       cpu: {
         manufacturer: cpu.manufacturer,
