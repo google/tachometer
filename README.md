@@ -75,6 +75,7 @@ To add a new benchmark or implementation, add a directory within the
 ```
 benchmarks/
 └── <implementation>/
+   ├── package.json
    └── <benchmark>/
        ├── index.html
        └── index.js
