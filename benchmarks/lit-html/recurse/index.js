@@ -20,8 +20,6 @@ const genXChildData = (depth) => {
   return xChild;
 };
 
-const data = genXChildData(500);
-
 const renderBox = (title, id, content) => html`
   <div>
     <span>${title}</span>
@@ -45,9 +43,10 @@ const renderXChild = (data, string, depth = 0) => {
   `;
 };
 
-const draw = (container, data, string, depth = 0) =>
+const draw = (container, data, string, depth) =>
     render(renderXChild(data, string, depth), container);
 
-registerBenchmark(() => {
+registerBenchmark((config) => {
+  const data = genXChildData(config.depth || 500);
   draw(document.body, data, 'hello');
 });

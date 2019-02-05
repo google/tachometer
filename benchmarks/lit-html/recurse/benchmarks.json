@@ -1,0 +1,16 @@
+{
+  "variants": [
+    {
+      "name": "shallow",
+      "config": {
+        "depth": 10
+      }
+    },
+    {
+      "name": "deep",
+      "config": {
+        "depth": 1000
+      }
+    }
+  ]
+}

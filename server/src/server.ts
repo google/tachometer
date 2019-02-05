@@ -11,6 +11,7 @@
 
 import * as http from 'http';
 import * as net from 'net';
+import * as querystring from 'querystring';
 
 import Koa = require('koa');
 import mount = require('koa-mount');
@@ -75,8 +76,25 @@ export class Server {
   }
 
   specUrl(spec: BenchmarkSpec, id?: string): string {
-    return `${this.url}/benchmarks/${spec.implementation}/${spec.name}/` +
-        `?trials=${spec.trials}` + (id !== undefined ? `&runId=${id}` : '');
+    const params: {
+      trials: number,
+      runId?: string,
+      variant?: string,
+      config?: string,
+    } = {
+      trials: spec.trials,
+    };
+    if (id !== undefined) {
+      params.runId = id;
+    }
+    if (spec.variant !== undefined) {
+      params.variant = spec.variant;
+    }
+    if (spec.config !== undefined) {
+      params.config = JSON.stringify(spec.config);
+    }
+    return `${this.url}/benchmarks/${spec.implementation}/${spec.name}/?` +
+        querystring.stringify(params);
   }
 
   async * streamResults(): AsyncIterableIterator<BenchmarkResult> {
@@ -112,6 +130,7 @@ export class Server {
     const result: BenchmarkResult = {
       runId: response.runId,
       name,
+      variant: response.variant,
       implementation,
       millis: response.millis,
       browser: {

@@ -12,6 +12,7 @@ implementations.
 - [Manual mode](#manual-mode)
 - [Saving data](#saving-data)
 - [Adding benchmarks](#adding-benchmarks)
+- [Variants](#variants)
 - [Example commands](#example-commands)
 
 ### Setup
@@ -96,6 +97,52 @@ that promise, otherwise immediately after `<fn>` returns.
 Run `npm run format` from the top-level of the repo to run clang-format on all
 `.js` files in `benchmarks/` (along with all `.ts` files in `client/` and
 `server/`).
+
+### Variants
+
+By default, each `benchmarks/<implementation>/<benchmark>/` directory represents
+one benchmark, which will be executed by launching the `index.html` found in
+that directory. It some cases, however, it may be convenient to define multiple
+*variants* of a benchmark implementation.
+
+If a `benchmarks.json` file is found in a `<benchmark>` directory, then it will
+be read to look for a list of variants.
+
+Option            | Description
+------------------| -------------------------------
+`variants`        | A list of variant objects for this benchmark
+`variants.name`   | A label for this variant
+`variants.config` | An arbitrary object which will be passed to the benchmark function
+
+For example, a benchmark that performs some recursive procedure to a
+parameterized depth might define two variants in its `benchmarks.json`:
+
+```js
+{
+  "variants": [
+    {
+      "name": "shallow",
+      "config": {
+        "depth": 10
+      }
+    },
+    {
+      "name": "deep",
+      "config": {
+        "depth": 1000
+      }
+    }
+  ]
+}
+```
+
+And might have an implementation like this:
+
+```js
+registerBenchmark((config) => {
+  recurse(config.depth);
+});
+```
 
 ### Example commands
 

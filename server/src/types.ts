@@ -22,10 +22,20 @@ export class Deferred<T> {
   }
 }
 
+/** The expected format of a benchmarks.json configuration file. */
+export interface ConfigFormat {
+  variants?: Array<{
+    name?: string,
+    config?: {},
+  }>;
+}
+
 /** A specification of a benchmark to run. */
 export interface BenchmarkSpec {
   name: string;
   implementation: string;
+  variant: string;
+  config: {};
   trials: number;
 }
 
@@ -33,6 +43,7 @@ export interface BenchmarkSpec {
 export interface BenchmarkResponse {
   runId?: string;
   urlPath: string;
+  variant: string;
   millis: number[];
 }
 
@@ -40,6 +51,7 @@ export interface BenchmarkResult {
   runId: string|undefined;
   name: string;
   implementation: string;
+  variant: string;
   millis: number[];
   browser: {name: string, version: string};
 }

@@ -23,7 +23,7 @@ import commandLineUsage = require('command-line-usage');
 import ansi = require('ansi-escape-sequences');
 
 import {makeSession} from './session';
-import {BenchmarkResult, BenchmarkSpec} from './types';
+import {ConfigFormat, BenchmarkResult, BenchmarkSpec} from './types';
 import {Server} from './server';
 
 const repoRoot = path.resolve(__dirname, '..', '..');
@@ -125,20 +125,43 @@ async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
     impls = opts.implementation.split(',');
   }
   for (const implementation of impls) {
-    const dir = path.join(repoRoot, 'benchmarks', implementation);
+    const implDir = path.join(repoRoot, 'benchmarks', implementation);
     let benchmarks;
     if (opts.name === '*') {
-      benchmarks = await fsExtra.readdir(dir);
-      benchmarks = benchmarks.filter((dir) => !ignoreFiles.has(dir));
+      benchmarks = await fsExtra.readdir(implDir);
+      benchmarks = benchmarks.filter((implDir) => !ignoreFiles.has(implDir));
     } else {
       benchmarks = opts.name.split(',');
     }
     for (const name of benchmarks) {
-      specs.push({
-        name,
-        implementation,
-        trials: opts.trials,
-      });
+      const benchDir = path.join(implDir, name);
+      let config: ConfigFormat|undefined;
+      try {
+        config = await fsExtra.readJson(path.join(benchDir, 'benchmarks.json'));
+      } catch (e) {
+        if (e.code !== 'ENOENT') {
+          throw e;
+        }
+      }
+      if (config && config.variants && config.variants.length) {
+        for (const variant of config.variants) {
+          specs.push({
+            name,
+            implementation,
+            variant: variant.name || '',
+            config: variant.config || {},
+            trials: opts.trials,
+          });
+        }
+      } else {
+        specs.push({
+          name,
+          implementation,
+          variant: '',
+          config: {},
+          trials: opts.trials,
+        });
+      }
     }
   }
   return specs;
@@ -147,11 +170,12 @@ async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
 const tableHeaders = [
   'Benchmark',       // 0
   'Implementation',  // 1
-  'Browser',         // 2
-  '(Version)',       // 3
-  'Trials',          // 4
-  'Worst (ms)',      // 5
-  'Avg (ms)',        // 6
+  'Variant',         // 2
+  'Browser',         // 3
+  '(Version)',       // 4
+  'Trials',          // 5
+  'Worst (ms)',      // 6
+  'Avg (ms)',        // 7
 ].map((header) => ansi.format(`[bold]{${header}}`));
 
 const tableColumns: {[key: string]: table.ColumnConfig} = {
@@ -162,20 +186,23 @@ const tableColumns: {[key: string]: table.ColumnConfig} = {
     width: 15,
   },
   2: {
-    width: 8,
+    width: 15,
   },
   3: {
-    width: 12,
+    width: 8,
   },
   4: {
+    width: 12,
+  },
+  5: {
     alignment: 'center',
     width: 6,
   },
-  5: {
+  6: {
     alignment: 'right',
     width: 10,
   },
-  6: {
+  7: {
     alignment: 'right',
     width: 8,
   },
@@ -190,6 +217,7 @@ function formatResultRow(result: BenchmarkResult): string[] {
   return [
     result.name,
     result.implementation,
+    result.variant,
     result.browser.name,
     result.browser.version,
     len.toString(),

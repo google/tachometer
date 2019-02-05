@@ -13,14 +13,17 @@
 interface BenchmarkResponse {
   runId?: string;
   urlPath: string;
+  variant?: string;
   millis: number[];
 }
 
 const url = new URL(window.location.href);
 const runId = url.searchParams.get('runId') || undefined;
 const trials = Number(url.searchParams.get('trials')) || 1;
+const variant = url.searchParams.get('variant') || undefined;
+const config = JSON.parse(url.searchParams.get('config') || '{}');
 
-let benchmarkFn: () => Promise<unknown>| unknown;
+let benchmarkFn: (config?: {}) => Promise<unknown>| unknown;
 let millis: number[];
 
 export const registerBenchmark = (fn: () => unknown) => benchmarkFn = fn;
@@ -33,7 +36,7 @@ const runBenchmarks = async () => {
       requestAnimationFrame(async () => {
         const start = performance.now();
         try {
-          const result = benchmarkFn();
+          const result = benchmarkFn(config);
           if (result instanceof Promise) {
             await result;
           }
@@ -53,6 +56,7 @@ const runBenchmarks = async () => {
   }
   const response: BenchmarkResponse = {
     runId,
+    variant,
     millis,
     urlPath: url.pathname,
   };
