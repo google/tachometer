@@ -146,3 +146,17 @@ const template = () => html`
 </div>`;
 
 _render();
+
+// clang-format on
+
+import {registerBenchmark} from '../../../client/lib/index.js';
+
+const raf = () => new Promise((resolve) => requestAnimationFrame(resolve));
+const runButton = document.getElementById('run');
+const swaprowsButton = document.getElementById('swaprows');
+
+registerBenchmark(async () => {
+  runButton.click();
+  swaprowsButton.click();
+  await raf();
+});
