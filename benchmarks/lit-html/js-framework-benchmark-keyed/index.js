@@ -1,6 +1,9 @@
-import { html, render } from '../node_modules/lit-html/lit-html.js';
-import { repeat } from '../node_modules/lit-html/directives/repeat.js';
+// Don't reformat third party code for easier synching.
+// clang-format off
+
 import { guard } from '../node_modules/lit-html/directives/guard.js';
+import { repeat } from '../node_modules/lit-html/directives/repeat.js';
+import { html, render } from '../node_modules/lit-html/lit-html.js';
 
 const adjectives = [
   'pretty', 'large', 'big', 'small', 'tall', 'short', 'long', 'handsome', 'plain', 'quaint', 'clean', 'elegant', 'easy', 'angry', 'crazy', 'helpful', 'mushy', 'odd', 'unsightly', 'adorable', 'important', 'inexpensive', 'cheap', 'expensive', 'fancy'];
@@ -30,7 +33,7 @@ const clear = () => {
 const interact = e => {
   const interaction = e.target.getAttribute('data-interaction');
   const id = parseInt(
-    e.target.parentNode.id || 
+    e.target.parentNode.id ||
     e.target.parentNode.parentNode.id ||
     e.target.parentNode.parentNode.parentNode.id
   );
