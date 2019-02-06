@@ -150,13 +150,6 @@ _render();
 // clang-format on
 
 import {registerBenchmark} from '../../../client/lib/index.js';
+import {runBenchmark} from '../../common/js-framework-benchmark/runner.js';
 
-const raf = () => new Promise((resolve) => requestAnimationFrame(resolve));
-const runButton = document.getElementById('run');
-const swaprowsButton = document.getElementById('swaprows');
-
-registerBenchmark(async () => {
-  runButton.click();
-  swaprowsButton.click();
-  await raf();
-});
+registerBenchmark(runBenchmark);
