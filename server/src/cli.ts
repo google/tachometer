@@ -113,6 +113,7 @@ const ignoreFiles = new Set([
   'node_modules',
   'package.json',
   'package-lock.json',
+  'common',
 ]);
 
 async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
