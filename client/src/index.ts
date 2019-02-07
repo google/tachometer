@@ -19,7 +19,6 @@ interface BenchmarkResponse {
 
 const url = new URL(window.location.href);
 const runId = url.searchParams.get('runId') || undefined;
-const trials = Number(url.searchParams.get('trials')) || 1;
 const variant = url.searchParams.get('variant') || undefined;
 const config = JSON.parse(url.searchParams.get('config') || '{}');
 
@@ -30,30 +29,28 @@ export const registerBenchmark = (fn: () => unknown) => benchmarkFn = fn;
 
 const runBenchmarks = async () => {
   millis = [];
-  for (let i = 0; i < trials; i++) {
-    console.log(`Running benchmark ${i + 1}/${trials}`);
-    const done = new Promise((resolve, reject) => {
-      requestAnimationFrame(async () => {
-        const start = performance.now();
-        try {
-          const result = benchmarkFn(config);
-          if (result instanceof Promise) {
-            await result;
-          }
-        } catch (e) {
-          reject(e);
-          return;
+  console.log(`Running benchmark`);
+  const done = new Promise((resolve, reject) => {
+    requestAnimationFrame(async () => {
+      const start = performance.now();
+      try {
+        const result = benchmarkFn(config);
+        if (result instanceof Promise) {
+          await result;
         }
-        setTimeout(() => {
-          const end = performance.now();
-          const runtime = end - start;
-          millis.push(runtime);
-          resolve();
-        }, 0);
-      });
+      } catch (e) {
+        reject(e);
+        return;
+      }
+      setTimeout(() => {
+        const end = performance.now();
+        const runtime = end - start;
+        millis.push(runtime);
+        resolve();
+      }, 0);
     });
-    await done;
-  }
+  });
+  await done;
   const response: BenchmarkResponse = {
     runId,
     variant,

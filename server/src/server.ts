@@ -77,13 +77,10 @@ export class Server {
 
   specUrl(spec: BenchmarkSpec, id?: string): string {
     const params: {
-      trials: number,
       runId?: string,
       variant?: string,
       config?: string,
-    } = {
-      trials: spec.trials,
-    };
+    } = {};
     if (id !== undefined) {
       params.runId = id;
     }

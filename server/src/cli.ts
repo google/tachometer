@@ -227,6 +227,17 @@ function formatResultRow(result: BenchmarkResult): string[] {
   ];
 }
 
+function combineResults(results: BenchmarkResult[]): BenchmarkResult {
+  const combined: BenchmarkResult = {
+    ...results[0],
+    millis: [],
+  };
+  for (const result of results) {
+    combined.millis.push(...result.millis);
+  }
+  return combined;
+}
+
 async function main() {
   const opts = commandLineArgs(optDefs) as Opts;
   if (opts.help) {
@@ -307,11 +318,16 @@ async function main() {
       console.log(`Launching ${browser}`);
       const driver = await new Builder().forBrowser(browser).build();
       for (const spec of specs) {
-        console.log(
-            `    Running benchmark ${spec.name} in ${spec.implementation}`);
-        const run = server.runBenchmark(spec);
-        await driver.get(run.url);
-        results.push(await run.result);
+        console.log(`    Running benchmark ${spec.name}.${spec.variant} in ${
+            spec.implementation}`);
+        const trialResults = [];
+        for (let t = 0; t < spec.trials; t++) {
+          console.log(`        Trial ${t}/${spec.trials}`);
+          const run = server.runBenchmark(spec);
+          await driver.get(run.url);
+          trialResults.push(await run.result);
+        }
+        results.push(combineResults(trialResults));
       }
       console.log();
       await driver.close();
