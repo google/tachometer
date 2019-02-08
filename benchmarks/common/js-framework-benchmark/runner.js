@@ -56,5 +56,5 @@ export async function runBenchmark(config) {
       throw new Error(`Unknown config.id "${config.id}"`);
   }
 
-  await raf();
+  // await raf();
 }

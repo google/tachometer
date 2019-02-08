@@ -129,7 +129,7 @@ export class Server {
       name,
       variant: response.variant,
       implementation,
-      millis: response.millis,
+      millis: [response.millis],
       browser: {
         name: browser.name || '',
         version: browser.version || '',

@@ -14,7 +14,7 @@ interface BenchmarkResponse {
   runId?: string;
   urlPath: string;
   variant?: string;
-  millis: number[];
+  millis: number;
 }
 
 const url = new URL(window.location.href);
@@ -23,38 +23,22 @@ const variant = url.searchParams.get('variant') || undefined;
 const config = JSON.parse(url.searchParams.get('config') || '{}');
 
 let benchmarkFn: (config?: {}) => Promise<unknown>| unknown;
-let millis: number[];
 
 export const registerBenchmark = (fn: () => unknown) => benchmarkFn = fn;
 
 const runBenchmarks = async () => {
-  millis = [];
   console.log(`Running benchmark`);
-  const done = new Promise((resolve, reject) => {
-    requestAnimationFrame(async () => {
-      const start = performance.now();
-      try {
-        const result = benchmarkFn(config);
-        if (result instanceof Promise) {
-          await result;
-        }
-      } catch (e) {
-        reject(e);
-        return;
-      }
-      setTimeout(() => {
-        const end = performance.now();
-        const runtime = end - start;
-        millis.push(runtime);
-        resolve();
-      }, 0);
-    });
-  });
-  await done;
+  const start = performance.now();
+  const result = benchmarkFn(config);
+  if (result instanceof Promise) {
+    await result;
+  }
+  const end = performance.now();
+  const runtime = end - start;
   const response: BenchmarkResponse = {
     runId,
     variant,
-    millis,
+    millis: runtime,
     urlPath: url.pathname,
   };
   await fetch('/submitResults', {

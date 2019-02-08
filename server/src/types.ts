@@ -44,7 +44,7 @@ export interface BenchmarkResponse {
   runId?: string;
   urlPath: string;
   variant: string;
-  millis: number[];
+  millis: number;
 }
 
 export interface BenchmarkResult {
