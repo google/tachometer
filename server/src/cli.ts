@@ -25,6 +25,7 @@ import ansi = require('ansi-escape-sequences');
 import {makeSession} from './session';
 import {ConfigFormat, BenchmarkResult, BenchmarkSpec} from './types';
 import {Server} from './server';
+import {summaryStats} from './stats';
 
 const repoRoot = path.resolve(__dirname, '..', '..');
 
@@ -195,6 +196,7 @@ const tableHeaders = [
   'Trials',          // 5
   'Worst (ms)',      // 6
   'Avg (ms)',        // 7
+  '95% CI',          // 8
 ].map((header) => ansi.format(`[bold]{${header}}`));
 
 const tableColumns: {[key: string]: table.ColumnConfig} = {
@@ -225,23 +227,24 @@ const tableColumns: {[key: string]: table.ColumnConfig} = {
     alignment: 'right',
     width: 8,
   },
+  8: {
+    alignment: 'right',
+    width: 8,
+  },
 };
 
 function formatResultRow(result: BenchmarkResult): string[] {
-  const millis = result.millis;
-  const len = millis.length;
-  const sum = millis.reduce((acc, cur) => acc + cur);
-  const avg = sum / len;
-  const worst = Math.max(...millis);
+  const stats = summaryStats(result.millis);
   return [
     result.name,
     result.implementation,
     result.variant,
     result.browser.name,
     result.browser.version,
-    len.toString(),
-    worst.toFixed(3),
-    avg.toFixed(3),
+    stats.size.toFixed(0),
+    stats.max.toFixed(2),
+    stats.arithmeticMean.toFixed(2),
+    `± ${stats.confidenceInterval95.toFixed(2)}`,
   ];
 }
 
