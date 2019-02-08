@@ -1,0 +1,17 @@
+<!doctype html>
+<html>
+  <head>
+    <title>vanilla create-node benchmark</title>
+  </head>
+  <body>
+    <script type="module">
+      import {registerBenchmark} from '../../../client/lib/index.js';
+
+      registerBenchmark((config) => {
+        for (let i = 0; i < config.elements; i++) {
+          document.createElement('div');
+        }
+      });
+    </script>
+  </body>
+</html>

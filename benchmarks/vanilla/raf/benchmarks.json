@@ -1,0 +1,10 @@
+{
+  "variants": [
+    {
+      "name": "10 frames",
+      "config": {
+        "frames": 10
+      }
+    }
+  ]
+}

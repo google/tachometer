@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+  <head>
+    <title>vanilla raf benchmark</title>
+  </head>
+  <body>
+    <script type="module">
+      import {registerBenchmark} from '../../../client/lib/index.js';
+
+      registerBenchmark(async (config) => {
+        return new Promise((resolve) => {
+          let remaining = config.frames;
+          const cb = () => {
+            if (remaining <= 0) {
+              resolve();
+            } else {
+              remaining--;
+              requestAnimationFrame(cb);
+            }
+          }
+          cb();
+        });
+      });
+    </script>
+  </body>
+</html>

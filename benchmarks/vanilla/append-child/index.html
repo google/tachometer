@@ -1,0 +1,18 @@
+<!doctype html>
+<html>
+  <head>
+    <title>vanilla append-child benchmark</title>
+  </head>
+  <body>
+    <script type="module">
+      import {registerBenchmark} from '../../../client/lib/index.js';
+
+      registerBenchmark((config) => {
+        for (let i = 0; i < config.elements; i++) {
+          const div = document.createElement('div');
+          document.body.appendChild(div);
+        }
+      });
+    </script>
+  </body>
+</html>
