@@ -5,7 +5,10 @@
   "description": "Benchmarks for lit-html",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "postinstall": "(cd server && npm install) && (cd client && npm install)",
+    "benchmarks": "npm run build && node server/lib/runner.js",
+    "build": "(cd server && npm run build) && (cd client && npm run build)",
+    "format": "(cd server && npm run format) && (cd client && npm run format)"
   },
   "repository": {
     "type": "git",
