@@ -67,6 +67,13 @@ const optDefs: commandLineUsage.OptionDefinition[] = [
     defaultValue: 'lit-html',
   },
   {
+    name: 'variant',
+    description: 'Which variant to run (* for all)',
+    alias: 'v',
+    type: String,
+    defaultValue: '*',
+  },
+  {
     name: 'browser',
     description: 'Which browsers to launch in automatic mode, ' +
         `comma-delimited (${[...validBrowsers].join(' ,')})`,
@@ -103,6 +110,7 @@ interface Opts {
   port: number;
   name: string;
   implementation: string;
+  variant: string;
   browser: string;
   trials: number;
   manual: boolean;
@@ -125,6 +133,10 @@ async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
   } else {
     impls = opts.implementation.split(',');
   }
+
+  const variants = new Set(
+      opts.variant.split(',').map((v) => v.trim()).filter((v) => v !== ''));
+
   for (const implementation of impls) {
     const implDir = path.join(repoRoot, 'benchmarks', implementation);
     let benchmarks;
@@ -136,6 +148,9 @@ async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
     }
     for (const name of benchmarks) {
       const benchDir = path.join(implDir, name);
+      if (!await fsExtra.pathExists(benchDir)) {
+        continue;
+      }
       let config: ConfigFormat|undefined;
       try {
         config = await fsExtra.readJson(path.join(benchDir, 'benchmarks.json'));
@@ -146,15 +161,18 @@ async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
       }
       if (config && config.variants && config.variants.length) {
         for (const variant of config.variants) {
-          specs.push({
-            name,
-            implementation,
-            variant: variant.name || '',
-            config: variant.config || {},
-            trials: opts.trials,
-          });
+          if (variant.name &&
+              (variants.has('*') || variants.has(variant.name))) {
+            specs.push({
+              name,
+              implementation,
+              variant: variant.name || '',
+              config: variant.config || {},
+              trials: opts.trials,
+            });
+          }
         }
-      } else {
+      } else if (opts.variant === '*') {
         specs.push({
           name,
           implementation,
@@ -181,7 +199,7 @@ const tableHeaders = [
 
 const tableColumns: {[key: string]: table.ColumnConfig} = {
   0: {
-    width: 10,
+    width: 15,
   },
   1: {
     width: 15,
@@ -253,6 +271,10 @@ async function main() {
   }
 
   const specs = await specsFromOpts(opts);
+  if (specs.length === 0) {
+    throw new Error('No benchmarks matched with the given flags');
+  }
+
   const server = await Server.start({
     host: opts.host,
     port: opts.port,
@@ -322,7 +344,7 @@ async function main() {
             spec.implementation}`);
         const trialResults = [];
         for (let t = 0; t < spec.trials; t++) {
-          console.log(`        Trial ${t}/${spec.trials}`);
+          console.log(`        Trial ${t + 1}/${spec.trials}`);
           const run = server.runBenchmark(spec);
           await driver.get(run.url);
           trialResults.push(await run.result);
