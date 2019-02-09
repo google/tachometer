@@ -21,6 +21,7 @@ import {Builder} from 'selenium-webdriver';
 import commandLineArgs = require('command-line-args');
 import commandLineUsage = require('command-line-usage');
 import ansi = require('ansi-escape-sequences');
+import ProgressBar = require('progress');
 
 import {makeSession} from './session';
 import {ConfigFormat, BenchmarkResult, BenchmarkSpec} from './types';
@@ -344,25 +345,41 @@ async function main() {
       }
     }
 
+    console.log('Running benchmarks\n');
+
+    const bar = new ProgressBar('[:bar] :status', {
+      total: browsers.size * specs.length * opts.trials,
+      width: 58,
+    });
+
     const results: BenchmarkResult[] = [];
     for (const browser of browsers) {
-      console.log(`Launching ${browser}`);
+      bar.tick(0, {status: `launching ${browser}`});
       const driver = await new Builder().forBrowser(browser).build();
       for (const spec of specs) {
-        console.log(`    Running benchmark ${spec.name}.${spec.variant} in ${
-            spec.implementation}`);
         const trialResults = [];
         for (let t = 0; t < spec.trials; t++) {
-          console.log(`        Trial ${t + 1}/${spec.trials}`);
           const run = server.runBenchmark(spec);
+          process.stdout
+          bar.tick(0, {
+            status: `${browser} ${spec.implementation} ${spec.name} ` +
+                `${spec.variant} ${t + 1}/${spec.trials}`,
+          });
           await driver.get(run.url);
           trialResults.push(await run.result);
+          if (bar.curr === bar.total - 1) {
+            // Note if we tick with 0 after we've completed, the status is
+            // rendered on the next line for some reason.
+            bar.tick(1, {status: 'done'});
+          } else {
+            bar.tick(1);
+          }
         }
         results.push(combineResults(trialResults));
       }
-      console.log();
       await driver.close();
     }
+    console.log();
 
     if (saveStream !== undefined) {
       const session = await makeSession(results);
