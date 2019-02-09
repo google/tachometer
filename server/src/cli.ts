@@ -194,9 +194,10 @@ const tableHeaders = [
   'Browser',         // 3
   '(Version)',       // 4
   'Trials',          // 5
-  'Worst (ms)',      // 6
-  'Avg (ms)',        // 7
+  'Mean',            // 7
   '95% CI',          // 8
+  'StdDev',          // 9
+  'Max',             // 10
 ].map((header) => ansi.format(`[bold]{${header}}`));
 
 const tableColumns: {[key: string]: table.ColumnConfig} = {
@@ -221,15 +222,19 @@ const tableColumns: {[key: string]: table.ColumnConfig} = {
   },
   6: {
     alignment: 'right',
-    width: 10,
+    width: 7,
   },
   7: {
     alignment: 'right',
-    width: 8,
+    width: 7,
   },
   8: {
     alignment: 'right',
-    width: 8,
+    width: 7,
+  },
+  9: {
+    alignment: 'right',
+    width: 7,
   },
 };
 
@@ -242,9 +247,10 @@ function formatResultRow(result: BenchmarkResult): string[] {
     result.browser.name,
     result.browser.version,
     stats.size.toFixed(0),
-    stats.max.toFixed(2),
     stats.arithmeticMean.toFixed(2),
     `± ${stats.confidenceInterval95.toFixed(2)}`,
+    stats.standardDeviation.toFixed(2),
+    stats.max.toFixed(2),
   ];
 }
 
