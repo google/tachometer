@@ -7,6 +7,12 @@
       }
     },
     {
+      "name": "100",
+      "config": {
+        "elements": 100
+      }
+    },
+    {
       "name": "1K",
       "config": {
         "elements": 1000
