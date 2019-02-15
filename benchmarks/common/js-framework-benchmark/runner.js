@@ -1,3 +1,5 @@
+import * as bench from '../../../client/lib/index.js';
+
 const raf = () => new Promise((resolve) => requestAnimationFrame(resolve));
 
 const clickId = (id) => document.getElementById(id).click();
@@ -5,11 +7,12 @@ const clickId = (id) => document.getElementById(id).click();
 const clickXPath = (xpath) =>
     document.evaluate(xpath, document.body).iterateNext().click();
 
-export async function runBenchmark(config) {
+export function runBenchmark() {
+  bench.start();
+
   // The following scripts are based on the scripts from
   // https://github.com/krausest/js-framework-benchmark/blob/master/webdriver-ts/src/benchmarks.ts
-
-  switch (config.script) {
+  switch (bench.config.script) {
     case 'create rows':
       clickId('add');
       break;
@@ -53,8 +56,8 @@ export async function runBenchmark(config) {
       break;
 
     default:
-      throw new Error(`Unknown config.id "${config.id}"`);
+      throw new Error(`Unknown config.script "${bench.config.script}"`);
   }
 
-  // await raf();
+  bench.stop();
 }

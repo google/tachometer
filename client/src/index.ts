@@ -20,21 +20,17 @@ interface BenchmarkResponse {
 const url = new URL(window.location.href);
 const runId = url.searchParams.get('runId') || undefined;
 const variant = url.searchParams.get('variant') || undefined;
-const config = JSON.parse(url.searchParams.get('config') || '{}');
 
-let benchmarkFn: (config?: {}) => Promise<unknown>| unknown;
+export const config = JSON.parse(url.searchParams.get('config') || '{}');
 
-export const registerBenchmark = (fn: () => unknown) => benchmarkFn = fn;
+let startTime: number;
+export function start() {
+  startTime = performance.now();
+}
 
-const runBenchmarks = async () => {
-  console.log(`Running benchmark`);
-  const start = performance.now();
-  const result = benchmarkFn(config);
-  if (result instanceof Promise) {
-    await result;
-  }
+export async function stop() {
   const end = performance.now();
-  const runtime = end - start;
+  const runtime = end - startTime;
   const response: BenchmarkResponse = {
     runId,
     variant,
@@ -48,6 +44,4 @@ const runBenchmarks = async () => {
     },
     body: JSON.stringify(response),
   });
-};
-
-setTimeout(() => runBenchmarks(), 0);
+}

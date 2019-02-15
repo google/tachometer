@@ -360,7 +360,6 @@ async function main() {
         const trialResults = [];
         for (let t = 0; t < spec.trials; t++) {
           const run = server.runBenchmark(spec);
-          process.stdout
           bar.tick(0, {
             status: `${browser} ${spec.implementation} ${spec.name} ` +
                 `${spec.variant} ${t + 1}/${spec.trials}`,

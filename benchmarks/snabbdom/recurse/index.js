@@ -9,7 +9,7 @@
  * rights grant found at http://polymer.github.io/PATENTS.txt
  */
 
-import {registerBenchmark} from '../../../client/lib/index.js';
+import * as bench from '../../../client/lib/index.js';
 
 const genXChildData = (depth) => {
   let xChild = {};
@@ -23,8 +23,6 @@ const data = genXChildData(500);
 
 const h = snabbdom.h;
 const patch = snabbdom.init([]);
-
-let vnode = null;
 
 function renderBox(title, id, content) {
   return h('div', [
@@ -49,17 +47,8 @@ function renderXChild(data, string, depth = 0) {
   ]);
 }
 
-function draw(container, data, string, depth = 0) {
-  let vnodeOrContainer = vnode;
-  if (!vnodeOrContainer) {
-    vnodeOrContainer = document.createElement('div');
-    container.appendChild(vnodeOrContainer);
-  }
-  const newVnode = renderXChild(data, string, depth);
-  patch(vnodeOrContainer, newVnode);
-  vnode = newVnode;
-}
-
-registerBenchmark(() => {
-  draw(document.body, data, 'hello');
-});
+bench.start();
+const div = document.createElement('div');
+document.body.appendChild(div);
+patch(div, renderXChild(data, 'hello'));
+bench.stop();

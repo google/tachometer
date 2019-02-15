@@ -5,8 +5,10 @@
   </head>
   <body>
     <script type="module">
-      import {registerBenchmark} from '../../../client/lib/index.js';
-      registerBenchmark(() => {});
+      import * as bench from '../../../client/lib/index.js';
+
+      bench.start();
+      bench.stop();
     </script>
   </body>
 </html>

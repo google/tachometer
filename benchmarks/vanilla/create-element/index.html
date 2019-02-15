@@ -5,13 +5,14 @@
   </head>
   <body>
     <script type="module">
-      import {registerBenchmark} from '../../../client/lib/index.js';
+      import * as bench from '../../../client/lib/index.js';
 
-      registerBenchmark((config) => {
-        for (let i = 0; i < config.elements; i++) {
-          document.createElement('div');
-        }
-      });
+      const elements = bench.config.elements;
+      bench.start();
+      for (let i = 0; i < elements; i++) {
+        document.createElement('div');
+      }
+      bench.stop();
     </script>
   </body>
 </html>

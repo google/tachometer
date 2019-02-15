@@ -9,7 +9,7 @@
  * rights grant found at http://polymer.github.io/PATENTS.txt
  */
 
-import {registerBenchmark} from '../../../client/lib/index.js';
+import * as bench from '../../../client/lib/index.js';
 import {html, render} from '../node_modules/lit-html/lit-html.js';
 
 const genXChildData = (depth) => {
@@ -43,10 +43,8 @@ const renderXChild = (data, string, depth = 0) => {
   `;
 };
 
-const draw = (container, data, string, depth) =>
-    render(renderXChild(data, string, depth), container);
+const data = genXChildData(bench.config.depth || 500);
 
-registerBenchmark((config) => {
-  const data = genXChildData(config.depth || 500);
-  draw(document.body, data, 'hello');
-});
+bench.start();
+render(renderXChild(data, 'hello'), document.body);
+bench.stop();

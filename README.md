@@ -87,12 +87,19 @@ dependencies between implementations. Running `npm install` from the top-level
 of the repo will automatically run `npm install` within each implementation
 directory.
 
-Benchmark `.js` files should `import {registerBenchmark} from
-'../../../client/lib/index.js';` and call `registerBenchmark(<fn>);` once, where
-`<fn>` is the function that implements the benchmark. The registered benchmark
-will begin running after a `setTimeout`. Timing will begin immediately before
-calling `<fn>`. If `<fn>` returns a promise then timing will end after awaiting
-that promise, otherwise immediately after `<fn>` returns.
+Benchmark `.js` files should
+`import * as bench from '../../../client/lib/index.js'` and call
+`bench.start()` and `bench.stop()` to mark the beginning and end times of the
+benchmark. Optionally use `bench.config` to access the configuration object
+defined by the variant (see next section).
+
+```js
+import * as bench from '../../../client/lib/index.js';
+// Do any initial setup here.
+bench.start();
+// Do the work being measured here.
+bench.stop();
+```
 
 Run `npm run format` from the top-level of the repo to run clang-format on all
 `.js` files in `benchmarks/` (along with all `.ts` files in `client/` and
@@ -139,9 +146,9 @@ parameterized depth might define two variants in its `benchmarks.json`:
 And might have an implementation like this:
 
 ```js
-registerBenchmark((config) => {
-  recurse(config.depth);
-});
+bench.start();
+recurse(bench.config.depth);
+bench.stop();
 ```
 
 ### Example commands

@@ -152,7 +152,5 @@ _render();
 
 // clang-format on
 
-import {registerBenchmark} from '../../../client/lib/index.js';
 import {runBenchmark} from '../../common/js-framework-benchmark/runner.js';
-
-registerBenchmark(runBenchmark);
+runBenchmark();
