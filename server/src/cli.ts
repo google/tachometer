@@ -17,7 +17,8 @@ import * as fsExtra from 'fs-extra';
 import * as path from 'path';
 import * as table from 'table';
 
-import {Builder} from 'selenium-webdriver';
+import * as webdriver from 'selenium-webdriver';
+import * as chrome from 'selenium-webdriver/chrome';
 import commandLineArgs = require('command-line-args');
 import commandLineUsage = require('command-line-usage');
 import ansi = require('ansi-escape-sequences');
@@ -104,6 +105,12 @@ const optDefs: commandLineUsage.OptionDefinition[] = [
     type: String,
     defaultValue: '',
   },
+  {
+    name: 'paint',
+    description: 'Include next paint in measured interval',
+    type: Boolean,
+    defaultValue: false,
+  },
 ];
 
 interface Opts {
@@ -117,6 +124,7 @@ interface Opts {
   trials: number;
   manual: boolean;
   save: string;
+  paint: boolean;
 }
 
 const ignoreFiles = new Set([
@@ -239,8 +247,9 @@ const tableColumns: {[key: string]: table.ColumnConfig} = {
   },
 };
 
-function formatResultRow(result: BenchmarkResult): string[] {
-  const stats = summaryStats(result.millis);
+function formatResultRow(result: BenchmarkResult, paint: boolean): string[] {
+  const stats =
+      summaryStats(paint === true ? result.paintMillis : result.millis);
   return [
     result.name,
     result.implementation,
@@ -262,6 +271,7 @@ function combineResults(results: BenchmarkResult[]): BenchmarkResult {
   };
   for (const result of results) {
     combined.millis.push(...result.millis);
+    combined.paintMillis.push(...result.paintMillis);
   }
   return combined;
 }
@@ -324,7 +334,7 @@ async function main() {
     streamWrite(tableHeaders);
     (async function() {
       for await (const result of server.streamResults()) {
-        streamWrite(formatResultRow(result));
+        streamWrite(formatResultRow(result, opts.paint));
         if (saveStream !== undefined) {
           const session = await makeSession([result]);
           saveStream.write(JSON.stringify(session));
@@ -355,7 +365,7 @@ async function main() {
     const results: BenchmarkResult[] = [];
     for (const browser of browsers) {
       bar.tick(0, {status: `launching ${browser}`});
-      const driver = await new Builder().forBrowser(browser).build();
+      const driver = await makeDriver(browser);
       for (const spec of specs) {
         const trialResults = [];
         for (let t = 0; t < spec.trials; t++) {
@@ -365,7 +375,12 @@ async function main() {
                 `${spec.variant} ${t + 1}/${spec.trials}`,
           });
           await driver.get(run.url);
-          trialResults.push(await run.result);
+          const result = await run.result;
+          const paintTime = await getPaintTime(driver);
+          if (paintTime !== undefined) {
+            result.paintMillis = [paintTime];
+          }
+          trialResults.push(result);
           if (bar.curr === bar.total - 1) {
             // Note if we tick with 0 after we've completed, the status is
             // rendered on the next line for some reason.
@@ -388,13 +403,50 @@ async function main() {
 
     const tableData = [
       tableHeaders,
-      ...results.map(formatResultRow),
+      ...results.map((r) => formatResultRow(r, opts.paint)),
     ];
     console.log(table.table(tableData, {columns: tableColumns}));
     if (saveStream !== undefined) {
       saveStream.end();
     }
     await server.close();
+  }
+}
+
+const chromeLogging = new webdriver.logging.Preferences();
+chromeLogging.setLevel(
+    webdriver.logging.Type.PERFORMANCE, webdriver.logging.Level.ALL);
+
+const chromeOpts = new chrome.Options();
+chromeOpts.setLoggingPrefs(chromeLogging);
+chromeOpts.setPerfLoggingPrefs({
+  traceCategories: ['devtools.timeline'].join(','),
+} as unknown as chrome.IPerfLoggingPrefs);  // Wrong typings.
+
+async function makeDriver(browser: string): Promise<webdriver.WebDriver> {
+  return await new webdriver.Builder()
+      .forBrowser(browser)
+      .setChromeOptions(chromeOpts)
+      .build();
+}
+
+async function getPaintTime(driver: webdriver.WebDriver):
+    Promise<number|undefined> {
+  let benchStartCalled;
+  // TODO(aomarks) Do we need a loop to ensure we get all the logs?
+  const perfLogs =
+      await driver.manage().logs().get(webdriver.logging.Type.PERFORMANCE);
+  for (const entry of perfLogs) {
+    const {method, params} = JSON.parse(entry.message).message;
+    if (method === 'Tracing.dataCollected') {
+      if (params.name === 'TimeStamp') {
+        if (params.args.data.message === 'benchStartCalled') {
+          benchStartCalled = params.ts / 1000;
+        }
+      } else if (params.name === 'Paint' && benchStartCalled !== undefined) {
+        return ((params.ts + params.dur) / 1000) - benchStartCalled;
+      }
+    }
   }
 }
 

@@ -130,6 +130,7 @@ export class Server {
       variant: response.variant,
       implementation,
       millis: [response.millis],
+      paintMillis: [],  // This will come from the performance logs.
       browser: {
         name: browser.name || '',
         version: browser.version || '',

@@ -52,7 +52,11 @@ export interface BenchmarkResult {
   name: string;
   implementation: string;
   variant: string;
+  // Millisecond interval between bench.start() and bench.stop().
   millis: number[];
+  // Millisecond interval between bench.start() and the end of the first paint
+  // which occurs after bench.stop()
+  paintMillis: number[];
   browser: {name: string, version: string};
 }
 
