@@ -19,7 +19,7 @@ const genXChildData = (depth) => {
   return xChild;
 };
 
-const data = genXChildData(500);
+const data = genXChildData(bench.config.depth);
 
 const h = snabbdom.h;
 const patch = snabbdom.init([]);

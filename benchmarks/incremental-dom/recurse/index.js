@@ -19,7 +19,7 @@ const genXChildData = (depth) => {
   return xChild;
 };
 
-const data = genXChildData(500);
+const data = genXChildData(bench.config.depth);
 
 IncrementalDOM.attributes[IncrementalDOM.symbols['default']] = function(
     el, name, value) {
