@@ -5,7 +5,7 @@
   "description": "Benchmarks for lit-html",
   "main": "index.js",
   "scripts": {
-    "prepare": "bash -c 'for dir in $(ls -1d */ | grep -v node_modules); do (cd $dir && npm install); done'",
+    "prepare": "bash -c 'for dir in $(ls -1d */package.json | cut -d/ -f1); do (cd $dir && npm install); done'",
     "format": "find . -name node_modules -prune -o -name \"*.js\" -print | xargs clang-format --style=file -i"
   },
   "repository": {
