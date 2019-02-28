@@ -193,13 +193,27 @@ async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
       }
     }
   }
+
+  specs.sort((a, b) => {
+    if (a.name !== b.name) {
+      return a.name.localeCompare(b.name);
+    }
+    if (a.variant !== b.variant) {
+      return a.variant.localeCompare(b.variant);
+    }
+    if (a.implementation !== b.implementation) {
+      return a.implementation.localeCompare(b.implementation);
+    }
+    return 0;
+  });
+
   return specs;
 }
 
 const tableHeaders = [
   'Benchmark',       // 0
-  'Implementation',  // 1
-  'Variant',         // 2
+  'Variant',         // 1
+  'Implementation',  // 2
   'Browser',         // 3
   '(Version)',       // 4
   'Trials',          // 5
@@ -252,8 +266,8 @@ function formatResultRow(result: BenchmarkResult, paint: boolean): string[] {
       summaryStats(paint === true ? result.paintMillis : result.millis);
   return [
     result.name,
-    result.implementation,
     result.variant,
+    result.implementation,
     result.browser.name,
     result.browser.version,
     stats.size.toFixed(0),
