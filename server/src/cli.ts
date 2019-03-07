@@ -237,7 +237,7 @@ const tableColumns: {[key: string]: table.ColumnConfig} = {
     width: 8,
   },
   4: {
-    width: 12,
+    width: 13,
   },
   5: {
     alignment: 'center',
