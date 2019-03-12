@@ -35,11 +35,11 @@ Flag                      | Default     | Description
 `--name` / `-n`           | `*`         | Which benchmarks to run (`*` for all) ([details](#adding-benchmarks))
 `--implementation` / `-i` | `lit-html`  | Which implementations to run (`*` for all) ([details](#adding-benchmarks))
 `--variant` / `-v`        | `*`         | Which variants to run (`*` for all) ([details](#variants))
-`--package-version` / `-p`| *(none)*      | Specify one or more dependency versions ([details](#versions))
+`--package-version` / `-p`| *(none)*    | Specify one or more dependency versions ([details](#versions))
 `--browser` / `-b`        | `chrome`    | Which browsers to launch in automatic mode, comma-delimited (chrome, firefox)
 `--trials` / `-t`         | `10`        | How many times to run each benchmark
 `--manual` / `-m`         | `false`     | Don't run automatically, just show URLs and collect results ([details](#manual-mode))
-`--save` / `-s`           | *(none)*      | Save benchmark JSON data to this file ([details](#saving-data))
+`--save` / `-s`           | *(none)*    | Save benchmark JSON data to this file ([details](#saving-data))
 
 ### Automatic mode
 
@@ -131,6 +131,9 @@ Part              | Description
 `label`           | An arbitrary concise name for this version (e.g. `master`, `local`, `1.x`).
 `pkg`             | The NPM package name (e.g. `lit-html`). Must already appear in the implementation's `package.json`.
 `version`         | Any valid [NPM version descriptor](https://docs.npmjs.com/files/package.json#dependencies) (e.g. `Polymer/lit-html#master`, `$HOME/lit-html`, `^1.0.0`).
+
+To include the default version when using this flag, use
+`<implementation>/default`.
 
 For example, here we configure 3 versions of `lit-html` to run benchmarks
 against: the GitHub master branch, a local development git clone, and the latest

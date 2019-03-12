@@ -25,9 +25,10 @@ import ansi = require('ansi-escape-sequences');
 import ProgressBar = require('progress');
 
 import {makeSession} from './session';
-import {ConfigFormat, BenchmarkResult, BenchmarkSpec} from './types';
+import {ConfigFormat, BenchmarkResult, BenchmarkSpec, PackageJson} from './types';
 import {Server} from './server';
 import {summaryStats} from './stats';
+import {npmInstall, applyVersion, parsePackageVersion} from './versions';
 
 const repoRoot = path.resolve(__dirname, '..', '..');
 
@@ -77,6 +78,14 @@ const optDefs: commandLineUsage.OptionDefinition[] = [
     defaultValue: '*',
   },
   {
+    name: 'package-version',
+    description: 'Specify one or more dependency versions (see README)',
+    alias: 'p',
+    type: String,
+    defaultValue: [],
+    lazyMultiple: true,
+  },
+  {
     name: 'browser',
     description: 'Which browsers to launch in automatic mode, ' +
         `comma-delimited (${[...validBrowsers].join(' ,')})`,
@@ -120,6 +129,7 @@ interface Opts {
   name: string;
   implementation: string;
   variant: string;
+  'package-version': string[];
   browser: string;
   trials: number;
   manual: boolean;
@@ -132,22 +142,12 @@ const ignoreFiles = new Set([
   'package.json',
   'package-lock.json',
   'common',
+  'versions',
 ]);
 
-async function getVersion(implDir: string): Promise<string> {
-  // Assume that the name of the implementation directory is the name
-  // of the package we care about.
-  const packageJsonPath = path.join(
-      implDir, 'node_modules', path.basename(implDir), 'package.json');
-  if (await fsExtra.pathExists(packageJsonPath)) {
-    const packageJson =
-        await fsExtra.readJSON(path.join(implDir, 'package.json'));
-    return packageJson['version'] || '';
-  }
-  return '';
-}
-
 async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
+  const versions = parsePackageVersion(opts['package-version']);
+
   const specs: BenchmarkSpec[] = [];
   let impls;
   if (opts.implementation === '*') {
@@ -162,7 +162,6 @@ async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
 
   for (const implementation of impls) {
     const implDir = path.join(repoRoot, 'benchmarks', implementation);
-    const version = await getVersion(implDir);
     let benchmarks;
     if (opts.name === '*') {
       benchmarks = await fsExtra.readdir(implDir);
@@ -183,29 +182,36 @@ async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
           throw e;
         }
       }
+      const vs = versions.get(implementation) ||
+          [{label: 'default', dependencies: {}}];
+      const partialSpec = {
+        name,
+        implementation,
+        trials: opts.trials,
+      };
       if (config && config.variants && config.variants.length) {
         for (const variant of config.variants) {
           if (variant.name &&
               (variants.has('*') || variants.has(variant.name))) {
-            specs.push({
-              name,
-              implementation,
-              version,
-              variant: variant.name || '',
-              config: variant.config || {},
-              trials: opts.trials,
-            });
+            for (const version of vs) {
+              specs.push({
+                ...partialSpec,
+                version,
+                variant: variant.name || '',
+                config: variant.config || {},
+              });
+            }
           }
         }
       } else if (opts.variant === '*') {
-        specs.push({
-          name,
-          implementation,
-          version,
-          variant: '',
-          config: {},
-          trials: opts.trials,
-        });
+        for (const version of vs) {
+          specs.push({
+            ...partialSpec,
+            version,
+            variant: '',
+            config: {},
+          });
+        }
       }
     }
   }
@@ -219,6 +225,9 @@ async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
     }
     if (a.implementation !== b.implementation) {
       return a.implementation.localeCompare(b.implementation);
+    }
+    if (a.version.label !== b.version.label) {
+      return a.version.label.localeCompare(b.version.label);
     }
     return 0;
   });
@@ -249,7 +258,7 @@ const tableColumns: {[key: string]: table.ColumnConfig} = {
     width: 6,
   },
   4: {
-    width: 25,
+    width: 28,
   },
 };
 
@@ -258,7 +267,7 @@ function formatResultRow(result: BenchmarkResult, paint: boolean): string[] {
       summaryStats(paint === true ? result.paintMillis : result.millis);
   return [
     [result.name, result.variant].join('\n'),
-    [result.implementation, result.version].join('\n'),
+    [result.implementation, result.version.label].join('\n'),
     [result.browser.name, result.browser.version].join('\n'),
     stats.size.toFixed(0),
     [
@@ -300,6 +309,26 @@ async function main() {
   const specs = await specsFromOpts(opts);
   if (specs.length === 0) {
     throw new Error('No benchmarks matched with the given flags');
+  }
+
+  for (const spec of specs) {
+    if (spec.version.label !== 'default') {
+      const implDir = path.join(repoRoot, 'benchmarks', spec.implementation);
+      const versionDir = path.join(implDir, 'versions', spec.version.label);
+      if (await fsExtra.pathExists(versionDir)) {
+        continue;
+      }
+      console.log(
+          `Installing ${spec.implementation}/${spec.version.label} ...`);
+      await fsExtra.ensureDir(versionDir);
+      const packageJson =
+          await fsExtra.readJson(path.join(implDir, 'package.json')) as
+          PackageJson;
+      const newPackageJson = applyVersion(spec.version, packageJson);
+      await fsExtra.writeJson(
+          path.join(versionDir, 'package.json'), newPackageJson, {spaces: 2});
+      await npmInstall(versionDir);
+    }
   }
 
   const server = await Server.start({

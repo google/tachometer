@@ -30,11 +30,26 @@ export interface ConfigFormat {
   }>;
 }
 
+/**
+ * The descriptor of a package version as specified by the --package-version
+ * flag.
+ */
+export interface PackageVersion {
+  label: string;
+  dependencies: {[pkg: string]: string};
+}
+
+/** A subset of the format of an NPM package.json file. */
+export interface PackageJson {
+  name: string;
+  dependencies: {[pkg: string]: string};
+}
+
 /** A specification of a benchmark to run. */
 export interface BenchmarkSpec {
   name: string;
   implementation: string;
-  version: string;
+  version: PackageVersion;
   variant: string;
   config: {};
   trials: number;
@@ -52,7 +67,7 @@ export interface BenchmarkResult {
   runId: string|undefined;
   name: string;
   implementation: string;
-  version: string;
+  version: PackageVersion;
   variant: string;
   // Millisecond interval between bench.start() and bench.stop().
   millis: number[];

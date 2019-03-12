@@ -49,6 +49,7 @@ export class Server {
     const app = new Koa();
     app.use(bodyParser());
     app.use(mount('/submitResults', this.submitResults.bind(this)));
+    app.use(this.rewriteVersionUrls.bind(this));
     app.use(mount('/', serve(rootDir, {index: 'index.html'})));
     this.server.on('request', app.callback());
 
@@ -90,8 +91,10 @@ export class Server {
     if (spec.config !== undefined) {
       params.config = JSON.stringify(spec.config);
     }
-    return `${this.url}/benchmarks/${spec.implementation}/${spec.name}/?` +
-        querystring.stringify(params);
+    return `${this.url}/benchmarks/${spec.implementation}/` +
+        (spec.version.label === 'default' ? '' :
+                                            `versions/${spec.version.label}/`) +
+        `${spec.name}/?${querystring.stringify(params)}`;
   }
 
   async * streamResults(): AsyncIterableIterator<BenchmarkResult> {
@@ -112,24 +115,54 @@ export class Server {
     });
   }
 
+  /**
+   * When serving specific versions, we want to serve any node_modules/ paths
+   * from that specific version directory (since that's the whole point of
+   * versions), but all other paths need to be re-mapped up to the grand-parent
+   * implementation directory (since that's where the actual benchmark code is).
+   */
+  private async rewriteVersionUrls(ctx: Koa.Context, next: () => void) {
+    const urlParts = ctx.url.split('/');
+    // We care about URLs of the form:
+    //   /benchmarks/<implementation>/versions/<version>/<name>/...
+    //  0 1          2                3        4         5      6
+    if (urlParts[1] === 'benchmarks' && urlParts[3] === 'versions' &&
+        urlParts[6] !== 'node_modules') {
+      urlParts.splice(3, 2);  // Remove the "versions/<version>" part.
+      ctx.url = urlParts.join('/');
+    }
+    return next();
+  }
+
   private async submitResults(ctx: Koa.Context) {
     const response = ctx.request.body as BenchmarkResponse;
     const browser = new UAParser(ctx.headers['user-agent']).getBrowser();
-    const urlParts = response.urlPath.split('/').filter((part) => part !== '');
-    let name, implementation;
-    if (urlParts[urlParts.length - 1].includes('.')) {
-      name = urlParts[urlParts.length - 2];
-      implementation = urlParts[urlParts.length - 3];
-    } else {
-      name = urlParts[urlParts.length - 1];
-      implementation = urlParts[urlParts.length - 2];
+
+    // URLs paths will be one of these two forms:
+    //   /benchmarks/<implementation>/<name>/...
+    //   /benchmarks/<implementation>/versions/<version>/<name>/...
+    //  0 1          2                3        4         5      6
+    const urlParts = response.urlPath.split('/');
+    if (urlParts.length < 4 || urlParts[1] !== 'benchmarks') {
+      console.error('unexpected response urlPath', response.urlPath, urlParts);
+      return;
     }
+    const implementation = urlParts[2];
+    let name, version;
+    if (urlParts[3] === 'versions') {
+      version = urlParts[4];
+      name = urlParts[5];
+    } else {
+      version = '';
+      name = urlParts[3];
+    }
+
     const result: BenchmarkResult = {
       runId: response.runId,
       name,
       variant: response.variant,
       implementation,
-      version: '',  // TODO(aomarks)
+      version: {label: version, dependencies: {}},
       millis: [response.millis],
       paintMillis: [],  // This will come from the performance logs.
       browser: {

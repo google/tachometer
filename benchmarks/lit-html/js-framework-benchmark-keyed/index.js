@@ -152,5 +152,5 @@ _render();
 
 // clang-format on
 
-import {runBenchmark} from '../../common/js-framework-benchmark/runner.js';
+import {runBenchmark} from '/benchmarks/common/js-framework-benchmark/runner.js';
 runBenchmark();
