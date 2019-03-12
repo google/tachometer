@@ -266,8 +266,7 @@ function formatResultRow(result: BenchmarkResult, paint: boolean): string[] {
           stats.confidenceInterval95.toFixed(2)} @95)`,
       `StdDev ${stats.standardDeviation.toFixed(2)} (${
           (stats.relativeStandardDeviation * 100).toFixed(2)}%)`,
-      ` Range ${(stats.min * 100).toFixed(2)} - ${
-          (stats.max * 100).toFixed(2)}`,
+      ` Range ${(stats.min).toFixed(2)} - ${(stats.max).toFixed(2)}`,
     ].join('\n'),
   ];
 }
