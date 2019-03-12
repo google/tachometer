@@ -273,7 +273,10 @@ function formatResultRow(result: BenchmarkResult, paint: boolean): string[] {
     stats.size.toFixed(0),
     stats.arithmeticMean.toFixed(2),
     `± ${stats.confidenceInterval95.toFixed(2)}`,
-    stats.standardDeviation.toFixed(2),
+    [
+      stats.standardDeviation.toFixed(2),
+      `${(stats.relativeStandardDeviation * 100).toFixed(2)}%`,
+    ].join('\n'),
     stats.max.toFixed(2),
   ];
 }
