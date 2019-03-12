@@ -13,6 +13,7 @@ implementations.
 - [Saving data](#saving-data)
 - [Adding benchmarks](#adding-benchmarks)
 - [Variants](#variants)
+- [Versions](#versions)
 - [Example commands](#example-commands)
 
 ### Setup
@@ -31,12 +32,14 @@ Flag                      | Default     | Description
 `--help`                  | `false`     | Show documentation
 `--host`                  | `127.0.0.1` | Which host to run on
 `--port`                  | `0`         | Which port to run on (`0` for random free)
-`--name` / `-n`           | `*`         | Which benchmarks to run (`*` for all)
-`--implementation` / `-i` | `lit-html`  | Which implementations to run (`*` for all)
+`--name` / `-n`           | `*`         | Which benchmarks to run (`*` for all) ([details](#adding-benchmarks))
+`--implementation` / `-i` | `lit-html`  | Which implementations to run (`*` for all) ([details](#adding-benchmarks))
+`--variant` / `-v`        | `*`         | Which variants to run (`*` for all) ([details](#variants))
+`--package-version` / `-p`| *(none)*      | Specify one or more dependency versions ([details](#versions))
 `--browser` / `-b`        | `chrome`    | Which browsers to launch in automatic mode, comma-delimited (chrome, firefox)
 `--trials` / `-t`         | `10`        | How many times to run each benchmark
-`--manual` / `-m`         | `false`     | Don't run automatically, just show URLs and collect results
-`--save` / `-s`           |             | Save benchmark JSON data to this file
+`--manual` / `-m`         | `false`     | Don't run automatically, just show URLs and collect results ([details](#manual-mode))
+`--save` / `-s`           | *(none)*      | Save benchmark JSON data to this file ([details](#saving-data))
 
 ### Automatic mode
 
@@ -104,6 +107,51 @@ bench.stop();
 Run `npm run format` from the top-level of the repo to run clang-format on all
 `.js` files in `benchmarks/` (along with all `.ts` files in `client/` and
 `server/`).
+
+### Versions
+
+By default, the version of a dependency library that a benchmark runs against is
+the one installed by NPM according to the implementation directory's
+`package.json`.
+
+However, it is often useful to compare the same benchmark across *multiple
+versions of the same dependency*, e.g. to see the difference between two
+different published versions, or between the GitHub master branch and a local
+development branch.
+
+Use the `--package-version` flag to specify a different version of a dependency
+library to install and run against, instead of the default one. To specify
+multiple versions, use the flag multiple times. The format of this flag is:
+
+`<implementation>/<label>=<pkg>@<version>[,<pkg@version>],...]`
+
+Part              | Description
+----------------- | -----------
+`implementation`  | The implementation directory name whose dependencies we are changing (e.g. `lit-html`).
+`label`           | An arbitrary concise name for this version (e.g. `master`, `local`, `1.x`).
+`pkg`             | The NPM package name (e.g. `lit-html`). Must already appear in the implementation's `package.json`.
+`version`         | Any valid [NPM version descriptor](https://docs.npmjs.com/files/package.json#dependencies) (e.g. `Polymer/lit-html#master`, `$HOME/lit-html`, `^1.0.0`).
+
+For example, here we configure 3 versions of `lit-html` to run benchmarks
+against: the GitHub master branch, a local development git clone, and the latest
+1.x version published to NPM:
+
+```sh
+npm run benchmarks --
+--package-version=lit-html/master=lit-html@github:Polymer/lit-html#master \
+--package-version=lit-html/local=lit-html@$HOME/lit-html \
+--package-version=lit-html/1.x=lit-html@^1.0.0
+```
+
+When you use the `--package-version` flag, the following happens:
+- A directory `<implementation>/versions/<label>` is created.
+- A copy of `<implementation>/package.json` is written to `.../<label>/package.json`
+  and modified according to the new dependency versions you specified.
+- `npm install` is run in this directory.
+- Benchmarks are run from URLs of the form `<implementation>/versions/<label>`.
+  URL paths within `node_modules/` are served from the version directory (to get
+  your new versions), while other URLs (i.e. the benchmarks themselves) are
+  mapped back to the main `<implementation>` directory.
 
 ### Variants
 
