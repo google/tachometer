@@ -34,6 +34,7 @@ export interface ConfigFormat {
 export interface BenchmarkSpec {
   name: string;
   implementation: string;
+  version: string;
   variant: string;
   config: {};
   trials: number;
@@ -51,6 +52,7 @@ export interface BenchmarkResult {
   runId: string|undefined;
   name: string;
   implementation: string;
+  version: string;
   variant: string;
   // Millisecond interval between bench.start() and bench.stop().
   millis: number[];

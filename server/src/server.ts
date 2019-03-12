@@ -129,6 +129,7 @@ export class Server {
       name,
       variant: response.variant,
       implementation,
+      version: '',  // TODO(aomarks)
       millis: [response.millis],
       paintMillis: [],  // This will come from the performance logs.
       browser: {
