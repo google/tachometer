@@ -382,7 +382,7 @@ async function main() {
     const results: BenchmarkResult[] = [];
     for (const browser of browsers) {
       bar.tick(0, {status: `launching ${browser}`});
-      const driver = await makeDriver(browser);
+      const driver = await makeDriver(browser, opts);
       for (const spec of specs) {
         const trialResults = [];
         for (let t = 0; t < spec.trials; t++) {
@@ -393,9 +393,11 @@ async function main() {
           });
           await driver.get(run.url);
           const result = await run.result;
-          const paintTime = await getPaintTime(driver);
-          if (paintTime !== undefined) {
-            result.paintMillis = [paintTime];
+          if (opts.paint === true) {
+            const paintTime = await getPaintTime(driver);
+            if (paintTime !== undefined) {
+              result.paintMillis = [paintTime];
+            }
           }
           trialResults.push(result);
           if (bar.curr === bar.total - 1) {
@@ -430,17 +432,21 @@ async function main() {
   }
 }
 
-const chromeLogging = new webdriver.logging.Preferences();
-chromeLogging.setLevel(
-    webdriver.logging.Type.PERFORMANCE, webdriver.logging.Level.ALL);
+async function makeDriver(
+    browser: string, opts: Opts): Promise<webdriver.WebDriver> {
+  const chromeOpts = new chrome.Options();
 
-const chromeOpts = new chrome.Options();
-chromeOpts.setLoggingPrefs(chromeLogging);
-chromeOpts.setPerfLoggingPrefs({
-  traceCategories: ['devtools.timeline'].join(','),
-} as unknown as chrome.IPerfLoggingPrefs);  // Wrong typings.
+  if (opts.paint === true) {
+    const chromeLogging = new webdriver.logging.Preferences();
+    chromeLogging.setLevel(
+        webdriver.logging.Type.PERFORMANCE, webdriver.logging.Level.ALL);
 
-async function makeDriver(browser: string): Promise<webdriver.WebDriver> {
+    chromeOpts.setLoggingPrefs(chromeLogging);
+    chromeOpts.setPerfLoggingPrefs({
+      traceCategories: ['devtools.timeline'].join(','),
+    } as unknown as chrome.IPerfLoggingPrefs);  // Wrong typings.
+  }
+
   return await new webdriver.Builder()
       .forBrowser(browser)
       .setChromeOptions(chromeOpts)
