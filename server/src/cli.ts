@@ -134,6 +134,19 @@ const ignoreFiles = new Set([
   'common',
 ]);
 
+async function getVersion(implDir: string): Promise<string> {
+  // Assume that the name of the implementation directory is the name
+  // of the package we care about.
+  const packageJsonPath = path.join(
+      implDir, 'node_modules', path.basename(implDir), 'package.json');
+  if (await fsExtra.pathExists(packageJsonPath)) {
+    const packageJson =
+        await fsExtra.readJSON(path.join(implDir, 'package.json'));
+    return packageJson['version'] || '';
+  }
+  return '';
+}
+
 async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
   const specs: BenchmarkSpec[] = [];
   let impls;
@@ -149,6 +162,7 @@ async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
 
   for (const implementation of impls) {
     const implDir = path.join(repoRoot, 'benchmarks', implementation);
+    const version = await getVersion(implDir);
     let benchmarks;
     if (opts.name === '*') {
       benchmarks = await fsExtra.readdir(implDir);
@@ -176,6 +190,7 @@ async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
             specs.push({
               name,
               implementation,
+              version,
               variant: variant.name || '',
               config: variant.config || {},
               trials: opts.trials,
@@ -186,6 +201,7 @@ async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
         specs.push({
           name,
           implementation,
+          version,
           variant: '',
           config: {},
           trials: opts.trials,
@@ -212,15 +228,10 @@ async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
 
 const tableHeaders = [
   'Benchmark',       // 0
-  'Variant',         // 1
-  'Implementation',  // 2
-  'Browser',         // 3
-  '(Version)',       // 4
-  'Trials',          // 5
-  'Mean',            // 7
-  '95% CI',          // 8
-  'StdDev',          // 9
-  'Max',             // 10
+  'Implementation',  // 1
+  'Browser',         // 2
+  'Trials',          // 3
+  'Stats',           // 4
 ].map((header) => ansi.format(`[bold]{${header}}`));
 
 const tableColumns: {[key: string]: table.ColumnConfig} = {
@@ -231,33 +242,14 @@ const tableColumns: {[key: string]: table.ColumnConfig} = {
     width: 15,
   },
   2: {
-    width: 15,
-  },
-  3: {
-    width: 8,
-  },
-  4: {
     width: 13,
   },
-  5: {
+  3: {
     alignment: 'center',
     width: 6,
   },
-  6: {
-    alignment: 'right',
-    width: 7,
-  },
-  7: {
-    alignment: 'right',
-    width: 7,
-  },
-  8: {
-    alignment: 'right',
-    width: 7,
-  },
-  9: {
-    alignment: 'right',
-    width: 7,
+  4: {
+    width: 25,
   },
 };
 
@@ -265,19 +257,17 @@ function formatResultRow(result: BenchmarkResult, paint: boolean): string[] {
   const stats =
       summaryStats(paint === true ? result.paintMillis : result.millis);
   return [
-    result.name,
-    result.variant,
-    result.implementation,
-    result.browser.name,
-    result.browser.version,
+    [result.name, result.variant].join('\n'),
+    [result.implementation, result.version].join('\n'),
+    [result.browser.name, result.browser.version].join('\n'),
     stats.size.toFixed(0),
-    stats.arithmeticMean.toFixed(2),
-    `± ${stats.confidenceInterval95.toFixed(2)}`,
     [
-      stats.standardDeviation.toFixed(2),
-      `${(stats.relativeStandardDeviation * 100).toFixed(2)}%`,
+      `  Mean ${stats.arithmeticMean.toFixed(2)} (±${
+          stats.confidenceInterval95.toFixed(2)} @95)`,
+      `StdDev ${stats.standardDeviation.toFixed(2)} (${
+          (stats.relativeStandardDeviation * 100).toFixed(2)}%)`,
+      ` Range ${(stats.min).toFixed(2)} - ${(stats.max).toFixed(2)}`,
     ].join('\n'),
-    stats.max.toFixed(2),
   ];
 }
 
@@ -393,6 +383,7 @@ async function main() {
           });
           await driver.get(run.url);
           const result = await run.result;
+          result.version = spec.version;
           if (opts.paint === true) {
             const paintTime = await getPaintTime(driver);
             if (paintTime !== undefined) {
