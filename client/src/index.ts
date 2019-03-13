@@ -9,63 +9,50 @@
  * rights grant found at http://polymer.github.io/PATENTS.txt
  */
 
-interface BenchmarkInfo {
-  name: string;
-  run(): Promise<unknown>|unknown;
-  runs: number[];
+// Note: sync with server/src/types.ts
+interface BenchmarkResponse {
+  runId?: string;
+  urlPath: string;
+  variant?: string;
+  millis: number;
 }
 
-const benchmarks: BenchmarkInfo[] = [];
+const url = new URL(window.location.href);
+const runId = url.searchParams.get('runId') || undefined;
+const variant = url.searchParams.get('variant') || undefined;
 
-export const benchmark = (name: string, run: () => unknown) => {
-  benchmarks.push({name, run, runs: []});
-};
+export const config = JSON.parse(url.searchParams.get('config') || '{}');
 
-const runBenchmarks = async () => {
-  console.log(`Running ${benchmarks.length} benchmarks`);
-  for (const benchmark of benchmarks) {
-    // TODO: run each benchmark multiple times
-    const start = performance.now();
-    const result = benchmark.run();
-    if (result && result instanceof Promise) {
-      await result;
-    }
-    const end = performance.now();
-    const runtime = end - start;
-    benchmark.runs.push(runtime);
-  }
-  socket.send(JSON.stringify({
-    type: 'result',
-    id,
-    benchmarks: benchmarks.map((b) => ({
-                                 name: b.name,
-                                 runs: b.runs,
-                               }))
-  }));
-};
-
-const urlParams = new URLSearchParams(window.location.search);
-const id = urlParams.get('id');
-
-const base = new URL(document.baseURI!);
-let socket!: WebSocket;
-
-try {
-  socket = new WebSocket(`ws://${base.host}/test`);
-} catch (error) {
-  console.error(error);
+let startTime: number;
+export function start() {
+  // This gives us a timestamp we can find in the performance logs to compute
+  // the interval between now and the end of the paint that may happen after
+  // bench.stop() is called.
+  console.timeStamp('benchStartCalled');
+  startTime = performance.now();
 }
 
-socket.addEventListener('open', () => {
-  console.log('Control socket opened');
-  socket.send(JSON.stringify({type: 'start', id}));
-  runBenchmarks();
-});
-
-socket.addEventListener('close', (event) => {
-  console.log('Control socket closed', event.code);
-});
-
-socket.addEventListener('message', (event) => {
-  console.log('Message from server ', event.data);
-});
+export async function stop() {
+  const end = performance.now();
+  // Wait two RAFs before we indicate that we're done, because if the code that
+  // just finished executing triggers a paint, it's probably going to paint on
+  // the next frame, and we want to see that in the performance logs.
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const runtime = end - startTime;
+      const response: BenchmarkResponse = {
+        runId,
+        variant,
+        millis: runtime,
+        urlPath: url.pathname,
+      };
+      fetch('/submitResults', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(response),
+      });
+    });
+  });
+}

@@ -8,7 +8,8 @@
     "lib": "lib"
   },
   "scripts": {
-    "build": "tsc && npm run lint",
+    "prepare": "npm run build",
+    "build": "rm -rf lib && tsc && npm run lint",
     "lint": "tslint --project . --format stylish",
     "format": "find src -name \"*.ts\" | xargs clang-format --style=file -i"
   },
@@ -26,7 +27,5 @@
     "tslint": "^5.12.1",
     "typescript": "^3.2.0"
   },
-  "dependencies": {
-    "lit-html": "^1.0.0-rc.2"
-  }
+  "dependencies": {}
 }
