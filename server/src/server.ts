@@ -121,7 +121,8 @@ export class Server {
    * versions), but all other paths need to be re-mapped up to the grand-parent
    * implementation directory (since that's where the actual benchmark code is).
    */
-  private async rewriteVersionUrls(ctx: Koa.Context, next: () => void) {
+  private async rewriteVersionUrls(ctx: Koa.Context, next: () => Promise<void>):
+      Promise<void> {
     const urlParts = ctx.url.split('/');
     // We care about URLs of the form:
     //   /benchmarks/<implementation>/versions/<version>/<name>/...
@@ -144,11 +145,12 @@ export class Server {
     //  0 1          2                3        4         5      6
     const urlParts = response.urlPath.split('/');
     if (urlParts.length < 4 || urlParts[1] !== 'benchmarks') {
-      console.error('unexpected response urlPath', response.urlPath, urlParts);
+      console.error(`Unexpected response urlPath ${response.urlPath}`);
       return;
     }
     const implementation = urlParts[2];
     let name, version;
+    // Note we assume that there are no benchmarks called "versions".
     if (urlParts[3] === 'versions') {
       version = urlParts[4];
       name = urlParts[5];
@@ -162,7 +164,7 @@ export class Server {
       name,
       variant: response.variant,
       implementation,
-      version: {label: version, dependencies: {}},
+      version,
       millis: [response.millis],
       paintMillis: [],  // This will come from the performance logs.
       browser: {

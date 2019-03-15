@@ -31,18 +31,26 @@ export interface ConfigFormat {
 }
 
 /**
+ * A mapping from NPM package name to version specifier, as used in a
+ * package.json's "dependencies" and "devDependencies".
+ */
+export interface PackageDependencyMap {
+  [pkg: string]: string;
+}
+
+/**
  * The descriptor of a package version as specified by the --package-version
  * flag.
  */
 export interface PackageVersion {
   label: string;
-  dependencies: {[pkg: string]: string};
+  dependencyOverrides: PackageDependencyMap;
 }
 
-/** A subset of the format of an NPM package.json file. */
-export interface PackageJson {
+/** The subset of the format of an NPM package.json file we care about. */
+export interface NpmPackageJson {
   name: string;
-  dependencies: {[pkg: string]: string};
+  dependencies: PackageDependencyMap;
 }
 
 /** A specification of a benchmark to run. */
@@ -66,7 +74,7 @@ export interface BenchmarkResult {
   runId: string|undefined;
   name: string;
   implementation: string;
-  version: PackageVersion;
+  version: string;
   variant: string;
   // Millisecond interval between bench.start() and bench.stop().
   millis: number[];

@@ -25,10 +25,10 @@ import ansi = require('ansi-escape-sequences');
 import ProgressBar = require('progress');
 
 import {makeSession} from './session';
-import {ConfigFormat, BenchmarkResult, BenchmarkSpec, PackageJson} from './types';
+import {ConfigFormat, BenchmarkResult, BenchmarkSpec} from './types';
 import {Server} from './server';
 import {summaryStats} from './stats';
-import {npmInstall, applyVersion, parsePackageVersion} from './versions';
+import {prepareVersionDirectories, parsePackageVersions} from './versions';
 
 const repoRoot = path.resolve(__dirname, '..', '..');
 
@@ -146,7 +146,7 @@ const ignoreFiles = new Set([
 ]);
 
 async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
-  const versions = parsePackageVersion(opts['package-version']);
+  const versions = parsePackageVersions(opts['package-version']);
 
   const specs: BenchmarkSpec[] = [];
   let impls;
@@ -155,6 +155,11 @@ async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
     impls = impls.filter((dir) => !ignoreFiles.has(dir));
   } else {
     impls = opts.implementation.split(',');
+    const badNames = impls.filter((dir) => ignoreFiles.has(dir))
+    if (badNames.length > 0) {
+      throw new Error(
+          `Implementations cannot be named ${badNames.join(' or ')}`)
+    }
   }
 
   const variants = new Set(
@@ -168,6 +173,10 @@ async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
       benchmarks = benchmarks.filter((implDir) => !ignoreFiles.has(implDir));
     } else {
       benchmarks = opts.name.split(',');
+      const badNames = benchmarks.filter((dir) => ignoreFiles.has(dir))
+      if (badNames.length > 0) {
+        throw new Error(`Benchmarks cannot be named ${badNames.join(' or ')}`)
+      }
     }
     for (const name of benchmarks) {
       const benchDir = path.join(implDir, name);
@@ -182,8 +191,8 @@ async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
           throw e;
         }
       }
-      const vs = versions.get(implementation) ||
-          [{label: 'default', dependencies: {}}];
+      const implVersions = versions.get(implementation) ||
+          [{label: 'default', dependencyOverrides: {}}];
       const partialSpec = {
         name,
         implementation,
@@ -192,7 +201,7 @@ async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
         for (const variant of config.variants) {
           if (variant.name &&
               (variants.has('*') || variants.has(variant.name))) {
-            for (const version of vs) {
+            for (const version of implVersions) {
               specs.push({
                 ...partialSpec,
                 version,
@@ -203,7 +212,7 @@ async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
           }
         }
       } else if (opts.variant === '*') {
-        for (const version of vs) {
+        for (const version of implVersions) {
           specs.push({
             ...partialSpec,
             version,
@@ -265,17 +274,17 @@ function formatResultRow(result: BenchmarkResult, paint: boolean): string[] {
   const stats =
       summaryStats(paint === true ? result.paintMillis : result.millis);
   return [
-    [result.name, result.variant].join('\n'),
-    [result.implementation, result.version.label].join('\n'),
-    [result.browser.name, result.browser.version].join('\n'),
+    `${result.name}\n${result.variant}`,
+    `${result.implementation}\n${result.version}`,
+    `${result.browser.name}\n${result.browser.version}`,
     stats.size.toFixed(0),
     [
-      `  Mean ${stats.arithmeticMean.toFixed(2)} (±${
-          stats.confidenceInterval95.toFixed(2)} @95)`,
-      `StdDev ${stats.standardDeviation.toFixed(2)} (${
-          (stats.relativeStandardDeviation * 100).toFixed(2)}%)`,
+      `  Mean ${stats.arithmeticMean.toFixed(2)} ` +
+          `(±${stats.confidenceInterval95.toFixed(2)} @95)`,
+      `StdDev ${stats.standardDeviation.toFixed(2)} ` +
+          `(${(stats.relativeStandardDeviation * 100).toFixed(2)}%)`,
       ` Range ${(stats.min).toFixed(2)} - ${(stats.max).toFixed(2)}`,
-    ].join('\n'),
+    ].join('\n')
   ];
 }
 
@@ -310,25 +319,7 @@ async function main() {
     throw new Error('No benchmarks matched with the given flags');
   }
 
-  for (const spec of specs) {
-    if (spec.version.label !== 'default') {
-      const implDir = path.join(repoRoot, 'benchmarks', spec.implementation);
-      const versionDir = path.join(implDir, 'versions', spec.version.label);
-      if (await fsExtra.pathExists(versionDir)) {
-        continue;
-      }
-      console.log(
-          `Installing ${spec.implementation}/${spec.version.label} ...`);
-      await fsExtra.ensureDir(versionDir);
-      const packageJson =
-          await fsExtra.readJson(path.join(implDir, 'package.json')) as
-          PackageJson;
-      const newPackageJson = applyVersion(spec.version, packageJson);
-      await fsExtra.writeJson(
-          path.join(versionDir, 'package.json'), newPackageJson, {spaces: 2});
-      await npmInstall(versionDir);
-    }
-  }
+  await prepareVersionDirectories(repoRoot, specs);
 
   const server = await Server.start({
     host: opts.host,
@@ -424,7 +415,6 @@ async function main() {
           });
           await driver.get(run.url);
           const result = await run.result;
-          result.version = spec.version;
           if (opts.paint === true) {
             const paintTime = await getPaintTime(driver);
             if (paintTime !== undefined) {

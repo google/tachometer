@@ -97,12 +97,22 @@ benchmark. Optionally use `bench.config` to access the configuration object
 defined by the variant (see next section).
 
 ```js
-import * as bench from '../../../client/lib/index.js';
+import * as bench from '/client/lib/index.js';
 // Do any initial setup here.
 bench.start();
 // Do the work being measured here.
 bench.stop();
 ```
+
+Always import resources that are *outside* your benchmark directory using
+absolute paths (e.g. the `client` library and files from `common/`) so that they
+are resolved correctly when serving custom [versions](#versions). Likewise,
+always import resources that are *inside* your benchmark directory using
+relative paths (e.g. the benchmark's `.js` file).
+
+To avoid collisions with special files and directories, implementation and
+benchmark directories cannot be named `versions`, `common`, `node_modules`,
+`package.json`, or `package-lock.json`.
 
 Run `npm run format` from the top-level of the repo to run clang-format on all
 `.js` files in `benchmarks/` (along with all `.ts` files in `client/` and
@@ -112,12 +122,12 @@ Run `npm run format` from the top-level of the repo to run clang-format on all
 
 By default, the version of a dependency library that a benchmark runs against is
 the one installed by NPM according to the implementation directory's
-`package.json`.
+`package.json` (usually the latest stable release).
 
-However, it is often useful to compare the same benchmark across *multiple
-versions of the same dependency*, e.g. to see the difference between two
-different published versions, or between the GitHub master branch and a local
-development branch.
+However, it is often useful to run a benchmark on a specific dependency version,
+or across *multiple versions of the same dependency*, e.g. to see the difference
+between two different published versions, or between the GitHub master branch
+and a local development branch.
 
 Use the `--package-version` flag to specify a different version of a dependency
 library to install and run against, instead of the default one. To specify
