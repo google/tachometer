@@ -128,7 +128,7 @@ export class Server {
     //   /benchmarks/<implementation>/versions/<version>/<name>/...
     //  0 1          2                3        4         5      6
     if (urlParts[1] === 'benchmarks' && urlParts[3] === 'versions' &&
-        urlParts[6] !== 'node_modules') {
+        urlParts[5] !== 'node_modules') {
       urlParts.splice(3, 2);  // Remove the "versions/<version>" part.
       ctx.url = urlParts.join('/');
     }
