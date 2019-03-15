@@ -155,10 +155,10 @@ async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
     impls = impls.filter((dir) => !ignoreFiles.has(dir));
   } else {
     impls = opts.implementation.split(',');
-    const badNames = impls.filter((dir) => ignoreFiles.has(dir))
+    const badNames = impls.filter((dir) => ignoreFiles.has(dir));
     if (badNames.length > 0) {
       throw new Error(
-          `Implementations cannot be named ${badNames.join(' or ')}`)
+          `Implementations cannot be named ${badNames.join(' or ')}`);
     }
   }
 
@@ -173,9 +173,9 @@ async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
       benchmarks = benchmarks.filter((implDir) => !ignoreFiles.has(implDir));
     } else {
       benchmarks = opts.name.split(',');
-      const badNames = benchmarks.filter((dir) => ignoreFiles.has(dir))
+      const badNames = benchmarks.filter((dir) => ignoreFiles.has(dir));
       if (badNames.length > 0) {
-        throw new Error(`Benchmarks cannot be named ${badNames.join(' or ')}`)
+        throw new Error(`Benchmarks cannot be named ${badNames.join(' or ')}`);
       }
     }
     for (const name of benchmarks) {
