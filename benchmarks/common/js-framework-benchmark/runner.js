@@ -1,4 +1,4 @@
-import * as bench from '../../../client/lib/index.js';
+import * as bench from '/client/lib/index.js';
 
 const raf = () => new Promise((resolve) => requestAnimationFrame(resolve));
 

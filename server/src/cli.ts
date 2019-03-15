@@ -28,6 +28,7 @@ import {makeSession} from './session';
 import {ConfigFormat, BenchmarkResult, BenchmarkSpec} from './types';
 import {Server} from './server';
 import {summaryStats} from './stats';
+import {prepareVersionDirectories, parsePackageVersions} from './versions';
 
 const repoRoot = path.resolve(__dirname, '..', '..');
 
@@ -77,6 +78,14 @@ const optDefs: commandLineUsage.OptionDefinition[] = [
     defaultValue: '*',
   },
   {
+    name: 'package-version',
+    description: 'Specify one or more dependency versions (see README)',
+    alias: 'p',
+    type: String,
+    defaultValue: [],
+    lazyMultiple: true,
+  },
+  {
     name: 'browser',
     description: 'Which browsers to launch in automatic mode, ' +
         `comma-delimited (${[...validBrowsers].join(' ,')})`,
@@ -120,6 +129,7 @@ interface Opts {
   name: string;
   implementation: string;
   variant: string;
+  'package-version': string[];
   browser: string;
   trials: number;
   manual: boolean;
@@ -132,9 +142,12 @@ const ignoreFiles = new Set([
   'package.json',
   'package-lock.json',
   'common',
+  'versions',
 ]);
 
 async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
+  const versions = parsePackageVersions(opts['package-version']);
+
   const specs: BenchmarkSpec[] = [];
   let impls;
   if (opts.implementation === '*') {
@@ -142,6 +155,11 @@ async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
     impls = impls.filter((dir) => !ignoreFiles.has(dir));
   } else {
     impls = opts.implementation.split(',');
+    const badNames = impls.filter((dir) => ignoreFiles.has(dir))
+    if (badNames.length > 0) {
+      throw new Error(
+          `Implementations cannot be named ${badNames.join(' or ')}`)
+    }
   }
 
   const variants = new Set(
@@ -155,6 +173,10 @@ async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
       benchmarks = benchmarks.filter((implDir) => !ignoreFiles.has(implDir));
     } else {
       benchmarks = opts.name.split(',');
+      const badNames = benchmarks.filter((dir) => ignoreFiles.has(dir))
+      if (badNames.length > 0) {
+        throw new Error(`Benchmarks cannot be named ${badNames.join(' or ')}`)
+      }
     }
     for (const name of benchmarks) {
       const benchDir = path.join(implDir, name);
@@ -169,27 +191,35 @@ async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
           throw e;
         }
       }
+      const implVersions = versions.get(implementation) ||
+          [{label: 'default', dependencyOverrides: {}}];
+      const partialSpec = {
+        name,
+        implementation,
+      };
       if (config && config.variants && config.variants.length) {
         for (const variant of config.variants) {
           if (variant.name &&
               (variants.has('*') || variants.has(variant.name))) {
-            specs.push({
-              name,
-              implementation,
-              variant: variant.name || '',
-              config: variant.config || {},
-              trials: opts.trials,
-            });
+            for (const version of implVersions) {
+              specs.push({
+                ...partialSpec,
+                version,
+                variant: variant.name || '',
+                config: variant.config || {},
+              });
+            }
           }
         }
       } else if (opts.variant === '*') {
-        specs.push({
-          name,
-          implementation,
-          variant: '',
-          config: {},
-          trials: opts.trials,
-        });
+        for (const version of implVersions) {
+          specs.push({
+            ...partialSpec,
+            version,
+            variant: '',
+            config: {},
+          });
+        }
       }
     }
   }
@@ -204,6 +234,9 @@ async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
     if (a.implementation !== b.implementation) {
       return a.implementation.localeCompare(b.implementation);
     }
+    if (a.version.label !== b.version.label) {
+      return a.version.label.localeCompare(b.version.label);
+    }
     return 0;
   });
 
@@ -212,15 +245,10 @@ async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
 
 const tableHeaders = [
   'Benchmark',       // 0
-  'Variant',         // 1
-  'Implementation',  // 2
-  'Browser',         // 3
-  '(Version)',       // 4
-  'Trials',          // 5
-  'Mean',            // 7
-  '95% CI',          // 8
-  'StdDev',          // 9
-  'Max',             // 10
+  'Implementation',  // 1
+  'Browser',         // 2
+  'Trials',          // 3
+  'Stats',           // 4
 ].map((header) => ansi.format(`[bold]{${header}}`));
 
 const tableColumns: {[key: string]: table.ColumnConfig} = {
@@ -231,33 +259,14 @@ const tableColumns: {[key: string]: table.ColumnConfig} = {
     width: 15,
   },
   2: {
-    width: 15,
+    width: 13,
   },
   3: {
-    width: 8,
-  },
-  4: {
-    width: 12,
-  },
-  5: {
     alignment: 'center',
     width: 6,
   },
-  6: {
-    alignment: 'right',
-    width: 7,
-  },
-  7: {
-    alignment: 'right',
-    width: 7,
-  },
-  8: {
-    alignment: 'right',
-    width: 7,
-  },
-  9: {
-    alignment: 'right',
-    width: 7,
+  4: {
+    width: 28,
   },
 };
 
@@ -265,16 +274,17 @@ function formatResultRow(result: BenchmarkResult, paint: boolean): string[] {
   const stats =
       summaryStats(paint === true ? result.paintMillis : result.millis);
   return [
-    result.name,
-    result.variant,
-    result.implementation,
-    result.browser.name,
-    result.browser.version,
+    `${result.name}\n${result.variant}`,
+    `${result.implementation}\n${result.version}`,
+    `${result.browser.name}\n${result.browser.version}`,
     stats.size.toFixed(0),
-    stats.arithmeticMean.toFixed(2),
-    `± ${stats.confidenceInterval95.toFixed(2)}`,
-    stats.standardDeviation.toFixed(2),
-    stats.max.toFixed(2),
+    [
+      `  Mean ${stats.arithmeticMean.toFixed(2)} ` +
+          `(±${stats.confidenceInterval95.toFixed(2)} @95)`,
+      `StdDev ${stats.standardDeviation.toFixed(2)} ` +
+          `(${(stats.relativeStandardDeviation * 100).toFixed(2)}%)`,
+      ` Range ${(stats.min).toFixed(2)} - ${(stats.max).toFixed(2)}`,
+    ].join('\n')
   ];
 }
 
@@ -308,6 +318,8 @@ async function main() {
   if (specs.length === 0) {
     throw new Error('No benchmarks matched with the given flags');
   }
+
+  await prepareVersionDirectories(repoRoot, specs);
 
   const server = await Server.start({
     host: opts.host,
@@ -376,25 +388,40 @@ async function main() {
       width: 58,
     });
 
-    const results: BenchmarkResult[] = [];
+    const specResults = new Map<BenchmarkSpec, BenchmarkResult[]>();
+    for (const spec of specs) {
+      specResults.set(spec, []);
+    }
+
+    const numRuns = browsers.size * specs.length * opts.trials;
+    let r = 0;
+
     for (const browser of browsers) {
       bar.tick(0, {status: `launching ${browser}`});
-      const driver = await makeDriver(browser);
-      for (const spec of specs) {
-        const trialResults = [];
-        for (let t = 0; t < spec.trials; t++) {
+      const driver = await makeDriver(browser, opts);
+
+      for (let t = 0; t < opts.trials; t++) {
+        for (const spec of specs) {
           const run = server.runBenchmark(spec);
           bar.tick(0, {
-            status: `${browser} ${spec.implementation} ${spec.name} ` +
-                `${spec.variant} ${t + 1}/${spec.trials}`,
+            status: [
+              `${++r}/${numRuns}`,
+              browser,
+              `${spec.implementation}@${spec.version.label}`,
+              spec.name,
+              spec.variant,
+            ].filter((part) => part !== '')
+                        .join(' '),
           });
           await driver.get(run.url);
           const result = await run.result;
-          const paintTime = await getPaintTime(driver);
-          if (paintTime !== undefined) {
-            result.paintMillis = [paintTime];
+          if (opts.paint === true) {
+            const paintTime = await getPaintTime(driver);
+            if (paintTime !== undefined) {
+              result.paintMillis = [paintTime];
+            }
           }
-          trialResults.push(result);
+          specResults.get(spec)!.push(result);
           if (bar.curr === bar.total - 1) {
             // Note if we tick with 0 after we've completed, the status is
             // rendered on the next line for some reason.
@@ -403,10 +430,15 @@ async function main() {
             bar.tick(1);
           }
         }
-        results.push(combineResults(trialResults));
       }
       await driver.close();
     }
+
+    const results: BenchmarkResult[] = [];
+    for (const sr of specResults.values()) {
+      results.push(combineResults(sr));
+    }
+
     console.log();
 
     if (saveStream !== undefined) {
@@ -427,17 +459,21 @@ async function main() {
   }
 }
 
-const chromeLogging = new webdriver.logging.Preferences();
-chromeLogging.setLevel(
-    webdriver.logging.Type.PERFORMANCE, webdriver.logging.Level.ALL);
+async function makeDriver(
+    browser: string, opts: Opts): Promise<webdriver.WebDriver> {
+  const chromeOpts = new chrome.Options();
 
-const chromeOpts = new chrome.Options();
-chromeOpts.setLoggingPrefs(chromeLogging);
-chromeOpts.setPerfLoggingPrefs({
-  traceCategories: ['devtools.timeline'].join(','),
-} as unknown as chrome.IPerfLoggingPrefs);  // Wrong typings.
+  if (opts.paint === true) {
+    const chromeLogging = new webdriver.logging.Preferences();
+    chromeLogging.setLevel(
+        webdriver.logging.Type.PERFORMANCE, webdriver.logging.Level.ALL);
 
-async function makeDriver(browser: string): Promise<webdriver.WebDriver> {
+    chromeOpts.setLoggingPrefs(chromeLogging);
+    chromeOpts.setPerfLoggingPrefs({
+      traceCategories: ['devtools.timeline'].join(','),
+    } as unknown as chrome.IPerfLoggingPrefs);  // Wrong typings.
+  }
+
   return await new webdriver.Builder()
       .forBrowser(browser)
       .setChromeOptions(chromeOpts)

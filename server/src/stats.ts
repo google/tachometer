@@ -15,6 +15,7 @@ export interface SummaryStats {
   max: number;
   arithmeticMean: number;
   standardDeviation: number;
+  relativeStandardDeviation: number;
   confidenceInterval95: number;
 }
 
@@ -32,6 +33,8 @@ export function summaryStats(data: number[]): SummaryStats {
     max: Math.max(...data),
     arithmeticMean: arithMean,
     standardDeviation: stdDev,
+    // aka coefficient of variation
+    relativeStandardDeviation: stdDev / arithMean,
     // TODO Should we use the t distribution instead of the standard normal
     // distribution?
     confidenceInterval95: z95 * (stdDev / Math.sqrt(size)),
