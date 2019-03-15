@@ -40,7 +40,7 @@ const body = () => html`
 `;
 
 const pageHeader = () => html`
-  <h1 id="logo">STALL</h1>
+  <h1 id="logo">SHACK</h1>
   <div id="cartContainer">${cartContainer()}</div>
   <nav id="categoryNav">${categoryNav()}</nav>
 `;
