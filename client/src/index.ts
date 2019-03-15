@@ -34,12 +34,13 @@ export function start() {
 
 export async function stop() {
   const end = performance.now();
+  const runtime = end - startTime;
+  console.log('benchmark runtime', runtime, 'ms');
   // Wait two RAFs before we indicate that we're done, because if the code that
   // just finished executing triggers a paint, it's probably going to paint on
   // the next frame, and we want to see that in the performance logs.
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
-      const runtime = end - startTime;
       const response: BenchmarkResponse = {
         runId,
         variant,
