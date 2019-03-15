@@ -274,7 +274,7 @@ function formatResultRow(result: BenchmarkResult, paint: boolean): string[] {
   const stats =
       summaryStats(paint === true ? result.paintMillis : result.millis);
   return [
-    `${result.name}\n${result.variant}`,
+    result.name + (result.variant !== undefined ? `\n${result.variant}` : ''),
     `${result.implementation}\n${result.version}`,
     `${result.browser.name}\n${result.browser.version}`,
     stats.size.toFixed(0),
@@ -407,9 +407,9 @@ async function main() {
             status: [
               `${++r}/${numRuns}`,
               browser,
-              `${spec.implementation}@${spec.version.label}`,
               spec.name,
               spec.variant,
+              `${spec.implementation}@${spec.version.label}`,
             ].filter((part) => part !== '')
                         .join(' '),
           });
