@@ -52,7 +52,6 @@ export interface BenchmarkSpec {
   version: PackageVersion;
   variant: string;
   config: {};
-  trials: number;
 }
 
 // Note: sync with client/src/index.ts

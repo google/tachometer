@@ -187,7 +187,6 @@ async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
       const partialSpec = {
         name,
         implementation,
-        trials: opts.trials,
       };
       if (config && config.variants && config.variants.length) {
         for (const variant of config.variants) {
@@ -398,17 +397,30 @@ async function main() {
       width: 58,
     });
 
-    const results: BenchmarkResult[] = [];
+    const specResults = new Map<BenchmarkSpec, BenchmarkResult[]>();
+    for (const spec of specs) {
+      specResults.set(spec, []);
+    }
+
+    const numRuns = browsers.size * specs.length * opts.trials;
+    let r = 0;
+
     for (const browser of browsers) {
       bar.tick(0, {status: `launching ${browser}`});
       const driver = await makeDriver(browser, opts);
-      for (const spec of specs) {
-        const trialResults = [];
-        for (let t = 0; t < spec.trials; t++) {
+
+      for (let t = 0; t < opts.trials; t++) {
+        for (const spec of specs) {
           const run = server.runBenchmark(spec);
           bar.tick(0, {
-            status: `${browser} ${spec.implementation} ${spec.name} ` +
-                `${spec.variant} ${t + 1}/${spec.trials}`,
+            status: [
+              `${++r}/${numRuns}`,
+              browser,
+              `${spec.implementation}@${spec.version.label}`,
+              spec.name,
+              spec.variant,
+            ].filter((part) => part !== '')
+                        .join(' '),
           });
           await driver.get(run.url);
           const result = await run.result;
@@ -419,7 +431,7 @@ async function main() {
               result.paintMillis = [paintTime];
             }
           }
-          trialResults.push(result);
+          specResults.get(spec)!.push(result);
           if (bar.curr === bar.total - 1) {
             // Note if we tick with 0 after we've completed, the status is
             // rendered on the next line for some reason.
@@ -428,10 +440,15 @@ async function main() {
             bar.tick(1);
           }
         }
-        results.push(combineResults(trialResults));
       }
       await driver.close();
     }
+
+    const results: BenchmarkResult[] = [];
+    for (const sr of specResults.values()) {
+      results.push(combineResults(sr));
+    }
+
     console.log();
 
     if (saveStream !== undefined) {
