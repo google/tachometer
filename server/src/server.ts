@@ -155,7 +155,7 @@ export class Server {
       version = urlParts[4];
       name = urlParts[5];
     } else {
-      version = '';
+      version = 'default';
       name = urlParts[3];
     }
 
