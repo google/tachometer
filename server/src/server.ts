@@ -124,11 +124,13 @@ export class Server {
   private async rewriteVersionUrls(ctx: Koa.Context, next: () => Promise<void>):
       Promise<void> {
     const urlParts = ctx.url.split('/');
-    // We care about URLs of the form:
+    // We want to remap the first of these forms, but not the second or third:
     //   /benchmarks/<implementation>/versions/<version>/<name>/...
+    //   /benchmarks/<implementation>/versions/<version>/node_modules/...
+    //   /benchmarks/<implementation>/<name>/...
     //  0 1          2                3        4         5      6
     if (urlParts[1] === 'benchmarks' && urlParts[3] === 'versions' &&
-        urlParts[6] !== 'node_modules') {
+        urlParts[5] !== 'node_modules') {
       urlParts.splice(3, 2);  // Remove the "versions/<version>" part.
       ctx.url = urlParts.join('/');
     }
@@ -155,7 +157,7 @@ export class Server {
       version = urlParts[4];
       name = urlParts[5];
     } else {
-      version = '';
+      version = 'default';
       name = urlParts[3];
     }
 

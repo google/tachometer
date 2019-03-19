@@ -155,10 +155,10 @@ async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
     impls = impls.filter((dir) => !ignoreFiles.has(dir));
   } else {
     impls = opts.implementation.split(',');
-    const badNames = impls.filter((dir) => ignoreFiles.has(dir))
+    const badNames = impls.filter((dir) => ignoreFiles.has(dir));
     if (badNames.length > 0) {
       throw new Error(
-          `Implementations cannot be named ${badNames.join(' or ')}`)
+          `Implementations cannot be named ${badNames.join(' or ')}`);
     }
   }
 
@@ -173,9 +173,9 @@ async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
       benchmarks = benchmarks.filter((implDir) => !ignoreFiles.has(implDir));
     } else {
       benchmarks = opts.name.split(',');
-      const badNames = benchmarks.filter((dir) => ignoreFiles.has(dir))
+      const badNames = benchmarks.filter((dir) => ignoreFiles.has(dir));
       if (badNames.length > 0) {
-        throw new Error(`Benchmarks cannot be named ${badNames.join(' or ')}`)
+        throw new Error(`Benchmarks cannot be named ${badNames.join(' or ')}`);
       }
     }
     for (const name of benchmarks) {
@@ -274,7 +274,7 @@ function formatResultRow(result: BenchmarkResult, paint: boolean): string[] {
   const stats =
       summaryStats(paint === true ? result.paintMillis : result.millis);
   return [
-    `${result.name}\n${result.variant}`,
+    result.name + (result.variant !== undefined ? `\n${result.variant}` : ''),
     `${result.implementation}\n${result.version}`,
     `${result.browser.name}\n${result.browser.version}`,
     stats.size.toFixed(0),
@@ -407,9 +407,9 @@ async function main() {
             status: [
               `${++r}/${numRuns}`,
               browser,
-              `${spec.implementation}@${spec.version.label}`,
               spec.name,
               spec.variant,
+              `${spec.implementation}@${spec.version.label}`,
             ].filter((part) => part !== '')
                         .join(' '),
           });

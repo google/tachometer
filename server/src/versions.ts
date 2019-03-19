@@ -30,13 +30,10 @@ export function parsePackageVersions(flags: string[]):
     if (flagMatch === null) {
       throw new Error(`Invalid package-version format: "${flag}"`);
     }
-    let [, implementation, isDefault, label, packageVersions] = flagMatch;
+    const [, implementation, isDefault, label, packageVersions] = flagMatch;
     const dependencyOverrides: {[pkg: string]: string} = {};
 
-    if (isDefault) {
-      label = 'default';
-
-    } else {
+    if (isDefault === undefined) {
       const implLabel = `${implementation}/${label}`;
       if (uniqueImplLabels.has(implLabel)) {
         throw new Error(
@@ -62,7 +59,10 @@ export function parsePackageVersions(flags: string[]):
       arr = [];
       versions.set(implementation, arr);
     }
-    arr.push({label, dependencyOverrides});
+    arr.push({
+      label: isDefault !== undefined ? 'default' : label,
+      dependencyOverrides
+    });
   }
   return versions;
 }
