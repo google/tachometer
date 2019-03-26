@@ -24,6 +24,7 @@ export const tableHeaders = [
   'Browser',         // 2
   'Trials',          // 3
   'Stats',           // 4
+  'Slowdown',        // 5
 ].map((header) => ansi.format(`[bold]{${header}}`));
 
 /**
@@ -46,6 +47,9 @@ export const tableColumns: {[key: string]: table.ColumnConfig} = {
   4: {
     width: 28,
   },
+  5: {
+    width: 25,
+  },
 };
 
 /**
@@ -64,6 +68,9 @@ export function formatResultRow(
       `StdDev ${stats.standardDeviation.toFixed(2)} ` +
           `(${(stats.relativeStandardDeviation * 100).toFixed(2)}%)`,
       ` Range ${(stats.min).toFixed(2)} - ${(stats.max).toFixed(2)}`,
-    ].join('\n')
+    ].join('\n'),
+    stats.slowdown !== undefined ?
+        `${stats.slowdown.low} - ${stats.slowdown.high}` :
+        '',
   ];
 }

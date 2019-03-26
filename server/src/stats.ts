@@ -21,6 +21,7 @@ export interface SummaryStats {
   arithmeticMean: ConfidenceInterval;
   standardDeviation: number;
   relativeStandardDeviation: number;
+  slowdown?: ConfidenceInterval;
 }
 
 export function summaryStats(data: number[]): SummaryStats {
