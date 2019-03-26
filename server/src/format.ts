@@ -13,7 +13,7 @@ import * as table from 'table';
 import ansi = require('ansi-escape-sequences');
 
 import {BenchmarkResult} from './types';
-import {summaryStats} from './stats';
+import {SummaryStats} from './stats';
 
 /**
  * The formatted headers of our ASCII results table.
@@ -52,11 +52,7 @@ export const tableColumns: {[key: string]: table.ColumnConfig} = {
  * Format a single row of our ASCII results table.
  */
 export function formatResultRow(
-    result: BenchmarkResult, paint: boolean): string[] {
-  // TODO Don't compute stats here, this should be concerned only with
-  // formatting.
-  const stats =
-      summaryStats(paint === true ? result.paintMillis : result.millis);
+    result: BenchmarkResult, stats: SummaryStats): string[] {
   return [
     result.name + (result.variant !== undefined ? `\n${result.variant}` : ''),
     `${result.implementation}\n${result.version}`,

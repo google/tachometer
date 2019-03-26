@@ -23,6 +23,7 @@ import {makeSession} from './session';
 import {makeDriver, openAndSwitchToNewTab, getPaintTime} from './browser';
 import {BenchmarkResult, BenchmarkSpec} from './types';
 import {Server} from './server';
+import {summaryStats} from './stats';
 import {specsFromOpts} from './specs';
 import {tableHeaders, tableColumns, formatResultRow} from './format';
 import {prepareVersionDirectories} from './versions';
@@ -216,7 +217,7 @@ async function manualMode(opts: Opts, specs: BenchmarkSpec[], server: Server) {
   streamWrite(tableHeaders);
   (async function() {
     for await (const result of server.streamResults()) {
-      streamWrite(formatResultRow(result, opts.paint));
+      streamWrite(formatResultRow(result, summaryStats(result.millis)));
     }
   })();
 }
@@ -315,7 +316,9 @@ async function automaticMode(
   console.log();
   const tableData = [
     tableHeaders,
-    ...results.map((r) => formatResultRow(r, opts.paint)),
+    ...results.map(
+        (r) => formatResultRow(
+            r, summaryStats(opts.paint ? r.paintMillis : r.millis))),
   ];
   console.log(table.table(tableData, {columns: tableColumns}));
 
