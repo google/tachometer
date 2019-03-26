@@ -217,7 +217,8 @@ async function manualMode(opts: Opts, specs: BenchmarkSpec[], server: Server) {
   streamWrite(tableHeaders);
   (async function() {
     for await (const result of server.streamResults()) {
-      streamWrite(formatResultRow(result, summaryStats(result.millis)));
+      streamWrite(
+          formatResultRow({result, stats: summaryStats(result.millis)}));
     }
   })();
 }
@@ -313,12 +314,16 @@ async function automaticMode(
     results.push(combineResults(sr));
   }
 
+  const withStats = results.map(
+      (result) => ({
+        result,
+        stats: summaryStats(opts.paint ? result.paintMillis : result.millis),
+      }));
+
   console.log();
   const tableData = [
     tableHeaders,
-    ...results.map(
-        (r) => formatResultRow(
-            r, summaryStats(opts.paint ? r.paintMillis : r.millis))),
+    ...withStats.map(formatResultRow),
   ];
   console.log(table.table(tableData, {columns: tableColumns}));
 

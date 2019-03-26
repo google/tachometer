@@ -9,6 +9,8 @@
  * rights grant found at http://polymer.github.io/PATENTS.txt
  */
 
+import {BenchmarkResult} from './types';
+
 export interface ConfidenceInterval {
   low: number;
   high: number;
@@ -22,6 +24,11 @@ export interface SummaryStats {
   standardDeviation: number;
   relativeStandardDeviation: number;
   slowdown?: ConfidenceInterval;
+}
+
+export interface ResultStats {
+  result: BenchmarkResult;
+  stats: SummaryStats;
 }
 
 export function summaryStats(data: number[]): SummaryStats {
