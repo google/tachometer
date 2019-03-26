@@ -23,7 +23,7 @@ import {makeSession} from './session';
 import {makeDriver, openAndSwitchToNewTab, getPaintTime} from './browser';
 import {BenchmarkResult, BenchmarkSpec} from './types';
 import {Server} from './server';
-import {summaryStats} from './stats';
+import {summaryStats, findFastest, computeSlowdowns} from './stats';
 import {specsFromOpts} from './specs';
 import {tableHeaders, tableColumns, formatResultRow} from './format';
 import {prepareVersionDirectories} from './versions';
@@ -319,11 +319,13 @@ async function automaticMode(
         result,
         stats: summaryStats(opts.paint ? result.paintMillis : result.millis),
       }));
+  const baseline = findFastest(withStats);
+  const withSlowdowns = computeSlowdowns(withStats, baseline);
 
   console.log();
   const tableData = [
     tableHeaders,
-    ...withStats.map(formatResultRow),
+    ...withSlowdowns.map(formatResultRow),
   ];
   console.log(table.table(tableData, {columns: tableColumns}));
 

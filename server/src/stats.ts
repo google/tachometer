@@ -20,22 +20,23 @@ export interface SummaryStats {
   size: number;
   min: number;
   max: number;
-  arithmeticMean: ConfidenceInterval;
+  mean: number;
+  meanCI: ConfidenceInterval;
   standardDeviation: number;
   relativeStandardDeviation: number;
-  slowdown?: ConfidenceInterval;
 }
 
 export interface ResultStats {
   result: BenchmarkResult;
   stats: SummaryStats;
+  slowdown?: ConfidenceInterval;
 }
 
 export function summaryStats(data: number[]): SummaryStats {
   const size = data.length;
   const sum = sumOf(data);
-  const arithMean = sum / size;
-  const squareResiduals = data.map((val) => (val - arithMean) ** 2);
+  const mean = sum / size;
+  const squareResiduals = data.map((val) => (val - mean) ** 2);
   // TODO Should we use Bessel's correction (n-1)?
   const variance = sumOf(squareResiduals) / size;
   const stdDev = Math.sqrt(variance);
@@ -44,13 +45,14 @@ export function summaryStats(data: number[]): SummaryStats {
     size,
     min: Math.min(...data),
     max: Math.max(...data),
-    arithmeticMean: {
-      low: arithMean - meanMargin,
-      high: arithMean + meanMargin,
+    mean,
+    meanCI: {
+      low: mean - meanMargin,
+      high: mean + meanMargin,
     },
     standardDeviation: stdDev,
     // aka coefficient of variation
-    relativeStandardDeviation: stdDev / arithMean,
+    relativeStandardDeviation: stdDev / mean,
     // TODO Should we use the t distribution instead of the standard normal
     // distribution?
   };
@@ -60,4 +62,24 @@ const z95 = 1.96;
 
 function sumOf(data: number[]): number {
   return data.reduce((acc, cur) => acc + cur);
+}
+
+export function findFastest(stats: ResultStats[]): ResultStats {
+  return stats.reduce((a, b) => a.stats.mean < b.stats.mean ? a : b);
+}
+
+export function computeSlowdowns(
+    stats: ResultStats[], baseline: ResultStats): ResultStats[] {
+  return stats.map((result) => {
+    if (result === baseline) {
+      return {
+        ...result,
+        slowdown: {low: 0, high: 0},
+      };
+    }
+    return {
+      ...result,
+      slowdown: {low: 1, high: 1},
+    };
+  });
 }

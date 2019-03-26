@@ -54,21 +54,20 @@ export const tableColumns: {[key: string]: table.ColumnConfig} = {
 /**
  * Format a single row of our ASCII results table.
  */
-export function formatResultRow({result, stats}: ResultStats): string[] {
+export function formatResultRow({result, stats, slowdown}: ResultStats):
+    string[] {
   return [
     result.name + (result.variant !== undefined ? `\n${result.variant}` : ''),
     `${result.implementation}\n${result.version}`,
     `${result.browser.name}\n${result.browser.version}`,
     stats.size.toFixed(0),
     [
-      `  Mean ${stats.arithmeticMean.low.toFixed(2)} - ` +
-          `${stats.arithmeticMean.high.toFixed(2)} @95%`,
+      `  Mean ${stats.meanCI.low.toFixed(2)} - ` +
+          `${stats.meanCI.high.toFixed(2)} @95%`,
       `StdDev ${stats.standardDeviation.toFixed(2)} ` +
           `(${(stats.relativeStandardDeviation * 100).toFixed(2)}%)`,
       ` Range ${(stats.min).toFixed(2)} - ${(stats.max).toFixed(2)}`,
     ].join('\n'),
-    stats.slowdown !== undefined ?
-        `${stats.slowdown.low} - ${stats.slowdown.high}` :
-        '',
+    slowdown !== undefined ? `${slowdown.low} - ${slowdown.high}` : '',
   ];
 }
