@@ -425,6 +425,8 @@ async function main() {
           await openAndSwitchToNewTab(driver);
           await driver.get(run.url);
           const result = await run.result;
+          // Close the active tab (but not the whole browser, since the
+          // initial blank tab is still open).
           await driver.close();
           await driver.switchTo().window(initialTabHandle);
 
@@ -444,6 +446,7 @@ async function main() {
           }
         }
       }
+      // Close the last tab and hence the whole browser too.
       await driver.close();
     }
 
