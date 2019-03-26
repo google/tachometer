@@ -63,8 +63,8 @@ export function formatResultRow(
     `${result.browser.name}\n${result.browser.version}`,
     stats.size.toFixed(0),
     [
-      `  Mean ${stats.arithmeticMean.toFixed(2)} ` +
-          `(±${stats.confidenceInterval95.toFixed(2)} @95)`,
+      `  Mean ${stats.arithmeticMean.low.toFixed(2)} - ` +
+          `${stats.arithmeticMean.high.toFixed(2)} @95%`,
       `StdDev ${stats.standardDeviation.toFixed(2)} ` +
           `(${(stats.relativeStandardDeviation * 100).toFixed(2)}%)`,
       ` Range ${(stats.min).toFixed(2)} - ${(stats.max).toFixed(2)}`,

@@ -9,14 +9,18 @@
  * rights grant found at http://polymer.github.io/PATENTS.txt
  */
 
+export interface ConfidenceInterval {
+  low: number;
+  high: number;
+}
+
 export interface SummaryStats {
   size: number;
   min: number;
   max: number;
-  arithmeticMean: number;
+  arithmeticMean: ConfidenceInterval;
   standardDeviation: number;
   relativeStandardDeviation: number;
-  confidenceInterval95: number;
 }
 
 export function summaryStats(data: number[]): SummaryStats {
@@ -27,17 +31,20 @@ export function summaryStats(data: number[]): SummaryStats {
   // TODO Should we use Bessel's correction (n-1)?
   const variance = sumOf(squareResiduals) / size;
   const stdDev = Math.sqrt(variance);
+  const meanMargin = z95 * (stdDev / Math.sqrt(size));
   return {
-    size: size,
+    size,
     min: Math.min(...data),
     max: Math.max(...data),
-    arithmeticMean: arithMean,
+    arithmeticMean: {
+      low: arithMean - meanMargin,
+      high: arithMean + meanMargin,
+    },
     standardDeviation: stdDev,
     // aka coefficient of variation
     relativeStandardDeviation: stdDev / arithMean,
     // TODO Should we use the t distribution instead of the standard normal
     // distribution?
-    confidenceInterval95: z95 * (stdDev / Math.sqrt(size)),
   };
 }
 
