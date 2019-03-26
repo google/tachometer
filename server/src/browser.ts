@@ -59,3 +59,28 @@ export async function openAndSwitchToNewTab(driver: webdriver.WebDriver):
   const newTab = tabs[tabs.length - 1];
   await driver.switchTo().window(newTab);
 }
+
+/**
+ * Analyze the Chrome performance log to find the millisecond interval between
+ * the start of the benchmark and the first paint event that followed the end of
+ * the benchmark.
+ */
+export async function getPaintTime(driver: webdriver.WebDriver):
+    Promise<number|undefined> {
+  let benchStartCalled;
+  // TODO Do we need a loop to ensure we get all the logs?
+  const perfLogs =
+      await driver.manage().logs().get(webdriver.logging.Type.PERFORMANCE);
+  for (const entry of perfLogs) {
+    const {method, params} = JSON.parse(entry.message).message;
+    if (method === 'Tracing.dataCollected') {
+      if (params.name === 'TimeStamp') {
+        if (params.args.data.message === 'benchStartCalled') {
+          benchStartCalled = params.ts / 1000;
+        }
+      } else if (params.name === 'Paint' && benchStartCalled !== undefined) {
+        return ((params.ts + params.dur) / 1000) - benchStartCalled;
+      }
+    }
+  }
+}
