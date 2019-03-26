@@ -22,6 +22,7 @@ export interface SummaryStats {
   max: number;
   mean: number;
   meanCI: ConfidenceInterval;
+  variance: number;
   standardDeviation: number;
   relativeStandardDeviation: number;
 }
@@ -50,6 +51,7 @@ export function summaryStats(data: number[]): SummaryStats {
       low: mean - meanMargin,
       high: mean + meanMargin,
     },
+    variance,
     standardDeviation: stdDev,
     // aka coefficient of variation
     relativeStandardDeviation: stdDev / mean,
@@ -70,6 +72,7 @@ export function findFastest(stats: ResultStats[]): ResultStats {
 
 export function computeSlowdowns(
     stats: ResultStats[], baseline: ResultStats): ResultStats[] {
+  const baselineSDM = samplingDistributionOfTheMean(baseline.stats);
   return stats.map((result) => {
     if (result === baseline) {
       return {
@@ -77,9 +80,43 @@ export function computeSlowdowns(
         slowdown: {low: 0, high: 0},
       };
     }
+
+    const resultSDM = samplingDistributionOfTheMean(result.stats);
+    const sddm =
+        samplingDistributionOfTheDifferenceOfMeans(resultSDM, baselineSDM);
+    const sddmCI = confidenceInterval(sddm);
     return {
       ...result,
-      slowdown: {low: 1, high: 1},
+      slowdown: sddmCI,
     };
   });
+}
+
+function confidenceInterval({mean, variance}: Distribution):
+    ConfidenceInterval {
+  const margin = z95 * Math.sqrt(variance);
+  return {
+    low: mean - margin,
+    high: mean + margin,
+  };
+}
+
+interface Distribution {
+  mean: number;
+  variance: number;
+}
+
+function samplingDistributionOfTheMean(stats: SummaryStats): Distribution {
+  return {
+    mean: stats.mean,
+    variance: stats.variance / stats.size,
+  };
+}
+
+function samplingDistributionOfTheDifferenceOfMeans(
+    a: Distribution, b: Distribution): Distribution {
+  return {
+    mean: a.mean - b.mean,
+    variance: a.variance + b.variance,
+  };
 }

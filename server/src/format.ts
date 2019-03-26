@@ -68,6 +68,10 @@ export function formatResultRow({result, stats, slowdown}: ResultStats):
           `(${(stats.relativeStandardDeviation * 100).toFixed(2)}%)`,
       ` Range ${(stats.min).toFixed(2)} - ${(stats.max).toFixed(2)}`,
     ].join('\n'),
-    slowdown !== undefined ? `${slowdown.low} - ${slowdown.high}` : '',
+    slowdown !== undefined ?
+        `${slowdown.low.toFixed(2)} - ${slowdown.high.toFixed(2)}ms @95%` :
+        '',
   ];
 }
+
+//
