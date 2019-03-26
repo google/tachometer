@@ -10,21 +10,19 @@
  */
 
 require('source-map-support').install();
-require('chromedriver');
-require('geckodriver');
 
 import * as fsExtra from 'fs-extra';
 import * as path from 'path';
 import * as table from 'table';
-
 import * as webdriver from 'selenium-webdriver';
-import * as chrome from 'selenium-webdriver/chrome';
+
 import commandLineArgs = require('command-line-args');
 import commandLineUsage = require('command-line-usage');
 import ansi = require('ansi-escape-sequences');
 import ProgressBar = require('progress');
 
 import {makeSession} from './session';
+import {makeDriver, openAndSwitchToNewTab} from './browser';
 import {ConfigFormat, BenchmarkResult, BenchmarkSpec} from './types';
 import {Server} from './server';
 import {summaryStats} from './stats';
@@ -398,7 +396,17 @@ async function main() {
 
     for (const browser of browsers) {
       bar.tick(0, {status: `launching ${browser}`});
+
+      // It's important that we execute each benchmark iteration in a new tab.
+      // At least in Chrome, each tab corresponds to process which shares some
+      // amount of cached V8 state which can cause significant measurement
+      // effects. There might even be additional interaction effects that would
+      // require an entirely new browser to remove, but experience in Chrome so
+      // far shows that new tabs are neccessary and sufficient.
       const driver = await makeDriver(browser, opts);
+      const tabs = await driver.getAllWindowHandles();
+      // We'll always launch new tabs from this initial blank tab.
+      const initialTabHandle = tabs[0];
 
       for (let t = 0; t < opts.trials; t++) {
         for (const spec of specs) {
@@ -413,8 +421,13 @@ async function main() {
             ].filter((part) => part !== '')
                         .join(' '),
           });
+
+          await openAndSwitchToNewTab(driver);
           await driver.get(run.url);
           const result = await run.result;
+          await driver.close();
+          await driver.switchTo().window(initialTabHandle);
+
           if (opts.paint === true) {
             const paintTime = await getPaintTime(driver);
             if (paintTime !== undefined) {
@@ -457,27 +470,6 @@ async function main() {
     }
     await server.close();
   }
-}
-
-async function makeDriver(
-    browser: string, opts: Opts): Promise<webdriver.WebDriver> {
-  const chromeOpts = new chrome.Options();
-
-  if (opts.paint === true) {
-    const chromeLogging = new webdriver.logging.Preferences();
-    chromeLogging.setLevel(
-        webdriver.logging.Type.PERFORMANCE, webdriver.logging.Level.ALL);
-
-    chromeOpts.setLoggingPrefs(chromeLogging);
-    chromeOpts.setPerfLoggingPrefs({
-      traceCategories: ['devtools.timeline'].join(','),
-    } as unknown as chrome.IPerfLoggingPrefs);  // Wrong typings.
-  }
-
-  return await new webdriver.Builder()
-      .forBrowser(browser)
-      .setChromeOptions(chromeOpts)
-      .build();
 }
 
 async function getPaintTime(driver: webdriver.WebDriver):
