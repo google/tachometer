@@ -60,8 +60,9 @@ export function formatResultRow(
   if (isBaseline) {
     slowdownColumn = ansi.format(`       [bold white bg-blue]{ BASELINE }`);
   } else if (slowdown !== undefined) {
-    slowdownColumn =
-        `+${slowdown.low.toFixed(2)} - ${slowdown.high.toFixed(2)}`;
+    slowdownColumn = '[' + (slowdown.low >= 0 ? '+' : '') +
+        slowdown.low.toFixed(2) + ', ' + (slowdown.high >= 0 ? '+' : '') +
+        slowdown.high.toFixed(2) + ']';
   }
   return [
     result.name + (result.variant !== undefined ? `\n${result.variant}` : ''),
@@ -69,8 +70,8 @@ export function formatResultRow(
     `${result.browser.name}\n${result.browser.version}`,
     stats.size.toFixed(0),
     [
-      `  Mean ${stats.meanCI.low.toFixed(2)} - ` +
-          `${stats.meanCI.high.toFixed(2)}`,
+      `  Mean [${stats.meanCI.low.toFixed(2)}, ` +
+          `${stats.meanCI.high.toFixed(2)}]`,
       `StdDev ${stats.standardDeviation.toFixed(2)} ` +
           `(${(stats.relativeStandardDeviation * 100).toFixed(2)}%)`,
     ].join('\n'),
