@@ -23,6 +23,7 @@ import {makeSession} from './session';
 import {makeDriver, openAndSwitchToNewTab, getPaintTime} from './browser';
 import {BenchmarkResult, BenchmarkSpec} from './types';
 import {Server} from './server';
+import {summaryStats, findFastest, computeSlowdowns} from './stats';
 import {specsFromOpts} from './specs';
 import {tableHeaders, tableColumns, formatResultRow} from './format';
 import {prepareVersionDirectories} from './versions';
@@ -216,7 +217,8 @@ async function manualMode(opts: Opts, specs: BenchmarkSpec[], server: Server) {
   streamWrite(tableHeaders);
   (async function() {
     for await (const result of server.streamResults()) {
-      streamWrite(formatResultRow(result, opts.paint));
+      streamWrite(
+          formatResultRow({result, stats: summaryStats(result.millis)}));
     }
   })();
 }
@@ -312,10 +314,19 @@ async function automaticMode(
     results.push(combineResults(sr));
   }
 
+  const withStats = results.map(
+      (result) => ({
+        result,
+        stats: summaryStats(opts.paint ? result.paintMillis : result.millis),
+      }));
+  const baseline = findFastest(withStats);
+  baseline.isBaseline = true;
+  const withSlowdowns = computeSlowdowns(withStats, baseline);
+
   console.log();
   const tableData = [
     tableHeaders,
-    ...results.map((r) => formatResultRow(r, opts.paint)),
+    ...withSlowdowns.map(formatResultRow),
   ];
   console.log(table.table(tableData, {columns: tableColumns}));
 
