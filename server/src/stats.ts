@@ -9,7 +9,15 @@
  * rights grant found at http://polymer.github.io/PATENTS.txt
  */
 
+// TODO Since we are estimating variance, we should probably use the student's
+// t-distribution instead of the normal distribution, for more sound results.
+
 import {BenchmarkResult} from './types';
+
+interface Distribution {
+  mean: number;
+  variance: number;
+}
 
 export interface ConfidenceInterval {
   low: number;
@@ -37,83 +45,103 @@ export function summaryStats(data: number[]): SummaryStats {
   const sum = sumOf(data);
   const mean = sum / size;
   const squareResiduals = data.map((val) => (val - mean) ** 2);
-  // TODO Should we use Bessel's correction (n-1)?
   const variance = sumOf(squareResiduals) / size;
   const stdDev = Math.sqrt(variance);
-  const meanMargin = z95 * (stdDev / Math.sqrt(size));
   return {
     size,
     mean,
-    meanCI: {
-      low: mean - meanMargin,
-      high: mean + meanMargin,
-    },
+    meanCI: confidenceInterval95(
+        samplingDistributionOfTheMean({mean, variance}, size)),
     variance,
     standardDeviation: stdDev,
     // aka coefficient of variation
     relativeStandardDeviation: stdDev / mean,
-    // TODO Should we use the t distribution instead of the standard normal
-    // distribution?
   };
 }
 
+// The z-value for a 95% confidence interval. On a normal distribution, 95% of
+// values lie within the area bounded by [-z95, z95] standard deviations from
+// the mean.
+//
+// http://onlinestatbook.com/2/normal_distribution/areas_normal.html
+// https://homepage.stat.uiowa.edu/~mbognar/applets/normal.html
 const z95 = 1.96;
 
-function sumOf(data: number[]): number {
-  return data.reduce((acc, cur) => acc + cur);
-}
-
-export function findFastest(stats: ResultStats[]): ResultStats {
-  return stats.reduce((a, b) => a.stats.mean < b.stats.mean ? a : b);
-}
-
-export function computeSlowdowns(
-    stats: ResultStats[], baseline: ResultStats): ResultStats[] {
-  const baselineSDM = samplingDistributionOfTheMean(baseline.stats);
-  return stats.map((result) => {
-    if (result === baseline) {
-      return {
-        ...result,
-        slowdown: {low: 0, high: 0},
-      };
-    }
-
-    const resultSDM = samplingDistributionOfTheMean(result.stats);
-    const sddm =
-        samplingDistributionOfTheDifferenceOfMeans(resultSDM, baselineSDM);
-    const sddmCI = confidenceInterval(sddm);
-    return {
-      ...result,
-      slowdown: sddmCI,
-    };
-  });
-}
-
-function confidenceInterval({mean, variance}: Distribution):
+/**
+ * Compute a 95% confidence interval for the given distribution.
+ */
+function confidenceInterval95({mean, variance}: Distribution):
     ConfidenceInterval {
-  const margin = z95 * Math.sqrt(variance);
+  // http://www.stat.yale.edu/Courses/1997-98/101/confint.htm
+  const stdDev = Math.sqrt(variance);
+  const margin = z95 * stdDev;
   return {
     low: mean - margin,
     high: mean + margin,
   };
 }
 
-interface Distribution {
-  mean: number;
-  variance: number;
+function sumOf(data: number[]): number {
+  return data.reduce((acc, cur) => acc + cur);
 }
 
-function samplingDistributionOfTheMean(stats: SummaryStats): Distribution {
+/**
+ * Returns the benchmark result with the lowest mean duration.
+ */
+export function findFastest(stats: ResultStats[]): ResultStats {
+  return stats.reduce((a, b) => a.stats.mean < b.stats.mean ? a : b);
+}
+
+/**
+ * Given an array of results and a baseline for comparison, return a new array
+ * of results where each result (apart from the baseline itself) has additional
+ * statistics describing how much slower it is than the baseline.
+ */
+export function computeSlowdowns(
+    stats: ResultStats[], baseline: ResultStats): ResultStats[] {
+  const baselineSDM =
+      samplingDistributionOfTheMean(baseline.stats, baseline.stats.size);
+  return stats.map((result) => {
+    if (result === baseline) {
+      // No slowdown for the baseline.
+      return result;
+    }
+    const sdm = samplingDistributionOfTheMean(result.stats, result.stats.size);
+    const sddm = samplingDistributionOfTheDifferenceOfMeans(sdm, baselineSDM);
+    return {
+      ...result,
+      slowdown: confidenceInterval95(sddm),
+    };
+  });
+}
+
+/**
+ * Estimates the sampling distribution of the mean. This models the distribution
+ * of the means that we would compute under repeated samples of the given size.
+ */
+function samplingDistributionOfTheMean(
+    dist: Distribution, sampleSize: number): Distribution {
+  // http://onlinestatbook.com/2/sampling_distributions/samp_dist_mean.html
+  // http://www.stat.yale.edu/Courses/1997-98/101/sampmn.htm
   return {
-    mean: stats.mean,
-    variance: stats.variance / stats.size,
+    mean: dist.mean,
+    // Error shrinks as sample size grows.
+    variance: dist.variance / sampleSize,
   };
 }
 
+/**
+ * Estimates the sampling distribution of the difference of means. This models
+ * the distribution of the difference between two means that we would compute
+ * under repeated samples under the given two sampling distributions of means.
+ */
 function samplingDistributionOfTheDifferenceOfMeans(
     a: Distribution, b: Distribution): Distribution {
+  // http://onlinestatbook.com/2/sampling_distributions/samplingdist_diff_means.html
+  // http://www.stat.yale.edu/Courses/1997-98/101/meancomp.htm
   return {
     mean: a.mean - b.mean,
+    // The error from both input sampling distributions of means accumulate.
     variance: a.variance + b.variance,
   };
 }
