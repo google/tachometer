@@ -18,8 +18,6 @@ export interface ConfidenceInterval {
 
 export interface SummaryStats {
   size: number;
-  min: number;
-  max: number;
   mean: number;
   meanCI: ConfidenceInterval;
   variance: number;
@@ -31,6 +29,7 @@ export interface ResultStats {
   result: BenchmarkResult;
   stats: SummaryStats;
   slowdown?: ConfidenceInterval;
+  isBaseline?: boolean;
 }
 
 export function summaryStats(data: number[]): SummaryStats {
@@ -44,8 +43,6 @@ export function summaryStats(data: number[]): SummaryStats {
   const meanMargin = z95 * (stdDev / Math.sqrt(size));
   return {
     size,
-    min: Math.min(...data),
-    max: Math.max(...data),
     mean,
     meanCI: {
       low: mean - meanMargin,

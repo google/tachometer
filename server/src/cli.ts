@@ -320,6 +320,7 @@ async function automaticMode(
         stats: summaryStats(opts.paint ? result.paintMillis : result.millis),
       }));
   const baseline = findFastest(withStats);
+  baseline.isBaseline = true;
   const withSlowdowns = computeSlowdowns(withStats, baseline);
 
   console.log();

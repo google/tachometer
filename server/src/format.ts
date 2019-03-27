@@ -18,12 +18,12 @@ import {ResultStats} from './stats';
  * The formatted headers of our ASCII results table.
  */
 export const tableHeaders = [
-  'Benchmark',       // 0
-  'Implementation',  // 1
-  'Browser',         // 2
-  'Trials',          // 3
-  'Stats',           // 4
-  'Slowdown',        // 5
+  'Benchmark',             // 0
+  'Implementation',        // 1
+  'Browser',               // 2
+  'Trials',                // 3
+  'Duration (ms) C=0.95',  // 4
+  'Slowdown (ms) C=0.95',  // 5
 ].map((header) => ansi.format(`[bold]{${header}}`));
 
 /**
@@ -47,15 +47,22 @@ export const tableColumns: {[key: string]: table.ColumnConfig} = {
     width: 28,
   },
   5: {
-    width: 25,
+    width: 23,
   },
 };
 
 /**
  * Format a single row of our ASCII results table.
  */
-export function formatResultRow({result, stats, slowdown}: ResultStats):
-    string[] {
+export function formatResultRow(
+    {result, stats, slowdown, isBaseline}: ResultStats): string[] {
+  let slowdownColumn = '';
+  if (isBaseline) {
+    slowdownColumn = ansi.format(`       [bold white bg-blue]{ BASELINE }`);
+  } else if (slowdown !== undefined) {
+    slowdownColumn =
+        `+${slowdown.low.toFixed(2)} - ${slowdown.high.toFixed(2)}`;
+  }
   return [
     result.name + (result.variant !== undefined ? `\n${result.variant}` : ''),
     `${result.implementation}\n${result.version}`,
@@ -63,14 +70,11 @@ export function formatResultRow({result, stats, slowdown}: ResultStats):
     stats.size.toFixed(0),
     [
       `  Mean ${stats.meanCI.low.toFixed(2)} - ` +
-          `${stats.meanCI.high.toFixed(2)} @95%`,
+          `${stats.meanCI.high.toFixed(2)}`,
       `StdDev ${stats.standardDeviation.toFixed(2)} ` +
           `(${(stats.relativeStandardDeviation * 100).toFixed(2)}%)`,
-      ` Range ${(stats.min).toFixed(2)} - ${(stats.max).toFixed(2)}`,
     ].join('\n'),
-    slowdown !== undefined ?
-        `${slowdown.low.toFixed(2)} - ${slowdown.high.toFixed(2)}ms @95%` :
-        '',
+    slowdownColumn,
   ];
 }
 
