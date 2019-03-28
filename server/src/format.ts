@@ -37,7 +37,7 @@ export const tableColumns: {[key: string]: table.ColumnConfig} = {
     width: 15,
   },
   2: {
-    width: 13,
+    width: 14,
   },
   3: {
     alignment: 'center',
@@ -60,10 +60,37 @@ export function formatResultRow(
   if (isBaseline) {
     slowdownColumn = ansi.format(`       [bold white bg-blue]{ BASELINE }`);
   } else if (slowdown !== undefined) {
-    slowdownColumn = '[' + (slowdown.low >= 0 ? '+' : '') +
-        slowdown.low.toFixed(2) + ', ' + (slowdown.high >= 0 ? '+' : '') +
-        slowdown.high.toFixed(2) + ']';
+    const ci = 'Δ [' + (slowdown.ci.low >= 0 ? '+' : '') +
+        slowdown.ci.low.toFixed(2) + ', ' + (slowdown.ci.high >= 0 ? '+' : '') +
+        slowdown.ci.high.toFixed(2) + ']';
+
+    if (slowdown.rejectNullHypothesis === true) {
+      if (slowdown.ci.low + slowdown.ci.high > 0) {
+        slowdownColumn +=
+            ansi.format(`     [bold white bg-red]{ LIKELY SLOWER }`);
+      } else {
+        slowdownColumn +=
+            ansi.format(`     [bold white bg-green]{ LIKELY FASTER }`);
+      }
+      slowdownColumn += '\n';
+      slowdownColumn += ci;
+      slowdownColumn += `\np ${percent(slowdown.pValue, 2)}`;
+
+    } else {
+      const power = slowdown.powerAnalysis;
+      slowdownColumn +=
+          ansi.format(`  [bold white bg-gray]{ INDISTINGUISHABLE }`);
+      slowdownColumn += '\n';
+      slowdownColumn += ci;
+      slowdownColumn += `\np ${percent(slowdown.pValue, 2)}`;
+      slowdownColumn += `\n${percent(power.observedPower)} power ` +
+          `| Δ${power.hypothesizedAbsoluteEffect.toFixed(2)}ms`;
+      if (power.observedPower < power.desiredPower) {
+        slowdownColumn += `\nTry n = ${power.minimumSampleSize}`;
+      }
+    }
   }
+
   return [
     result.name + (result.variant !== undefined ? `\n${result.variant}` : ''),
     `${result.implementation}\n${result.version}`,
@@ -73,10 +100,12 @@ export function formatResultRow(
       `  Mean [${stats.meanCI.low.toFixed(2)}, ` +
           `${stats.meanCI.high.toFixed(2)}]`,
       `StdDev ${stats.standardDeviation.toFixed(2)} ` +
-          `(${(stats.relativeStandardDeviation * 100).toFixed(2)}%)`,
+          `(${percent(stats.relativeStandardDeviation, 2)})`,
     ].join('\n'),
     slowdownColumn,
   ];
 }
 
-//
+function percent(n: number, digits: number = 0): string {
+  return (n * 100).toFixed(digits) + '%';
+}

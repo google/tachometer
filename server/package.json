@@ -43,6 +43,7 @@
     "command-line-usage": "^5.0.5",
     "fs-extra": "^7.0.1",
     "geckodriver": "^1.14.1",
+    "jstat": "^1.7.1",
     "koa": "^2.5.1",
     "koa-bodyparser": "^4.2.1",
     "koa-mount": "^4.0.0",
