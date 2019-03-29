@@ -1,0 +1,15 @@
+<!doctype html>
+<html>
+  <head>
+    <title>vanilla for-loop benchmark</title>
+  </head>
+  <body>
+    <script type="module">
+      import * as bench from '/client/lib/index.js';
+      bench.start();
+      for (let i = 0; i < bench.config.n; i++) {
+      }
+      bench.stop();
+    </script>
+  </body>
+</html>
