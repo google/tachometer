@@ -96,7 +96,7 @@ const optDefs: commandLineUsage.OptionDefinition[] = [
     description: 'How many times to run each benchmark',
     alias: 't',
     type: Number,
-    defaultValue: 10,
+    defaultValue: 50,
   },
   {
     name: 'manual',
