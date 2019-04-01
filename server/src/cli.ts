@@ -245,7 +245,7 @@ async function automaticMode(
     }
   }
 
-  const pickBaseline = pickBaselineFn(specs, opts);
+  const pickBaseline = pickBaselineFn(specs, opts.baseline);
 
   console.log('Running benchmarks\n');
 
@@ -347,27 +347,25 @@ async function automaticMode(
   }
 }
 
-main();
-
 /**
  * Parse the --baseline flag in the context of the benchmarks we're
  * preparing to run, and return a function which, once we have results, will
  * be able to pick a single result to use as the baseline for comparison.
  */
-export function pickBaselineFn(
-    specs: BenchmarkSpec[], opts: Opts): (specs: ResultStats[]) => ResultStats {
+export function pickBaselineFn(specs: BenchmarkSpec[], flag: string):
+    (specs: ResultStats[]) => ResultStats {
   // Special cases.
-  if (opts.baseline === 'fastest') {
+  if (flag === 'fastest') {
     return findFastest;
   }
-  if (opts.baseline === 'slowest') {
+  if (flag === 'slowest') {
     return findSlowest;
   }
 
   // Try to select one benchmarks from the given key=val filters, e.g.
   // "name=my-bench,variant=fun,implementation=lit-html,version=v1".
   const filter: SpecFilter = {};
-  for (const keyVal of opts.baseline.split(',')) {
+  for (const keyVal of flag.split(',')) {
     const [key, val] = keyVal.split('=').map((s) => s.trim());
     if (key === '' || val === '' || val.includes('=')) {
       throw new Error('Invalid baseline flag syntax');
@@ -397,4 +395,8 @@ export function pickBaselineFn(
                  result.implementation === spec.implementation &&
                  result.variant === spec.variant &&
                  result.version === spec.version.label)!;
+}
+
+if (require.main === module) {
+  main();
 }
