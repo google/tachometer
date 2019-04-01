@@ -14,6 +14,7 @@ implementations.
 - [Adding benchmarks](#adding-benchmarks)
 - [Variants](#variants)
 - [Versions](#versions)
+- [Comparison](#comparison)
 - [Example commands](#example-commands)
 
 ### Setup
@@ -37,6 +38,7 @@ Flag                      | Default     | Description
 `--variant` / `-v`        | `*`         | Which variants to run (`*` for all) ([details](#variants))
 `--package-version` / `-p`| *(none)*    | Specify one or more dependency versions ([details](#versions))
 `--browser` / `-b`        | `chrome`    | Which browsers to launch in automatic mode, comma-delimited (chrome, firefox)
+`--baseline`              | `fastest`   | Which result to use as the baseline for comparison ([details](#comparison))
 `--trials` / `-t`         | `10`        | How many times to run each benchmark
 `--manual` / `-m`         | `false`     | Don't run automatically, just show URLs and collect results ([details](#manual-mode))
 `--save` / `-s`           | *(none)*    | Save benchmark JSON data to this file ([details](#saving-data))
@@ -211,6 +213,20 @@ bench.start();
 recurse(bench.config.depth);
 bench.stop();
 ```
+
+### Comparison
+
+If more than one benchmark configuration is running, then comparative results
+between them will be presented. One result will be used as the *baseline*, and
+the others will report data in terms of its relative slowdown (result ms -
+baseline ms). By default the fastest result will be used as the baseline, but
+this can be changed with the `--baseline` flag.
+
+Option                              | Description
+------------------------------------| -------------------------------
+`fastest`                           | Use the lowest estimated mean runtime as the baseline.
+`slowest`                           | Use the highest estimated mean runtime as the baseline.
+`name=<name>,version=<version>,...` | One or more comma-delimited `key=val` filters for narrowing down the baseline. At least one filter is required, and an error will be thrown if the selection is ambiguous. Valid filter keys: `name`, `variant`, `implementation`, `version`.
 
 ### Example commands
 

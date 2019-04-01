@@ -23,8 +23,8 @@ import {makeSession} from './session';
 import {makeDriver, openAndSwitchToNewTab, getPaintTime} from './browser';
 import {BenchmarkResult, BenchmarkSpec} from './types';
 import {Server} from './server';
-import {summaryStats, findFastest, computeSlowdowns} from './stats';
-import {specsFromOpts} from './specs';
+import {ResultStats, summaryStats, findFastest, findSlowest, computeSlowdowns} from './stats';
+import {specMatchesFilter, specsFromOpts, SpecFilter} from './specs';
 import {tableHeaders, tableColumns, formatResultRow} from './format';
 import {prepareVersionDirectories} from './versions';
 
@@ -92,6 +92,14 @@ const optDefs: commandLineUsage.OptionDefinition[] = [
     defaultValue: 'chrome',
   },
   {
+    name: 'baseline',
+    description:
+        'Which result to use as the baseline for comparison: "fastest", ' +
+        '"slowest", or e.g. "name=foo,version=bar,...".',
+    type: String,
+    defaultValue: 'fastest',
+  },
+  {
     name: 'trials',
     description: 'How many times to run each benchmark',
     alias: 't',
@@ -129,6 +137,7 @@ interface Opts {
   variant: string;
   'package-version': string[];
   browser: string;
+  baseline: string;
   trials: number;
   manual: boolean;
   save: string;
@@ -236,6 +245,8 @@ async function automaticMode(
     }
   }
 
+  const pickBaseline = pickBaselineFn(specs, opts);
+
   console.log('Running benchmarks\n');
 
   const bar = new ProgressBar('[:bar] :status', {
@@ -319,7 +330,7 @@ async function automaticMode(
         result,
         stats: summaryStats(opts.paint ? result.paintMillis : result.millis),
       }));
-  const baseline = findFastest(withStats);
+  const baseline = pickBaseline(withStats);
   baseline.isBaseline = true;
   const withSlowdowns = computeSlowdowns(withStats, baseline);
 
@@ -337,3 +348,53 @@ async function automaticMode(
 }
 
 main();
+
+/**
+ * Parse the --baseline flag in the context of the benchmarks we're
+ * preparing to run, and return a function which, once we have results, will
+ * be able to pick a single result to use as the baseline for comparison.
+ */
+export function pickBaselineFn(
+    specs: BenchmarkSpec[], opts: Opts): (specs: ResultStats[]) => ResultStats {
+  // Special cases.
+  if (opts.baseline === 'fastest') {
+    return findFastest;
+  }
+  if (opts.baseline === 'slowest') {
+    return findSlowest;
+  }
+
+  // Try to select one benchmarks from the given key=val filters, e.g.
+  // "name=my-bench,variant=fun,implementation=lit-html,version=v1".
+  const filter: SpecFilter = {};
+  for (const keyVal of opts.baseline.split(',')) {
+    const [key, val] = keyVal.split('=').map((s) => s.trim());
+    if (key === '' || val === '' || val.includes('=')) {
+      throw new Error('Invalid baseline flag syntax');
+    }
+    if (key === 'name') {
+      filter.name = val;
+    } else if (key === 'variant') {
+      filter.variant = val;
+    } else if (key === 'implementation') {
+      filter.implementation = val;
+    } else if (key === 'version') {
+      filter.version = val;
+    } else {
+      throw new Error(`Invalid baseline flag key ${key}`);
+    }
+  }
+  const filtered = specs.filter((spec) => specMatchesFilter(spec, filter));
+  if (filtered.length === 0) {
+    throw new Error('No benchmarks matched by baseline flag');
+  }
+  if (filtered.length > 1) {
+    throw new Error('Ambiguous baseline flag');
+  }
+  const spec = filtered[0];
+  return (results) => results.find(
+             ({result}: ResultStats) => result.name === spec.name &&
+                 result.implementation === spec.implementation &&
+                 result.variant === spec.variant &&
+                 result.version === spec.version.label)!;
+}
