@@ -41,6 +41,7 @@ const fakeResult: BenchmarkResult = {
   millis: [],
   paintMillis: [],
   browser: {name: 'fakeBrowserName', version: 'fakeBrowserVersion'},
+  bytesSent: 0,
 };
 
 suite('pickBaseline', function() {
