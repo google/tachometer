@@ -132,3 +132,33 @@ export async function specsFromOpts(
 
   return specs;
 }
+
+export interface SpecFilter {
+  name?: string;
+  implementation?: string;
+  variant?: string;
+  version?: string;
+}
+
+/**
+ * Return whether the given benchmark spec matches the given filter
+ * configuration.
+ */
+export function specMatchesFilter(
+    spec: BenchmarkSpec, selector: SpecFilter): boolean {
+  if (selector.name !== undefined && spec.name !== selector.name) {
+    return false;
+  }
+  if (selector.implementation !== undefined &&
+      spec.implementation !== selector.implementation) {
+    return false;
+  }
+  if (selector.variant !== undefined && spec.variant !== selector.variant) {
+    return false;
+  }
+  if (selector.version !== undefined &&
+      spec.version.label !== selector.version) {
+    return false;
+  }
+  return true;
+}
