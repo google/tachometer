@@ -120,8 +120,12 @@ export class Server {
   private async recordBytesSent(ctx: Koa.Context, next: () => Promise<void>):
       Promise<void> {
     await next();
-    if (ctx.response.length) {
+    if (typeof ctx.response.length === 'number') {
       this.currentRunBytes += ctx.response.length;
+    } else if (ctx.status === 200) {
+      console.log(
+          `No response length for 200 response for ${ctx.url}, ` +
+          `byte count may be inaccurate.`);
     }
   }
 
