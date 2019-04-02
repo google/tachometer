@@ -119,6 +119,9 @@ export class Server {
 
   private async recordBytesSent(ctx: Koa.Context, next: () => Promise<void>):
       Promise<void> {
+    // Note this assumes serial runs, as we guarantee in automatic mode. If we
+    // ever wanted to support parallel requests, we would require some kind of
+    // session tracking.
     await next();
     if (typeof ctx.response.length === 'number') {
       this.currentRunBytes += ctx.response.length;
