@@ -116,8 +116,8 @@ export function computeSlowdowns(
     }
 
     // We're assuming sample sizes are equal. If they're not for some reason, be
-    // conservative and use the smaller one (since it will have higher
-    // variance).
+    // conservative and use the smaller one (since the sampling distribution
+    // will most likely have higher variance).
     const size = Math.min(baseline.stats.size, result.stats.size);
 
     const sdm = samplingDistributionOfTheMean(result.stats, size);
@@ -127,8 +127,8 @@ export function computeSlowdowns(
     // means are equal.
     // https://en.wikipedia.org/wiki/Student%27s_t-test
 
-    // Convert the (signed) difference in means we observed into units of our
-    // estimation of that statistic's standard error.
+    // Convert the (signed) difference in means we observed into standard
+    // errors.
     // https://en.wikipedia.org/wiki/T-statistic
     const tStatistic = sddm.mean / Math.sqrt(sddm.variance);
 
