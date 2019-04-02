@@ -80,7 +80,7 @@ export function formatResultRow(
           `(${(stats.relativeStandardDeviation * 100).toFixed(2)}%)`,
     ].join('\n'),
     slowdownColumn,
-    `${(result.bytesSent / 1000).toFixed(2)} KB`,
+    `${(result.bytesSent / 1024).toFixed(2)} KiB`,
   ];
 }
 

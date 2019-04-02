@@ -120,11 +120,8 @@ export class Server {
   private async recordBytesSent(ctx: Koa.Context, next: () => Promise<void>):
       Promise<void> {
     await next();
-    if (ctx.response.body !== undefined) {
-      // Note this approach works with our current static serving middleware,
-      // but it might not work for all possible Koa middlewares.
-      ctx.response.body.on(
-          'data', (chunk: Buffer) => this.currentRunBytes += chunk.length);
+    if (ctx.response.length) {
+      this.currentRunBytes += ctx.response.length;
     }
   }
 
