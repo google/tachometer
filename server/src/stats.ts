@@ -100,6 +100,13 @@ export function findFastest(stats: ResultStats[]): ResultStats {
 }
 
 /**
+ * Returns the benchmark result with the highest mean duration.
+ */
+export function findSlowest(stats: ResultStats[]): ResultStats {
+  return stats.reduce((a, b) => a.stats.mean > b.stats.mean ? a : b);
+}
+
+/**
  * Given an array of results and a baseline for comparison, return a new array
  * of results where each result (apart from the baseline itself) has additional
  * statistics describing how much slower it is than the baseline.

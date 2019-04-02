@@ -82,6 +82,7 @@ export interface BenchmarkResult {
   // which occurs after bench.stop()
   paintMillis: number[];
   browser: {name: string, version: string};
+  bytesSent: number;
 }
 
 export interface PendingBenchmark {

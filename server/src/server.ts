@@ -30,6 +30,7 @@ export class Server {
   // prevents any spurrious race conditions and enables one runner to launch
   // multiple clients eventually.
   private currentRunId = 0;
+  private currentRunBytes = 0;
   private readonly pendingRuns = new Map<string, PendingBenchmark>();
   private resultSubmitted = new Deferred<BenchmarkResult>();
 
@@ -50,6 +51,7 @@ export class Server {
     app.use(bodyParser());
     app.use(mount('/submitResults', this.submitResults.bind(this)));
     app.use(this.rewriteVersionUrls.bind(this));
+    app.use(this.recordBytesSent.bind(this));
     app.use(mount('/', serve(rootDir, {index: 'index.html'})));
     this.server.on('request', app.callback());
 
@@ -115,6 +117,21 @@ export class Server {
     });
   }
 
+  private async recordBytesSent(ctx: Koa.Context, next: () => Promise<void>):
+      Promise<void> {
+    // Note this assumes serial runs, as we guarantee in automatic mode. If we
+    // ever wanted to support parallel requests, we would require some kind of
+    // session tracking.
+    await next();
+    if (typeof ctx.response.length === 'number') {
+      this.currentRunBytes += ctx.response.length;
+    } else if (ctx.status === 200) {
+      console.log(
+          `No response length for 200 response for ${ctx.url}, ` +
+          `byte count may be inaccurate.`);
+    }
+  }
+
   /**
    * When serving specific versions, we want to serve any node_modules/ paths
    * from that specific version directory (since that's the whole point of
@@ -138,6 +155,9 @@ export class Server {
   }
 
   private async submitResults(ctx: Koa.Context) {
+    const bytesSent = this.currentRunBytes;
+    this.currentRunBytes = 0;  // Reset for next run.
+
     const response = ctx.request.body as BenchmarkResponse;
     const browser = new UAParser(ctx.headers['user-agent']).getBrowser();
 
@@ -173,6 +193,7 @@ export class Server {
         name: browser.name || '',
         version: browser.version || '',
       },
+      bytesSent,
     };
     this.resultSubmitted.resolve(result);
     this.resultSubmitted = new Deferred();

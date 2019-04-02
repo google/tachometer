@@ -24,6 +24,7 @@ export const tableHeaders = [
   'Trials',                // 3
   'Duration (ms) C=0.95',  // 4
   'Slowdown (ms) C=0.95',  // 5
+  'Bytes sent',            // 6
 ].map((header) => ansi.format(`[bold]{${header}}`));
 
 /**
@@ -48,6 +49,9 @@ export const tableColumns: {[key: string]: table.ColumnConfig} = {
   },
   5: {
     width: 23,
+  },
+  6: {
+    width: 10,
   },
 };
 
@@ -103,6 +107,7 @@ export function formatResultRow(
           `(${percent(stats.relativeStandardDeviation, 2)})`,
     ].join('\n'),
     slowdownColumn,
+    `${(result.bytesSent / 1024).toFixed(2)} KiB`,
   ];
 }
 

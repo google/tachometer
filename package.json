@@ -8,7 +8,8 @@
     "prepare": "(cd server && npm install) && (cd client && npm install) && (cd benchmarks && npm install)",
     "benchmarks": "node server/lib/cli.js",
     "build": "(cd server && npm run build) && (cd client && npm run build)",
-    "format": "(cd server && npm run format) && (cd client && npm run format) && (cd benchmarks && npm run format)"
+    "format": "(cd server && npm run format) && (cd client && npm run format) && (cd benchmarks && npm run format)",
+    "test": "(cd server && npm run test)"
   },
   "repository": {
     "type": "git",
