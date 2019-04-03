@@ -21,7 +21,7 @@ export const tableHeaders = [
   'Benchmark',             // 0
   'Implementation',        // 1
   'Browser',               // 2
-  'Trials',                // 3
+  'Samples',               // 3
   'Duration (ms) C=0.95',  // 4
   'Slowdown (ms) C=0.95',  // 5
   'Bytes sent',            // 6
@@ -42,7 +42,7 @@ export const tableColumns: {[key: string]: table.ColumnConfig} = {
   },
   3: {
     alignment: 'center',
-    width: 6,
+    width: 7,
   },
   4: {
     width: 28,

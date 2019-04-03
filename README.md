@@ -39,7 +39,7 @@ Flag                      | Default     | Description
 `--package-version` / `-p`| *(none)*    | Specify one or more dependency versions ([details](#versions))
 `--browser` / `-b`        | `chrome`    | Which browsers to launch in automatic mode, comma-delimited (chrome, firefox)
 `--baseline`              | `fastest`   | Which result to use as the baseline for comparison ([details](#comparison))
-`--trials` / `-t`         | `10`        | How many times to run each benchmark
+`--sample-size` / `-n`    | `50`        | How many times to run each benchmark
 `--manual` / `-m`         | `false`     | Don't run automatically, just show URLs and collect results ([details](#manual-mode))
 `--save` / `-s`           | *(none)*    | Save benchmark JSON data to this file ([details](#saving-data))
 

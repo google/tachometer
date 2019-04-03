@@ -53,7 +53,6 @@ const optDefs: commandLineUsage.OptionDefinition[] = [
   {
     name: 'name',
     description: 'Which benchmarks to run (* for all)',
-    alias: 'n',
     type: String,
     defaultValue: '*',
   },
@@ -96,9 +95,9 @@ const optDefs: commandLineUsage.OptionDefinition[] = [
     defaultValue: 'fastest',
   },
   {
-    name: 'trials',
+    name: 'sample-size',
     description: 'How many times to run each benchmark',
-    alias: 't',
+    alias: 'n',
     type: Number,
     defaultValue: 50,
   },
@@ -134,7 +133,7 @@ interface Opts {
   'package-version': string[];
   browser: string;
   baseline: string;
-  trials: number;
+  ['sample-size']: number;
   manual: boolean;
   save: string;
   paint: boolean;
@@ -162,8 +161,8 @@ async function main() {
     return;
   }
 
-  if (opts.trials <= 0) {
-    throw new Error('--trials must be > 0');
+  if (opts['sample-size'] <= 0) {
+    throw new Error('--sample-size must be > 0');
   }
 
   const specs = await specsFromOpts(repoRoot, opts);
@@ -235,7 +234,7 @@ async function automaticMode(
   console.log('Running benchmarks\n');
 
   const bar = new ProgressBar('[:bar] :status', {
-    total: specs.length * opts.trials,
+    total: specs.length * opts['sample-size'],
     width: 58,
   });
 
@@ -264,10 +263,10 @@ async function automaticMode(
     specResults.set(spec, []);
   }
 
-  const numRuns = specs.length * opts.trials;
+  const numRuns = specs.length * opts['sample-size'];
   let r = 0;
 
-  for (let t = 0; t < opts.trials; t++) {
+  for (let t = 0; t < opts['sample-size']; t++) {
     for (const spec of specs) {
       const run = server.runBenchmark(spec);
       bar.tick(0, {
