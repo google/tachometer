@@ -132,7 +132,7 @@ const optDefs: commandLineUsage.OptionDefinition[] = [
   {
     name: 'boundaries',
     description: 'The boundaries to use when --auto-sample is enabled ' +
-        '(comma-delimited, default -0.5,0.5)',
+        '(milliseconds, comma-delimited, default -0.5,0.5)',
     type: String,
     defaultValue: '-0.5,0.5',
   },
