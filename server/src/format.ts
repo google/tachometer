@@ -114,3 +114,6 @@ export function formatResultRow(
 function percent(n: number, digits: number = 0): string {
   return (n * 100).toFixed(digits) + '%';
 }
+
+export const spinner = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'].map(
+    (frame) => ansi.format(`[blue]{${frame}}`));

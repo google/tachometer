@@ -24,9 +24,9 @@ import {makeSession} from './session';
 import {validBrowsers, makeDriver, openAndSwitchToNewTab, getPaintTime} from './browser';
 import {BenchmarkResult, BenchmarkSpec} from './types';
 import {Server} from './server';
-import {ResultStats, summaryStats, findFastest, findSlowest, computeSlowdowns} from './stats';
+import {ResultStats, slowdownBoundariesResolved, summaryStats, findFastest, findSlowest, computeSlowdowns} from './stats';
 import {specMatchesFilter, specsFromOpts, SpecFilter} from './specs';
-import {tableHeaders, tableColumns, formatResultRow} from './format';
+import {tableHeaders, tableColumns, formatResultRow, spinner} from './format';
 import {prepareVersionDirectories} from './versions';
 
 const repoRoot = path.resolve(__dirname, '..', '..');
@@ -121,6 +121,28 @@ const optDefs: commandLineUsage.OptionDefinition[] = [
     type: Boolean,
     defaultValue: false,
   },
+  {
+    name: 'auto-sample',
+    description: 'Continuously sample until all runtime differences can be ' +
+        'placed, with statistical significance, on one side or the other ' +
+        'of all specified --boundary points (default true)',
+    type: Boolean,
+    defaultValue: true,
+  },
+  {
+    name: 'boundaries',
+    description: 'The boundaries to use when --auto-sample is enabled ' +
+        '(comma-delimited, default -0.5,0.5)',
+    type: String,
+    defaultValue: '-0.5,0.5',
+  },
+  {
+    name: 'timeout',
+    description: 'The maximum number of minutes to spend auto-sampling ' +
+        '(default 5).',
+    type: Number,
+    defaultValue: 5,
+  },
 ];
 
 interface Opts {
@@ -137,6 +159,9 @@ interface Opts {
   manual: boolean;
   save: string;
   paint: boolean;
+  boundaries: string;
+  ['auto-sample']: boolean;
+  timeout: number;
 }
 
 function combineResults(results: BenchmarkResult[]): BenchmarkResult {
@@ -231,6 +256,12 @@ async function automaticMode(
     opts: Opts, specs: BenchmarkSpec[], server: Server) {
   const pickBaseline = pickBaselineFn(specs, opts.baseline);
 
+  const boundaryStrs = opts.boundaries.split(',');
+  if (boundaryStrs.some((s) => !s.match(/^-?(\d*\.)?\d+$/))) {
+    throw new Error(`Invalid --boundaries ${opts.boundaries}`);
+  }
+  const boundaries = boundaryStrs.map(Number);
+
   console.log('Running benchmarks\n');
 
   const bar = new ProgressBar('[:bar] :status', {
@@ -263,15 +294,33 @@ async function automaticMode(
     specResults.set(spec, []);
   }
 
-  const numRuns = specs.length * opts['sample-size'];
-  let r = 0;
+  const runSpec = async (spec: BenchmarkSpec) => {
+    const run = server.runBenchmark(spec);
+    const {driver, initialTabHandle} = browsers.get(spec.browser)!;
+    await openAndSwitchToNewTab(driver);
+    await driver.get(run.url);
+    const result = await run.result;
+    // Close the active tab (but not the whole browser, since the
+    // initial blank tab is still open).
+    await driver.close();
+    await driver.switchTo().window(initialTabHandle);
+    if (opts.paint === true) {
+      const paintTime = await getPaintTime(driver);
+      if (paintTime !== undefined) {
+        result.paintMillis = [paintTime];
+      }
+    }
+    specResults.get(spec)!.push(result);
+  };
 
-  for (let t = 0; t < opts['sample-size']; t++) {
+  // Always collect our minimum number of samples.
+  const numRuns = specs.length * opts['sample-size'];
+  let run = 0;
+  for (let sample = 0; sample < opts['sample-size']; sample++) {
     for (const spec of specs) {
-      const run = server.runBenchmark(spec);
       bar.tick(0, {
         status: [
-          `${++r}/${numRuns}`,
+          `${++run}/${numRuns}`,
           spec.browser,
           spec.name,
           spec.variant,
@@ -279,23 +328,7 @@ async function automaticMode(
         ].filter((part) => part !== '')
                     .join(' '),
       });
-
-      const {driver, initialTabHandle} = browsers.get(spec.browser)!;
-      await openAndSwitchToNewTab(driver);
-      await driver.get(run.url);
-      const result = await run.result;
-      // Close the active tab (but not the whole browser, since the
-      // initial blank tab is still open).
-      await driver.close();
-      await driver.switchTo().window(initialTabHandle);
-
-      if (opts.paint === true) {
-        const paintTime = await getPaintTime(driver);
-        if (paintTime !== undefined) {
-          result.paintMillis = [paintTime];
-        }
-      }
-      specResults.get(spec)!.push(result);
+      await runSpec(spec);
       if (bar.curr === bar.total - 1) {
         // Note if we tick with 0 after we've completed, the status is
         // rendered on the next line for some reason.
@@ -306,25 +339,57 @@ async function automaticMode(
     }
   }
 
-  // Close the browsers by closing each of their last remaining tabs.
-  await Promise.all([...browsers.values()].map(({driver}) => driver.close()));
+  const makeResults = () => {
+    const results: BenchmarkResult[] = [];
+    for (const sr of specResults.values()) {
+      results.push(combineResults(sr));
+    }
+    const withStats = results.map(
+        (result): ResultStats => ({
+          result,
+          stats: summaryStats(opts.paint ? result.paintMillis : result.millis),
+        }));
+    const baseline = pickBaseline(withStats);
+    baseline.isBaseline = true;
+    const withSlowdowns = computeSlowdowns(withStats, baseline);
+    return withSlowdowns;
+  };
 
-  await server.close();
-
-  const results: BenchmarkResult[] = [];
-  for (const sr of specResults.values()) {
-    results.push(combineResults(sr));
+  if (opts['auto-sample'] === true) {
+    console.log();
+    const timeoutMs = opts.timeout * 60 * 1000;  // minutes -> millis
+    const startMs = Date.now();
+    let run = 0;
+    let sample = 0;
+    while (true) {
+      if (slowdownBoundariesResolved(makeResults(), boundaries)) {
+        console.log();
+        break;
+      }
+      if ((Date.now() - startMs) >= timeoutMs) {
+        console.log();
+        console.log(`Hit ${opts.timeout} minute auto-sample timeout`);
+        break;
+      }
+      // Run batches of 10 additional samples at a time for more presentable
+      // sample sizes, and to nudge sample sizes up a little.
+      for (let i = 0; i < 10; i++) {
+        sample++;
+        for (const spec of specs) {
+          run++;
+          process.stdout.write(
+              `\r${spinner[run % spinner.length]} Auto-sample ${sample}`);
+          await runSpec(spec);
+        }
+      }
+    }
   }
 
-  const withStats = results.map(
-      (result): ResultStats => ({
-        result,
-        stats: summaryStats(opts.paint ? result.paintMillis : result.millis),
-      }));
-  const baseline = pickBaseline(withStats);
-  baseline.isBaseline = true;
-  const withSlowdowns = computeSlowdowns(withStats, baseline);
+  // Close the browsers by closing each of their last remaining tabs.
+  await Promise.all([...browsers.values()].map(({driver}) => driver.close()));
+  await server.close();
 
+  const withSlowdowns = makeResults();
   console.log();
   const tableData = [
     tableHeaders,
@@ -333,7 +398,7 @@ async function automaticMode(
   console.log(table.table(tableData, {columns: tableColumns}));
 
   if (opts.save) {
-    const session = await makeSession(results);
+    const session = await makeSession(withSlowdowns.map((s) => s.result));
     await fsExtra.writeJSON(opts.save, session);
   }
 }

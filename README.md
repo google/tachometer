@@ -42,6 +42,9 @@ Flag                      | Default     | Description
 `--sample-size` / `-n`    | `50`        | How many times to run each benchmark
 `--manual` / `-m`         | `false`     | Don't run automatically, just show URLs and collect results ([details](#manual-mode))
 `--save` / `-s`           | *(none)*    | Save benchmark JSON data to this file ([details](#saving-data))
+`--auto-sample`           | `true`      | Continuously sample until all runtime differences can be placed, with statistical significance, on one side or the other of all specified `--boundary` points 
+`--boundaries`            | `-0.5,0.5`  | The boundaries to use when `--auto-sample` is enabled (comma-delimited)
+`--timeout`               | `5`         | The maximum number of minutes to spend auto-sampling
 
 ### Automatic mode
 

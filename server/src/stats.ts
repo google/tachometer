@@ -88,6 +88,45 @@ function confidenceInterval95(
   };
 }
 
+/**
+ * Return whether the given confidence interval contains a value.
+ */
+function intervalContains(
+    interval: ConfidenceInterval, value: number): boolean {
+  return value >= interval.low && value <= interval.high;
+}
+
+/**
+ * Return whether all slowdown confidence intervals are unambiguously located on
+ * one side or the other of all given boundary values.
+ *
+ * For example, given the boundaries 0 and 1:
+ *
+ *    <--->                   true
+ *        <--->               false
+ *            <--->           true
+ *                <--->       false
+ *                    <--->   true
+ *        <----------->       false
+ *
+ *  |-------|-------|-------| ms slowdown
+ * -1       0       1       2
+ */
+export function slowdownBoundariesResolved(
+    resultStats: ResultStats[], boundaries: number[]): boolean {
+  for (const {isBaseline, slowdown} of resultStats) {
+    if (isBaseline === true || slowdown === undefined) {
+      continue;
+    }
+    for (const boundary of boundaries) {
+      if (intervalContains(slowdown.ci, boundary)) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 function sumOf(data: number[]): number {
   return data.reduce((acc, cur) => acc + cur);
 }
@@ -149,7 +188,7 @@ export function computeSlowdowns(
     // below our chosen significance level (aka Type I error rate, aka alpha,
     // aka 1 - chosen confidence level).
     // https://en.wikipedia.org/wiki/Type_I_and_type_II_errors#Type_I_error
-    const significanceLevel = 0.05;
+    const significanceLevel = 0.05 / 2;
     const rejectNullHypothesis = pValue < significanceLevel;
 
     // We are also interested in our potential Type II error rates (aka beta);
