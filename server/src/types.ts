@@ -59,6 +59,7 @@ export interface BenchmarkSpec {
   implementation: string;
   version: PackageVersion;
   variant: string;
+  browser: string;
   config: {};
 }
 

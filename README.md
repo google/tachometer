@@ -226,7 +226,7 @@ Option                              | Description
 ------------------------------------| -------------------------------
 `fastest`                           | Use the lowest estimated mean runtime as the baseline.
 `slowest`                           | Use the highest estimated mean runtime as the baseline.
-`name=<name>,version=<version>,...` | One or more comma-delimited `key=val` filters for narrowing down the baseline. At least one filter is required, and an error will be thrown if the selection is ambiguous. Valid filter keys: `name`, `variant`, `implementation`, `version`.
+`name=<name>,version=<version>,...` | One or more comma-delimited `key=val` filters for narrowing down the baseline. At least one filter is required, and an error will be thrown if the selection is ambiguous. Valid filter keys: `name`, `variant`, `implementation`, `version`, `browser`.
 
 ### Example commands
 

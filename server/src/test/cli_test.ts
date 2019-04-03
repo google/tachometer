@@ -20,6 +20,7 @@ const fakeSpec: BenchmarkSpec = {
   variant: 'fakeVariant',
   implementation: 'fakeImplementation',
   version: {label: 'fakeVersion', dependencyOverrides: {}},
+  browser: 'fakeBrowser',
   config: {},
 };
 

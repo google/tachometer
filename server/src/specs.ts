@@ -11,6 +11,8 @@
 
 import * as fsExtra from 'fs-extra';
 import * as path from 'path';
+
+import {validBrowsers} from './browser';
 import {BenchmarkSpec, ConfigFormat} from './types';
 import {parsePackageVersions} from './versions';
 
@@ -26,6 +28,7 @@ interface Opts {
   name: string;
   implementation: string;
   variant: string;
+  browser: string;
   'package-version': string[];
 }
 
@@ -36,6 +39,17 @@ interface Opts {
  */
 export async function specsFromOpts(
     repoRoot: string, opts: Opts): Promise<BenchmarkSpec[]> {
+  const browsers = new Set(
+      opts.browser.replace(/\s+/, '').split(',').filter((b) => b !== ''));
+  if (browsers.size === 0) {
+    throw new Error('At least one --browser must be specified');
+  }
+  for (const b of browsers) {
+    if (validBrowsers.has(b) === false) {
+      throw new Error(`Unknown --browser '${b}'`);
+    }
+  }
+
   const versions = parsePackageVersions(opts['package-version']);
 
   const specs: BenchmarkSpec[] = [];
@@ -92,23 +106,29 @@ export async function specsFromOpts(
           if (variant.name &&
               (variants.has('*') || variants.has(variant.name))) {
             for (const version of implVersions) {
-              specs.push({
-                ...partialSpec,
-                version,
-                variant: variant.name || '',
-                config: variant.config || {},
-              });
+              for (const browser of browsers) {
+                specs.push({
+                  ...partialSpec,
+                  browser,
+                  version,
+                  variant: variant.name || '',
+                  config: variant.config || {},
+                });
+              }
             }
           }
         }
       } else if (opts.variant === '*') {
         for (const version of implVersions) {
-          specs.push({
-            ...partialSpec,
-            version,
-            variant: '',
-            config: {},
-          });
+          for (const browser of browsers) {
+            specs.push({
+              ...partialSpec,
+              browser,
+              version,
+              variant: '',
+              config: {},
+            });
+          }
         }
       }
     }
@@ -138,6 +158,7 @@ export interface SpecFilter {
   implementation?: string;
   variant?: string;
   version?: string;
+  browser?: string;
 }
 
 /**
@@ -158,6 +179,9 @@ export function specMatchesFilter(
   }
   if (selector.version !== undefined &&
       spec.version.label !== selector.version) {
+    return false;
+  }
+  if (selector.browser !== undefined && spec.browser !== selector.browser) {
     return false;
   }
   return true;

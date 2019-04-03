@@ -14,13 +14,14 @@ require('source-map-support').install();
 import * as fsExtra from 'fs-extra';
 import * as path from 'path';
 import * as table from 'table';
+import * as webdriver from 'selenium-webdriver';
 
 import commandLineArgs = require('command-line-args');
 import commandLineUsage = require('command-line-usage');
 import ProgressBar = require('progress');
 
 import {makeSession} from './session';
-import {makeDriver, openAndSwitchToNewTab, getPaintTime} from './browser';
+import {validBrowsers, makeDriver, openAndSwitchToNewTab, getPaintTime} from './browser';
 import {BenchmarkResult, BenchmarkSpec} from './types';
 import {Server} from './server';
 import {ResultStats, summaryStats, findFastest, findSlowest, computeSlowdowns} from './stats';
@@ -29,11 +30,6 @@ import {tableHeaders, tableColumns, formatResultRow} from './format';
 import {prepareVersionDirectories} from './versions';
 
 const repoRoot = path.resolve(__dirname, '..', '..');
-
-const validBrowsers = new Set([
-  'chrome',
-  'firefox',
-]);
 
 const optDefs: commandLineUsage.OptionDefinition[] = [
   {
@@ -234,37 +230,22 @@ async function manualMode(opts: Opts, specs: BenchmarkSpec[], server: Server) {
 
 async function automaticMode(
     opts: Opts, specs: BenchmarkSpec[], server: Server) {
-  const browsers = new Set(
-      opts.browser.replace(/\s+/, '').split(',').filter((b) => b !== ''));
-  if (browsers.size === 0) {
-    throw new Error('At least one --browser must be specified');
-  }
-  for (const b of browsers) {
-    if (validBrowsers.has(b) === false) {
-      throw new Error(`Unknown --browser '${b}'`);
-    }
-  }
-
   const pickBaseline = pickBaselineFn(specs, opts.baseline);
 
   console.log('Running benchmarks\n');
 
   const bar = new ProgressBar('[:bar] :status', {
-    total: browsers.size * specs.length * opts.trials,
+    total: specs.length * opts.trials,
     width: 58,
   });
 
-  const specResults = new Map<BenchmarkSpec, BenchmarkResult[]>();
-  for (const spec of specs) {
-    specResults.set(spec, []);
-  }
-
-  const numRuns = browsers.size * specs.length * opts.trials;
-  let r = 0;
-
-  for (const browser of browsers) {
+  const browsers = new Map<string, {
+    name: string,
+    driver: webdriver.WebDriver,
+    initialTabHandle: string,
+  }>();
+  for (const browser of new Set(specs.map((spec) => spec.browser))) {
     bar.tick(0, {status: `launching ${browser}`});
-
     // It's important that we execute each benchmark iteration in a new tab.
     // At least in Chrome, each tab corresponds to process which shares some
     // amount of cached V8 state which can cause significant measurement
@@ -275,48 +256,59 @@ async function automaticMode(
     const tabs = await driver.getAllWindowHandles();
     // We'll always launch new tabs from this initial blank tab.
     const initialTabHandle = tabs[0];
+    browsers.set(browser, {name: browser, driver, initialTabHandle});
+  }
 
-    for (let t = 0; t < opts.trials; t++) {
-      for (const spec of specs) {
-        const run = server.runBenchmark(spec);
-        bar.tick(0, {
-          status: [
-            `${++r}/${numRuns}`,
-            browser,
-            spec.name,
-            spec.variant,
-            `${spec.implementation}@${spec.version.label}`,
-          ].filter((part) => part !== '')
-                      .join(' '),
-        });
+  const specResults = new Map<BenchmarkSpec, BenchmarkResult[]>();
+  for (const spec of specs) {
+    specResults.set(spec, []);
+  }
 
-        await openAndSwitchToNewTab(driver);
-        await driver.get(run.url);
-        const result = await run.result;
-        // Close the active tab (but not the whole browser, since the
-        // initial blank tab is still open).
-        await driver.close();
-        await driver.switchTo().window(initialTabHandle);
+  const numRuns = specs.length * opts.trials;
+  let r = 0;
 
-        if (opts.paint === true) {
-          const paintTime = await getPaintTime(driver);
-          if (paintTime !== undefined) {
-            result.paintMillis = [paintTime];
-          }
-        }
-        specResults.get(spec)!.push(result);
-        if (bar.curr === bar.total - 1) {
-          // Note if we tick with 0 after we've completed, the status is
-          // rendered on the next line for some reason.
-          bar.tick(1, {status: 'done'});
-        } else {
-          bar.tick(1);
+  for (let t = 0; t < opts.trials; t++) {
+    for (const spec of specs) {
+      const run = server.runBenchmark(spec);
+      bar.tick(0, {
+        status: [
+          `${++r}/${numRuns}`,
+          spec.browser,
+          spec.name,
+          spec.variant,
+          `${spec.implementation}@${spec.version.label}`,
+        ].filter((part) => part !== '')
+                    .join(' '),
+      });
+
+      const {driver, initialTabHandle} = browsers.get(spec.browser)!;
+      await openAndSwitchToNewTab(driver);
+      await driver.get(run.url);
+      const result = await run.result;
+      // Close the active tab (but not the whole browser, since the
+      // initial blank tab is still open).
+      await driver.close();
+      await driver.switchTo().window(initialTabHandle);
+
+      if (opts.paint === true) {
+        const paintTime = await getPaintTime(driver);
+        if (paintTime !== undefined) {
+          result.paintMillis = [paintTime];
         }
       }
+      specResults.get(spec)!.push(result);
+      if (bar.curr === bar.total - 1) {
+        // Note if we tick with 0 after we've completed, the status is
+        // rendered on the next line for some reason.
+        bar.tick(1, {status: 'done'});
+      } else {
+        bar.tick(1);
+      }
     }
-    // Close the last tab and hence the whole browser too.
-    await driver.close();
   }
+
+  // Close the browsers by closing each of their last remaining tabs.
+  await Promise.all([...browsers.values()].map(({driver}) => driver.close()));
 
   await server.close();
 
@@ -378,6 +370,8 @@ export function pickBaselineFn(specs: BenchmarkSpec[], flag: string):
       filter.implementation = val;
     } else if (key === 'version') {
       filter.version = val;
+    } else if (key === 'browser') {
+      filter.browser = val;
     } else {
       throw new Error(`Invalid baseline flag key ${key}`);
     }
