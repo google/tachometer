@@ -40,12 +40,12 @@ Flag                      | Default     | Description
 `--package-version` / `-p`| *(none)*    | Specify one or more dependency versions ([details](#versions))
 `--browser` / `-b`        | `chrome`    | Which browsers to launch in automatic mode, comma-delimited (chrome, firefox)
 `--baseline`              | `fastest`   | Which result to use as the baseline for comparison ([details](#comparison))
-`--sample-size` / `-n`    | `50`        | How many times to run each benchmark
+`--sample-size` / `-n`    | `50`        | Minimum number of times to run each benchmark
 `--manual` / `-m`         | `false`     | Don't run automatically, just show URLs and collect results ([details](#manual-mode))
 `--save` / `-s`           | *(none)*    | Save benchmark JSON data to this file ([details](#saving-data))
-`--auto-sample`           | `true`      | Continuously sample until all runtime differences can be placed, with statistical significance, on one side or the other of all specified `--boundary` points
-`--boundaries`            | `-0.5,0.5`  | The boundaries to use when `--auto-sample` is enabled (milliseconds, comma-delimited)
-`--timeout`               | `5`         | The maximum number of minutes to spend auto-sampling
+`--auto-sample`           | `true`      | Continuously sample until all runtime differences can be placed, with statistical significance, on one side or the other of all specified `--boundary` points ([details](#sample-size))
+`--boundaries`            | `0.5`       | The boundaries to use when `--auto-sample` is enabled (milliseconds, comma-delimited) ([details](#sample-size))
+`--timeout`               | `5`         | The maximum number of minutes to spend auto-sampling ([details](#sample-size))
 
 ### Automatic mode
 
@@ -108,10 +108,10 @@ Example boundaries | Question
 ------------------ | -----------
 `0`                | Is X faster or slower than the baseline at all?
 `0.5`              | Is X faster or slower than the baseline by at least 0.5 milliseconds?
-`+0.5`             | Is X faster than the baseline by at least 0.5 milliseconds?
-`-0.5`             | Is X slower than the baseline by at least 0.5 milliseconds?
+`+0.5`             | Is X slower than the baseline by at least 0.5 milliseconds?
+`-0.5`             | Is X faster than the baseline by at least 0.5 milliseconds?
 `-0.5,+0.5'        | (Same as `0.5`)
-`0,0.1,1`          | Is X at all, a little, or a lot faster or slower than the baseline?
+`0,0.1,1`          | Is X at all, a little, or a lot slower or faster than the baseline?
 
 Note that, if the actual difference is very close to a boundary, then it is
 likely that the precision stopping condition will never be met, and the timeout
