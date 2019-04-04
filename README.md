@@ -43,7 +43,7 @@ Flag                      | Default     | Description
 `--sample-size` / `-n`    | `50`        | How many times to run each benchmark
 `--manual` / `-m`         | `false`     | Don't run automatically, just show URLs and collect results ([details](#manual-mode))
 `--save` / `-s`           | *(none)*    | Save benchmark JSON data to this file ([details](#saving-data))
-`--auto-sample`           | `true`      | Continuously sample until all runtime differences can be placed, with statistical significance, on one side or the other of all specified `--boundary` points 
+`--auto-sample`           | `true`      | Continuously sample until all runtime differences can be placed, with statistical significance, on one side or the other of all specified `--boundary` points
 `--boundaries`            | `-0.5,0.5`  | The boundaries to use when `--auto-sample` is enabled (milliseconds, comma-delimited)
 `--timeout`               | `5`         | The maximum number of minutes to spend auto-sampling
 
@@ -62,7 +62,7 @@ allow you to to draw a statistically significant conclusion.
 
 For example, if you are interested in knowing which of A and B are faster, but
 you find that the confidence interval for the difference between the mean
-runtimes of A and B *includes zero* (e.g. `[-0.4, 0.6] ms`), then it is clearly
+runtimes of A and B *includes zero* (e.g. `[-0.4, +0.6] ms`), then it is clearly
 not possible to draw a conclusion about whether A is faster than B or
 vice-versa.
 
@@ -76,19 +76,19 @@ flag. Samples will continue to be taken until it is no longer statistically
 ambiguous whether a difference is either less than or greater than each of the
 configured boundaries.
 
-In the following visual example, we have set `--boundaries=-0.5,0.5` (the
-default), meaning that we are interested in knowing whether A differs from B by
-at least 0.5 milliseconds in either direction. The sample size automatically
-increases until the confidence interval is narrow enough to place the estimated
-difference squarely on one side or the other of both boundaries.
+In the following visual example, we have set `--boundaries=0.5` (the default),
+meaning that we are interested in knowing whether A differs from B by at least
+0.5 milliseconds in either direction. The sample size automatically increases
+until the confidence interval is narrow enough to place the estimated difference
+squarely on one side or the other of both boundaries.
 
 ```
-     <------------------------------->     n=50  ❌ -0.5 ❌ 0.5
-               <------------------>        n=100 ✔️ -0.5 ❌ 0.5
-                   <----->                 n=200 ✔️ -0.5 ✔️ 0.5
+     <------------------------------->     n=50  ❌ -0.5 ❌ +0.5
+               <------------------>        n=100 ✔️ -0.5 ❌ +0.5
+                   <----->                 n=200 ✔️ -0.5 ✔️ +0.5
 
  |---------|---------|---------|---------| ms runtime B - A
--1       -0.5        0        0.5        1
+-1       -0.5        0       +0.5       +1
 
 n     = sample size
 <---> = confidence interval for difference of mean runtimes
@@ -106,11 +106,12 @@ than 0.5.
 
 Example boundaries | Question
 ------------------ | -----------
-`0`                | Is X faster or slower than the baseline?
-`0.5`              | Is X slower than the baseline by at least 0.5 milliseconds?
-`-0.5`             | Is X faster than the baseline by at least 0.5 milliseconds?
-`-0.5,0.5`         | Is X faster or slower than the baseline by at least 0.5 milliseconds?
-`-1,-0.1,0,0.1,1`  | Is X at all, a little, or a lot faster or slower than the baseline?
+`0`                | Is X faster or slower than the baseline at all?
+`0.5`              | Is X faster or slower than the baseline by at least 0.5 milliseconds?
+`+0.5`             | Is X faster than the baseline by at least 0.5 milliseconds?
+`-0.5`             | Is X slower than the baseline by at least 0.5 milliseconds?
+`-0.5,+0.5'        | (Same as `0.5`)
+`0,0.1,1`          | Is X at all, a little, or a lot faster or slower than the baseline?
 
 Note that, if the actual difference is very close to a boundary, then it is
 likely that the precision stopping condition will never be met, and the timeout

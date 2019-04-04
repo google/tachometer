@@ -132,9 +132,9 @@ const optDefs: commandLineUsage.OptionDefinition[] = [
   {
     name: 'boundaries',
     description: 'The boundaries to use when --auto-sample is enabled ' +
-        '(milliseconds, comma-delimited, default -0.5,0.5)',
+        '(milliseconds, comma-delimited, optionally signed, default 0.5)',
     type: String,
-    defaultValue: '-0.5,0.5',
+    defaultValue: '0.5',
   },
   {
     name: 'timeout',
@@ -261,12 +261,7 @@ interface Browser {
 async function automaticMode(
     opts: Opts, specs: BenchmarkSpec[], server: Server) {
   const pickBaseline = pickBaselineFn(specs, opts.baseline);
-
-  const boundaryStrs = opts.boundaries.split(',');
-  if (boundaryStrs.some((s) => !s.match(/^-?(\d*\.)?\d+$/))) {
-    throw new Error(`Invalid --boundaries ${opts.boundaries}`);
-  }
-  const boundaries = boundaryStrs.map(Number);
+  const boundaries = parseBoundariesFlag(opts.boundaries);
 
   console.log('Running benchmarks\n');
 
@@ -403,6 +398,29 @@ async function automaticMode(
     const session = await makeSession(withSlowdowns.map((s) => s.result));
     await fsExtra.writeJSON(opts.save, session);
   }
+}
+
+/** Parse the --boundaries flag into a list of signed boundary values. */
+export function parseBoundariesFlag(flag: string): number[] {
+  const boundaries = new Set<number>();
+  const strs = flag.split(',');
+  for (const str of strs) {
+    if (!str.match(/^[-+]?(\d*\.)?\d+$/)) {
+      throw new Error(`Invalid --boundaries ${flag}`);
+    }
+    const num = Number(str);  // Note that Number("+1") === 1
+    if (str.startsWith('+') || str.startsWith('-') || num === 0) {
+      // If the sign was explicit (e.g. "+0.1", "-0.1") then we're only
+      // interested in that signed boundary.
+      boundaries.add(num);
+    } else {
+      // Otherwise (e.g. "0.1") we're interested in the boundary as a difference
+      // in either direction.
+      boundaries.add(-num);
+      boundaries.add(num);
+    }
+  }
+  return [...boundaries].sort((a, b) => a - b);
 }
 
 /**

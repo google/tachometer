@@ -11,7 +11,7 @@
 
 import {assert} from 'chai';
 
-import {pickBaselineFn} from '../cli';
+import {parseBoundariesFlag, pickBaselineFn} from '../cli';
 import {ResultStats, SummaryStats} from '../stats';
 import {BenchmarkResult, BenchmarkSpec} from '../types';
 
@@ -122,5 +122,27 @@ suite('pickBaseline', function() {
 
   test('throws on empty pick', () => {
     assert.throws(() => pickBaselineFn(specs, 'version=noSuchVersion'));
+  });
+});
+
+suite('parseBoundaryFlag', function() {
+  test('0', () => {
+    assert.deepEqual(parseBoundariesFlag('0'), [0]);
+  });
+
+  test('0.1', () => {
+    assert.deepEqual(parseBoundariesFlag('0.1'), [-0.1, 0.1]);
+  });
+
+  test('+0.1', () => {
+    assert.deepEqual(parseBoundariesFlag('+0.1'), [0.1]);
+  });
+
+  test('-0.1', () => {
+    assert.deepEqual(parseBoundariesFlag('-0.1'), [-0.1]);
+  });
+
+  test('0,0.1,1', () => {
+    assert.deepEqual(parseBoundariesFlag('0,0.1,1'), [-1, -0.1, 0, 0.1, 1]);
   });
 });
