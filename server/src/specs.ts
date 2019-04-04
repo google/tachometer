@@ -46,7 +46,9 @@ export async function specsFromOpts(
   }
   for (const b of browsers) {
     if (validBrowsers.has(b) === false) {
-      throw new Error(`Unknown --browser '${b}'`);
+      throw new Error(
+          `Browser ${b} is not yet supported, ` +
+          `only ${[...validBrowsers].join(' ,')} are currently supported`);
     }
   }
 

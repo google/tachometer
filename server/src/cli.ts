@@ -96,7 +96,7 @@ const optDefs: commandLineUsage.OptionDefinition[] = [
   },
   {
     name: 'sample-size',
-    description: 'How many times to run each benchmark',
+    description: 'Minimum number of times to run each benchmark',
     alias: 'n',
     type: Number,
     defaultValue: 50,
@@ -155,12 +155,12 @@ interface Opts {
   'package-version': string[];
   browser: string;
   baseline: string;
-  ['sample-size']: number;
+  'sample-size': number;
   manual: boolean;
   save: string;
   paint: boolean;
   boundaries: string;
-  ['auto-sample']: boolean;
+  'auto-sample': boolean;
   timeout: number;
 }
 
@@ -252,6 +252,12 @@ async function manualMode(opts: Opts, specs: BenchmarkSpec[], server: Server) {
   })();
 }
 
+interface Browser {
+  name: string;
+  driver: webdriver.WebDriver;
+  initialTabHandle: string;
+}
+
 async function automaticMode(
     opts: Opts, specs: BenchmarkSpec[], server: Server) {
   const pickBaseline = pickBaselineFn(specs, opts.baseline);
@@ -269,11 +275,7 @@ async function automaticMode(
     width: 58,
   });
 
-  const browsers = new Map<string, {
-    name: string,
-    driver: webdriver.WebDriver,
-    initialTabHandle: string,
-  }>();
+  const browsers = new Map<string, Browser>();
   for (const browser of new Set(specs.map((spec) => spec.browser))) {
     bar.tick(0, {status: `launching ${browser}`});
     // It's important that we execute each benchmark iteration in a new tab.
