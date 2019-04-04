@@ -21,7 +21,7 @@ export const tableHeaders = [
   'Benchmark',             // 0
   'Implementation',        // 1
   'Browser',               // 2
-  'Trials',                // 3
+  'Samples',               // 3
   'Duration (ms) C=0.95',  // 4
   'Slowdown (ms) C=0.95',  // 5
   'Bytes sent',            // 6
@@ -42,7 +42,7 @@ export const tableColumns: {[key: string]: table.ColumnConfig} = {
   },
   3: {
     alignment: 'center',
-    width: 6,
+    width: 7,
   },
   4: {
     width: 28,
@@ -114,3 +114,6 @@ export function formatResultRow(
 function percent(n: number, digits: number = 0): string {
   return (n * 100).toFixed(digits) + '%';
 }
+
+export const spinner = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'].map(
+    (frame) => ansi.format(`[blue]{${frame}}`));

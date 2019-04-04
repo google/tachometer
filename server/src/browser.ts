@@ -21,6 +21,14 @@ export interface MakeDriverOpts {
 }
 
 /**
+ * Names of the browsers we can drive.
+ */
+export const validBrowsers = new Set([
+  'chrome',
+  'firefox',
+]);
+
+/**
  * Configure a WebDriver suitable for benchmarking the given browser.
  */
 export async function makeDriver(

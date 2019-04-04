@@ -9,6 +9,7 @@ implementations.
 - [Setup](#setup)
 - [Flags](#flags)
 - [Automatic mode](#automatic-mode)
+- [Sample size](#sample-size)
 - [Manual mode](#manual-mode)
 - [Saving data](#saving-data)
 - [Adding benchmarks](#adding-benchmarks)
@@ -39,9 +40,12 @@ Flag                      | Default     | Description
 `--package-version` / `-p`| *(none)*    | Specify one or more dependency versions ([details](#versions))
 `--browser` / `-b`        | `chrome`    | Which browsers to launch in automatic mode, comma-delimited (chrome, firefox)
 `--baseline`              | `fastest`   | Which result to use as the baseline for comparison ([details](#comparison))
-`--trials` / `-t`         | `10`        | How many times to run each benchmark
+`--sample-size` / `-n`    | `50`        | Minimum number of times to run each benchmark
 `--manual` / `-m`         | `false`     | Don't run automatically, just show URLs and collect results ([details](#manual-mode))
 `--save` / `-s`           | *(none)*    | Save benchmark JSON data to this file ([details](#saving-data))
+`--auto-sample`           | `true`      | Continuously sample until all runtime differences can be placed, with statistical significance, on one side or the other of all specified `--boundary` points ([details](#sample-size))
+`--boundaries`            | `0.5`       | The boundaries to use when `--auto-sample` is enabled (milliseconds, comma-delimited) ([details](#sample-size))
+`--timeout`               | `5`         | The maximum number of minutes to spend auto-sampling ([details](#sample-size))
 
 ### Automatic mode
 
@@ -49,6 +53,69 @@ The default mode automatically launches Chrome with the selected
 benchmarks/implementations (all lit-html benchmarks by default), runs the
 benchmarks, reports the results back to the server, and prints them to the
 terminal.
+
+### Sample size
+
+By default, a minimum of 50 samples are taken from each benchmark configuration.
+The preliminary results from these samples may or may not be precise enough to
+allow you to to draw a statistically significant conclusion.
+
+For example, if you are interested in knowing which of A and B are faster, but
+you find that the confidence interval for the difference between the mean
+runtimes of A and B *includes zero* (e.g. `[-0.4, +0.6] ms`), then it is clearly
+not possible to draw a conclusion about whether A is faster than B or
+vice-versa.
+
+To help refine such inconclusive results after the initial 50 samples,
+additional samples will be continuously drawn until either the configured
+stopping condition is met, or until a timeout has expired (5 minutes by
+default).
+
+To configure the stopping condition for auto-sampling, use the `--boundaries`
+flag. Samples will continue to be taken until it is no longer statistically
+ambiguous whether a difference is either less than or greater than each of the
+configured boundaries.
+
+In the following visual example, we have set `--boundaries=0.5` (the default),
+meaning that we are interested in knowing whether A differs from B by at least
+0.5 milliseconds in either direction. The sample size automatically increases
+until the confidence interval is narrow enough to place the estimated difference
+squarely on one side or the other of both boundaries.
+
+```
+     <------------------------------->     n=50  ❌ -0.5 ❌ +0.5
+               <------------------>        n=100 ✔️ -0.5 ❌ +0.5
+                   <----->                 n=200 ✔️ -0.5 ✔️ +0.5
+
+ |---------|---------|---------|---------| ms runtime B - A
+-1       -0.5        0       +0.5       +1
+
+n     = sample size
+<---> = confidence interval for difference of mean runtimes
+✔️    = resolved boundary
+❌    = unresolved boundary
+```
+
+In the example, by `n=50` we are not sure whether A is faster or slower than B
+by more than 0.5 ms. By `n=100` we have ruled out that B is faster than A by
+more than 0.5 ms, but we're still not sure if it's slower by more than 0.5 ms.
+By `n=200` we have also ruled out that B is slower than A by more than 0.5 ms,
+so we stop sampling. Note that we still don't know which is *absolutely* faster,
+we just know that whatever the difference is, it is neither faster nor slower
+than 0.5.
+
+Example boundaries | Question
+------------------ | -----------
+`0`                | Is X faster or slower than the baseline at all?
+`0.5`              | Is X faster or slower than the baseline by at least 0.5 milliseconds?
+`+0.5`             | Is X slower than the baseline by at least 0.5 milliseconds?
+`-0.5`             | Is X faster than the baseline by at least 0.5 milliseconds?
+`-0.5,+0.5'        | (Same as `0.5`)
+`0,0.1,1`          | Is X at all, a little, or a lot slower or faster than the baseline?
+
+Note that, if the actual difference is very close to a boundary, then it is
+likely that the precision stopping condition will never be met, and the timeout
+will expire.
 
 ### Manual mode
 
@@ -226,7 +293,7 @@ Option                              | Description
 ------------------------------------| -------------------------------
 `fastest`                           | Use the lowest estimated mean runtime as the baseline.
 `slowest`                           | Use the highest estimated mean runtime as the baseline.
-`name=<name>,version=<version>,...` | One or more comma-delimited `key=val` filters for narrowing down the baseline. At least one filter is required, and an error will be thrown if the selection is ambiguous. Valid filter keys: `name`, `variant`, `implementation`, `version`.
+`name=<name>,version=<version>,...` | One or more comma-delimited `key=val` filters for narrowing down the baseline. At least one filter is required, and an error will be thrown if the selection is ambiguous. Valid filter keys: `name`, `variant`, `implementation`, `version`, `browser`.
 
 ### Example commands
 
@@ -239,13 +306,13 @@ npm run benchmarks
 ##### Run all benchmarks with all implementations
 
 ```sh
-npm run benchmarks -- --implementation=* --benchmarks=*
+npm run benchmarks -- --implementation=* --name=*
 ```
 
 ##### Run a specific benchmark implementation
 
 ```sh
-npm run benchmarks -- --implementation=incremental-dom --benchmarks=recurse
+npm run benchmarks -- --implementation=incremental-dom --name=recurse
 ```
 
 ##### Run benchmarks manually and log all results
