@@ -305,13 +305,13 @@ npm run benchmarks
 ##### Run all benchmarks with all implementations
 
 ```sh
-npm run benchmarks -- --implementation=* --benchmarks=*
+npm run benchmarks -- --implementation=* --name=*
 ```
 
 ##### Run a specific benchmark implementation
 
 ```sh
-npm run benchmarks -- --implementation=incremental-dom --benchmarks=recurse
+npm run benchmarks -- --implementation=incremental-dom --name=recurse
 ```
 
 ##### Run benchmarks manually and log all results

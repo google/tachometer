@@ -81,7 +81,7 @@ const optDefs: commandLineUsage.OptionDefinition[] = [
   {
     name: 'browser',
     description: 'Which browsers to launch in automatic mode, ' +
-        `comma-delimited (${[...validBrowsers].join(' ,')})`,
+        `comma-delimited (${[...validBrowsers].join(', ')})`,
     alias: 'b',
     type: String,
     defaultValue: 'chrome',
