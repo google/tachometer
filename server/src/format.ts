@@ -79,8 +79,9 @@ export function formatAutomaticResults(results: ResultStats[]): string {
       // These are the primary observed results, so they always go in the main
       // result table, even if they happen to be the same in one run.
       runtimeConfidenceIntervalDimension,
-      directionDimension,
+      standardDeviationDimension,
       slowdownDimension,
+      directionDimension,
   );
 
   const fixedTable = horizontalResultTable([results[0]], fixed);
@@ -203,7 +204,7 @@ const bytesSentDimension: Dimension = {
 };
 
 const runtimeConfidenceIntervalDimension: Dimension = {
-  label: 'Runtime (95% CI)',
+  label: 'Runtime [95% CI]',
   tableConfig: {
     alignment: 'right',
   },
@@ -218,7 +219,7 @@ const runtimePointEstimateDimension: Dimension = {
 };
 
 const slowdownDimension: Dimension = {
-  label: 'Slowdown (95% CI)',
+  label: 'Slowdown [95% CI]',
   tableConfig: {
     alignment: 'right',
   },
@@ -250,5 +251,14 @@ const directionDimension: Dimension = {
     } else {
       return ansi.format(`[bold green]{faster}`);
     }
+  }
+};
+
+const standardDeviationDimension: Dimension = {
+  label: 'StdDev (CV)',
+  format: (r: ResultStats) => {
+    const sd = r.stats.standardDeviation;
+    const mean = r.stats.mean;
+    return `${sd.toFixed(2)}ms (${(sd / mean * 100).toFixed()}%)`;
   }
 };
