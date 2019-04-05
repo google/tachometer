@@ -12,7 +12,7 @@
 import * as table from 'table';
 import ansi = require('ansi-escape-sequences');
 
-import {intervalContains, intervalMidpoint, ConfidenceInterval, ResultStats} from './stats';
+import {ConfidenceInterval, ResultStats} from './stats';
 
 export const spinner = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'].map(
     (frame) => ansi.format(`[blue]{${frame}}`));
@@ -243,13 +243,12 @@ const directionDimension: Dimension = {
     if (r.isBaseline === true || r.slowdown === undefined) {
       return ansi.format(`[bold blue]{baseline}`);
     }
-    if (intervalContains(r.slowdown.ci, 0)) {
-      return ansi.format(`[bold gray]{unsure}`);
-    }
-    if (intervalMidpoint(r.slowdown.ci) > 0) {
+    if (r.slowdown.ci.low > 0) {
       return ansi.format(`[bold red]{slower}`);
-    } else {
+    } else if (r.slowdown.ci.high < 0) {
       return ansi.format(`[bold green]{faster}`);
+    } else {
+      return ansi.format(`[bold gray]{unsure}`);
     }
   }
 };
