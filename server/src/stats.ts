@@ -91,9 +91,16 @@ function confidenceInterval95(
 /**
  * Return whether the given confidence interval contains a value.
  */
-function intervalContains(
+export function intervalContains(
     interval: ConfidenceInterval, value: number): boolean {
   return value >= interval.low && value <= interval.high;
+}
+
+/**
+ * Return the midpoint of the given confidence interval.
+ */
+export function intervalMidpoint(interval: ConfidenceInterval): number {
+  return (interval.low + interval.high) / 2;
 }
 
 /**

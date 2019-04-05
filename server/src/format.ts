@@ -12,108 +12,243 @@
 import * as table from 'table';
 import ansi = require('ansi-escape-sequences');
 
-import {ResultStats} from './stats';
-
-/**
- * The formatted headers of our ASCII results table.
- */
-export const tableHeaders = [
-  'Benchmark',             // 0
-  'Implementation',        // 1
-  'Browser',               // 2
-  'Samples',               // 3
-  'Duration (ms) C=0.95',  // 4
-  'Slowdown (ms) C=0.95',  // 5
-  'Bytes sent',            // 6
-].map((header) => ansi.format(`[bold]{${header}}`));
-
-/**
- * The column configuration of our ASCII results table.
- */
-export const tableColumns: {[key: string]: table.ColumnConfig} = {
-  0: {
-    width: 15,
-  },
-  1: {
-    width: 15,
-  },
-  2: {
-    width: 14,
-  },
-  3: {
-    alignment: 'center',
-    width: 7,
-  },
-  4: {
-    width: 28,
-  },
-  5: {
-    width: 23,
-  },
-  6: {
-    width: 10,
-  },
-};
-
-/**
- * Format a single row of our ASCII results table.
- */
-export function formatResultRow(
-    {result, stats, slowdown, isBaseline}: ResultStats): string[] {
-  let slowdownColumn = '';
-  if (isBaseline) {
-    slowdownColumn = ansi.format(`       [bold white bg-blue]{ BASELINE }`);
-  } else if (slowdown !== undefined) {
-    const ci = 'Δ [' + (slowdown.ci.low >= 0 ? '+' : '') +
-        slowdown.ci.low.toFixed(2) + ', ' + (slowdown.ci.high >= 0 ? '+' : '') +
-        slowdown.ci.high.toFixed(2) + ']';
-
-    if (slowdown.rejectNullHypothesis === true) {
-      if (slowdown.ci.low + slowdown.ci.high > 0) {
-        slowdownColumn +=
-            ansi.format(`     [bold white bg-red]{ LIKELY SLOWER }`);
-      } else {
-        slowdownColumn +=
-            ansi.format(`     [bold white bg-green]{ LIKELY FASTER }`);
-      }
-      slowdownColumn += '\n';
-      slowdownColumn += ci;
-      slowdownColumn += `\np ${percent(slowdown.pValue, 2)}`;
-
-    } else {
-      const power = slowdown.powerAnalysis;
-      slowdownColumn +=
-          ansi.format(`  [bold white bg-gray]{ INDISTINGUISHABLE }`);
-      slowdownColumn += '\n';
-      slowdownColumn += ci;
-      slowdownColumn += `\np ${percent(slowdown.pValue, 2)}`;
-      slowdownColumn += `\n${percent(power.observedPower)} power ` +
-          `| Δ${power.hypothesizedAbsoluteEffect.toFixed(2)}ms`;
-      if (power.observedPower < power.desiredPower) {
-        slowdownColumn += `\nTry n = ${power.minimumSampleSize}`;
-      }
-    }
-  }
-
-  return [
-    result.name + (result.variant !== undefined ? `\n${result.variant}` : ''),
-    `${result.implementation}\n${result.version}`,
-    `${result.browser.name}\n${result.browser.version}`,
-    stats.size.toFixed(0),
-    [
-      `  Mean [${stats.meanCI.low.toFixed(2)}, ` +
-          `${stats.meanCI.high.toFixed(2)}]`,
-      `StdDev ${stats.standardDeviation.toFixed(2)} ` +
-          `(${percent(stats.relativeStandardDeviation, 2)})`,
-    ].join('\n'),
-    slowdownColumn,
-    `${(result.bytesSent / 1024).toFixed(2)} KiB`,
-  ];
-}
-
-function percent(n: number, digits: number = 0): string {
-  return (n * 100).toFixed(digits) + '%';
-}
+import {intervalContains, intervalMidpoint, ConfidenceInterval, ResultStats} from './stats';
 
 export const spinner = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'].map(
     (frame) => ansi.format(`[blue]{${frame}}`));
+
+/**
+ * An abstraction for the various dimensions of data we display.
+ */
+interface Dimension {
+  label: string;
+  format: (r: ResultStats) => string;
+  tableConfig?: table.ColumnConfig;
+}
+
+/**
+ * Format a manual mode result as an ASCII table.
+ */
+export function formatManualResult(result: ResultStats): string {
+  const dimensions = [
+    benchmarkDimension,
+    variantDimension,
+    implementationDimension,
+    versionDimension,
+    browserDimension,
+    bytesSentDimension,
+    runtimePointEstimateDimension,
+  ];
+  return verticalResultTable([result], dimensions);
+}
+
+/**
+ * Format automatic mode results as ASCII tables.
+ */
+export function formatAutomaticResults(results: ResultStats[]): string {
+  // Typically most dimensions for a set of results share the same value (e.g
+  // because we're only running one benchmark, one browser, etc.). To save
+  // horizontal space and make the results easier to read, we first show the
+  // fixed values in one table, then the unfixed values in another.
+  const fixed: Dimension[] = [];
+  const unfixed: Dimension[] = [];
+
+  const possiblyFixed = [
+    benchmarkDimension,
+    variantDimension,
+    implementationDimension,
+    versionDimension,
+    browserDimension,
+    sampleSizeDimension,
+    bytesSentDimension,
+  ];
+
+  for (const dimension of possiblyFixed) {
+    const values = new Set<string>();
+    for (const res of results) {
+      values.add(dimension.format(res));
+    }
+    if (values.size === 1) {
+      fixed.push(dimension);
+    } else {
+      unfixed.push(dimension);
+    }
+  }
+
+  unfixed.push(
+      // These are the primary observed results, so they always go in the main
+      // result table, even if they happen to be the same in one run.
+      runtimeConfidenceIntervalDimension,
+      directionDimension,
+      slowdownDimension,
+  );
+
+  const fixedTable = horizontalResultTable([results[0]], fixed);
+  const unfixedTable = verticalResultTable(results, unfixed);
+  return `${fixedTable}\n${unfixedTable}\n`;
+}
+
+/**
+ * Format a result table where each result is a row:
+ *
+ * +--------+--------+
+ * | Header | Header |
+ * +--------+--------+
+ * | Value  | Value  |
+ * +--------+--------+
+ * | Value  | Value  |
+ * +--------+--------+
+ */
+function verticalResultTable(
+    results: ResultStats[], dimensions: Dimension[]): string {
+  const columns = dimensions.map((d) => d.tableConfig || {});
+  const rows = [
+    dimensions.map((d) => ansi.format(`[bold]{${d.label}}`)),
+    ...results.map((r) => dimensions.map((d) => d.format(r))),
+  ];
+  return table.table(rows, {
+    border: table.getBorderCharacters('norc'),
+    columns,
+  });
+}
+
+/**
+ * Format a result table where each result is a column:
+ *
+ * +--------+-------+-------+
+ * | Header | Value | Value |
+ * +--------+-------+-------+
+ * | Header | Value | Value |
+ * +--------+-------+-------+
+ */
+function horizontalResultTable(
+    results: ResultStats[], dimensions: Dimension[]): string {
+  const columns: table.ColumnConfig[] = [
+    {alignment: 'right'},
+    ...results.map((): table.ColumnConfig => ({alignment: 'left'})),
+  ];
+  const rows = dimensions.map((d) => {
+    return [
+      ansi.format(`[bold]{${d.label}}`),
+      ...results.map((r) => d.format(r)),
+    ];
+  });
+  return table.table(rows, {
+    border: table.getBorderCharacters('norc'),
+    columns,
+  });
+}
+
+/**
+ * Format a confidence interval as "[low, high]".
+ */
+const formatConfidenceInterval =
+    (ci: ConfidenceInterval, format: (n: number) => string) => {
+      return ansi.format(
+          `[gray]{[}${format(ci.low)}[gray]{,} ` +
+          `${format(ci.high)}[gray]{]}`);
+    };
+
+/**
+ * Prefix positive numbers with a red "+" and negative ones with a green "-".
+ */
+const colorizeSign = (n: number, format: (n: number) => string) => {
+  if (n > 0) {
+    return ansi.format(`[red bold]{+}${format(n)}`);
+  } else if (n < 0) {
+    // Negate the value so that we don't get a double negative sign.
+    return ansi.format(`[green bold]{-}${format(-n)}`);
+  } else {
+    return format(n);
+  }
+};
+
+const benchmarkDimension: Dimension = {
+  label: 'Benchmark',
+  format: (r: ResultStats) => r.result.name,
+};
+
+const variantDimension: Dimension = {
+  label: 'Variant',
+  tableConfig: {
+    alignment: 'right',
+  },
+  format: (r: ResultStats) => r.result.variant,
+};
+
+const implementationDimension: Dimension = {
+  label: 'Impl',
+  format: (r: ResultStats) => r.result.implementation,
+};
+
+const versionDimension: Dimension = {
+  label: 'Version',
+  format: (r: ResultStats) => r.result.version,
+};
+
+const browserDimension: Dimension = {
+  label: 'Browser',
+  format: (r: ResultStats) =>
+      `${r.result.browser.name} ${r.result.browser.version}`,
+};
+
+const sampleSizeDimension: Dimension = {
+  label: 'Sample size',
+  format: (r: ResultStats) => r.result.millis.length.toString(),
+};
+
+const bytesSentDimension: Dimension = {
+  label: 'Bytes',
+  format: (r: ResultStats) => (r.result.bytesSent / 1024).toFixed(2) + ' KiB',
+};
+
+const runtimeConfidenceIntervalDimension: Dimension = {
+  label: 'Runtime (95% CI)',
+  tableConfig: {
+    alignment: 'right',
+  },
+  format: (r: ResultStats) =>
+      formatConfidenceInterval(r.stats.meanCI, (n) => n.toFixed(3)) + ' ms',
+};
+
+const runtimePointEstimateDimension: Dimension = {
+  label: 'Runtime',
+  format: (r: ResultStats) =>
+      ansi.format(`[blue]{${r.stats.mean.toFixed(3)}} ms`),
+};
+
+const slowdownDimension: Dimension = {
+  label: 'Slowdown (95% CI)',
+  tableConfig: {
+    alignment: 'right',
+  },
+  format: (r: ResultStats) => {
+    if (r.isBaseline === true || r.slowdown == undefined) {
+      return ansi.format(`[gray]{N/A        }`);
+    }
+    return formatConfidenceInterval(
+               r.slowdown.ci,
+               (n: number) => colorizeSign(n, (n) => n.toFixed(3))) +
+        ' ms';
+  },
+};
+
+const directionDimension: Dimension = {
+  label: 'Direction',
+  tableConfig: {
+    alignment: 'center',
+  },
+  format: (r: ResultStats) => {
+    if (r.isBaseline === true || r.slowdown === undefined) {
+      return ansi.format(`[bold blue]{baseline}`);
+    }
+    if (intervalContains(r.slowdown.ci, 0)) {
+      return ansi.format(`[bold gray]{unsure}`);
+    }
+    if (intervalMidpoint(r.slowdown.ci) > 0) {
+      return ansi.format(`[bold red]{slower}`);
+    } else {
+      return ansi.format(`[bold green]{faster}`);
+    }
+  }
+};

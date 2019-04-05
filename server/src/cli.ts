@@ -13,12 +13,12 @@ require('source-map-support').install();
 
 import * as fsExtra from 'fs-extra';
 import * as path from 'path';
-import * as table from 'table';
 import * as webdriver from 'selenium-webdriver';
 
 import commandLineArgs = require('command-line-args');
 import commandLineUsage = require('command-line-usage');
 import ProgressBar = require('progress');
+import ansi = require('ansi-escape-sequences');
 
 import {makeSession} from './session';
 import {validBrowsers, makeDriver, openAndSwitchToNewTab, getPaintTime} from './browser';
@@ -26,7 +26,7 @@ import {BenchmarkResult, BenchmarkSpec} from './types';
 import {Server} from './server';
 import {ResultStats, slowdownBoundariesResolved, summaryStats, findFastest, findSlowest, computeSlowdowns} from './stats';
 import {specMatchesFilter, specsFromOpts, SpecFilter} from './specs';
-import {tableHeaders, tableColumns, formatResultRow, spinner} from './format';
+import {formatManualResult, formatAutomaticResults, spinner} from './format';
 import {prepareVersionDirectories} from './versions';
 
 const repoRoot = path.resolve(__dirname, '..', '..');
@@ -219,35 +219,19 @@ async function manualMode(opts: Opts, specs: BenchmarkSpec[], server: Server) {
     throw new Error(`Can't save results in manual mode`);
   }
 
-  const urlTable: string[][] = [];
-  for (const spec of specs) {
-    urlTable.push([
-      spec.name,
-      spec.implementation,
-      server.specUrl(spec),
-    ]);
-  }
-  console.log();
   console.log('Visit these URLs in any browser:');
-  console.log();
-  console.log(table.table(urlTable));
-
-  console.log('Results will appear below:');
-  console.log();
-  const stream = table.createStream({
-    columnCount: tableHeaders.length,
-    columns: tableColumns,
-    columnDefault: {
-      width: 18,
-    },
-  });
-  // TODO(aomarks) Upstream this type to DT, it's wrong.
-  const streamWrite = stream.write as unknown as (cols: string[]) => void;
-  streamWrite(tableHeaders);
+  for (const spec of specs) {
+    console.log();
+    console.log(
+        `${spec.name} ${spec.variant} ` +
+        `/ ${spec.implementation} ${spec.version.label}`);
+    console.log(ansi.format(`[yellow]{${server.specUrl(spec)}}`));
+  }
+  console.log(`\nResults will appear below:\n`);
   (async function() {
     for await (const result of server.streamResults()) {
-      streamWrite(
-          formatResultRow({result, stats: summaryStats(result.millis)}));
+      const resultStats = {result, stats: summaryStats(result.millis)};
+      console.log(formatManualResult(resultStats));
     }
   })();
 }
@@ -388,11 +372,7 @@ async function automaticMode(
 
   const withSlowdowns = makeResults();
   console.log();
-  const tableData = [
-    tableHeaders,
-    ...withSlowdowns.map(formatResultRow),
-  ];
-  console.log(table.table(tableData, {columns: tableColumns}));
+  console.log(formatAutomaticResults(withSlowdowns));
 
   if (opts.save) {
     const session = await makeSession(withSlowdowns.map((s) => s.result));
