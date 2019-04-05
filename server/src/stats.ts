@@ -41,16 +41,6 @@ export interface ResultStats {
 
 export interface Slowdown {
   ci: ConfidenceInterval;
-  rejectNullHypothesis: boolean;
-  pValue: number;
-  powerAnalysis: PowerAnalysis;
-}
-
-interface PowerAnalysis {
-  hypothesizedAbsoluteEffect: number;
-  desiredPower: number;
-  observedPower: number;
-  minimumSampleSize: number;
 }
 
 export function summaryStats(data: number[]): SummaryStats {
@@ -191,77 +181,14 @@ export function computeSlowdowns(
     // https://en.wikipedia.org/wiki/P-value
     const pValue = jstat.studentt.cdf(-Math.abs(tStatistic), size - 1);
 
-    // Reject if the probability of observing a value as extreme as this one is
-    // below our chosen significance level (aka Type I error rate, aka alpha,
-    // aka 1 - chosen confidence level).
-    // https://en.wikipedia.org/wiki/Type_I_and_type_II_errors#Type_I_error
-    const significanceLevel = 0.05 / 2;
-    const rejectNullHypothesis = pValue < significanceLevel;
-
-    // We are also interested in our potential Type II error rates (aka beta);
-    // the probability of failing to reject the null hypothesis if it was in
-    // fact false. This rate is defined only for given specific hypothesized
-    // differences (called effect size), since it is easier to detect large
-    // differences than small ones. See https://rpsychologist.com/d3/NHST/ for a
-    // visualization of power analysis.
-
-    // TODO Make this a flag. The difference we might care about detecting about
-    // varies by case.
-    const hypothesizedAbsoluteEffect = 0.01;
-
-    // 80% power is a common value. Could be a flag.
-    const desiredPower = 0.8;
-
-    // TODO It seems possible that two different programs would have different
-    // variance, so the pooled variance isn't neccessarily what we want to use.
-    // Is there another way of computing power that takes this into account?
-    const pooledVariance = poolVariances(baseline.stats, result.stats);
-    const pooledStdDev = Math.sqrt(pooledVariance);
-
-    // Convert our effect of interest into units of standard deviation.
-    const hypothesizedStandardEffect =
-        hypothesizedAbsoluteEffect / pooledStdDev;
-
-    // http://statweb.stanford.edu/~susan/courses/s141/hopower.pdf
-    const tAlpha = jstat.studentt.inv(1 - (significanceLevel / 2), size - 1);
-    const observedPower =
-        jstat.studentt.cdf(
-            (Math.sqrt(size) * hypothesizedStandardEffect) - tAlpha, size - 1) +
-        jstat.studentt.cdf(
-            (-Math.sqrt(size) * hypothesizedStandardEffect) - tAlpha, size - 1);
-
-    // See "Sample Sizes for Two Independent Samples, Continuous Outcome" from
-    // http://sphweb.bumc.bu.edu/otlt/MPH-Modules/BS/BS704_Power/BS704_Power_print.html
-    const tBeta = jstat.studentt.inv(desiredPower, size - 1);
-    const minimumSampleSize =
-        Math.ceil(2 * (((tAlpha + tBeta) / hypothesizedStandardEffect) ** 2));
-
     return {
       ...result,
       slowdown: {
         ci: confidenceInterval95(sddm, size),
-        rejectNullHypothesis,
         pValue,
-        powerAnalysis: {
-          hypothesizedAbsoluteEffect,
-          desiredPower,
-          observedPower,
-          minimumSampleSize,
-        },
       },
     };
   });
-}
-
-/**
- * If we assume that the two populations have equal variance, then the pooled
- * (average, weighted by sample size) variance is a better estimate of that
- * variance than either of the individual estimates.
- * https://en.wikipedia.org/wiki/Pooled_variance
- */
-function poolVariances(...stats: SummaryStats[]): number {
-  return sumOf(stats.map((s) => (s.size - 1) * s.variance)) /
-      sumOf(stats.map((s) => s.size - 1));
 }
 
 /**
