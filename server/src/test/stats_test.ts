@@ -20,7 +20,7 @@ suite('statistics', function() {
 
     // Increasing the number of trials increases the precision of our long-term
     // estimate of the proportion of correct confidence intervals (see below).
-    // Imperically, 10000 lets us reliably assert the proportion +/- 0.01.
+    // Empirically, 10000 lets us reliably assert the proportion +/- 0.01.
     const numTrials = 10000;
 
     // How many randomized configurations of hypothetical benchmarks to test.
