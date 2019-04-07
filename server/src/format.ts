@@ -80,7 +80,8 @@ export function formatAutomaticResults(results: ResultStats[]): string {
       // result table, even if they happen to be the same in one run.
       runtimeConfidenceIntervalDimension,
       standardDeviationDimension,
-      slowdownDimension,
+      absoluteSlowdownDimension,
+      relativeSlowdownDimension,
       directionDimension,
   );
 
@@ -218,7 +219,7 @@ const runtimePointEstimateDimension: Dimension = {
       ansi.format(`[blue]{${r.stats.mean.toFixed(3)}} ms`),
 };
 
-const slowdownDimension: Dimension = {
+const absoluteSlowdownDimension: Dimension = {
   label: 'Slowdown [95% CI]',
   tableConfig: {
     alignment: 'right',
@@ -228,9 +229,25 @@ const slowdownDimension: Dimension = {
       return ansi.format(`[gray]{N/A        }`);
     }
     return formatConfidenceInterval(
-               r.slowdown.ci,
+               r.slowdown.absolute,
                (n: number) => colorizeSign(n, (n) => n.toFixed(3))) +
         ' ms';
+  },
+};
+
+const relativeSlowdownDimension: Dimension = {
+  label: 'Relative [95% CI]',
+  tableConfig: {
+    alignment: 'right',
+  },
+  format: (r: ResultStats) => {
+    if (r.isBaseline === true || r.slowdown === undefined) {
+      return ansi.format(`[gray]{N/A        }`);
+    }
+    return formatConfidenceInterval(
+               r.slowdown.relative,
+               (n: number) => colorizeSign(n, (n) => (n * 100).toFixed(2))) +
+        ' %';
   },
 };
 
@@ -243,9 +260,9 @@ const directionDimension: Dimension = {
     if (r.isBaseline === true || r.slowdown === undefined) {
       return ansi.format(`[bold blue]{baseline}`);
     }
-    if (r.slowdown.ci.low > 0) {
+    if (r.slowdown.absolute.low > 0) {
       return ansi.format(`[bold red]{slower}`);
-    } else if (r.slowdown.ci.high < 0) {
+    } else if (r.slowdown.absolute.high < 0) {
       return ansi.format(`[bold green]{faster}`);
     } else {
       return ansi.format(`[bold gray]{unsure}`);

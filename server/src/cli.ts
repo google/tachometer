@@ -24,7 +24,7 @@ import {makeSession} from './session';
 import {validBrowsers, makeDriver, openAndSwitchToNewTab, getPaintTime} from './browser';
 import {BenchmarkResult, BenchmarkSpec} from './types';
 import {Server} from './server';
-import {ResultStats, slowdownBoundariesResolved, summaryStats, findFastest, findSlowest, computeSlowdowns} from './stats';
+import {Boundaries, ResultStats, slowdownBoundariesResolved, summaryStats, findFastest, findSlowest, computeSlowdowns} from './stats';
 import {specMatchesFilter, specsFromOpts, SpecFilter} from './specs';
 import {formatManualResult, formatAutomaticResults, spinner} from './format';
 import {prepareVersionDirectories} from './versions';
@@ -132,9 +132,9 @@ const optDefs: commandLineUsage.OptionDefinition[] = [
   {
     name: 'boundaries',
     description: 'The boundaries to use when --auto-sample is enabled ' +
-        '(milliseconds, comma-delimited, optionally signed, default 0.5)',
+        '(milliseconds, comma-delimited, optionally signed, default 10%)',
     type: String,
-    defaultValue: '0.5',
+    defaultValue: '10%',
   },
   {
     name: 'timeout',
@@ -381,26 +381,41 @@ async function automaticMode(
 }
 
 /** Parse the --boundaries flag into a list of signed boundary values. */
-export function parseBoundariesFlag(flag: string): number[] {
-  const boundaries = new Set<number>();
+export function parseBoundariesFlag(flag: string): Boundaries {
+  const absolute = new Set<number>();
+  const relative = new Set<number>();
   const strs = flag.split(',');
   for (const str of strs) {
-    if (!str.match(/^[-+]?(\d*\.)?\d+$/)) {
+    if (!str.match(/^[-+]?(\d*\.)?\d+%?$/)) {
       throw new Error(`Invalid --boundaries ${flag}`);
     }
-    const num = Number(str);  // Note that Number("+1") === 1
+
+    let num;
+    let absOrRel;
+    const isPercent = str.endsWith('%');
+    if (isPercent === true) {
+      num = Number(str.slice(0, -1)) / 100;
+      absOrRel = relative;
+    } else {
+      num = Number(str);  // Note that Number("+1") === 1
+      absOrRel = absolute;
+    }
+
     if (str.startsWith('+') || str.startsWith('-') || num === 0) {
       // If the sign was explicit (e.g. "+0.1", "-0.1") then we're only
       // interested in that signed boundary.
-      boundaries.add(num);
+      absOrRel.add(num);
     } else {
-      // Otherwise (e.g. "0.1") we're interested in the boundary as a difference
-      // in either direction.
-      boundaries.add(-num);
-      boundaries.add(num);
+      // Otherwise (e.g. "0.1") we're interested in the boundary as a
+      // difference in either direction.
+      absOrRel.add(-num);
+      absOrRel.add(num);
     }
   }
-  return [...boundaries].sort((a, b) => a - b);
+  return {
+    absolute: [...absolute].sort((a, b) => a - b),
+    relative: [...relative].sort((a, b) => a - b),
+  };
 }
 
 /**
