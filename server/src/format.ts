@@ -209,7 +209,7 @@ const runtimeConfidenceIntervalDimension: Dimension = {
     alignment: 'right',
   },
   format: (r: ResultStats) =>
-      formatConfidenceInterval(r.stats.meanCI, (n) => n.toFixed(3)) + ' ms',
+      formatConfidenceInterval(r.stats.meanCI, (n) => n.toFixed(3) + 'ms'),
 };
 
 const runtimePointEstimateDimension: Dimension = {
@@ -228,9 +228,8 @@ const slowdownDimension: Dimension = {
       return ansi.format(`[gray]{N/A        }`);
     }
     return formatConfidenceInterval(
-               r.slowdown.ci,
-               (n: number) => colorizeSign(n, (n) => n.toFixed(3))) +
-        ' ms';
+        r.slowdown.ci,
+        (n: number) => colorizeSign(n, (n) => n.toFixed(3)) + 'ms');
   },
 };
 
