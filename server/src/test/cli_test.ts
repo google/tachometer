@@ -127,22 +127,79 @@ suite('pickBaseline', function() {
 
 suite('parseBoundaryFlag', function() {
   test('0', () => {
-    assert.deepEqual(parseBoundariesFlag('0'), [0]);
+    assert.deepEqual(parseBoundariesFlag('0'), {
+      absolute: [0],
+      relative: [],
+    });
   });
 
   test('0.1', () => {
-    assert.deepEqual(parseBoundariesFlag('0.1'), [-0.1, 0.1]);
+    assert.deepEqual(parseBoundariesFlag('0.1'), {
+      absolute: [-0.1, 0.1],
+      relative: [],
+    });
   });
 
   test('+0.1', () => {
-    assert.deepEqual(parseBoundariesFlag('+0.1'), [0.1]);
+    assert.deepEqual(parseBoundariesFlag('+0.1'), {
+      absolute: [0.1],
+      relative: [],
+    });
   });
 
   test('-0.1', () => {
-    assert.deepEqual(parseBoundariesFlag('-0.1'), [-0.1]);
+    assert.deepEqual(parseBoundariesFlag('-0.1'), {
+      absolute: [-0.1],
+      relative: [],
+    });
   });
 
   test('0,0.1,1', () => {
-    assert.deepEqual(parseBoundariesFlag('0,0.1,1'), [-1, -0.1, 0, 0.1, 1]);
+    assert.deepEqual(parseBoundariesFlag('0,0.1,1'), {
+      absolute: [-1, -0.1, 0, 0.1, 1],
+      relative: [],
+    });
+  });
+
+  test('0%', () => {
+    assert.deepEqual(parseBoundariesFlag('0%'), {
+      absolute: [],
+      relative: [0],
+    });
+  });
+
+  test('1%', () => {
+    assert.deepEqual(parseBoundariesFlag('1%'), {
+      absolute: [],
+      relative: [-0.01, 0.01],
+    });
+  });
+
+  test('+1%', () => {
+    assert.deepEqual(parseBoundariesFlag('+1%'), {
+      absolute: [],
+      relative: [0.01],
+    });
+  });
+
+  test('-1%', () => {
+    assert.deepEqual(parseBoundariesFlag('-1%'), {
+      absolute: [],
+      relative: [-0.01],
+    });
+  });
+
+  test('0%,1%,10%', () => {
+    assert.deepEqual(parseBoundariesFlag('0%,1%,10%'), {
+      absolute: [],
+      relative: [-0.1, -0.01, 0, 0.01, 0.10],
+    });
+  });
+
+  test('0,0.1,1,0%,1%,10%', () => {
+    assert.deepEqual(parseBoundariesFlag('0,0.1,1,0%,1%,10%'), {
+      absolute: [-1, -0.1, 0, 0.1, 1],
+      relative: [-0.1, -0.01, 0, 0.01, 0.10],
+    });
   });
 });

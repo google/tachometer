@@ -40,7 +40,8 @@ export interface ResultStats {
 }
 
 export interface Slowdown {
-  ci: ConfidenceInterval;
+  absolute: ConfidenceInterval;
+  relative: ConfidenceInterval;
 }
 
 export function summaryStats(data: number[]): SummaryStats {
@@ -86,6 +87,11 @@ export function intervalContains(
   return value >= interval.low && value <= interval.high;
 }
 
+export interface Boundaries {
+  absolute: number[];
+  relative: number[];
+}
+
 /**
  * Return whether all slowdown confidence intervals are unambiguously located on
  * one side or the other of all given boundary values.
@@ -103,13 +109,18 @@ export function intervalContains(
  * -1       0       1       2
  */
 export function slowdownBoundariesResolved(
-    resultStats: ResultStats[], boundaries: number[]): boolean {
+    resultStats: ResultStats[], boundaries: Boundaries): boolean {
   for (const {isBaseline, slowdown} of resultStats) {
     if (isBaseline === true || slowdown === undefined) {
       continue;
     }
-    for (const boundary of boundaries) {
-      if (intervalContains(slowdown.ci, boundary)) {
+    for (const boundary of boundaries.absolute) {
+      if (intervalContains(slowdown.absolute, boundary)) {
+        return false;
+      }
+    }
+    for (const boundary of boundaries.relative) {
+      if (intervalContains(slowdown.relative, boundary)) {
         return false;
       }
     }
@@ -154,17 +165,18 @@ export function computeSlowdowns(
   });
 }
 
-export function computeSlowdown(
-    baseline: SummaryStats, comparison: SummaryStats): Slowdown {
+export function computeSlowdown(a: SummaryStats, b: SummaryStats): Slowdown {
+  const meanA = samplingDistributionOfTheMean(a, a.size);
+  const meanB = samplingDistributionOfTheMean(b, b.size);
+  const diffAbs = samplingDistributionOfAbsoluteDifferenceOfMeans(meanA, meanB);
+  const diffRel = samplingDistributionOfRelativeDifferenceOfMeans(meanA, meanB);
   // We're assuming sample sizes are equal. If they're not for some reason, be
-  // conservative and use the smaller one (since we'll calculate higher
-  // errors).
-  const size = Math.min(baseline.size, comparison.size);
-  const baselineSDM = samplingDistributionOfTheMean(baseline, size);
-  const sdm = samplingDistributionOfTheMean(comparison, size);
-  const sddm = samplingDistributionOfTheDifferenceOfMeans(sdm, baselineSDM);
+  // conservative and use the smaller one for the t-distribution's degrees of
+  // freedom (since that will lead to a wider confidence interval).
+  const minSize = Math.min(a.size, b.size);
   return {
-    ci: confidenceInterval95(sddm, size),
+    absolute: confidenceInterval95(diffAbs, minSize),
+    relative: confidenceInterval95(diffRel, minSize),
   };
 }
 
@@ -184,17 +196,37 @@ function samplingDistributionOfTheMean(
 }
 
 /**
- * Estimates the sampling distribution of the difference of means. This models
- * the distribution of the difference between two means that we would compute
- * under repeated samples under the given two sampling distributions of means.
+ * Estimates the sampling distribution of the difference of means (b-a). This
+ * models the distribution of the difference between two means that we would
+ * compute under repeated samples under the given two sampling distributions of
+ * means.
  */
-function samplingDistributionOfTheDifferenceOfMeans(
+function samplingDistributionOfAbsoluteDifferenceOfMeans(
     a: Distribution, b: Distribution): Distribution {
   // http://onlinestatbook.com/2/sampling_distributions/samplingdist_diff_means.html
   // http://www.stat.yale.edu/Courses/1997-98/101/meancomp.htm
   return {
-    mean: a.mean - b.mean,
+    mean: b.mean - a.mean,
     // The error from both input sampling distributions of means accumulate.
     variance: a.variance + b.variance,
+  };
+}
+
+/**
+ * Estimates the sampling distribution of the relative difference of means
+ * ((b-a)/a). This models the distribution of the relative difference between
+ * two means that we would compute under repeated samples under the given two
+ * sampling distributions of means.
+ */
+function samplingDistributionOfRelativeDifferenceOfMeans(
+    a: Distribution, b: Distribution): Distribution {
+  // http://blog.analytics-toolkit.com/2018/confidence-intervals-p-values-percent-change-relative-difference/
+  // Note that the above article also prevents an alternative calculation for a
+  // confidence interval for relative differences, but the one chosen here is
+  // is much simpler and passes our stochastic tests, so it seems sufficient.
+  return {
+    mean: (b.mean - a.mean) / a.mean,
+    variance:
+        (a.variance * b.mean ** 2 + b.variance * a.mean ** 2) / a.mean ** 4,
   };
 }

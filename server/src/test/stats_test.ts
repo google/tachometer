@@ -35,7 +35,8 @@ suite('statistics', function() {
       // the value of the --sample-size flag).
       const trueMeanA = randFloat(0.01, 1000);
       const trueMeanB = randFloat(0.01, 1000);
-      const trueDifference = trueMeanB - trueMeanA;
+      const trueAbsoluteDifference = trueMeanB - trueMeanA;
+      const trueRelativeDifference = (trueMeanB - trueMeanA) / trueMeanA;
       const stdDevA = randFloat(0.01, 10);
       const stdDevB = randFloat(0.01, 10);
       const sampleSize = randInt(50, 1000);
@@ -44,7 +45,8 @@ suite('statistics', function() {
       // Keep track of how often our confidence interval contains the true mean.
       let numGoodA = 0;
       let numGoodB = 0;
-      let numGoodDiff = 0;
+      let numGoodAbsoluteDiff = 0;
+      let numGoodRelativeDiff = 0;
       for (let t = 0; t < numTrials; t++) {
         // TODO It does not theoretically matter if our underlying data is
         // normally distributed. Test with some other underlying distributions,
@@ -60,8 +62,11 @@ suite('statistics', function() {
         if (intervalContains(statsB.meanCI, trueMeanB)) {
           numGoodB++;
         }
-        if (intervalContains(slowdown.ci, trueDifference)) {
-          numGoodDiff++;
+        if (intervalContains(slowdown.absolute, trueAbsoluteDifference)) {
+          numGoodAbsoluteDiff++;
+        }
+        if (intervalContains(slowdown.relative, trueRelativeDifference)) {
+          numGoodRelativeDiff++;
         }
       }
 
@@ -70,7 +75,8 @@ suite('statistics', function() {
       // mean 95% of the time (this is the definition of a confidence interval).
       assert.closeTo(numGoodA / numTrials, 0.95, 0.01);
       assert.closeTo(numGoodB / numTrials, 0.95, 0.01);
-      assert.closeTo(numGoodDiff / numTrials, 0.95, 0.01);
+      assert.closeTo(numGoodAbsoluteDiff / numTrials, 0.95, 0.01);
+      assert.closeTo(numGoodRelativeDiff / numTrials, 0.95, 0.01);
     }
   });
 });
