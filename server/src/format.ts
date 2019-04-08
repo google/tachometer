@@ -224,7 +224,7 @@ const slowdownDimension: Dimension = {
     alignment: 'right',
   },
   format: (r: ResultStats) => {
-    if (r.isBaseline === true || r.slowdown == undefined) {
+    if (r.isBaseline === true || r.slowdown === undefined) {
       return ansi.format(`[gray]{N/A        }`);
     }
     return formatConfidenceInterval(

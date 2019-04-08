@@ -81,7 +81,7 @@ function confidenceInterval95(
 /**
  * Return whether the given confidence interval contains a value.
  */
-function intervalContains(
+export function intervalContains(
     interval: ConfidenceInterval, value: number): boolean {
   return value >= interval.low && value <= interval.high;
 }
@@ -142,46 +142,30 @@ export function findSlowest(stats: ResultStats[]): ResultStats {
  */
 export function computeSlowdowns(
     stats: ResultStats[], baseline: ResultStats): ResultStats[] {
-  const baselineSDM =
-      samplingDistributionOfTheMean(baseline.stats, baseline.stats.size);
-
   return stats.map((result) => {
     if (result === baseline) {
       // No slowdown for the baseline.
       return result;
     }
-
-    // We're assuming sample sizes are equal. If they're not for some reason, be
-    // conservative and use the smaller one (since the sampling distribution
-    // will most likely have higher variance).
-    const size = Math.min(baseline.stats.size, result.stats.size);
-
-    const sdm = samplingDistributionOfTheMean(result.stats, size);
-    const sddm = samplingDistributionOfTheDifferenceOfMeans(sdm, baselineSDM);
-
-    // Here we perform a 2-sided t-test with a null hypothesis that the two
-    // means are equal.
-    // https://en.wikipedia.org/wiki/Student%27s_t-test
-
-    // Convert the (signed) difference in means we observed into standard
-    // errors.
-    // https://en.wikipedia.org/wiki/T-statistic
-    const tStatistic = sddm.mean / Math.sqrt(sddm.variance);
-
-    // Compute the probability that we could observe a difference in means as
-    // extreme as this one (in either direction), if we assumed that the null
-    // hypothesis was true.
-    // https://en.wikipedia.org/wiki/P-value
-    const pValue = jstat.studentt.cdf(-Math.abs(tStatistic), size - 1);
-
     return {
       ...result,
-      slowdown: {
-        ci: confidenceInterval95(sddm, size),
-        pValue,
-      },
+      slowdown: computeSlowdown(baseline.stats, result.stats),
     };
   });
+}
+
+export function computeSlowdown(
+    baseline: SummaryStats, comparison: SummaryStats): Slowdown {
+  // We're assuming sample sizes are equal. If they're not for some reason, be
+  // conservative and use the smaller one (since we'll calculate higher
+  // errors).
+  const size = Math.min(baseline.size, comparison.size);
+  const baselineSDM = samplingDistributionOfTheMean(baseline, size);
+  const sdm = samplingDistributionOfTheMean(comparison, size);
+  const sddm = samplingDistributionOfTheDifferenceOfMeans(sdm, baselineSDM);
+  return {
+    ci: confidenceInterval95(sddm, size),
+  };
 }
 
 /**
