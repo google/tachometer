@@ -149,6 +149,9 @@ export async function specsFromOpts(
     if (a.version.label !== b.version.label) {
       return a.version.label.localeCompare(b.version.label);
     }
+    if (a.browser !== b.browser) {
+      return a.browser.localeCompare(b.browser);
+    }
     return 0;
   });
 
