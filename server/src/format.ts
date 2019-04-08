@@ -244,9 +244,8 @@ const relativeSlowdownDimension: Dimension = {
       return ansi.format(`[gray]{N/A        }`);
     }
     return formatConfidenceInterval(
-               r.slowdown.relative,
-               (n: number) => colorizeSign(n, (n) => (n * 100).toFixed(2))) +
-        ' %';
+        r.slowdown.relative,
+        (n: number) => colorizeSign(n, (n) => (n * 100).toFixed(2) + '%'));
   },
 };
 
