@@ -6,7 +6,7 @@
   "main": "index.js",
   "scripts": {
     "prepare": "(cd server && npm install) && (cd client && npm install) && (cd benchmarks && npm install)",
-    "benchmarks": "node server/lib/cli.js",
+    "benchmarks": "node server/bin/benchmark.js --root=./benchmarks",
     "build": "(cd server && npm run build) && (cd client && npm run build)",
     "format": "(cd server && npm run format) && (cd client && npm run format) && (cd benchmarks && npm run format)",
     "test": "(cd server && npm run test)"

@@ -176,7 +176,7 @@ function combineResults(results: BenchmarkResult[]): BenchmarkResult {
   return combined;
 }
 
-async function main() {
+export async function main() {
   const opts = commandLineArgs(optDefs) as Opts;
   if (opts.help) {
     console.log(commandLineUsage([{
@@ -468,8 +468,4 @@ export function pickBaselineFn(specs: BenchmarkSpec[], flag: string):
                  result.implementation === spec.implementation &&
                  result.variant === spec.variant &&
                  result.version === spec.version.label)!;
-}
-
-if (require.main === module) {
-  main();
 }
