@@ -61,7 +61,7 @@ const optDefs: commandLineUsage.OptionDefinition[] = [
     description: 'Which implementations to run (* for all)',
     alias: 'i',
     type: String,
-    defaultValue: 'lit-html',
+    defaultValue: '*',
   },
   {
     name: 'variant',

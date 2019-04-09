@@ -35,7 +35,7 @@ Flag                      | Default     | Description
 `--host`                  | `127.0.0.1` | Which host to run on
 `--port`                  | `0`         | Which port to run on (`0` for random free)
 `--name` / `-n`           | `*`         | Which benchmarks to run (`*` for all) ([details](#adding-benchmarks))
-`--implementation` / `-i` | `lit-html`  | Which implementations to run (`*` for all) ([details](#adding-benchmarks))
+`--implementation` / `-i` | `*`         | Which implementations to run (`*` for all) ([details](#adding-benchmarks))
 `--variant` / `-v`        | `*`         | Which variants to run (`*` for all) ([details](#variants))
 `--package-version` / `-p`| *(none)*    | Specify one or more dependency versions ([details](#versions))
 `--browser` / `-b`        | `chrome`    | Which browsers to launch in automatic mode, comma-delimited (chrome, firefox)
