@@ -5,10 +5,10 @@
   "description": "Benchmarks for lit-html",
   "main": "index.js",
   "scripts": {
-    "prepare": "(cd runner && npm install) && (cd client && npm install) && (cd benchmarks && npm install)",
+    "prepare": "(cd runner && npm install) && (cd benchmarks && npm install)",
     "benchmarks": "node runner/bin/benchmark.js --root=./benchmarks",
-    "build": "(cd runner && npm run build) && (cd client && npm run build)",
-    "format": "(cd runner && npm run format) && (cd client && npm run format) && (cd benchmarks && npm run format)",
+    "build": "(cd runner && npm run build)",
+    "format": "(cd runner && npm run format) && (cd benchmarks && npm run format)",
     "test": "(cd runner && npm run test)"
   },
   "repository": {

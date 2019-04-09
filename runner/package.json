@@ -12,9 +12,9 @@
   },
   "scripts": {
     "prepare": "npm run build",
-    "build": "rm -rf lib && tsc && npm run lint",
+    "build": "rm -rf lib/ client/lib/ && tsc && tsc -p client/ && npm run lint",
     "lint": "tslint --project . --format stylish",
-    "format": "find src -name \"*.ts\" | xargs clang-format --style=file -i",
+    "format": "find src/ client/src/ -name \"*.ts\" | xargs clang-format --style=file -i",
     "test": "npm run build && mocha"
   },
   "repository": {

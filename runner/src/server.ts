@@ -28,7 +28,7 @@ export interface ServerOpts {
   benchmarksDir: string;
 }
 
-const clientDir = path.resolve(__dirname, '..', '..', 'client');
+const clientDir = path.resolve(__dirname, '..', 'client');
 
 export class Server {
   readonly url: string;
