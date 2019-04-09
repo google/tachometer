@@ -103,14 +103,14 @@ async function npmInstall(cwd: string): Promise<void> {
  * package.json, applying dependency overrides to it, and running "npm install".
  */
 export async function prepareVersionDirectories(
-    rootDir: string, specs: BenchmarkSpec[]): Promise<void> {
+    benchmarksDir: string, specs: BenchmarkSpec[]): Promise<void> {
   for (const spec of specs) {
     if (spec.version.label === 'default') {
       // This is just the main implementation installation. We assume it's
       // already been setup by the main npm install process.
       continue;
     }
-    const implDir = path.join(rootDir, 'benchmarks', spec.implementation);
+    const implDir = path.join(benchmarksDir, spec.implementation);
     const versionDir = path.join(implDir, 'versions', spec.version.label);
     if (await fsExtra.pathExists(versionDir)) {
       // TODO(aomarks) If the user specified new dependencies for the same

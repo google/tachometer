@@ -9,7 +9,7 @@
  * rights grant found at http://polymer.github.io/PATENTS.txt
  */
 
-// Note: sync with server/src/types.ts
+// Note: sync with runner/src/types.ts
 interface BenchmarkResponse {
   runId?: string;
   urlPath: string;

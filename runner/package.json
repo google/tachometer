@@ -1,17 +1,20 @@
 {
-  "name": "lit-benchmarks-server",
+  "name": "lit-benchmark-runner",
   "private": true,
   "version": "1.0.0",
-  "description": "lit-html benchmarks server/runner",
-  "main": "lib/cli.js",
+  "description": "lit-html benchmark runner",
+  "main": "index.js",
   "directories": {
     "lib": "lib"
   },
+  "bin": {
+    "benchmark": "bin/benchmark.js"
+  },
   "scripts": {
     "prepare": "npm run build",
-    "build": "rm -rf lib && tsc && npm run lint",
+    "build": "rm -rf lib/ client/lib/ && tsc && tsc -p client/ && npm run lint",
     "lint": "tslint --project . --format stylish",
-    "format": "find src -name \"*.ts\" | xargs clang-format --style=file -i",
+    "format": "find src/ client/src/ -name \"*.ts\" | xargs clang-format --style=file -i",
     "test": "npm run build && mocha"
   },
   "repository": {

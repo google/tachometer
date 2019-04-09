@@ -11,6 +11,7 @@
 
 import * as http from 'http';
 import * as net from 'net';
+import * as path from 'path';
 import * as querystring from 'querystring';
 
 import Koa = require('koa');
@@ -20,6 +21,14 @@ import bodyParser = require('koa-bodyparser');
 import {UAParser} from 'ua-parser-js';
 
 import {BenchmarkResponse, Deferred, BenchmarkSpec, BenchmarkResult, PendingBenchmark} from './types';
+
+export interface ServerOpts {
+  host: string;
+  port: number;
+  benchmarksDir: string;
+}
+
+const clientDir = path.resolve(__dirname, '..', 'client');
 
 export class Server {
   readonly url: string;
@@ -34,17 +43,16 @@ export class Server {
   private readonly pendingRuns = new Map<string, PendingBenchmark>();
   private resultSubmitted = new Deferred<BenchmarkResult>();
 
-  static start(opts: {host: string, port: number, rootDir: string}):
-      Promise<Server> {
+  static start(opts: ServerOpts): Promise<Server> {
     return new Promise((resolve) => {
       const server = http.createServer();
       server.listen(
           {host: opts.host, port: opts.port},
-          () => resolve(new Server(server, opts.rootDir)));
+          () => resolve(new Server(server, opts)));
     });
   }
 
-  constructor(server: http.Server, rootDir: string) {
+  constructor(server: http.Server, opts: ServerOpts) {
     this.server = server;
 
     const app = new Koa();
@@ -52,7 +60,9 @@ export class Server {
     app.use(mount('/submitResults', this.submitResults.bind(this)));
     app.use(this.rewriteVersionUrls.bind(this));
     app.use(this.recordBytesSent.bind(this));
-    app.use(mount('/', serve(rootDir, {index: 'index.html'})));
+    app.use(
+        mount('/benchmarks', serve(opts.benchmarksDir, {index: 'index.html'})));
+    app.use(mount('/client', serve(clientDir)));
     this.server.on('request', app.callback());
 
     const address = (this.server.address() as net.AddressInfo);
@@ -184,7 +194,7 @@ export class Server {
     const result: BenchmarkResult = {
       runId: response.runId,
       name,
-      variant: response.variant,
+      variant: response.variant || '',
       implementation,
       version,
       millis: [response.millis],

@@ -67,7 +67,7 @@ export interface BenchmarkSpec {
 export interface BenchmarkResponse {
   runId?: string;
   urlPath: string;
-  variant: string;
+  variant?: string;
   millis: number;
 }
 

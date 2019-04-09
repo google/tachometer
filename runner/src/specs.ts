@@ -25,6 +25,7 @@ const ignoreFiles = new Set([
 ]);
 
 interface Opts {
+  root: string;
   name: string;
   implementation: string;
   variant: string;
@@ -37,8 +38,7 @@ interface Opts {
  * given options, which may require checking the layout on disk of the
  * benchmarks/ directory.
  */
-export async function specsFromOpts(
-    repoRoot: string, opts: Opts): Promise<BenchmarkSpec[]> {
+export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
   const browsers = new Set(
       opts.browser.replace(/\s+/, '').split(',').filter((b) => b !== ''));
   if (browsers.size === 0) {
@@ -57,7 +57,7 @@ export async function specsFromOpts(
   const specs: BenchmarkSpec[] = [];
   let impls;
   if (opts.implementation === '*') {
-    impls = await fsExtra.readdir(path.join(repoRoot, 'benchmarks'));
+    impls = await fsExtra.readdir(opts.root);
     impls = impls.filter((dir) => !ignoreFiles.has(dir));
   } else {
     impls = opts.implementation.split(',');
@@ -72,7 +72,7 @@ export async function specsFromOpts(
       opts.variant.split(',').map((v) => v.trim()).filter((v) => v !== ''));
 
   for (const implementation of impls) {
-    const implDir = path.join(repoRoot, 'benchmarks', implementation);
+    const implDir = path.join(opts.root, implementation);
     let benchmarks;
     if (opts.name === '*') {
       benchmarks = await fsExtra.readdir(implDir);

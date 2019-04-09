@@ -1,0 +1,8 @@
+test/
+src/test/
+lib/test/
+.clang-format
+tsconfig-base.json
+tsconfig.json
+tslint.json
+*.tgz
