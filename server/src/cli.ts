@@ -12,7 +12,6 @@
 require('source-map-support').install();
 
 import * as fsExtra from 'fs-extra';
-import * as path from 'path';
 import * as webdriver from 'selenium-webdriver';
 
 import commandLineArgs = require('command-line-args');
@@ -29,14 +28,19 @@ import {specMatchesFilter, specsFromOpts, SpecFilter} from './specs';
 import {formatManualResult, formatAutomaticResults, spinner} from './format';
 import {prepareVersionDirectories} from './versions';
 
-const repoRoot = path.resolve(__dirname, '..', '..');
-
 const optDefs: commandLineUsage.OptionDefinition[] = [
   {
     name: 'help',
     description: 'Show documentation',
     type: Boolean,
     defaultValue: false,
+  },
+  {
+    name: 'root',
+    description:
+        'Root directory to search for benchmarks (default current directory)',
+    type: String,
+    defaultValue: './',
   },
   {
     name: 'host',
@@ -147,6 +151,7 @@ const optDefs: commandLineUsage.OptionDefinition[] = [
 
 interface Opts {
   help: boolean;
+  root: string;
   host: string;
   port: number;
   name: string;
@@ -190,17 +195,17 @@ export async function main() {
     throw new Error('--sample-size must be > 0');
   }
 
-  const specs = await specsFromOpts(repoRoot, opts);
+  const specs = await specsFromOpts(opts);
   if (specs.length === 0) {
     throw new Error('No benchmarks matched with the given flags');
   }
 
-  await prepareVersionDirectories(repoRoot, specs);
+  await prepareVersionDirectories(opts.root, specs);
 
   const server = await Server.start({
     host: opts.host,
     port: opts.port,
-    rootDir: repoRoot,
+    benchmarksDir: opts.root,
   });
 
   if (opts.manual === true) {

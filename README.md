@@ -32,6 +32,7 @@ npm run benchmarks
 Flag                      | Default     | Description
 ------------------------- | ----------- | --------------------------------
 `--help`                  | `false`     | Show documentation
+`--root`                  | `./`        | Root directory to search for benchmarks
 `--host`                  | `127.0.0.1` | Which host to run on
 `--port`                  | `0`         | Which port to run on (`0` for random free)
 `--name` / `-n`           | `*`         | Which benchmarks to run (`*` for all) ([details](#adding-benchmarks))
