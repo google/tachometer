@@ -134,7 +134,7 @@ Use the `--save <filename>` flag to save benchmarking results to a file. If the
 file does not exist it will be created, otherwise it will be created.
 
 The file format is one line per *session*, where a session is a JSON-encoded
-[`BenchmarkSession`](https://github.com/PolymerLabs/lit-benchmarks/blob/master/server/src/types.ts)
+[`BenchmarkSession`](https://github.com/PolymerLabs/lit-benchmarks/blob/master/runner/src/types.ts)
 object which contains an array of millisecond benchmark results along with
 timestamp and system information.
 
@@ -187,7 +187,7 @@ benchmark directories cannot be named `versions`, `common`, `node_modules`,
 
 Run `npm run format` from the top-level of the repo to run clang-format on all
 `.js` files in `benchmarks/` (along with all `.ts` files in `client/` and
-`server/`).
+`runner/`).
 
 ### Versions
 
