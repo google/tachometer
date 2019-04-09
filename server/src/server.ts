@@ -184,7 +184,7 @@ export class Server {
     const result: BenchmarkResult = {
       runId: response.runId,
       name,
-      variant: response.variant,
+      variant: response.variant || '',
       implementation,
       version,
       millis: [response.millis],
