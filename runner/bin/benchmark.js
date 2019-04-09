@@ -10,4 +10,8 @@
  * Google as part of the polymer project is also subject to an additional IP
  * rights grant found at http://polymer.github.io/PATENTS.txt
  */
-require('../lib/cli.js').main();
+
+require('../lib/cli.js').main().catch((e) => {
+  console.error(e);
+  process.exitCode = 1;
+})
