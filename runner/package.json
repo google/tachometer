@@ -1,9 +1,9 @@
 {
-  "name": "lit-benchmarks-server",
+  "name": "lit-benchmark-runner",
   "private": true,
   "version": "1.0.0",
-  "description": "lit-html benchmarks server/runner",
-  "main": "lib/cli.js",
+  "description": "lit-html benchmark runner",
+  "main": "index.js",
   "directories": {
     "lib": "lib"
   },
