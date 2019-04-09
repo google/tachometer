@@ -9,7 +9,7 @@
       bench.start();
       let s = 0;
       for (let i = 0; i < bench.config.n; i++) {
-        s+= i;
+        s += i;
       }
       bench.stop();
       console.log(i); // Side effect to prevent e.g. dead code elimination.
