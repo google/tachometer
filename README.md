@@ -1,195 +1,331 @@
-# Lit Benchmarks
+# RUNNER
 
-Benchmarks for evaluating the performance of
-[lit-html](https://github.com/Polymer/lit-html), along with alternative
-implementations.
+<img src="./images/horses.jpg" width="207" height="173" align="right">
 
-## Contents
+> RUNNER is a tool for running benchmarks in web browsers. It uses repeated
+sampling and statistics to reliably identify even the smallest differences in
+timing.
 
-- [Setup](#setup)
-- [Flags](#flags)
-- [Automatic mode](#automatic-mode)
-- [Sample size](#sample-size)
-- [Manual mode](#manual-mode)
-- [Saving data](#saving-data)
-- [Adding benchmarks](#adding-benchmarks)
-- [Variants](#variants)
-- [Versions](#versions)
-- [Comparison](#comparison)
-- [Example commands](#example-commands)
+## Why?
 
-### Setup
+Benchmarking is *hard*. Even if you run the exact same JavaScript, on the same
+browser, on the same machine, on the same day, you will likely get a
+significantly different result every time you measure. For this reason, at first
+pass, it is often very difficult to say anything meaningful about the
+performance of a script.
 
-```sh
-git clone git@github.com:PolymerLabs/lit-benchmarks.git
-cd lit-benchmarks
-npm install
-npm run benchmarks
+But there is signal in the noise. Scripts do have true underlying performance
+characteristics on average. By taking enough *repeated samples* and applying the
+right statistics, we can reliably identify small differences and quantify our
+confidence in them.
+
+## Quick Start
+
+1. Install RUNNER from NPM.
+
+  ```sh
+  $ npm i RUNNER
+  ```
+
+2. Make a folder for your benchmarks. RUNNER expects a particular file layout
+   (explained [below](#folder-layout)).
+
+  ```sh
+  $ mkdir benchmarks/
+  $ cd benchmarks/
+  $ mkdir -p default/forloop
+  $ vim default/forloop/index.html
+  ```
+
+3. Create a simple benchmark that just executes a for loop. RUNNER benchmarks
+   are just HTML files that import and call `bench.start()` and `bench.stop()`.
+
+  ```html
+  <html>
+  <body>
+  <script type="module">
+    import * as bench from '/client/lib/index.js';
+    bench.start();
+    for (let i = 0; i < 1000; i++) { }
+    bench.stop();
+  </script>
+  </body>
+  </html>
+  ```
+
+4. Launch RUNNER, which will automatically find your benchmark, launch Chrome,
+   and execute the benchmark 50 times.
+
+  ```sh
+  $ RUNNER
+  ```
+
+  Along with some other information, RUNNER will show you a range of plausible
+  values for how long this benchmark takes to run (more precisely, a *95%
+  confidence interval*, which is explained [below]()).
+
+  <img src="./images/screen1.png">
+
+## Features
+
+The above quick start shows the simplest way to use RUNNER, but it can do much
+more.
+
+- *Compare benchmarks*. Run any number of benchmarks in the same session, see
+  you which ones were faster or slower, and by how much. Compare different
+  benchmarks, different browsers, and different implementations or
+  configurations of the same benchmark. See [multiple
+  benchmarks](#multiple-benchmarks).
+
+
+- *Configure different versions* of the same NPM dependency that your
+  benchmark uses. Compare competing implementation ideas, or detect
+  regressions. See [package versions](#package-versions).
+
+
+- *Configure variants* of a benchmark from the command-line. For example we
+  can make the number of iterations in the example above a parameter so that
+  it can be configured from a JSON config file. See [variants](#variants).
+
+
+- *Automatically continue sampling* until we have enough precision to draw the
+  conclusion you are trying to make. See [auto sampling](#auto-sampling).
+
+## One benchmark
+
+When you execute just one benchmark, you'll get a table with one main result
+column: the ***runtime*** of the benchmark, presented as a *95% confidence
+interval* (see [below](#confidence-intervals) for interpretation) for the number
+of milliseconds that elapsed between `bench.start()` and `bench.stop()`.
+
+<img src="./images/screen1.png"></img>
+
+## Multiple benchmarks
+
+When you run multiple benchmarks together in the same session, you'll get a
+table with 1 row per benchmark, and 3 main result columns per row:
+
+1. The ***runtime*** of each benchmark.
+2. The ***absolute difference*** versus the baseline (*"slowdown"* column).
+3. The ***percent difference*** versus the baseline (*"relative"* column).
+
+<img src="./images/screen2.png"></img>
+
+## Baseline
+
+The ***baseline*** is the result which the *difference* confidence intervals are
+relative to. The absolute difference is `result - baseline`, and the percent
+difference is `(result - baseline) / baseline`. Positive numbers (red) indicate
+a *slowdown* versus the baseline, and negative numbers (green) indicate a
+*speedup* versus the baseline. By default the *fastest* benchmark is chosen as
+the baseline, but you can change that with the `--baseline` flag.
+
+Baseline flag option                | Description
+------------------------------------| -------------------------------
+`fastest`                           | Use the lowest estimated mean runtime as the baseline.
+`slowest`                           | Use the highest estimated mean runtime as the baseline.
+`name=<name>,version=<version>,...` | One or more comma-delimited `key=val` filters for narrowing down the baseline. At least one filter is required, and an error will be thrown if the selection is ambiguous. Valid filter keys: `name`, `variant`, `implementation`, `version`, `browser`.
+
+## Folder layout
+
+```
+<root>/
+└── <implementation>/
+    ├── package.json
+    └── <benchmark>/
+        ├── index.html
+        └── index.js
 ```
 
-### Flags
+The **root** directory is where RUNNER looks for your benchmarks. By default it
+is the current working directory, but you can change it with the `--root` flag
+(see [flags](#flags)).
 
-Flag                      | Default     | Description
-------------------------- | ----------- | --------------------------------
-`--help`                  | `false`     | Show documentation
-`--root`                  | `./`        | Root directory to search for benchmarks
-`--host`                  | `127.0.0.1` | Which host to run on
-`--port`                  | `0`         | Which port to run on (`0` for random free)
-`--name` / `-n`           | `*`         | Which benchmarks to run (`*` for all) ([details](#adding-benchmarks))
-`--implementation` / `-i` | `*`         | Which implementations to run (`*` for all) ([details](#adding-benchmarks))
-`--variant` / `-v`        | `*`         | Which variants to run (`*` for all) ([details](#variants))
-`--package-version` / `-p`| *(none)*    | Specify one or more dependency versions ([details](#versions))
-`--browser` / `-b`        | `chrome`    | Which browsers to launch in automatic mode, comma-delimited (chrome, firefox)
-`--baseline`              | `fastest`   | Which result to use as the baseline for comparison ([details](#comparison))
-`--sample-size` / `-n`    | `50`        | Minimum number of times to run each benchmark
-`--manual` / `-m`         | `false`     | Don't run automatically, just show URLs and collect results ([details](#manual-mode))
-`--save` / `-s`           | *(none)*    | Save benchmark JSON data to this file ([details](#saving-data))
-`--auto-sample`           | `true`      | Continuously sample until all runtime differences can be placed, with statistical significance, on one side or the other of all specified `--boundary` points ([details](#sample-size))
-`--boundaries`            | `10%`       | The boundaries to use when `--auto-sample` is enabled (milliseconds, comma-delimited) ([details](#sample-size))
-`--timeout`               | `5`         | The maximum number of minutes to spend auto-sampling ([details](#sample-size))
+Benchmarks are next organized into **implementation** directories, each with
+their own optional `package.json`. Since one supported use cases is to compare
+equivalent benchmarks using different underlying implementations, this layer
+exists to isolate those NPM dependencies. For simple use cases, you can just
+create a `default` (or any name) directory with no `package.json`.
 
-### Automatic mode
+Finally, each **benchmark** directory contains a benchmark. Each benchmark
+directory must have an `index.html` file, which is what RUNNER will launch.
 
-The default mode automatically launches Chrome with the selected
-benchmarks/implementations (all lit-html benchmarks by default), runs the
-benchmarks, reports the results back to the server, and prints them to the
-terminal.
+## Confidence intervals
 
-### Sample size
+The most important concept needed to interpret results from RUNNER is the
+***confidence interval***. Loosely speaking, a confidence interval is a range of
+*plausible values* for a parameter (e.g. runtime), and the *confidence level*
+(which we fix at *95%*) corresponds to the degree of confidence we have that
+interval contains the *true value* of that parameter.
 
-By default, a minimum of 50 samples are taken from each benchmark configuration.
-The preliminary results from these samples may or may not be precise enough to
-allow you to to draw a statistically significant conclusion.
+> More precisely, the 95% confidence level describes the *long-run proportion of
+> confidence intervals that will contain the true value*. Hypothetically, if you
+> run RUNNER over and over again in the same configuration, then while you'll
+> get a slightly different confidence interval every time, it should be the case
+> that *95% of those confidence intervals will contain the true value*. See
+> [Wikipedia](https://en.wikipedia.org/wiki/Confidence_interval#Meaning_and_interpretation)
+> for more information on interpreting confidence intervals.
 
-For example, if you are interested in knowing which of A and B are faster, but
-you find that the confidence interval for the difference between the mean
-runtimes of A and B *includes zero* (e.g. `[-0.4, +0.6] ms`), then it is clearly
-not possible to draw a conclusion about whether A is faster than B or
-vice-versa.
-
-To help refine such inconclusive results after the initial 50 samples,
-additional samples will be continuously drawn until either the configured
-stopping condition is met, or until a timeout has expired (5 minutes by
-default).
-
-To configure the stopping condition for auto-sampling, use the `--boundaries`
-flag. Samples will continue to be taken until it is no longer statistically
-ambiguous whether a difference is either less than or greater than each of the
-configured boundaries.
-
-In the following visual example, we have set `--boundaries=0.5` meaning that we
-are interested in knowing whether A differs from B by at least 0.5 milliseconds
-in either direction. The sample size automatically increases until the
-confidence interval is narrow enough to place the estimated difference squarely
-on one side or the other of both boundaries.
+The *width* of a confidence interval determines the range of values it includes.
+Narrower confidence intervals give you a more precise estimate of what the true
+value might be. In general, we want narrower confidence intervals.
 
 ```
-     <------------------------------->     n=50  ❌ -0.5 ❌ +0.5
-               <------------------>        n=100 ✔️ -0.5 ❌ +0.5
-                   <----->                 n=200 ✔️ -0.5 ✔️ +0.5
+    <------------->   Wider confidence interval
+                      High variance and/or low sample size
 
- |---------|---------|---------|---------| ms runtime B - A
--1       -0.5        0       +0.5       +1
+         <--->   Narrower confidence interval
+                 Low variance and/or high sample size
+
+ |---------|---------|---------|---------|
+-1%      -0.5%       0%      +0.5%      +1%
+```
+
+Three knobs can shrink our confidence intervals:
+
+1. Dropping the chosen confidence level. *This is not a good idea!* We want our
+   results to be *consistently reported with high confidence*, so we always use
+   95% confidence intervals.
+
+
+2. Decreasing the variation in the benchmark timing measurements. *This is hard
+   to do*. A great many factors lead to variation in timing measurements, most
+   of which are very difficult to control, including some that are
+   [intentionally built
+   in](https://developers.google.com/web/updates/2018/02/meltdown-spectre#high-resolution_timers)!
+
+
+3. Increasing the sample size. The [central limit
+   theorem](https://en.wikipedia.org/wiki/Central_limit_theorem) means that,
+   even when we have high variance data, and even when that data is not normally
+   distributed, as we take more and more samples, we'll be able to calculate a
+   more and more precise estimate of the true mean of the data. *Increasing the
+   sample size is the main knob we have.*
+
+## Sample size
+
+By default, a minimum of 50 samples are taken from each benchmark. The
+preliminary results from these samples may or may not be precise enough to allow
+you to to draw a statistically significant conclusion.
+
+> For example, if you are interested in knowing which of A and B are faster, but
+> you find that the confidence interval for the percent change between the mean
+> runtimes of A and B *includes zero* (e.g. `[-3.08%, +2.97%]`), then it is
+> clearly not possible to draw a conclusion about whether A is faster than B or
+> vice-versa.
+
+You can increase the sample size with the `--sample-size` flag, or you can
+enable *auto-sampling*.
+
+## Auto sampling
+
+When the `--auto-sample` flag is set, RUNNER will continue drawing samples until
+either certain stopping conditions that you specify are met, or until a timeout
+expires (5 minutes by default).
+
+The stopping conditions for auto-sampling are specified in terms of
+***boundaries***. A boundary can be thought of as a *point of interest* on the
+number-line of either absolute or relative differences in runtime. By setting a
+boundary, you are asking RUNNER to try to *shrink the confidence interval until
+it is unambiguously placed on one side or the other of that boundary*.
+
+Example boundaries | Question
+------------------ | -----------
+`0%`               | Is X faster or slower than the baseline *at all*?
+`10%`              | Is X faster or slower than the baseline by at least 10%?
+`+10%`             | Is X slower than the baseline by at least 10%?
+`-10%`             | Is X faster than the baseline by at least 10%?
+`-10%,+10%`        | (Same as `10%`)
+`0%,10%,100%`      | Is X at all, a little, or a lot slower or faster than the baseline?
+`0.5`              | Is X faster or slower than the baseline by at least 0.5 milliseconds?
+
+In the following visual example, we have set `--boundaries=10%` meaning that we
+are interested in knowing whether A differs from B by at least 10% in either
+direction. The sample size automatically increases until the confidence interval
+is narrow enough to place the estimated difference squarely on one side or the
+other of both boundaries.
+
+```
+      <------------------------------->     n=50  ❌ -10% ❌ +10%
+                <------------------>        n=100 ✔️ -10% ❌ +10%
+                    <----->                 n=200 ✔️ -10% ✔️ +10%
+
+  |---------|---------|---------|---------| difference in runtime
+-20%      -10%        0       +10%      +20%
 
 n     = sample size
-<---> = confidence interval for difference of mean runtimes
+<---> = confidence interval for percent difference of mean runtimes
 ✔️    = resolved boundary
 ❌    = unresolved boundary
 ```
 
 In the example, by `n=50` we are not sure whether A is faster or slower than B
-by more than 0.5 ms. By `n=100` we have ruled out that B is faster than A by
-more than 0.5 ms, but we're still not sure if it's slower by more than 0.5 ms.
-By `n=200` we have also ruled out that B is slower than A by more than 0.5 ms,
-so we stop sampling. Note that we still don't know which is *absolutely* faster,
-we just know that whatever the difference is, it is neither faster nor slower
-than 0.5.
-
-Example boundaries | Question
------------------- | -----------
-`0`                | Is X faster or slower than the baseline at all?
-`0.5`              | Is X faster or slower than the baseline by at least 0.5 milliseconds?
-`20%`              | Is X faster or slower than the baseline by 10%?
-`+0.5`             | Is X slower than the baseline by at least 0.5 milliseconds?
-`-0.5`             | Is X faster than the baseline by at least 0.5 milliseconds?
-`-0.5,+0.5'        | (Same as `0.5`)
-`0%,10%,100%`      | Is X at all, a little, or a lot slower or faster than the baseline?
+by more than 10%. By `n=100` we have ruled out that B is *faster* than A by more
+than 10%, but we're still not sure if it's *slower* by more than 10%. By `n=200`
+we have also ruled out that B is slower than A by more than 10%, so we stop
+sampling. Note that we still don't know which is *absolutely* faster, we just
+know that whatever the difference is, it is neither faster nor slower than 10%
+(and if we did want to know, we could add `0` to our boundaries).
 
 Note that, if the actual difference is very close to a boundary, then it is
 likely that the precision stopping condition will never be met, and the timeout
 will expire.
 
-### Manual mode
+## Variants
 
-If the `--manual` or `-m` flag is set, then no benchmarks will run
-automatically. Instead, URLs for all selected benchmarks/implementations will be
-printed on the terminal, and the server will listen indefinitely. Visiting any
-of these URLs in any browser (or any other valid benchmark URL on the host) will
-run the benchmark, report the results back to the server, and print them to the
-terminal.
+We often want to compare multiple versions of the same benchmark implementation,
+but with different configuration parameters. For example, we might want to see
+how the performance of some function scales with 1, 100, and 1000 invocations.
+Instead of writing a new benchmark for each of these numbers, we can instead use
+a configuration file to define ***variants***.
 
-### Saving data
+If a `benchmarks.json` file is found in a `<benchmark>` directory, then it will
+be read to look for a list of variants in the following format:
 
-Use the `--save <filename>` flag to save benchmarking results to a file. If the
-file does not exist it will be created, otherwise it will be created.
+Field             | Description
+------------------| -------------------------------
+`variants`        | A list of variant objects for this benchmark
+`variants.name`   | A label for this variant for use on the command-line
+`variants.config` | An arbitrary object which will be passed to the benchmark function as `bench.config`
 
-The file format is one line per *session*, where a session is a JSON-encoded
-[`BenchmarkSession`](https://github.com/PolymerLabs/lit-benchmarks/blob/master/runner/src/types.ts)
-object which contains an array of millisecond benchmark results along with
-timestamp and system information.
-
-In automatic mode, a single session will be appended after all benchmarks have
-completed. In manual mode, a new session will be appended every time a benchmark
-finishes.
-
-### Adding benchmarks
-
-To add a new benchmark or implementation, add a directory within the
-`benchmarks/` directory following the layout:
-
-```
-benchmarks/
-└── <implementation>/
-   ├── package.json
-   └── <benchmark>/
-       ├── index.html
-       └── index.js
-```
-
-Each implementation directory should have its own `package.json` to isolate
-dependencies between implementations. Running `npm install` from the top-level
-of the repo will automatically run `npm install` within each implementation
-directory.
-
-Benchmark `.js` files should
-`import * as bench from '../../../client/lib/index.js'` and call
-`bench.start()` and `bench.stop()` to mark the beginning and end times of the
-benchmark. Optionally use `bench.config` to access the configuration object
-defined by the variant (see next section).
+For example, we might have this `benchmarks.json`:
 
 ```js
-import * as bench from '/client/lib/index.js';
-// Do any initial setup here.
+{
+  "variants": [
+    {
+      "name": "small",
+      "config": {
+        "iterations": 1
+      }
+    },
+    {
+      "name": "medium",
+      "config": {
+        "iterations": 100
+      }
+    },
+    {
+      "name": "large",
+      "config": {
+        "iterations": 1000
+      }
+    }
+  ]
+}
+```
+
+With an implementation like this:
+
+```js
 bench.start();
-// Do the work being measured here.
+for (let i = 0; i < bench.config.iterations; i++) {
+  doSomething();
+}
 bench.stop();
 ```
 
-Always import resources that are *outside* your benchmark directory using
-absolute paths (e.g. the `client` library and files from `common/`) so that they
-are resolved correctly when serving custom [versions](#versions). Likewise,
-always import resources that are *inside* your benchmark directory using
-relative paths (e.g. the benchmark's `.js` file).
-
-To avoid collisions with special files and directories, implementation and
-benchmark directories cannot be named `versions`, `common`, `node_modules`,
-`package.json`, or `package-lock.json`.
-
-Run `npm run format` from the top-level of the repo to run clang-format on all
-`.js` files in `benchmarks/` (along with all `.ts` files in `client/` and
-`runner/`).
-
-### Versions
+## Package Versions
 
 By default, the version of a dependency library that a benchmark runs against is
 the one installed by NPM according to the implementation directory's
@@ -213,9 +349,6 @@ Part              | Description
 `pkg`             | The NPM package name (e.g. `lit-html`). Must already appear in the implementation's `package.json`.
 `version`         | Any valid [NPM version descriptor](https://docs.npmjs.com/files/package.json#dependencies) (e.g. `Polymer/lit-html#master`, `$HOME/lit-html`, `^1.0.0`).
 
-To include the default version when using this flag, use
-`<implementation>/default`.
-
 For example, here we configure 3 versions of `lit-html` to run benchmarks
 against: the GitHub master branch, a local development git clone, and the latest
 1.x version published to NPM:
@@ -237,88 +370,21 @@ When you use the `--package-version` flag, the following happens:
   your new versions), while other URLs (i.e. the benchmarks themselves) are
   mapped back to the main `<implementation>` directory.
 
-### Variants
+## Flags
 
-By default, each `benchmarks/<implementation>/<benchmark>/` directory represents
-one benchmark, which will be executed by launching the `index.html` found in
-that directory. It some cases, however, it may be convenient to define multiple
-*variants* of a benchmark implementation.
-
-If a `benchmarks.json` file is found in a `<benchmark>` directory, then it will
-be read to look for a list of variants.
-
-Option            | Description
-------------------| -------------------------------
-`variants`        | A list of variant objects for this benchmark
-`variants.name`   | A label for this variant
-`variants.config` | An arbitrary object which will be passed to the benchmark function
-
-For example, a benchmark that performs some recursive procedure to a
-parameterized depth might define two variants in its `benchmarks.json`:
-
-```js
-{
-  "variants": [
-    {
-      "name": "shallow",
-      "config": {
-        "depth": 10
-      }
-    },
-    {
-      "name": "deep",
-      "config": {
-        "depth": 1000
-      }
-    }
-  ]
-}
-```
-
-And might have an implementation like this:
-
-```js
-bench.start();
-recurse(bench.config.depth);
-bench.stop();
-```
-
-### Comparison
-
-If more than one benchmark configuration is running, then comparative results
-between them will be presented. One result will be used as the *baseline*, and
-the others will report data in terms of its relative slowdown (result ms -
-baseline ms). By default the fastest result will be used as the baseline, but
-this can be changed with the `--baseline` flag.
-
-Option                              | Description
-------------------------------------| -------------------------------
-`fastest`                           | Use the lowest estimated mean runtime as the baseline.
-`slowest`                           | Use the highest estimated mean runtime as the baseline.
-`name=<name>,version=<version>,...` | One or more comma-delimited `key=val` filters for narrowing down the baseline. At least one filter is required, and an error will be thrown if the selection is ambiguous. Valid filter keys: `name`, `variant`, `implementation`, `version`, `browser`.
-
-### Example commands
-
-##### Run all lit-html benchmarks
-
-```sh
-npm run benchmarks
-```
-
-##### Run all benchmarks with all implementations
-
-```sh
-npm run benchmarks -- --implementation=* --name=*
-```
-
-##### Run a specific benchmark implementation
-
-```sh
-npm run benchmarks -- --implementation=incremental-dom --name=recurse
-```
-
-##### Run benchmarks manually and log all results
-
-```sh
-npm run benchmarks -- --manual
-```
+Flag                      | Default     | Description
+------------------------- | ----------- | --------------------------------
+`--help`                  | `false`     | Show documentation
+`--root`                  | `./`        | Root directory to search for benchmarks
+`--host`                  | `127.0.0.1` | Which host to run on
+`--port`                  | `0`         | Which port to run on (`0` for random free)
+`--name` / `-n`           | `*`         | Which benchmarks to run (`*` for all) ([details](#adding-benchmarks))
+`--implementation` / `-i` | `*`         | Which implementations to run (`*` for all) ([details](#adding-benchmarks))
+`--variant` / `-v`        | `*`         | Which variants to run (`*` for all) ([details](#variants))
+`--package-version` / `-p`| *(none)*    | Specify one or more dependency versions ([details](#versions))
+`--browser` / `-b`        | `chrome`    | Which browsers to launch in automatic mode, comma-delimited (chrome, firefox)
+`--baseline`              | `fastest`   | Which result to use as the baseline for comparison ([details](#comparison))
+`--sample-size` / `-n`    | `50`        | Minimum number of times to run each benchmark
+`--auto-sample`           | `true`      | Continuously sample until all runtime differences can be placed, with statistical significance, on one side or the other of all specified `--boundary` points ([details](#sample-size))
+`--boundaries`            | `10%`       | The boundaries to use when `--auto-sample` is enabled (milliseconds, comma-delimited) ([details](#sample-size))
+`--timeout`               | `5`         | The maximum number of minutes to spend auto-sampling ([details](#sample-size))
