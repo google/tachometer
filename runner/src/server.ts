@@ -25,7 +25,7 @@ import {BenchmarkResponse, Deferred, BenchmarkSpec, BenchmarkResult, PendingBenc
 
 export interface ServerOpts {
   host: string;
-  port: number;
+  ports: number[];
   benchmarksDir: string;
 }
 
@@ -45,11 +45,28 @@ export class Server {
   private resultSubmitted = new Deferred<BenchmarkResult>();
 
   static start(opts: ServerOpts): Promise<Server> {
-    return new Promise((resolve) => {
-      const server = http.createServer();
-      server.listen(
-          {host: opts.host, port: opts.port},
-          () => resolve(new Server(server, opts)));
+    const server = http.createServer();
+    const ports = [...opts.ports];
+
+    return new Promise((resolve, reject) => {
+      const tryNextPort = () => {
+        if (ports.length === 0) {
+          reject(`No ports available, tried: ${opts.ports.join(', ')}`);
+        }
+        server.listen(
+            {host: opts.host, port: ports.shift()},
+            () => resolve(new Server(server, opts)));
+      };
+
+      server.on('error', (e: {code?: string}) => {
+        if (e.code === 'EADDRINUSE' || e.code == 'EACCES') {
+          tryNextPort();
+        } else {
+          reject(e);
+        }
+      });
+
+      tryNextPort();
     });
   }
 

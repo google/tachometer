@@ -50,9 +50,10 @@ const optDefs: commandLineUsage.OptionDefinition[] = [
   },
   {
     name: 'port',
-    description: 'Which port to run on (0 for random free)',
-    type: Number,
-    defaultValue: '0',
+    description: 'Which port to run on (comma-delimited preference list, ' +
+        '0 for random, default [8080, 8081, ..., 0])',
+    type: (flag: string) => flag.split(',').map(Number),
+    defaultValue: [8080, 8081, 8082, 8083, 0],
   },
   {
     name: 'name',
@@ -153,7 +154,7 @@ interface Opts {
   help: boolean;
   root: string;
   host: string;
-  port: number;
+  port: number[];
   name: string;
   implementation: string;
   variant: string;
@@ -204,7 +205,7 @@ export async function main() {
 
   const server = await Server.start({
     host: opts.host,
-    port: opts.port,
+    ports: opts.port,
     benchmarksDir: opts.root,
   });
 
@@ -216,8 +217,8 @@ export async function main() {
 }
 
 /**
- * Let the user run benchmarks manually. This process will not exit until the
- * user sends a termination signal.
+ * Let the user run benchmarks manually. This process will not exit until
+ * the user sends a termination signal.
  */
 async function manualMode(opts: Opts, specs: BenchmarkSpec[], server: Server) {
   if (opts.save) {
@@ -265,9 +266,9 @@ async function automaticMode(
     // It's important that we execute each benchmark iteration in a new tab.
     // At least in Chrome, each tab corresponds to process which shares some
     // amount of cached V8 state which can cause significant measurement
-    // effects. There might even be additional interaction effects that would
-    // require an entirely new browser to remove, but experience in Chrome so
-    // far shows that new tabs are neccessary and sufficient.
+    // effects. There might even be additional interaction effects that
+    // would require an entirely new browser to remove, but experience in
+    // Chrome so far shows that new tabs are neccessary and sufficient.
     const driver = await makeDriver(browser, opts);
     const tabs = await driver.getAllWindowHandles();
     // We'll always launch new tabs from this initial blank tab.
@@ -412,8 +413,8 @@ export function parseTargetsFlag(flag: string): Targets {
       // interested in that signed target.
       absOrRel.add(num);
     } else {
-      // Otherwise (e.g. "0.1") we're interested in the target as a difference
-      // in either direction.
+      // Otherwise (e.g. "0.1") we're interested in the target as a
+      // difference in either direction.
       absOrRel.add(-num);
       absOrRel.add(num);
     }
