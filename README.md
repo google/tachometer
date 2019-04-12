@@ -148,6 +148,105 @@ create a `default` (or any name) directory with no `package.json`.
 Finally, each **benchmark** directory contains a benchmark. Each benchmark
 directory must have an `index.html` file, which is what RUNNER will launch.
 
+## Variants
+
+We often want to compare multiple versions of the same benchmark implementation,
+but with different configuration parameters. For example, we might want to see
+how the performance of some function scales with 1, 100, and 1000 invocations.
+Instead of writing a new benchmark for each of these numbers, we can instead use
+a configuration file to define ***variants***.
+
+If a `benchmarks.json` file is found in a `<benchmark>` directory, then it will
+be read to look for a list of variants in the following format:
+
+Field             | Description
+------------------| -------------------------------
+`variants`        | A list of variant objects for this benchmark
+`variants.name`   | A label for this variant for use on the command-line
+`variants.config` | An arbitrary object which will be passed to the benchmark function as `bench.config`
+
+For example, we might have this `benchmarks.json`:
+
+```js
+{
+  "variants": [
+    {
+      "name": "small",
+      "config": {
+        "iterations": 1
+      }
+    },
+    {
+      "name": "medium",
+      "config": {
+        "iterations": 100
+      }
+    },
+    {
+      "name": "large",
+      "config": {
+        "iterations": 1000
+      }
+    }
+  ]
+}
+```
+
+With an implementation like this:
+
+```js
+bench.start();
+for (let i = 0; i < bench.config.iterations; i++) {
+  doSomething();
+}
+bench.stop();
+```
+
+## Package Versions
+
+By default, the version of a dependency library that a benchmark runs against is
+the one installed by NPM according to the implementation directory's
+`package.json` (usually the latest stable release).
+
+However, it is often useful to run a benchmark on a specific dependency version,
+or across *multiple versions of the same dependency*, e.g. to see the difference
+between two different published versions, or between the GitHub master branch
+and a local development branch.
+
+Use the `--package-version` flag to specify a different version of a dependency
+library to install and run against, instead of the default one. To specify
+multiple versions, use the flag multiple times. The format of this flag is:
+
+`<implementation>/<label>=<pkg>@<version>[,<pkg@version>],...]`
+
+Part              | Description
+----------------- | -----------
+`implementation`  | The implementation directory name whose dependencies we are changing (e.g. `lit-html`).
+`label`           | An arbitrary concise name for this version (e.g. `master`, `local`, `1.x`).
+`pkg`             | The NPM package name (e.g. `lit-html`). Must already appear in the implementation's `package.json`.
+`version`         | Any valid [NPM version descriptor](https://docs.npmjs.com/files/package.json#dependencies) (e.g. `Polymer/lit-html#master`, `$HOME/lit-html`, `^1.0.0`).
+
+For example, here we configure 3 versions of `lit-html` to run benchmarks
+against: the GitHub master branch, a local development git clone, and the latest
+1.x version published to NPM:
+
+```sh
+npm run benchmarks --
+--package-version=lit-html/master=lit-html@github:Polymer/lit-html#master \
+--package-version=lit-html/local=lit-html@$HOME/lit-html \
+--package-version=lit-html/1.x=lit-html@^1.0.0
+```
+
+When you use the `--package-version` flag, the following happens:
+- A directory `<implementation>/versions/<label>` is created.
+- A copy of `<implementation>/package.json` is written to `.../<label>/package.json`
+  and modified according to the new dependency versions you specified.
+- `npm install` is run in this directory.
+- Benchmarks are run from URLs of the form `<implementation>/versions/<label>`.
+  URL paths within `node_modules/` are served from the version directory (to get
+  your new versions), while other URLs (i.e. the benchmarks themselves) are
+  mapped back to the main `<implementation>` directory.
+
 ## Confidence intervals
 
 The most important concept needed to interpret results from RUNNER is the
@@ -268,105 +367,6 @@ know that whatever the difference is, it is neither faster nor slower than 10%
 Note that, if the actual difference is very close to a boundary, then it is
 likely that the precision stopping condition will never be met, and the timeout
 will expire.
-
-## Variants
-
-We often want to compare multiple versions of the same benchmark implementation,
-but with different configuration parameters. For example, we might want to see
-how the performance of some function scales with 1, 100, and 1000 invocations.
-Instead of writing a new benchmark for each of these numbers, we can instead use
-a configuration file to define ***variants***.
-
-If a `benchmarks.json` file is found in a `<benchmark>` directory, then it will
-be read to look for a list of variants in the following format:
-
-Field             | Description
-------------------| -------------------------------
-`variants`        | A list of variant objects for this benchmark
-`variants.name`   | A label for this variant for use on the command-line
-`variants.config` | An arbitrary object which will be passed to the benchmark function as `bench.config`
-
-For example, we might have this `benchmarks.json`:
-
-```js
-{
-  "variants": [
-    {
-      "name": "small",
-      "config": {
-        "iterations": 1
-      }
-    },
-    {
-      "name": "medium",
-      "config": {
-        "iterations": 100
-      }
-    },
-    {
-      "name": "large",
-      "config": {
-        "iterations": 1000
-      }
-    }
-  ]
-}
-```
-
-With an implementation like this:
-
-```js
-bench.start();
-for (let i = 0; i < bench.config.iterations; i++) {
-  doSomething();
-}
-bench.stop();
-```
-
-## Package Versions
-
-By default, the version of a dependency library that a benchmark runs against is
-the one installed by NPM according to the implementation directory's
-`package.json` (usually the latest stable release).
-
-However, it is often useful to run a benchmark on a specific dependency version,
-or across *multiple versions of the same dependency*, e.g. to see the difference
-between two different published versions, or between the GitHub master branch
-and a local development branch.
-
-Use the `--package-version` flag to specify a different version of a dependency
-library to install and run against, instead of the default one. To specify
-multiple versions, use the flag multiple times. The format of this flag is:
-
-`<implementation>/<label>=<pkg>@<version>[,<pkg@version>],...]`
-
-Part              | Description
------------------ | -----------
-`implementation`  | The implementation directory name whose dependencies we are changing (e.g. `lit-html`).
-`label`           | An arbitrary concise name for this version (e.g. `master`, `local`, `1.x`).
-`pkg`             | The NPM package name (e.g. `lit-html`). Must already appear in the implementation's `package.json`.
-`version`         | Any valid [NPM version descriptor](https://docs.npmjs.com/files/package.json#dependencies) (e.g. `Polymer/lit-html#master`, `$HOME/lit-html`, `^1.0.0`).
-
-For example, here we configure 3 versions of `lit-html` to run benchmarks
-against: the GitHub master branch, a local development git clone, and the latest
-1.x version published to NPM:
-
-```sh
-npm run benchmarks --
---package-version=lit-html/master=lit-html@github:Polymer/lit-html#master \
---package-version=lit-html/local=lit-html@$HOME/lit-html \
---package-version=lit-html/1.x=lit-html@^1.0.0
-```
-
-When you use the `--package-version` flag, the following happens:
-- A directory `<implementation>/versions/<label>` is created.
-- A copy of `<implementation>/package.json` is written to `.../<label>/package.json`
-  and modified according to the new dependency versions you specified.
-- `npm install` is run in this directory.
-- Benchmarks are run from URLs of the form `<implementation>/versions/<label>`.
-  URL paths within `node_modules/` are served from the version directory (to get
-  your new versions), while other URLs (i.e. the benchmarks themselves) are
-  mapped back to the main `<implementation>` directory.
 
 ## Flags
 
