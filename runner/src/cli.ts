@@ -23,7 +23,7 @@ import {makeSession} from './session';
 import {validBrowsers, makeDriver, openAndSwitchToNewTab, getPaintTime} from './browser';
 import {BenchmarkResult, BenchmarkSpec} from './types';
 import {Server} from './server';
-import {Boundaries, ResultStats, slowdownBoundariesResolved, summaryStats, findFastest, findSlowest, computeSlowdowns} from './stats';
+import {Targets, ResultStats, targetsResolved, summaryStats, findFastest, findSlowest, computeSlowdowns} from './stats';
 import {specMatchesFilter, specsFromOpts, SpecFilter} from './specs';
 import {formatManualResult, formatAutomaticResults, spinner} from './format';
 import {prepareVersionDirectories} from './versions';
@@ -129,13 +129,13 @@ const optDefs: commandLineUsage.OptionDefinition[] = [
     name: 'auto-sample',
     description: 'Continuously sample until all runtime differences can be ' +
         'placed, with statistical significance, on one side or the other ' +
-        'of all specified --boundary points (default true)',
+        'of all specified --targets (default true)',
     type: Boolean,
     defaultValue: true,
   },
   {
-    name: 'boundaries',
-    description: 'The boundaries to use when --auto-sample is enabled ' +
+    name: 'targets',
+    description: 'The targets to use when --auto-sample is enabled ' +
         '(milliseconds, comma-delimited, optionally signed, default 10%)',
     type: String,
     defaultValue: '10%',
@@ -164,7 +164,7 @@ interface Opts {
   manual: boolean;
   save: string;
   paint: boolean;
-  boundaries: string;
+  targets: string;
   'auto-sample': boolean;
   timeout: number;
 }
@@ -250,7 +250,7 @@ interface Browser {
 async function automaticMode(
     opts: Opts, specs: BenchmarkSpec[], server: Server) {
   const pickBaseline = pickBaselineFn(specs, opts.baseline);
-  const boundaries = parseBoundariesFlag(opts.boundaries);
+  const targets = parseTargetsFlag(opts.targets);
 
   console.log('Running benchmarks\n');
 
@@ -348,7 +348,7 @@ async function automaticMode(
     let run = 0;
     let sample = 0;
     while (true) {
-      if (slowdownBoundariesResolved(makeResults(), boundaries)) {
+      if (targetsResolved(makeResults(), targets)) {
         console.log();
         break;
       }
@@ -385,14 +385,14 @@ async function automaticMode(
   }
 }
 
-/** Parse the --boundaries flag into a list of signed boundary values. */
-export function parseBoundariesFlag(flag: string): Boundaries {
+/** Parse the --targets flag into signed target values. */
+export function parseTargetsFlag(flag: string): Targets {
   const absolute = new Set<number>();
   const relative = new Set<number>();
   const strs = flag.split(',');
   for (const str of strs) {
     if (!str.match(/^[-+]?(\d*\.)?\d+%?$/)) {
-      throw new Error(`Invalid --boundaries ${flag}`);
+      throw new Error(`Invalid --targets ${flag}`);
     }
 
     let num;
@@ -408,11 +408,11 @@ export function parseBoundariesFlag(flag: string): Boundaries {
 
     if (str.startsWith('+') || str.startsWith('-') || num === 0) {
       // If the sign was explicit (e.g. "+0.1", "-0.1") then we're only
-      // interested in that signed boundary.
+      // interested in that signed target.
       absOrRel.add(num);
     } else {
-      // Otherwise (e.g. "0.1") we're interested in the boundary as a
-      // difference in either direction.
+      // Otherwise (e.g. "0.1") we're interested in the target as a difference
+      // in either direction.
       absOrRel.add(-num);
       absOrRel.add(num);
     }

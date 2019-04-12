@@ -322,12 +322,12 @@ either certain stopping conditions that you specify are met, or until a timeout
 expires (5 minutes by default).
 
 The stopping conditions for auto-sampling are specified in terms of
-***boundaries***. A boundary can be thought of as a *point of interest* on the
+***targets***. A target can be thought of as a *point of interest* on the
 number-line of either absolute or relative differences in runtime. By setting a
-boundary, you are asking tachometer to try to *shrink the confidence interval until
-it is unambiguously placed on one side or the other of that boundary*.
+target, you are asking tachometer to try to *shrink the confidence interval until
+it is unambiguously placed on one side or the other of that target*.
 
-Example boundaries | Question
+Example targets    | Question
 ------------------ | -----------
 `0%`               | Is X faster or slower than the baseline *at all*?
 `10%`              | Is X faster or slower than the baseline by at least 10%?
@@ -337,11 +337,11 @@ Example boundaries | Question
 `0%,10%,100%`      | Is X at all, a little, or a lot slower or faster than the baseline?
 `0.5`              | Is X faster or slower than the baseline by at least 0.5 milliseconds?
 
-In the following visual example, we have set `--boundaries=10%` meaning that we
-are interested in knowing whether A differs from B by at least 10% in either
+In the following visual example, we have set `--targets=10%` meaning that we are
+interested in knowing whether A differs from B by at least 10% in either
 direction. The sample size automatically increases until the confidence interval
 is narrow enough to place the estimated difference squarely on one side or the
-other of both boundaries.
+other of both targets.
 
 ```
       <------------------------------->     n=50  ❌ -10% ❌ +10%
@@ -353,8 +353,8 @@ other of both boundaries.
 
 n     = sample size
 <---> = confidence interval for percent difference of mean runtimes
-✔️    = resolved boundary
-❌    = unresolved boundary
+✔️    = resolved target
+❌    = unresolved target
 ```
 
 In the example, by `n=50` we are not sure whether A is faster or slower than B
@@ -363,9 +363,9 @@ than 10%, but we're still not sure if it's *slower* by more than 10%. By `n=200`
 we have also ruled out that B is slower than A by more than 10%, so we stop
 sampling. Note that we still don't know which is *absolutely* faster, we just
 know that whatever the difference is, it is neither faster nor slower than 10%
-(and if we did want to know, we could add `0` to our boundaries).
+(and if we did want to know, we could add `0` to our targets).
 
-Note that, if the actual difference is very close to a boundary, then it is
+Note that, if the actual difference is very close to a target, then it is
 likely that the precision stopping condition will never be met, and the timeout
 will expire.
 
@@ -384,6 +384,6 @@ Flag                      | Default     | Description
 `--browser` / `-b`        | `chrome`    | Which browsers to launch in automatic mode, comma-delimited (chrome, firefox)
 `--baseline`              | `fastest`   | Which result to use as the baseline for comparison ([details](#comparison))
 `--sample-size` / `-n`    | `50`        | Minimum number of times to run each benchmark
-`--auto-sample`           | `true`      | Continuously sample until all runtime differences can be placed, with statistical significance, on one side or the other of all specified `--boundary` points ([details](#sample-size))
-`--boundaries`            | `10%`       | The boundaries to use when `--auto-sample` is enabled (milliseconds, comma-delimited) ([details](#sample-size))
+`--auto-sample`           | `true`      | Continuously sample until all runtime differences can be placed, with statistical significance, on one side or the other of all specified `--targets` points ([details](#sample-size))
+`--targets`               | `10%`       | The targets to use when `--auto-sample` is enabled (milliseconds, comma-delimited) ([details](#sample-size))
 `--timeout`               | `5`         | The maximum number of minutes to spend auto-sampling ([details](#sample-size))

@@ -87,16 +87,16 @@ export function intervalContains(
   return value >= interval.low && value <= interval.high;
 }
 
-export interface Boundaries {
+export interface Targets {
   absolute: number[];
   relative: number[];
 }
 
 /**
  * Return whether all slowdown confidence intervals are unambiguously located on
- * one side or the other of all given boundary values.
+ * one side or the other of all given target values.
  *
- * For example, given the boundaries 0 and 1:
+ * For example, given the targets 0 and 1:
  *
  *    <--->                   true
  *        <--->               false
@@ -108,19 +108,19 @@ export interface Boundaries {
  *  |-------|-------|-------| ms slowdown
  * -1       0       1       2
  */
-export function slowdownBoundariesResolved(
-    resultStats: ResultStats[], boundaries: Boundaries): boolean {
+export function targetsResolved(
+    resultStats: ResultStats[], targets: Targets): boolean {
   for (const {isBaseline, slowdown} of resultStats) {
     if (isBaseline === true || slowdown === undefined) {
       continue;
     }
-    for (const boundary of boundaries.absolute) {
-      if (intervalContains(slowdown.absolute, boundary)) {
+    for (const target of targets.absolute) {
+      if (intervalContains(slowdown.absolute, target)) {
         return false;
       }
     }
-    for (const boundary of boundaries.relative) {
-      if (intervalContains(slowdown.relative, boundary)) {
+    for (const target of targets.relative) {
+      if (intervalContains(slowdown.relative, target)) {
         return false;
       }
     }
