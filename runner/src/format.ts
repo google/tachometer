@@ -75,15 +75,19 @@ export function formatAutomaticResults(results: ResultStats[]): string {
     }
   }
 
+  // These are the primary observed results, so they always go in the main
+  // result table, even if they happen to be the same in one run.
   unfixed.push(
-      // These are the primary observed results, so they always go in the main
-      // result table, even if they happen to be the same in one run.
       runtimeConfidenceIntervalDimension,
       standardDeviationDimension,
-      absoluteSlowdownDimension,
-      relativeSlowdownDimension,
-      directionDimension,
-  );
+  )
+  if (results.length > 1) {
+    unfixed.push(
+        absoluteSlowdownDimension,
+        relativeSlowdownDimension,
+        directionDimension,
+    );
+  }
 
   const fixedTable = horizontalResultTable([results[0]], fixed);
   const unfixedTable = verticalResultTable(results, unfixed);
