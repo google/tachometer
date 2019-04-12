@@ -16,6 +16,7 @@ import * as querystring from 'querystring';
 
 import Koa = require('koa');
 import mount = require('koa-mount');
+import send = require('koa-send');
 import serve = require('koa-static');
 import bodyParser = require('koa-bodyparser');
 import {UAParser} from 'ua-parser-js';
@@ -28,7 +29,7 @@ export interface ServerOpts {
   benchmarksDir: string;
 }
 
-const clientDir = path.resolve(__dirname, '..', 'client');
+const clientLib = path.resolve(__dirname, '..', 'client', 'lib');
 
 export class Server {
   readonly url: string;
@@ -62,7 +63,7 @@ export class Server {
     app.use(this.recordBytesSent.bind(this));
     app.use(
         mount('/benchmarks', serve(opts.benchmarksDir, {index: 'index.html'})));
-    app.use(mount('/client', serve(clientDir)));
+    app.use(this.serveBenchLib.bind(this));
     this.server.on('request', app.callback());
 
     const address = (this.server.address() as net.AddressInfo);
@@ -139,6 +140,14 @@ export class Server {
       console.log(
           `No response length for 200 response for ${ctx.url}, ` +
           `byte count may be inaccurate.`);
+    }
+  }
+
+  private async serveBenchLib(ctx: Koa.Context, next: () => Promise<void>) {
+    if (ctx.path === '/bench.js') {
+      await send(ctx, 'bench.js', {root: clientLib});
+    } else {
+      await next();
     }
   }
 

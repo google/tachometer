@@ -9,7 +9,7 @@
  * rights grant found at http://polymer.github.io/PATENTS.txt
  */
 
-import * as bench from '/client/lib/index.js';
+import * as bench from '/bench.js';
 
 const genXChildData = (depth) => {
   let xChild = {};

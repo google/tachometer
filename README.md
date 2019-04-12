@@ -43,7 +43,7 @@ confidence in them.
   <html>
   <body>
   <script type="module">
-    import * as bench from '/client/lib/index.js';
+    import * as bench from '/bench.js';
     bench.start();
     for (let i = 0; i < 1000; i++) { }
     bench.stop();
