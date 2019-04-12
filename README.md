@@ -384,6 +384,6 @@ Flag                      | Default     | Description
 `--browser` / `-b`        | `chrome`    | Which browsers to launch in automatic mode, comma-delimited (chrome, firefox)
 `--baseline`              | `fastest`   | Which result to use as the baseline for comparison ([details](#comparison))
 `--sample-size` / `-n`    | `50`        | Minimum number of times to run each benchmark
-`--auto-sample`           | `true`      | Continuously sample until all runtime differences can be placed, with statistical significance, on one side or the other of all specified `--targets` points ([details](#sample-size))
-`--targets`               | `10%`       | The targets to use when `--auto-sample` is enabled (milliseconds, comma-delimited) ([details](#sample-size))
+`--auto-sample`           | `false`     | Continuously sample until all runtime differences can be placed, with statistical significance, on one side or the other of all specified `--targets` points ([details](#sample-size))
+`--targets`               | `0`         | The targets to use when `--auto-sample` is enabled (milliseconds, comma-delimited) ([details](#sample-size))
 `--timeout`               | `5`         | The maximum number of minutes to spend auto-sampling ([details](#sample-size))

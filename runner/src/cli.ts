@@ -129,16 +129,16 @@ const optDefs: commandLineUsage.OptionDefinition[] = [
     name: 'auto-sample',
     description: 'Continuously sample until all runtime differences can be ' +
         'placed, with statistical significance, on one side or the other ' +
-        'of all specified --targets (default true)',
+        'of all specified --targets (default false)',
     type: Boolean,
-    defaultValue: true,
+    defaultValue: false,
   },
   {
     name: 'targets',
     description: 'The targets to use when --auto-sample is enabled ' +
-        '(milliseconds, comma-delimited, optionally signed, default 10%)',
+        '(milliseconds, comma-delimited, optionally signed, default 0)',
     type: String,
-    defaultValue: '10%',
+    defaultValue: '0',
   },
   {
     name: 'timeout',
