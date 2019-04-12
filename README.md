@@ -335,7 +335,7 @@ Example targets    | Question
 `-10%`             | Is X faster than the baseline by at least 10%?
 `-10%,+10%`        | (Same as `10%`)
 `0%,10%,100%`      | Is X at all, a little, or a lot slower or faster than the baseline?
-`0.5`              | Is X faster or slower than the baseline by at least 0.5 milliseconds?
+`0.5ms`            | Is X faster or slower than the baseline by at least 0.5 milliseconds?
 
 In the following visual example, we have set `--targets=10%` meaning that we are
 interested in knowing whether A differs from B by at least 10% in either
@@ -385,5 +385,5 @@ Flag                      | Default     | Description
 `--baseline`              | `fastest`   | Which result to use as the baseline for comparison ([details](#comparison))
 `--sample-size` / `-n`    | `50`        | Minimum number of times to run each benchmark
 `--auto-sample`           | `false`     | Continuously sample until all runtime differences can be placed, with statistical significance, on one side or the other of all specified `--targets` points ([details](#sample-size))
-`--targets`               | `0`         | The targets to use when `--auto-sample` is enabled (milliseconds, comma-delimited) ([details](#sample-size))
+`--targets`               | `0%`        | The targets to use when `--auto-sample` is enabled (milliseconds, comma-delimited) ([details](#sample-size))
 `--timeout`               | `5`         | The maximum number of minutes to spend auto-sampling ([details](#sample-size))

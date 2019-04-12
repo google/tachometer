@@ -126,36 +126,36 @@ suite('pickBaseline', function() {
 });
 
 suite('parseTargetsFlag', function() {
-  test('0', () => {
-    assert.deepEqual(parseTargetsFlag('0'), {
+  test('0ms', () => {
+    assert.deepEqual(parseTargetsFlag('0ms'), {
       absolute: [0],
       relative: [],
     });
   });
 
-  test('0.1', () => {
-    assert.deepEqual(parseTargetsFlag('0.1'), {
+  test('0.1ms', () => {
+    assert.deepEqual(parseTargetsFlag('0.1ms'), {
       absolute: [-0.1, 0.1],
       relative: [],
     });
   });
 
-  test('+0.1', () => {
-    assert.deepEqual(parseTargetsFlag('+0.1'), {
+  test('+0.1ms', () => {
+    assert.deepEqual(parseTargetsFlag('+0.1ms'), {
       absolute: [0.1],
       relative: [],
     });
   });
 
-  test('-0.1', () => {
-    assert.deepEqual(parseTargetsFlag('-0.1'), {
+  test('-0.1ms', () => {
+    assert.deepEqual(parseTargetsFlag('-0.1ms'), {
       absolute: [-0.1],
       relative: [],
     });
   });
 
-  test('0,0.1,1', () => {
-    assert.deepEqual(parseTargetsFlag('0,0.1,1'), {
+  test('0ms,0.1,1ms', () => {
+    assert.deepEqual(parseTargetsFlag('0ms,0.1ms,1ms'), {
       absolute: [-1, -0.1, 0, 0.1, 1],
       relative: [],
     });
@@ -196,10 +196,18 @@ suite('parseTargetsFlag', function() {
     });
   });
 
-  test('0,0.1,1,0%,1%,10%', () => {
-    assert.deepEqual(parseTargetsFlag('0,0.1,1,0%,1%,10%'), {
+  test('0ms,0.1ms,1ms,0%,1%,10%', () => {
+    assert.deepEqual(parseTargetsFlag('0ms,0.1ms,1ms,0%,1%,10%'), {
       absolute: [-1, -0.1, 0, 0.1, 1],
       relative: [-0.1, -0.01, 0, 0.01, 0.10],
     });
+  });
+
+  test('throws on nonsense', () => {
+    assert.throws(() => parseTargetsFlag('sailboat'));
+  });
+
+  test('throws on ambiguous unit', () => {
+    assert.throws(() => parseTargetsFlag('4'));
   });
 });

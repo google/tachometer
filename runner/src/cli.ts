@@ -138,7 +138,7 @@ const optDefs: commandLineUsage.OptionDefinition[] = [
     description: 'The targets to use when --auto-sample is enabled ' +
         '(milliseconds, comma-delimited, optionally signed, default 0)',
     type: String,
-    defaultValue: '0',
+    defaultValue: '0%',
   },
   {
     name: 'timeout',
@@ -391,7 +391,7 @@ export function parseTargetsFlag(flag: string): Targets {
   const relative = new Set<number>();
   const strs = flag.split(',');
   for (const str of strs) {
-    if (!str.match(/^[-+]?(\d*\.)?\d+%?$/)) {
+    if (!str.match(/^[-+]?(\d*\.)?\d+(ms|%)$/)) {
       throw new Error(`Invalid --targets ${flag}`);
     }
 
@@ -402,7 +402,8 @@ export function parseTargetsFlag(flag: string): Targets {
       num = Number(str.slice(0, -1)) / 100;
       absOrRel = relative;
     } else {
-      num = Number(str);  // Note that Number("+1") === 1
+      // Otherwise with "ms"
+      num = Number(str.slice(0, -2));  // Note that Number("+1") === 1
       absOrRel = absolute;
     }
 
