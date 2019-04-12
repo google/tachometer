@@ -1,7 +1,5 @@
 # RUNNER
 
-<img src="./images/horses.jpg" width="207" height="173" align="right">
-
 > RUNNER is a tool for running benchmarks in web browsers. It uses repeated
 sampling and statistics to reliably identify even the smallest differences in
 timing.
@@ -72,7 +70,7 @@ The above quick start shows the simplest way to use RUNNER, but it can do much
 more.
 
 - *Compare benchmarks*. Run any number of benchmarks in the same session, see
-  you which ones were faster or slower, and by how much. Compare different
+  which ones were faster or slower, and by how much. Compare different
   benchmarks, different browsers, and different implementations or
   configurations of the same benchmark. See [multiple
   benchmarks](#multiple-benchmarks).
@@ -88,8 +86,8 @@ more.
   it can be configured from a JSON config file. See [variants](#variants).
 
 
-- *Automatically continue sampling* until we have enough precision to draw the
-  conclusion you are trying to make. See [auto sampling](#auto-sampling).
+- *Automatically continue sampling* until we have enough precision to answer the
+  question you are asking. See [auto sampling](#auto-sampling).
 
 ## One benchmark
 
@@ -113,7 +111,7 @@ table with 1 row per benchmark, and 3 main result columns per row:
 
 ## Baseline
 
-The ***baseline*** is the result which the *difference* confidence intervals are
+The ***baseline*** is the result that the *difference* confidence intervals are
 relative to. The absolute difference is `result - baseline`, and the percent
 difference is `(result - baseline) / baseline`. Positive numbers (red) indicate
 a *slowdown* versus the baseline, and negative numbers (green) indicate a
