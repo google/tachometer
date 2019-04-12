@@ -1,6 +1,6 @@
-# RUNNER
+# tachometer
 
-> RUNNER is a tool for running benchmarks in web browsers. It uses repeated
+> tachometer is a tool for running benchmarks in web browsers. It uses repeated
 sampling and statistics to reliably identify even the smallest differences in
 timing.
 
@@ -19,14 +19,14 @@ confidence in them.
 
 ## Quick Start
 
-1. Install RUNNER from NPM.
+1. Install tachometer from NPM.
 
   ```sh
-  $ npm i RUNNER
+  $ npm i tachometer
   ```
 
-2. Make a folder for your benchmarks. RUNNER expects a particular file layout
-   (explained [below](#folder-layout)).
+2. Make a folder for your benchmarks. tachometer expects a particular file
+   layout (explained [below](#folder-layout)).
 
   ```sh
   $ mkdir benchmarks/
@@ -35,8 +35,9 @@ confidence in them.
   $ vim default/forloop/index.html
   ```
 
-3. Create a simple benchmark that just executes a for loop. RUNNER benchmarks
-   are just HTML files that import and call `bench.start()` and `bench.stop()`.
+3. Create a simple benchmark that just executes a for loop. tachometer
+   benchmarks are just HTML files that import and call `bench.start()` and
+   `bench.stop()`.
 
   ```html
   <html>
@@ -51,23 +52,23 @@ confidence in them.
   </html>
   ```
 
-4. Launch RUNNER, which will automatically find your benchmark, launch Chrome,
-   and execute the benchmark 50 times.
+4. Launch tachometer, which will automatically find your benchmark, launch
+   Chrome, and execute the benchmark 50 times.
 
   ```sh
-  $ RUNNER
+  $ tachometer
   ```
 
-  Along with some other information, RUNNER will show you a range of plausible
-  values for how long this benchmark takes to run (more precisely, a *95%
-  confidence interval*, which is explained [below]()).
+  Along with some other information, tachometer will show you a range of
+  plausible values for how long this benchmark takes to run (more precisely, a
+  *95% confidence interval*, which is explained [below]()).
 
   <img src="./images/screen1.png">
 
 ## Features
 
-The above quick start shows the simplest way to use RUNNER, but it can do much
-more.
+The above quick start shows the simplest way to use tachometer, but it can do
+much more.
 
 - *Compare benchmarks*. Run any number of benchmarks in the same session, see
   which ones were faster or slower, and by how much. Compare different
@@ -135,9 +136,9 @@ Baseline flag option                | Description
         └── index.js
 ```
 
-The **root** directory is where RUNNER looks for your benchmarks. By default it
-is the current working directory, but you can change it with the `--root` flag
-(see [flags](#flags)).
+The **root** directory is where tachometer looks for your benchmarks. By default
+it is the current working directory, but you can change it with the `--root`
+flag (see [flags](#flags)).
 
 Benchmarks are next organized into **implementation** directories, each with
 their own optional `package.json`. Since one supported use cases is to compare
@@ -146,7 +147,7 @@ exists to isolate those NPM dependencies. For simple use cases, you can just
 create a `default` (or any name) directory with no `package.json`.
 
 Finally, each **benchmark** directory contains a benchmark. Each benchmark
-directory must have an `index.html` file, which is what RUNNER will launch.
+directory must have an `index.html` file, which is what tachometer will launch.
 
 ## Variants
 
@@ -249,7 +250,7 @@ When you use the `--package-version` flag, the following happens:
 
 ## Confidence intervals
 
-The most important concept needed to interpret results from RUNNER is the
+The most important concept needed to interpret results from tachometer is the
 ***confidence interval***. Loosely speaking, a confidence interval is a range of
 *plausible values* for a parameter (e.g. runtime), and the *confidence level*
 (which we fix at *95%*) corresponds to the degree of confidence we have that
@@ -257,7 +258,7 @@ interval contains the *true value* of that parameter.
 
 > More precisely, the 95% confidence level describes the *long-run proportion of
 > confidence intervals that will contain the true value*. Hypothetically, if you
-> run RUNNER over and over again in the same configuration, then while you'll
+> run tachometer over and over again in the same configuration, then while you'll
 > get a slightly different confidence interval every time, it should be the case
 > that *95% of those confidence intervals will contain the true value*. See
 > [Wikipedia](https://en.wikipedia.org/wiki/Confidence_interval#Meaning_and_interpretation)
@@ -316,14 +317,14 @@ enable *auto-sampling*.
 
 ## Auto sampling
 
-When the `--auto-sample` flag is set, RUNNER will continue drawing samples until
+When the `--auto-sample` flag is set, tachometer will continue drawing samples until
 either certain stopping conditions that you specify are met, or until a timeout
 expires (5 minutes by default).
 
 The stopping conditions for auto-sampling are specified in terms of
 ***boundaries***. A boundary can be thought of as a *point of interest* on the
 number-line of either absolute or relative differences in runtime. By setting a
-boundary, you are asking RUNNER to try to *shrink the confidence interval until
+boundary, you are asking tachometer to try to *shrink the confidence interval until
 it is unambiguously placed on one side or the other of that boundary*.
 
 Example boundaries | Question

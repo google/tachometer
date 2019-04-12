@@ -1,14 +1,14 @@
 {
-  "name": "lit-benchmark-runner",
+  "name": "tachometer",
   "private": true,
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "lit-html benchmark runner",
   "main": "index.js",
   "directories": {
     "lib": "lib"
   },
   "bin": {
-    "benchmark": "bin/benchmark.js"
+    "tachometer": "bin/tachometer.js"
   },
   "scripts": {
     "prepare": "npm run build",
@@ -19,14 +19,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/PolymerLabs/lit-benchmarks.git"
+    "url": "git+https://github.com/PolymerLabs/tachometer.git"
   },
   "author": "The Polymer Project Authors",
   "license": "BSD-3-Clause",
   "bugs": {
-    "url": "https://github.com/PolymerLabs/lit-benchmarks/issues"
+    "url": "https://github.com/PolymerLabs/tachometer/issues"
   },
-  "homepage": "https://github.com/PolymerLabs/lit-benchmarks#readme",
+  "homepage": "https://github.com/PolymerLabs/tachometer#readme",
   "dependencies": {
     "@types/ansi-escape-sequences": "^4.0.0",
     "@types/command-line-args": "^5.0.0",
