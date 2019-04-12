@@ -22,6 +22,7 @@ const fakeSpec: BenchmarkSpec = {
   version: {label: 'fakeVersion', dependencyOverrides: {}},
   browser: 'fakeBrowser',
   config: {},
+  paint: false,
 };
 
 const fakeStats: SummaryStats = {

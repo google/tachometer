@@ -80,7 +80,7 @@ export function formatAutomaticResults(results: ResultStats[]): string {
   unfixed.push(
       runtimeConfidenceIntervalDimension,
       standardDeviationDimension,
-  )
+  );
   if (results.length > 1) {
     unfixed.push(
         absoluteSlowdownDimension,

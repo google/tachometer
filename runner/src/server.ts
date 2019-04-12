@@ -59,7 +59,7 @@ export class Server {
       };
 
       server.on('error', (e: {code?: string}) => {
-        if (e.code === 'EADDRINUSE' || e.code == 'EACCES') {
+        if (e.code === 'EADDRINUSE' || e.code === 'EACCES') {
           tryNextPort();
         } else {
           reject(e);
@@ -111,6 +111,7 @@ export class Server {
       runId?: string,
       variant?: string,
       config?: string,
+      paint?: 'true',
     } = {};
     if (id !== undefined) {
       params.runId = id;
@@ -120,6 +121,9 @@ export class Server {
     }
     if (spec.config !== undefined) {
       params.config = JSON.stringify(spec.config);
+    }
+    if (spec.paint === true) {
+      params.paint = 'true';
     }
     return `${this.url}/benchmarks/${spec.implementation}/` +
         (spec.version.label === 'default' ? '' :

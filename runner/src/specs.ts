@@ -31,6 +31,7 @@ interface Opts {
   variant: string;
   browser: string;
   'package-version': string[];
+  paint: boolean;
 }
 
 /**
@@ -115,6 +116,7 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
                   version,
                   variant: variant.name || '',
                   config: variant.config || {},
+                  paint: opts.paint,
                 });
               }
             }
@@ -129,6 +131,7 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
               version,
               variant: '',
               config: {},
+              paint: opts.paint,
             });
           }
         }

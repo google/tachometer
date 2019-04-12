@@ -20,6 +20,7 @@ interface BenchmarkResponse {
 const url = new URL(window.location.href);
 const runId = url.searchParams.get('runId') || undefined;
 const variant = url.searchParams.get('variant') || undefined;
+const paint = url.searchParams.has('paint');
 
 export const config = JSON.parse(url.searchParams.get('config') || '{}');
 
@@ -36,24 +37,29 @@ export async function stop() {
   const end = performance.now();
   const runtime = end - startTime;
   console.log('benchmark runtime', runtime, 'ms');
-  // Wait two RAFs before we indicate that we're done, because if the code that
-  // just finished executing triggers a paint, it's probably going to paint on
-  // the next frame, and we want to see that in the performance logs.
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      const response: BenchmarkResponse = {
-        runId,
-        variant,
-        millis: runtime,
-        urlPath: url.pathname,
-      };
-      fetch('/submitResults', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(response),
-      });
+
+  const send = async () => {
+    const response: BenchmarkResponse = {
+      runId,
+      variant,
+      millis: runtime,
+      urlPath: url.pathname,
+    };
+    fetch('/submitResults', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(response),
     });
-  });
+  };
+
+  if (paint === true) {
+    // Wait two RAFs before we indicate that we're done, because if the code
+    // that just finished executing triggers a paint, it's probably going to
+    // paint on the next frame, and we want to see that in the performance logs.
+    requestAnimationFrame(() => requestAnimationFrame(() => send()));
+  } else {
+    send();
+  }
 }
