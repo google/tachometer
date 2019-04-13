@@ -23,7 +23,7 @@ import {makeSession} from './session';
 import {validBrowsers, makeDriver, openAndSwitchToNewTab, getPaintTime} from './browser';
 import {BenchmarkResult, BenchmarkSpec} from './types';
 import {Server} from './server';
-import {Targets, ResultStats, targetsResolved, summaryStats, findFastest, findSlowest, computeSlowdowns} from './stats';
+import {Horizons, ResultStats, horizonsResolved, summaryStats, findFastest, findSlowest, computeSlowdowns} from './stats';
 import {specMatchesFilter, specsFromOpts, SpecFilter} from './specs';
 import {formatManualResult, formatAutomaticResults, spinner} from './format';
 import {prepareVersionDirectories} from './versions';
@@ -127,26 +127,18 @@ const optDefs: commandLineUsage.OptionDefinition[] = [
     defaultValue: false,
   },
   {
-    name: 'auto-sample',
-    description: 'Continuously sample until all runtime differences can be ' +
-        'placed, with statistical significance, on one side or the other ' +
-        'of all specified --targets (default false)',
-    type: Boolean,
-    defaultValue: false,
-  },
-  {
-    name: 'targets',
-    description: 'The targets to use when --auto-sample is enabled ' +
-        '(milliseconds, comma-delimited, optionally signed, default 0)',
+    name: 'horizons',
+    description: 'The horizons to use when --auto-sample is enabled ' +
+        '(milliseconds, comma-delimited, optionally signed, default 10%)',
     type: String,
-    defaultValue: '0%',
+    defaultValue: '10%',
   },
   {
     name: 'timeout',
     description: 'The maximum number of minutes to spend auto-sampling ' +
-        '(default 5).',
+        '(default 3).',
     type: Number,
-    defaultValue: 5,
+    defaultValue: 3,
   },
 ];
 
@@ -165,8 +157,7 @@ interface Opts {
   manual: boolean;
   save: string;
   paint: boolean;
-  targets: string;
-  'auto-sample': boolean;
+  horizons: string;
   timeout: number;
 }
 
@@ -251,7 +242,7 @@ interface Browser {
 async function automaticMode(
     opts: Opts, specs: BenchmarkSpec[], server: Server) {
   const pickBaseline = pickBaselineFn(specs, opts.baseline);
-  const targets = parseTargetsFlag(opts.targets);
+  const horizons = parseHorizonsFlag(opts.horizons);
 
   console.log('Running benchmarks\n');
 
@@ -342,20 +333,20 @@ async function automaticMode(
     return withSlowdowns;
   };
 
-  if (opts['auto-sample'] === true) {
+  let hitTimeout = false;
+  if (opts.timeout > 0) {
     console.log();
     const timeoutMs = opts.timeout * 60 * 1000;  // minutes -> millis
     const startMs = Date.now();
     let run = 0;
     let sample = 0;
     while (true) {
-      if (targetsResolved(makeResults(), targets)) {
+      if (horizonsResolved(makeResults(), horizons)) {
         console.log();
         break;
       }
       if ((Date.now() - startMs) >= timeoutMs) {
-        console.log();
-        console.log(`Hit ${opts.timeout} minute auto-sample timeout`);
+        hitTimeout = true;
         break;
       }
       // Run batches of 10 additional samples at a time for more presentable
@@ -380,20 +371,27 @@ async function automaticMode(
   console.log();
   console.log(formatAutomaticResults(withSlowdowns));
 
+  if (hitTimeout === true) {
+    console.log(ansi.format(
+        `[bold red]{NOTE} Hit ${opts.timeout} minute auto-sample timeout` +
+        ` trying to resolve ${opts.horizons} horizon(s)`));
+    console.log('Consider a longer --timeout or different --horizons');
+  }
+
   if (opts.save) {
     const session = await makeSession(withSlowdowns.map((s) => s.result));
     await fsExtra.writeJSON(opts.save, session);
   }
 }
 
-/** Parse the --targets flag into signed target values. */
-export function parseTargetsFlag(flag: string): Targets {
+/** Parse the --horizons flag into signed horizon values. */
+export function parseHorizonsFlag(flag: string): Horizons {
   const absolute = new Set<number>();
   const relative = new Set<number>();
   const strs = flag.split(',');
   for (const str of strs) {
     if (!str.match(/^[-+]?(\d*\.)?\d+(ms|%)$/)) {
-      throw new Error(`Invalid --targets ${flag}`);
+      throw new Error(`Invalid --horizons ${flag}`);
     }
 
     let num;
@@ -410,10 +408,10 @@ export function parseTargetsFlag(flag: string): Targets {
 
     if (str.startsWith('+') || str.startsWith('-') || num === 0) {
       // If the sign was explicit (e.g. "+0.1", "-0.1") then we're only
-      // interested in that signed target.
+      // interested in that signed horizon.
       absOrRel.add(num);
     } else {
-      // Otherwise (e.g. "0.1") we're interested in the target as a
+      // Otherwise (e.g. "0.1") we're interested in the horizon as a
       // difference in either direction.
       absOrRel.add(-num);
       absOrRel.add(num);

@@ -312,22 +312,19 @@ you to to draw a statistically significant conclusion.
 > clearly not possible to draw a conclusion about whether A is faster than B or
 > vice-versa.
 
-You can increase the sample size with the `--sample-size` flag, or you can
-enable *auto-sampling*.
-
 ## Auto sampling
 
-When the `--auto-sample` flag is set, tachometer will continue drawing samples until
+After the initial 50 samples, tachometer will continue drawing samples until
 either certain stopping conditions that you specify are met, or until a timeout
-expires (5 minutes by default).
+expires (3 minutes by default).
 
 The stopping conditions for auto-sampling are specified in terms of
-***targets***. A target can be thought of as a *point of interest* on the
+***horizons***. A horizon can be thought of as a *point of interest* on the
 number-line of either absolute or relative differences in runtime. By setting a
-target, you are asking tachometer to try to *shrink the confidence interval until
-it is unambiguously placed on one side or the other of that target*.
+horizon, you are asking tachometer to try to *shrink the confidence interval
+until it is unambiguously placed on one side or the other of that horizon*.
 
-Example targets    | Question
+Example horizon    | Question
 ------------------ | -----------
 `0%`               | Is X faster or slower than the baseline *at all*?
 `10%`              | Is X faster or slower than the baseline by at least 10%?
@@ -337,11 +334,11 @@ Example targets    | Question
 `0%,10%,100%`      | Is X at all, a little, or a lot slower or faster than the baseline?
 `0.5ms`            | Is X faster or slower than the baseline by at least 0.5 milliseconds?
 
-In the following visual example, we have set `--targets=10%` meaning that we are
+In the following visual example, we have set `--horizons=10%` meaning that we are
 interested in knowing whether A differs from B by at least 10% in either
 direction. The sample size automatically increases until the confidence interval
 is narrow enough to place the estimated difference squarely on one side or the
-other of both targets.
+other of both horizons.
 
 ```
       <------------------------------->     n=50  ❌ -10% ❌ +10%
@@ -353,8 +350,8 @@ other of both targets.
 
 n     = sample size
 <---> = confidence interval for percent difference of mean runtimes
-✔️    = resolved target
-❌    = unresolved target
+✔️    = resolved horizon
+❌    = unresolved horizon
 ```
 
 In the example, by `n=50` we are not sure whether A is faster or slower than B
@@ -363,9 +360,9 @@ than 10%, but we're still not sure if it's *slower* by more than 10%. By `n=200`
 we have also ruled out that B is slower than A by more than 10%, so we stop
 sampling. Note that we still don't know which is *absolutely* faster, we just
 know that whatever the difference is, it is neither faster nor slower than 10%
-(and if we did want to know, we could add `0` to our targets).
+(and if we did want to know, we could add `0` to our horizons).
 
-Note that, if the actual difference is very close to a target, then it is
+Note that, if the actual difference is very close to a horizon, then it is
 likely that the precision stopping condition will never be met, and the timeout
 will expire.
 
@@ -384,6 +381,5 @@ Flag                      | Default     | Description
 `--browser` / `-b`        | `chrome`    | Which browsers to launch in automatic mode, comma-delimited (chrome, firefox)
 `--baseline`              | `fastest`   | Which result to use as the baseline for comparison ([details](#comparison))
 `--sample-size` / `-n`    | `50`        | Minimum number of times to run each benchmark
-`--auto-sample`           | `false`     | Continuously sample until all runtime differences can be placed, with statistical significance, on one side or the other of all specified `--targets` points ([details](#sample-size))
-`--targets`               | `0%`        | The targets to use when `--auto-sample` is enabled (milliseconds, comma-delimited) ([details](#sample-size))
-`--timeout`               | `5`         | The maximum number of minutes to spend auto-sampling ([details](#sample-size))
+`--horizons`              | `10%`       | The degrees of difference to try and resolve when auto-sampling (milliseconds, comma-delimited) ([details](#sample-size))
+`--timeout`               | `3`         | The maximum number of minutes to spend auto-sampling ([details](#sample-size))

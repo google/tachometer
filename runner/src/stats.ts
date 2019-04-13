@@ -87,16 +87,16 @@ export function intervalContains(
   return value >= interval.low && value <= interval.high;
 }
 
-export interface Targets {
+export interface Horizons {
   absolute: number[];
   relative: number[];
 }
 
 /**
  * Return whether all slowdown confidence intervals are unambiguously located on
- * one side or the other of all given target values.
+ * one side or the other of all given horizon values.
  *
- * For example, given the targets 0 and 1:
+ * For example, given the horizons 0 and 1:
  *
  *    <--->                   true
  *        <--->               false
@@ -108,19 +108,19 @@ export interface Targets {
  *  |-------|-------|-------| ms slowdown
  * -1       0       1       2
  */
-export function targetsResolved(
-    resultStats: ResultStats[], targets: Targets): boolean {
+export function horizonsResolved(
+    resultStats: ResultStats[], horizons: Horizons): boolean {
   for (const {isBaseline, slowdown} of resultStats) {
     if (isBaseline === true || slowdown === undefined) {
       continue;
     }
-    for (const target of targets.absolute) {
-      if (intervalContains(slowdown.absolute, target)) {
+    for (const horizon of horizons.absolute) {
+      if (intervalContains(slowdown.absolute, horizon)) {
         return false;
       }
     }
-    for (const target of targets.relative) {
-      if (intervalContains(slowdown.relative, target)) {
+    for (const horizon of horizons.relative) {
+      if (intervalContains(slowdown.relative, horizon)) {
         return false;
       }
     }
