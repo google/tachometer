@@ -2,7 +2,7 @@
   "name": "tachometer",
   "private": true,
   "version": "0.0.1",
-  "description": "lit-html benchmark runner",
+  "description": "Web benchmark runner",
   "main": "index.js",
   "directories": {
     "lib": "lib"
