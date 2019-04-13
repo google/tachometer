@@ -52,10 +52,11 @@ export class Server {
       const tryNextPort = () => {
         if (ports.length === 0) {
           reject(`No ports available, tried: ${opts.ports.join(', ')}`);
+        } else {
+          server.listen(
+              {host: opts.host, port: ports.shift()},
+              () => resolve(new Server(server, opts)));
         }
-        server.listen(
-            {host: opts.host, port: ports.shift()},
-            () => resolve(new Server(server, opts)));
       };
 
       server.on('error', (e: {code?: string}) => {

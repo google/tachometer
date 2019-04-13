@@ -232,7 +232,7 @@ against: the GitHub master branch, a local development git clone, and the latest
 1.x version published to NPM:
 
 ```sh
-npm run benchmarks --
+tachometer
 --package-version=lit-html/master=lit-html@github:Polymer/lit-html#master \
 --package-version=lit-html/local=lit-html@$HOME/lit-html \
 --package-version=lit-html/1.x=lit-html@^1.0.0
@@ -374,12 +374,12 @@ Flag                      | Default     | Description
 `--root`                  | `./`        | Root directory to search for benchmarks
 `--host`                  | `127.0.0.1` | Which host to run on
 `--port`                  | `8080, 8081, ..., 0`| Which port to run on (comma-delimited preference list, `0` for random)
-`--name` / `-n`           | `*`         | Which benchmarks to run (`*` for all) ([details](#adding-benchmarks))
-`--implementation` / `-i` | `*`         | Which implementations to run (`*` for all) ([details](#adding-benchmarks))
+`--name` / `-n`           | `*`         | Which benchmarks to run (`*` for all) ([details](#folder-layout))
+`--implementation` / `-i` | `*`         | Which implementations to run (`*` for all) ([details](#folder-layout))
 `--variant` / `-v`        | `*`         | Which variants to run (`*` for all) ([details](#variants))
-`--package-version` / `-p`| *(none)*    | Specify one or more dependency versions ([details](#versions))
+`--package-version` / `-p`| *(none)*    | Specify one or more dependency versions ([details](#package-versions))
 `--browser` / `-b`        | `chrome`    | Which browsers to launch in automatic mode, comma-delimited (chrome, firefox)
-`--baseline`              | `fastest`   | Which result to use as the baseline for comparison ([details](#comparison))
-`--sample-size` / `-n`    | `50`        | Minimum number of times to run each benchmark
-`--horizons`              | `10%`       | The degrees of difference to try and resolve when auto-sampling (milliseconds, comma-delimited) ([details](#sample-size))
-`--timeout`               | `3`         | The maximum number of minutes to spend auto-sampling ([details](#sample-size))
+`--baseline`              | `fastest`   | Which result to use as the baseline for comparison ([details](#baseline))
+`--sample-size` / `-n`    | `50`        | Minimum number of times to run each benchmark ([details](#sample-size)]
+`--horizons`              | `10%`       | The degrees of difference to try and resolve when auto-sampling ("N%" or "Nms", comma-delimited) ([details](#auto-sampling))
+`--timeout`               | `3`         | The maximum number of minutes to spend auto-sampling ([details](#auto-sampling))

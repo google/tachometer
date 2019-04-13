@@ -401,7 +401,7 @@ export function parseHorizonsFlag(flag: string): Horizons {
       num = Number(str.slice(0, -1)) / 100;
       absOrRel = relative;
     } else {
-      // Otherwise with "ms"
+      // Otherwise ends with "ms".
       num = Number(str.slice(0, -2));  // Note that Number("+1") === 1
       absOrRel = absolute;
     }
