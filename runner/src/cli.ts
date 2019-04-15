@@ -23,7 +23,7 @@ import {makeSession} from './session';
 import {validBrowsers, makeDriver, openAndSwitchToNewTab, getPaintTime} from './browser';
 import {BenchmarkResult, BenchmarkSpec} from './types';
 import {Server} from './server';
-import {Boundaries, ResultStats, slowdownBoundariesResolved, summaryStats, findFastest, findSlowest, computeSlowdowns} from './stats';
+import {Horizons, ResultStats, horizonsResolved, summaryStats, findFastest, findSlowest, computeSlowdowns} from './stats';
 import {specMatchesFilter, specsFromOpts, SpecFilter} from './specs';
 import {formatManualResult, formatAutomaticResults, spinner} from './format';
 import {prepareVersionDirectories} from './versions';
@@ -50,9 +50,10 @@ const optDefs: commandLineUsage.OptionDefinition[] = [
   },
   {
     name: 'port',
-    description: 'Which port to run on (0 for random free)',
-    type: Number,
-    defaultValue: '0',
+    description: 'Which port to run on (comma-delimited preference list, ' +
+        '0 for random, default [8080, 8081, ..., 0])',
+    type: (flag: string) => flag.split(',').map(Number),
+    defaultValue: [8080, 8081, 8082, 8083, 0],
   },
   {
     name: 'name',
@@ -126,26 +127,19 @@ const optDefs: commandLineUsage.OptionDefinition[] = [
     defaultValue: false,
   },
   {
-    name: 'auto-sample',
-    description: 'Continuously sample until all runtime differences can be ' +
-        'placed, with statistical significance, on one side or the other ' +
-        'of all specified --boundary points (default true)',
-    type: Boolean,
-    defaultValue: true,
-  },
-  {
-    name: 'boundaries',
-    description: 'The boundaries to use when --auto-sample is enabled ' +
-        '(milliseconds, comma-delimited, optionally signed, default 10%)',
+    name: 'horizon',
+    description:
+        'The degrees of difference to try and resolve when auto-sampling ' +
+        '(milliseconds, comma-delimited, optionally signed, default 0%)',
     type: String,
-    defaultValue: '10%',
+    defaultValue: '0%'
   },
   {
     name: 'timeout',
     description: 'The maximum number of minutes to spend auto-sampling ' +
-        '(default 5).',
+        '(default 3).',
     type: Number,
-    defaultValue: 5,
+    defaultValue: 3,
   },
 ];
 
@@ -153,7 +147,7 @@ interface Opts {
   help: boolean;
   root: string;
   host: string;
-  port: number;
+  port: number[];
   name: string;
   implementation: string;
   variant: string;
@@ -164,8 +158,7 @@ interface Opts {
   manual: boolean;
   save: string;
   paint: boolean;
-  boundaries: string;
-  'auto-sample': boolean;
+  horizon: string;
   timeout: number;
 }
 
@@ -204,7 +197,7 @@ export async function main() {
 
   const server = await Server.start({
     host: opts.host,
-    port: opts.port,
+    ports: opts.port,
     benchmarksDir: opts.root,
   });
 
@@ -216,8 +209,8 @@ export async function main() {
 }
 
 /**
- * Let the user run benchmarks manually. This process will not exit until the
- * user sends a termination signal.
+ * Let the user run benchmarks manually. This process will not exit until
+ * the user sends a termination signal.
  */
 async function manualMode(opts: Opts, specs: BenchmarkSpec[], server: Server) {
   if (opts.save) {
@@ -250,7 +243,7 @@ interface Browser {
 async function automaticMode(
     opts: Opts, specs: BenchmarkSpec[], server: Server) {
   const pickBaseline = pickBaselineFn(specs, opts.baseline);
-  const boundaries = parseBoundariesFlag(opts.boundaries);
+  const horizons = parseHorizonFlag(opts.horizon);
 
   console.log('Running benchmarks\n');
 
@@ -265,9 +258,9 @@ async function automaticMode(
     // It's important that we execute each benchmark iteration in a new tab.
     // At least in Chrome, each tab corresponds to process which shares some
     // amount of cached V8 state which can cause significant measurement
-    // effects. There might even be additional interaction effects that would
-    // require an entirely new browser to remove, but experience in Chrome so
-    // far shows that new tabs are neccessary and sufficient.
+    // effects. There might even be additional interaction effects that
+    // would require an entirely new browser to remove, but experience in
+    // Chrome so far shows that new tabs are neccessary and sufficient.
     const driver = await makeDriver(browser, opts);
     const tabs = await driver.getAllWindowHandles();
     // We'll always launch new tabs from this initial blank tab.
@@ -341,20 +334,20 @@ async function automaticMode(
     return withSlowdowns;
   };
 
-  if (opts['auto-sample'] === true) {
+  let hitTimeout = false;
+  if (opts.timeout > 0) {
     console.log();
     const timeoutMs = opts.timeout * 60 * 1000;  // minutes -> millis
     const startMs = Date.now();
     let run = 0;
     let sample = 0;
     while (true) {
-      if (slowdownBoundariesResolved(makeResults(), boundaries)) {
+      if (horizonsResolved(makeResults(), horizons)) {
         console.log();
         break;
       }
       if ((Date.now() - startMs) >= timeoutMs) {
-        console.log();
-        console.log(`Hit ${opts.timeout} minute auto-sample timeout`);
+        hitTimeout = true;
         break;
       }
       // Run batches of 10 additional samples at a time for more presentable
@@ -379,20 +372,27 @@ async function automaticMode(
   console.log();
   console.log(formatAutomaticResults(withSlowdowns));
 
+  if (hitTimeout === true) {
+    console.log(ansi.format(
+        `[bold red]{NOTE} Hit ${opts.timeout} minute auto-sample timeout` +
+        ` trying to resolve ${opts.horizon} horizon(s)`));
+    console.log('Consider a longer --timeout or different --horizon');
+  }
+
   if (opts.save) {
     const session = await makeSession(withSlowdowns.map((s) => s.result));
     await fsExtra.writeJSON(opts.save, session);
   }
 }
 
-/** Parse the --boundaries flag into a list of signed boundary values. */
-export function parseBoundariesFlag(flag: string): Boundaries {
+/** Parse the --horizon flag into signed horizon values. */
+export function parseHorizonFlag(flag: string): Horizons {
   const absolute = new Set<number>();
   const relative = new Set<number>();
   const strs = flag.split(',');
   for (const str of strs) {
-    if (!str.match(/^[-+]?(\d*\.)?\d+%?$/)) {
-      throw new Error(`Invalid --boundaries ${flag}`);
+    if (!str.match(/^[-+]?(\d*\.)?\d+(ms|%)$/)) {
+      throw new Error(`Invalid --horizon ${flag}`);
     }
 
     let num;
@@ -402,16 +402,17 @@ export function parseBoundariesFlag(flag: string): Boundaries {
       num = Number(str.slice(0, -1)) / 100;
       absOrRel = relative;
     } else {
-      num = Number(str);  // Note that Number("+1") === 1
+      // Otherwise ends with "ms".
+      num = Number(str.slice(0, -2));  // Note that Number("+1") === 1
       absOrRel = absolute;
     }
 
     if (str.startsWith('+') || str.startsWith('-') || num === 0) {
       // If the sign was explicit (e.g. "+0.1", "-0.1") then we're only
-      // interested in that signed boundary.
+      // interested in that signed horizon.
       absOrRel.add(num);
     } else {
-      // Otherwise (e.g. "0.1") we're interested in the boundary as a
+      // Otherwise (e.g. "0.1") we're interested in the horizon as a
       // difference in either direction.
       absOrRel.add(-num);
       absOrRel.add(num);

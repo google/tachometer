@@ -11,7 +11,7 @@
 
 import {assert} from 'chai';
 
-import {parseBoundariesFlag, pickBaselineFn} from '../cli';
+import {parseHorizonFlag, pickBaselineFn} from '../cli';
 import {ResultStats, SummaryStats} from '../stats';
 import {BenchmarkResult, BenchmarkSpec} from '../types';
 
@@ -22,6 +22,7 @@ const fakeSpec: BenchmarkSpec = {
   version: {label: 'fakeVersion', dependencyOverrides: {}},
   browser: 'fakeBrowser',
   config: {},
+  paint: false,
 };
 
 const fakeStats: SummaryStats = {
@@ -125,81 +126,89 @@ suite('pickBaseline', function() {
   });
 });
 
-suite('parseBoundaryFlag', function() {
-  test('0', () => {
-    assert.deepEqual(parseBoundariesFlag('0'), {
+suite('parseHorizonFlag', function() {
+  test('0ms', () => {
+    assert.deepEqual(parseHorizonFlag('0ms'), {
       absolute: [0],
       relative: [],
     });
   });
 
-  test('0.1', () => {
-    assert.deepEqual(parseBoundariesFlag('0.1'), {
+  test('0.1ms', () => {
+    assert.deepEqual(parseHorizonFlag('0.1ms'), {
       absolute: [-0.1, 0.1],
       relative: [],
     });
   });
 
-  test('+0.1', () => {
-    assert.deepEqual(parseBoundariesFlag('+0.1'), {
+  test('+0.1ms', () => {
+    assert.deepEqual(parseHorizonFlag('+0.1ms'), {
       absolute: [0.1],
       relative: [],
     });
   });
 
-  test('-0.1', () => {
-    assert.deepEqual(parseBoundariesFlag('-0.1'), {
+  test('-0.1ms', () => {
+    assert.deepEqual(parseHorizonFlag('-0.1ms'), {
       absolute: [-0.1],
       relative: [],
     });
   });
 
-  test('0,0.1,1', () => {
-    assert.deepEqual(parseBoundariesFlag('0,0.1,1'), {
+  test('0ms,0.1,1ms', () => {
+    assert.deepEqual(parseHorizonFlag('0ms,0.1ms,1ms'), {
       absolute: [-1, -0.1, 0, 0.1, 1],
       relative: [],
     });
   });
 
   test('0%', () => {
-    assert.deepEqual(parseBoundariesFlag('0%'), {
+    assert.deepEqual(parseHorizonFlag('0%'), {
       absolute: [],
       relative: [0],
     });
   });
 
   test('1%', () => {
-    assert.deepEqual(parseBoundariesFlag('1%'), {
+    assert.deepEqual(parseHorizonFlag('1%'), {
       absolute: [],
       relative: [-0.01, 0.01],
     });
   });
 
   test('+1%', () => {
-    assert.deepEqual(parseBoundariesFlag('+1%'), {
+    assert.deepEqual(parseHorizonFlag('+1%'), {
       absolute: [],
       relative: [0.01],
     });
   });
 
   test('-1%', () => {
-    assert.deepEqual(parseBoundariesFlag('-1%'), {
+    assert.deepEqual(parseHorizonFlag('-1%'), {
       absolute: [],
       relative: [-0.01],
     });
   });
 
   test('0%,1%,10%', () => {
-    assert.deepEqual(parseBoundariesFlag('0%,1%,10%'), {
+    assert.deepEqual(parseHorizonFlag('0%,1%,10%'), {
       absolute: [],
       relative: [-0.1, -0.01, 0, 0.01, 0.10],
     });
   });
 
-  test('0,0.1,1,0%,1%,10%', () => {
-    assert.deepEqual(parseBoundariesFlag('0,0.1,1,0%,1%,10%'), {
+  test('0ms,0.1ms,1ms,0%,1%,10%', () => {
+    assert.deepEqual(parseHorizonFlag('0ms,0.1ms,1ms,0%,1%,10%'), {
       absolute: [-1, -0.1, 0, 0.1, 1],
       relative: [-0.1, -0.01, 0, 0.01, 0.10],
     });
+  });
+
+  test('throws on nonsense', () => {
+    assert.throws(() => parseHorizonFlag('sailboat'));
+  });
+
+  test('throws on ambiguous unit', () => {
+    assert.throws(() => parseHorizonFlag('4'));
   });
 });

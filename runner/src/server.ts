@@ -16,6 +16,7 @@ import * as querystring from 'querystring';
 
 import Koa = require('koa');
 import mount = require('koa-mount');
+import send = require('koa-send');
 import serve = require('koa-static');
 import bodyParser = require('koa-bodyparser');
 import {UAParser} from 'ua-parser-js';
@@ -24,11 +25,11 @@ import {BenchmarkResponse, Deferred, BenchmarkSpec, BenchmarkResult, PendingBenc
 
 export interface ServerOpts {
   host: string;
-  port: number;
+  ports: number[];
   benchmarksDir: string;
 }
 
-const clientDir = path.resolve(__dirname, '..', 'client');
+const clientLib = path.resolve(__dirname, '..', 'client', 'lib');
 
 export class Server {
   readonly url: string;
@@ -44,11 +45,29 @@ export class Server {
   private resultSubmitted = new Deferred<BenchmarkResult>();
 
   static start(opts: ServerOpts): Promise<Server> {
-    return new Promise((resolve) => {
-      const server = http.createServer();
-      server.listen(
-          {host: opts.host, port: opts.port},
-          () => resolve(new Server(server, opts)));
+    const server = http.createServer();
+    const ports = [...opts.ports];
+
+    return new Promise((resolve, reject) => {
+      const tryNextPort = () => {
+        if (ports.length === 0) {
+          reject(`No ports available, tried: ${opts.ports.join(', ')}`);
+        } else {
+          server.listen(
+              {host: opts.host, port: ports.shift()},
+              () => resolve(new Server(server, opts)));
+        }
+      };
+
+      server.on('error', (e: {code?: string}) => {
+        if (e.code === 'EADDRINUSE' || e.code === 'EACCES') {
+          tryNextPort();
+        } else {
+          reject(e);
+        }
+      });
+
+      tryNextPort();
     });
   }
 
@@ -62,7 +81,7 @@ export class Server {
     app.use(this.recordBytesSent.bind(this));
     app.use(
         mount('/benchmarks', serve(opts.benchmarksDir, {index: 'index.html'})));
-    app.use(mount('/client', serve(clientDir)));
+    app.use(this.serveBenchLib.bind(this));
     this.server.on('request', app.callback());
 
     const address = (this.server.address() as net.AddressInfo);
@@ -93,6 +112,7 @@ export class Server {
       runId?: string,
       variant?: string,
       config?: string,
+      paint?: 'true',
     } = {};
     if (id !== undefined) {
       params.runId = id;
@@ -102,6 +122,9 @@ export class Server {
     }
     if (spec.config !== undefined) {
       params.config = JSON.stringify(spec.config);
+    }
+    if (spec.paint === true) {
+      params.paint = 'true';
     }
     return `${this.url}/benchmarks/${spec.implementation}/` +
         (spec.version.label === 'default' ? '' :
@@ -139,6 +162,14 @@ export class Server {
       console.log(
           `No response length for 200 response for ${ctx.url}, ` +
           `byte count may be inaccurate.`);
+    }
+  }
+
+  private async serveBenchLib(ctx: Koa.Context, next: () => Promise<void>) {
+    if (ctx.path === '/bench.js') {
+      await send(ctx, 'bench.js', {root: clientLib});
+    } else {
+      await next();
     }
   }
 

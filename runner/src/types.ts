@@ -61,6 +61,7 @@ export interface BenchmarkSpec {
   variant: string;
   browser: string;
   config: {};
+  paint: boolean;
 }
 
 // Note: sync with client/src/index.ts
