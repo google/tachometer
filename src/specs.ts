@@ -16,10 +16,8 @@ import {validBrowsers} from './browser';
 import {BenchmarkSpec, ConfigFormat} from './types';
 import {parsePackageVersions} from './versions';
 
-const ignoreFiles = new Set([
+const ignoreDirs = new Set([
   'node_modules',
-  'package.json',
-  'package-lock.json',
   'common',
   'versions',
 ]);
@@ -58,11 +56,11 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
   const specs: BenchmarkSpec[] = [];
   let impls;
   if (opts.implementation === '*') {
-    impls = await fsExtra.readdir(opts.root);
-    impls = impls.filter((dir) => !ignoreFiles.has(dir));
+    impls = await listDirs(opts.root);
+    impls = impls.filter((dir) => !dir.startsWith('.') && !ignoreDirs.has(dir));
   } else {
     impls = opts.implementation.split(',');
-    const badNames = impls.filter((dir) => ignoreFiles.has(dir));
+    const badNames = impls.filter((dir) => ignoreDirs.has(dir));
     if (badNames.length > 0) {
       throw new Error(
           `Implementations cannot be named ${badNames.join(' or ')}`);
@@ -76,11 +74,12 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
     const implDir = path.join(opts.root, implementation);
     let benchmarks;
     if (opts.name === '*') {
-      benchmarks = await fsExtra.readdir(implDir);
-      benchmarks = benchmarks.filter((implDir) => !ignoreFiles.has(implDir));
+      benchmarks = await listDirs(implDir);
+      benchmarks = benchmarks.filter(
+          (implDir) => !implDir.startsWith('.') && !ignoreDirs.has(implDir));
     } else {
       benchmarks = opts.name.split(',');
-      const badNames = benchmarks.filter((dir) => ignoreFiles.has(dir));
+      const badNames = benchmarks.filter((dir) => ignoreDirs.has(dir));
       if (badNames.length > 0) {
         throw new Error(`Benchmarks cannot be named ${badNames.join(' or ')}`);
       }
@@ -159,6 +158,13 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
   });
 
   return specs;
+}
+
+async function listDirs(root: string): Promise<string[]> {
+  const files = await fsExtra.readdir(root);
+  const stats = await Promise.all(
+      files.map((name) => fsExtra.stat(path.join(root, name))));
+  return files.filter((_, idx) => stats[idx].isDirectory());
 }
 
 export interface SpecFilter {
