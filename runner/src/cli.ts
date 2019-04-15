@@ -127,11 +127,12 @@ const optDefs: commandLineUsage.OptionDefinition[] = [
     defaultValue: false,
   },
   {
-    name: 'horizons',
-    description: 'The horizons to use when --auto-sample is enabled ' +
-        '(milliseconds, comma-delimited, optionally signed, default 10%)',
+    name: 'horizon',
+    description:
+        'The degrees of difference to try and resolve when auto-sampling ' +
+        '(milliseconds, comma-delimited, optionally signed, default 0%)',
     type: String,
-    defaultValue: '10%',
+    defaultValue: '0%'
   },
   {
     name: 'timeout',
@@ -157,7 +158,7 @@ interface Opts {
   manual: boolean;
   save: string;
   paint: boolean;
-  horizons: string;
+  horizon: string;
   timeout: number;
 }
 
@@ -242,7 +243,7 @@ interface Browser {
 async function automaticMode(
     opts: Opts, specs: BenchmarkSpec[], server: Server) {
   const pickBaseline = pickBaselineFn(specs, opts.baseline);
-  const horizons = parseHorizonsFlag(opts.horizons);
+  const horizons = parseHorizonFlag(opts.horizon);
 
   console.log('Running benchmarks\n');
 
@@ -374,8 +375,8 @@ async function automaticMode(
   if (hitTimeout === true) {
     console.log(ansi.format(
         `[bold red]{NOTE} Hit ${opts.timeout} minute auto-sample timeout` +
-        ` trying to resolve ${opts.horizons} horizon(s)`));
-    console.log('Consider a longer --timeout or different --horizons');
+        ` trying to resolve ${opts.horizon} horizon(s)`));
+    console.log('Consider a longer --timeout or different --horizon');
   }
 
   if (opts.save) {
@@ -384,14 +385,14 @@ async function automaticMode(
   }
 }
 
-/** Parse the --horizons flag into signed horizon values. */
-export function parseHorizonsFlag(flag: string): Horizons {
+/** Parse the --horizon flag into signed horizon values. */
+export function parseHorizonFlag(flag: string): Horizons {
   const absolute = new Set<number>();
   const relative = new Set<number>();
   const strs = flag.split(',');
   for (const str of strs) {
     if (!str.match(/^[-+]?(\d*\.)?\d+(ms|%)$/)) {
-      throw new Error(`Invalid --horizons ${flag}`);
+      throw new Error(`Invalid --horizon ${flag}`);
     }
 
     let num;
