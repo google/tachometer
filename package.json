@@ -1,24 +1,74 @@
 {
-  "name": "lit-benchmarks",
+  "name": "tachometer",
   "private": true,
-  "version": "1.0.0",
-  "description": "Benchmarks for lit-html",
+  "version": "0.0.1",
+  "description": "Web benchmark runner",
   "main": "index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "bin": {
+    "tach": "bin/tach.js"
+  },
   "scripts": {
-    "prepare": "(cd runner && npm install) && (cd benchmarks && npm install)",
-    "benchmarks": "node runner/bin/tach.js --root=./benchmarks",
-    "build": "(cd runner && npm run build)",
-    "format": "(cd runner && npm run format) && (cd benchmarks && npm run format)",
-    "test": "(cd runner && npm run test)"
+    "prepare": "npm run build",
+    "build": "rm -rf lib/ client/lib/ && tsc && tsc -p client/ && npm run lint",
+    "lint": "tslint --project . --format stylish",
+    "format": "find src/ client/src/ -name \"*.ts\" | xargs clang-format --style=file -i",
+    "test": "npm run build && mocha"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/PolymerLabs/lit-benchmarks.git"
+    "url": "git+https://github.com/PolymerLabs/tachometer.git"
   },
   "author": "The Polymer Project Authors",
   "license": "BSD-3-Clause",
   "bugs": {
-    "url": "https://github.com/PolymerLabs/lit-benchmarks/issues"
+    "url": "https://github.com/PolymerLabs/tachometer/issues"
   },
-  "homepage": "https://github.com/PolymerLabs/lit-benchmarks#readme"
+  "homepage": "https://github.com/PolymerLabs/tachometer#readme",
+  "dependencies": {
+    "@types/ansi-escape-sequences": "^4.0.0",
+    "@types/command-line-args": "^5.0.0",
+    "@types/command-line-usage": "^5.0.1",
+    "@types/fs-extra": "^5.0.3",
+    "@types/koa": "^2.0.45",
+    "@types/koa-bodyparser": "^4.2.1",
+    "@types/koa-mount": "^3.0.1",
+    "@types/koa-send": "^4.1.2",
+    "@types/koa-static": "^4.0.0",
+    "@types/progress": "^2.0.3",
+    "@types/selenium-webdriver": "^4.0.0",
+    "@types/systeminformation": "^3.23.0",
+    "@types/table": "^4.0.5",
+    "@types/ua-parser-js": "^0.7.32",
+    "ansi-escape-sequences": "^4.0.1",
+    "chromedriver": "^2.45.0",
+    "command-line-args": "^5.0.2",
+    "command-line-usage": "^5.0.5",
+    "fs-extra": "^7.0.1",
+    "geckodriver": "^1.14.1",
+    "jstat": "^1.7.1",
+    "koa": "^2.5.1",
+    "koa-bodyparser": "^4.2.1",
+    "koa-mount": "^4.0.0",
+    "koa-router": "^7.4.0",
+    "koa-send": "^5.0.0",
+    "koa-static": "^5.0.0",
+    "progress": "^2.0.3",
+    "selenium-webdriver": "^4.0.0-alpha.1",
+    "source-map-support": "^0.5.6",
+    "systeminformation": "^4.1.1",
+    "table": "^5.2.1",
+    "ua-parser-js": "^0.7.19"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.1.7",
+    "@types/mocha": "^5.2.6",
+    "chai": "^4.2.0",
+    "clang-format": "^1.2.4",
+    "mocha": "^6.0.2",
+    "tslint": "^5.12.1",
+    "typescript": "^3.2.0"
+  }
 }
