@@ -6,7 +6,7 @@
   "main": "index.js",
   "scripts": {
     "prepare": "(cd runner && npm install) && (cd benchmarks && npm install)",
-    "benchmarks": "node runner/bin/tachometer.js --root=./benchmarks",
+    "benchmarks": "node runner/bin/tach.js --root=./benchmarks",
     "build": "(cd runner && npm run build)",
     "format": "(cd runner && npm run format) && (cd benchmarks && npm run format)",
     "test": "(cd runner && npm run test)"

@@ -56,7 +56,7 @@ confidence in them.
    Chrome, and execute the benchmark 50 times.
 
   ```sh
-  $ tachometer
+  $ tach
   ```
 
   Along with some other information, tachometer will show you a range of
