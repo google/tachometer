@@ -14,6 +14,7 @@ require('geckodriver');
 
 import * as webdriver from 'selenium-webdriver';
 import * as chrome from 'selenium-webdriver/chrome';
+import * as firefox from 'selenium-webdriver/firefox';
 
 export interface MakeDriverOpts {
   /** Turn on profiling that allows us to measure paint time. */
@@ -25,7 +26,9 @@ export interface MakeDriverOpts {
  */
 export const validBrowsers = new Set([
   'chrome',
+  'chrome-headless',
   'firefox',
+  'firefox-headless',
 ]);
 
 /**
@@ -33,15 +36,23 @@ export const validBrowsers = new Set([
  */
 export async function makeDriver(
     browser: string, makeOpts: MakeDriverOpts): Promise<webdriver.WebDriver> {
+  const headless = browser.endsWith('-headless');
+  if (headless === true) {
+    browser = browser.replace(/-headless$/, '');
+  }
   return await new webdriver.Builder()
       .forBrowser(browser)
-      .setChromeOptions(chromeOpts(makeOpts))
-      // TODO Options for other browers.
+      .setChromeOptions(chromeOpts(makeOpts, headless))
+      .setFirefoxOptions(firefoxOpts(headless))
       .build();
 }
 
-function chromeOpts(makeOpts: MakeDriverOpts): chrome.Options {
+function chromeOpts(
+    makeOpts: MakeDriverOpts, headless: boolean): chrome.Options {
   const opts = new chrome.Options();
+  if (headless === true) {
+    opts.addArguments('--headless');
+  }
   // TODO Test and add Chrome options that reduce variation.
   if (makeOpts.paint === true) {
     const logging = new webdriver.logging.Preferences();
@@ -51,6 +62,15 @@ function chromeOpts(makeOpts: MakeDriverOpts): chrome.Options {
     opts.setPerfLoggingPrefs({
       traceCategories: ['devtools.timeline'].join(','),
     } as unknown as chrome.IPerfLoggingPrefs);  // TODO Upstream type fixes.
+  }
+  return opts;
+}
+
+function firefoxOpts(headless: boolean): firefox.Options {
+  const opts = new firefox.Options();
+  if (headless === true) {
+    // tslint:disable-next-line:no-any TODO Incorrect types.
+    (opts as any).addArguments('-headless');
   }
   return opts;
 }

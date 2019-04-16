@@ -378,7 +378,7 @@ Flag                      | Default     | Description
 `--implementation` / `-i` | `*`         | Which implementations to run (`*` for all) ([details](#folder-layout))
 `--variant` / `-v`        | `*`         | Which variants to run (`*` for all) ([details](#variants))
 `--package-version` / `-p`| *(none)*    | Specify one or more dependency versions ([details](#package-versions))
-`--browser` / `-b`        | `chrome`    | Which browsers to launch in automatic mode, comma-delimited (chrome, firefox)
+`--browser` / `-b`        | `chrome`    | Which browsers to launch in automatic mode, comma-delimited (chrome, chrome-headless, firefox, firefox-headless)
 `--baseline`              | `fastest`   | Which result to use as the baseline for comparison ([details](#baseline))
 `--sample-size` / `-n`    | `50`        | Minimum number of times to run each benchmark ([details](#sample-size)]
 `--horizons`              | `10%`       | The degrees of difference to try and resolve when auto-sampling ("N%" or "Nms", comma-delimited) ([details](#auto-sampling))
