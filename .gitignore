@@ -4,5 +4,4 @@ lib/
 .vscode
 .DS_Store
 npm-debug.log
-benchmarks/*/versions
 *.tgz
