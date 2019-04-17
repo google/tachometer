@@ -47,7 +47,7 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
     if (validBrowsers.has(b) === false) {
       throw new Error(
           `Browser ${b} is not yet supported, ` +
-          `only ${[...validBrowsers].join(' ,')} are currently supported`);
+          `only ${[...validBrowsers].join(', ')} are currently supported`);
     }
   }
 
