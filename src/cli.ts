@@ -14,6 +14,7 @@ require('source-map-support').install();
 import * as fsExtra from 'fs-extra';
 import * as webdriver from 'selenium-webdriver';
 
+import stripAnsi from 'strip-ansi';
 import commandLineArgs = require('command-line-args');
 import commandLineUsage = require('command-line-usage');
 import ProgressBar = require('progress');
@@ -27,6 +28,7 @@ import {Horizons, ResultStats, horizonsResolved, summaryStats, findFastest, find
 import {specMatchesFilter, specsFromOpts, SpecFilter} from './specs';
 import {formatManualResult, formatAutomaticResults, spinner} from './format';
 import {prepareVersionDirectories} from './versions';
+import * as github from './github';
 
 const optDefs: commandLineUsage.OptionDefinition[] = [
   {
@@ -141,6 +143,13 @@ const optDefs: commandLineUsage.OptionDefinition[] = [
     type: Number,
     defaultValue: 3,
   },
+  {
+    name: 'github-check',
+    description: 'Post benchmark results as a GitHub Check. A JSON object' +
+        'with properties appId, installationId, repo, and commit.',
+    type: String,
+    defaultValue: '',
+  },
 ];
 
 interface Opts {
@@ -160,6 +169,7 @@ interface Opts {
   paint: boolean;
   horizon: string;
   timeout: number;
+  'github-check': string;
 }
 
 function combineResults(results: BenchmarkResult[]): BenchmarkResult {
@@ -244,6 +254,48 @@ async function automaticMode(
     opts: Opts, specs: BenchmarkSpec[], server: Server) {
   const pickBaseline = pickBaselineFn(specs, opts.baseline);
   const horizons = parseHorizonFlag(opts.horizon);
+
+  let reportGitHubCheckResults;
+  if (opts['github-check'] !== '') {
+    const {appId, installationId, repo, commit} =
+        github.parseCheckFlag(opts['github-check']);
+
+    // We can directly store our GitHub App private key as a secret Travis
+    // environment variable (as opposed to committing it as a file and
+    // configuring to Travis decrypt it), but we have to be careful with the
+    // spaces and newlines that PEM files have, since Travis does a raw Bash
+    // substitution when it sets the variable.
+    //
+    // Given a PEM file from GitHub, the following command will escape spaces
+    // and newlines so that it can be safely pasted into the Travis UI. The
+    // spaces will get unescaped by Bash, and we'll unescape newlines ourselves.
+    //
+    //     cat <GITHUB_PEM_FILE>.pem \
+    //         | awk '{printf "%s\\\\n", $0}' | sed 's/ /\\ // // /g'
+    const appPrivateKey =
+        (process.env.GITHUB_APP_PRIVATE_KEY || '').trim().replace(/\\n/g, '\n');
+    if (appPrivateKey === '') {
+      throw new Error(
+          'Missing or empty GITHUB_APP_PRIVATE_KEY environment variable, ' +
+          'which is required when using --github-check.');
+    }
+    const appToken = github.getAppToken(appId, appPrivateKey);
+    const installationToken =
+        await github.getInstallationToken({installationId, appToken});
+
+    // Create the initial Check Run run now, so that it will show up in the
+    // GitHub UI as pending.
+    const checkId =
+        await github.createCheckRun({repo, commit, installationToken});
+
+    // We'll call this after we're done to complete the Check Run.
+    reportGitHubCheckResults = async (resultTableText: string) => {
+      // Color and other formatting ANSI codes aren't supported by Markdown.
+      const markdown = '```\n' + stripAnsi(resultTableText) + '```';
+      await github.completeCheckRun(
+          {repo, installationToken, checkId, markdown});
+    };
+  }
 
   console.log('Running benchmarks\n');
 
@@ -370,7 +422,8 @@ async function automaticMode(
 
   const withSlowdowns = makeResults();
   console.log();
-  console.log(formatAutomaticResults(withSlowdowns));
+  const resultTableText = formatAutomaticResults(withSlowdowns);
+  console.log(resultTableText);
 
   if (hitTimeout === true) {
     console.log(ansi.format(
@@ -382,6 +435,10 @@ async function automaticMode(
   if (opts.save) {
     const session = await makeSession(withSlowdowns.map((s) => s.result));
     await fsExtra.writeJSON(opts.save, session);
+  }
+
+  if (reportGitHubCheckResults !== undefined) {
+    await reportGitHubCheckResults(resultTableText);
   }
 }
 
