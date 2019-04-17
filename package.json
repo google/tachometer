@@ -1,6 +1,5 @@
 {
   "name": "tachometer",
-  "private": true,
   "version": "0.1.0",
   "description": "Web benchmark runner",
   "main": "index.js",
