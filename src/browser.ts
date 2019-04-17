@@ -29,6 +29,7 @@ export const validBrowsers = new Set([
   'chrome-headless',
   'firefox',
   'firefox-headless',
+  'safari',
 ]);
 
 /**
@@ -82,10 +83,17 @@ function firefoxOpts(headless: boolean): firefox.Options {
  */
 export async function openAndSwitchToNewTab(driver: webdriver.WebDriver):
     Promise<void> {
+  // Chrome and Firefox add new tabs to the end of the handle list, but Safari
+  // adds them to the beginning. Just look for the new one instead of making
+  // any assumptions about this order.
+  const tabsBefore = await driver.getAllWindowHandles();
   await driver.executeScript('window.open();');
-  const tabs = await driver.getAllWindowHandles();
-  const newTab = tabs[tabs.length - 1];
-  await driver.switchTo().window(newTab);
+  const tabsAfter = await driver.getAllWindowHandles();
+  const newTabs = tabsAfter.filter((tab) => !tabsBefore.includes(tab));
+  if (newTabs.length !== 1) {
+    throw new Error(`Expected to create 1 new tab, got ${newTabs.length}`);
+  }
+  await driver.switchTo().window(newTabs[0]);
 }
 
 /**
