@@ -141,7 +141,7 @@ export async function completeCheckRun(
           // Note that in the future we will likely want to be able to report
           // a failing check (e.g. if there appears to be a slowdown greater
           // than some threshold).
-          conclusion: 'success',
+          conclusion: 'neutral',
           output: {
             title: 'Tachometer Benchmarks',
             summary: 'Benchmark results',
