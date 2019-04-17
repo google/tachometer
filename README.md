@@ -334,7 +334,7 @@ Example horizon    | Question
 `0%,10%,100%`      | Is X at all, a little, or a lot slower or faster than the baseline?
 `0.5ms`            | Is X faster or slower than the baseline by at least 0.5 milliseconds?
 
-In the following visual example, we have set `--horizons=10%` meaning that we are
+In the following visual example, we have set `--horizon=10%` meaning that we are
 interested in knowing whether A differs from B by at least 10% in either
 direction. The sample size automatically increases until the confidence interval
 is narrow enough to place the estimated difference squarely on one side or the
@@ -381,5 +381,5 @@ Flag                      | Default     | Description
 `--browser` / `-b`        | `chrome`    | Which browsers to launch in automatic mode, comma-delimited (chrome, chrome-headless, firefox, firefox-headless, safari)
 `--baseline`              | `fastest`   | Which result to use as the baseline for comparison ([details](#baseline))
 `--sample-size` / `-n`    | `50`        | Minimum number of times to run each benchmark ([details](#sample-size)]
-`--horizons`              | `10%`       | The degrees of difference to try and resolve when auto-sampling ("N%" or "Nms", comma-delimited) ([details](#auto-sampling))
+`--horizon`               | `10%`       | The degrees of difference to try and resolve when auto-sampling ("N%" or "Nms", comma-delimited) ([details](#auto-sampling))
 `--timeout`               | `3`         | The maximum number of minutes to spend auto-sampling ([details](#auto-sampling))
