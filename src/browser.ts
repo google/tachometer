@@ -87,9 +87,12 @@ export async function openAndSwitchToNewTab(driver: webdriver.WebDriver):
   // adds them to the beginning. Just look for the new one instead of making
   // any assumptions about this order.
   const tabsBefore = await driver.getAllWindowHandles();
+  if (tabsBefore.length !== 1) {
+    throw new Error(`Expected only 1 open tab, got ${tabsBefore.length}`);
+  }
   await driver.executeScript('window.open();');
   const tabsAfter = await driver.getAllWindowHandles();
-  const newTabs = tabsAfter.filter((tab) => !tabsBefore.includes(tab));
+  const newTabs = tabsAfter.filter((tab) => tab !== tabsBefore[0]);
   if (newTabs.length !== 1) {
     throw new Error(`Expected to create 1 new tab, got ${newTabs.length}`);
   }
