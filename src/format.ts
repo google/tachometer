@@ -9,7 +9,9 @@
  * rights grant found at http://polymer.github.io/PATENTS.txt
  */
 
+import stripAnsi from 'strip-ansi';
 import * as table from 'table';
+
 import ansi = require('ansi-escape-sequences');
 
 import {ConfidenceInterval, ResultStats} from './stats';
@@ -26,10 +28,15 @@ interface Dimension {
   tableConfig?: table.ColumnConfig;
 }
 
+export interface ResultTable {
+  dimensions: Dimension[];
+  results: ResultStats[];
+}
+
 /**
- * Format a manual mode result as an ASCII table.
+ * Create a manual mode result table.
  */
-export function formatManualResult(result: ResultStats): string {
+export function manualResultTable(result: ResultStats): ResultTable {
   const dimensions = [
     benchmarkDimension,
     variantDimension,
@@ -39,13 +46,18 @@ export function formatManualResult(result: ResultStats): string {
     bytesSentDimension,
     runtimePointEstimateDimension,
   ];
-  return verticalResultTable([result], dimensions);
+  return {dimensions, results: [result]};
+}
+
+export interface AutomaticResults {
+  fixed: ResultTable;
+  unfixed: ResultTable;
 }
 
 /**
- * Format automatic mode results as ASCII tables.
+ * Create an automatic mode result table.
  */
-export function formatAutomaticResults(results: ResultStats[]): string {
+export function automaticResultTable(results: ResultStats[]): AutomaticResults {
   // Typically most dimensions for a set of results share the same value (e.g
   // because we're only running one benchmark, one browser, etc.). To save
   // horizontal space and make the results easier to read, we first show the
@@ -89,13 +101,13 @@ export function formatAutomaticResults(results: ResultStats[]): string {
     );
   }
 
-  const fixedTable = horizontalResultTable([results[0]], fixed);
-  const unfixedTable = verticalResultTable(results, unfixed);
-  return `${fixedTable}\n${unfixedTable}\n`;
+  const fixedTable = {dimensions: fixed, results: [results[0]]};
+  const unfixedTable = {dimensions: unfixed, results};
+  return {fixed: fixedTable, unfixed: unfixedTable};
 }
 
 /**
- * Format a result table where each result is a row:
+ * Format a terminal text result table where each result is a row:
  *
  * +--------+--------+
  * | Header | Header |
@@ -105,8 +117,8 @@ export function formatAutomaticResults(results: ResultStats[]): string {
  * | Value  | Value  |
  * +--------+--------+
  */
-function verticalResultTable(
-    results: ResultStats[], dimensions: Dimension[]): string {
+export function verticalTermResultTable({dimensions, results}: ResultTable):
+    string {
   const columns = dimensions.map((d) => d.tableConfig || {});
   const rows = [
     dimensions.map((d) => ansi.format(`[bold]{${d.label}}`)),
@@ -119,7 +131,7 @@ function verticalResultTable(
 }
 
 /**
- * Format a result table where each result is a column:
+ * Format a terminal text result table where each result is a column:
  *
  * +--------+-------+-------+
  * | Header | Value | Value |
@@ -127,8 +139,8 @@ function verticalResultTable(
  * | Header | Value | Value |
  * +--------+-------+-------+
  */
-function horizontalResultTable(
-    results: ResultStats[], dimensions: Dimension[]): string {
+export function horizontalTermResultTable({dimensions, results}: ResultTable):
+    string {
   const columns: table.ColumnConfig[] = [
     {alignment: 'right'},
     ...results.map((): table.ColumnConfig => ({alignment: 'left'})),
@@ -143,6 +155,58 @@ function horizontalResultTable(
     border: table.getBorderCharacters('norc'),
     columns,
   });
+}
+
+/**
+ * Format an HTML result table where each result is a row:
+ *
+ * <table>
+ *   <tr> <th>Header</th> <th>Header</th> </tr>
+ *   <tr> <td>Value</td> <td>Value</td> </tr>
+ *   <tr> <td>Value</td> <td>Value</td> </tr>
+ * </table>
+ */
+export function verticalHtmlResultTable({dimensions, results}: ResultTable):
+    string {
+  const headers = dimensions.map((d) => `<th>${d.label}</th>`);
+  const rows = [];
+  for (const r of results) {
+    const cells =
+        dimensions.map((d) => `<td>${ansiCellToHtml(d.format(r))}</td>`);
+    rows.push(`<tr>${cells.join('')}</tr>`);
+  }
+  return `<table>
+    <tr>${headers.join('')}</tr>
+    ${rows.join('')}
+  </table>`;
+}
+
+/**
+ * Format an HTML result table where each result is a column:
+ *
+ * <table>
+ *   <tr> <th>Header</th> <td>Value</td> <td>Value</td> </tr>
+ *   <tr> <th>Header</th> <td>Value</td> <td>Value</td> </tr>
+ * </table>
+ */
+export function horizontalHtmlResultTable({dimensions, results}: ResultTable):
+    string {
+  const rows: string[] = [];
+  for (const d of dimensions) {
+    const cells = [
+      `<th>${d.label}</th>`,
+      ...results.map((r) => `<td>${ansiCellToHtml(d.format(r))}</td>`),
+    ];
+    rows.push(`<tr>${cells.join('')}</tr>`);
+  }
+  return `<table>${rows.join('')}</table>`;
+}
+
+function ansiCellToHtml(ansi: string): string {
+  // For now, just remove ANSI color sequences and prevent line-breaks. We may
+  // want to add an htmlFormat method to each dimension object so that we can
+  // have more advanced control per dimension.
+  return stripAnsi(ansi).replace(/ /g, '&nbsp;');
 }
 
 /**

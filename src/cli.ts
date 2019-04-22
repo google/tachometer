@@ -14,7 +14,6 @@ require('source-map-support').install();
 import * as fsExtra from 'fs-extra';
 import * as webdriver from 'selenium-webdriver';
 
-import stripAnsi from 'strip-ansi';
 import commandLineArgs = require('command-line-args');
 import commandLineUsage = require('command-line-usage');
 import ProgressBar = require('progress');
@@ -26,7 +25,7 @@ import {BenchmarkResult, BenchmarkSpec} from './types';
 import {Server} from './server';
 import {Horizons, ResultStats, horizonsResolved, summaryStats, findFastest, findSlowest, computeSlowdowns} from './stats';
 import {specMatchesFilter, specsFromOpts, SpecFilter} from './specs';
-import {formatManualResult, formatAutomaticResults, spinner} from './format';
+import {AutomaticResults, verticalTermResultTable, horizontalTermResultTable, verticalHtmlResultTable, horizontalHtmlResultTable, automaticResultTable, manualResultTable, spinner} from './format';
 import {prepareVersionDirectories} from './versions';
 import * as github from './github';
 
@@ -239,7 +238,7 @@ async function manualMode(opts: Opts, specs: BenchmarkSpec[], server: Server) {
   (async function() {
     for await (const result of server.streamResults()) {
       const resultStats = {result, stats: summaryStats(result.millis)};
-      console.log(formatManualResult(resultStats));
+      console.log(verticalTermResultTable(manualResultTable(resultStats)));
     }
   })();
 }
@@ -289,9 +288,9 @@ async function automaticMode(
         await github.createCheckRun({repo, commit, installationToken});
 
     // We'll call this after we're done to complete the Check Run.
-    reportGitHubCheckResults = async (resultTableText: string) => {
-      // Color and other formatting ANSI codes aren't supported by Markdown.
-      const markdown = '```\n' + stripAnsi(resultTableText) + '```';
+    reportGitHubCheckResults = async ({fixed, unfixed}: AutomaticResults) => {
+      const markdown = horizontalHtmlResultTable(fixed) + '\n' +
+          verticalHtmlResultTable(unfixed);
       await github.completeCheckRun(
           {repo, installationToken, checkId, markdown});
     };
@@ -422,8 +421,9 @@ async function automaticMode(
 
   const withSlowdowns = makeResults();
   console.log();
-  const resultTableText = formatAutomaticResults(withSlowdowns);
-  console.log(resultTableText);
+  const {fixed, unfixed} = automaticResultTable(withSlowdowns);
+  console.log(horizontalTermResultTable(fixed));
+  console.log(verticalTermResultTable(unfixed));
 
   if (hitTimeout === true) {
     console.log(ansi.format(
@@ -438,7 +438,7 @@ async function automaticMode(
   }
 
   if (reportGitHubCheckResults !== undefined) {
-    await reportGitHubCheckResults(resultTableText);
+    await reportGitHubCheckResults({fixed, unfixed});
   }
 }
 
