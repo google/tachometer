@@ -237,7 +237,7 @@ async function manualMode(opts: Opts, specs: BenchmarkSpec[], server: Server) {
   console.log(`\nResults will appear below:\n`);
   (async function() {
     for await (const result of server.streamResults()) {
-      const resultStats = {result, stats: summaryStats(result.millis)};
+      const resultStats = {result, stats: summaryStats(result.millis), vs: []};
       console.log(verticalTermResultTable(manualResultTable(resultStats)));
     }
   })();
@@ -381,7 +381,7 @@ async function automaticMode(
         }));
     const baseline = pickBaseline(withStats);
     baseline.isBaseline = true;
-    const withSlowdowns = computeSlowdowns(withStats, baseline);
+    const withSlowdowns = computeSlowdowns(withStats);
     return withSlowdowns;
   };
 

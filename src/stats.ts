@@ -35,8 +35,8 @@ export interface SummaryStats {
 export interface ResultStats {
   result: BenchmarkResult;
   stats: SummaryStats;
-  slowdown?: Slowdown;
   isBaseline?: boolean;
+  differences?: Array<Slowdown|null>;
 }
 
 export interface Slowdown {
@@ -93,8 +93,8 @@ export interface Horizons {
 }
 
 /**
- * Return whether all slowdown confidence intervals are unambiguously located on
- * one side or the other of all given horizon values.
+ * Return whether all difference confidence intervals are unambiguously located
+ * on one side or the other of all given horizon values.
  *
  * For example, given the horizons 0 and 1:
  *
@@ -110,18 +110,26 @@ export interface Horizons {
  */
 export function horizonsResolved(
     resultStats: ResultStats[], horizons: Horizons): boolean {
-  for (const {isBaseline, slowdown} of resultStats) {
-    if (isBaseline === true || slowdown === undefined) {
+  for (const {differences} of resultStats) {
+    if (differences === undefined) {
       continue;
     }
-    for (const horizon of horizons.absolute) {
-      if (intervalContains(slowdown.absolute, horizon)) {
-        return false;
+    // TODO We may want to offer more control over which particular set of
+    // differences we care about resolving. For the moment, a horizon of 1%
+    // means we'll try to resolve a 1% difference pairwise in both directions.
+    for (const diff of differences) {
+      if (diff === null) {
+        continue;
       }
-    }
-    for (const horizon of horizons.relative) {
-      if (intervalContains(slowdown.relative, horizon)) {
-        return false;
+      for (const horizon of horizons.absolute) {
+        if (intervalContains(diff.absolute, horizon)) {
+          return false;
+        }
+      }
+      for (const horizon of horizons.relative) {
+        if (intervalContains(diff.relative, horizon)) {
+          return false;
+        }
       }
     }
   }
@@ -151,18 +159,20 @@ export function findSlowest(stats: ResultStats[]): ResultStats {
  * of results where each result (apart from the baseline itself) has additional
  * statistics describing how much slower it is than the baseline.
  */
-export function computeSlowdowns(
-    stats: ResultStats[], baseline: ResultStats): ResultStats[] {
+export function computeSlowdowns(stats: ResultStats[]): ResultStats[] {
   return stats.map((result) => {
-    if (result === baseline) {
-      // No slowdown for the baseline.
-      return result;
-    }
     return {
       ...result,
-      slowdown: computeSlowdown(baseline.stats, result.stats),
+      differences:
+          computeDifferences(stats.map((stat) => stat.stats), result.stats),
     };
   });
+}
+
+function computeDifferences(
+    stats: SummaryStats[], baseline: SummaryStats): Array<Slowdown|null> {
+  return stats.map(
+      (stat) => stat === baseline ? null : computeSlowdown(stat, baseline));
 }
 
 export function computeSlowdown(a: SummaryStats, b: SummaryStats): Slowdown {

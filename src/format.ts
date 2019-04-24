@@ -14,7 +14,8 @@ import * as table from 'table';
 
 import ansi = require('ansi-escape-sequences');
 
-import {ConfidenceInterval, ResultStats} from './stats';
+import {Slowdown, ConfidenceInterval, ResultStats} from './stats';
+import {BenchmarkResult} from './types';
 
 export const spinner = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'].map(
     (frame) => ansi.format(`[blue]{${frame}}`));
@@ -91,14 +92,28 @@ export function automaticResultTable(results: ResultStats[]): AutomaticResults {
   // result table, even if they happen to be the same in one run.
   unfixed.push(
       runtimeConfidenceIntervalDimension,
-      standardDeviationDimension,
   );
   if (results.length > 1) {
-    unfixed.push(
-        absoluteSlowdownDimension,
-        relativeSlowdownDimension,
-        directionDimension,
-    );
+    // Create an NxN matrix comparing every result to every other result.
+    const labelFn = makeUniqueLabelFn(results.map((result) => result.result));
+    for (let i = 0; i < results.length; i++) {
+      unfixed.push({
+        label: `vs ${labelFn(results[i].result)}`,
+        tableConfig: {
+          alignment: 'right',
+        },
+        format: (r: ResultStats) => {
+          if (r.differences === undefined) {
+            return '';
+          }
+          const diff = r.differences[i];
+          if (diff === null) {
+            return '\n-       ';
+          }
+          return formatDifference(diff);
+        },
+      });
+    }
   }
 
   const fixedTable = {dimensions: fixed, results: [results[0]]};
@@ -214,9 +229,7 @@ function ansiCellToHtml(ansi: string): string {
  */
 const formatConfidenceInterval =
     (ci: ConfidenceInterval, format: (n: number) => string) => {
-      return ansi.format(
-          `[gray]{[}${format(ci.low)}[gray]{,} ` +
-          `${format(ci.high)}[gray]{]}`);
+      return ansi.format(`${format(ci.low)} [gray]{-} ${format(ci.high)}`);
     };
 
 /**
@@ -259,7 +272,7 @@ const versionDimension: Dimension = {
 const browserDimension: Dimension = {
   label: 'Browser',
   format: (r: ResultStats) =>
-      `${r.result.browser.name} ${r.result.browser.version}`,
+      `${r.result.browser.name}\n${r.result.browser.version}`,
 };
 
 const sampleSizeDimension: Dimension = {
@@ -273,12 +286,12 @@ const bytesSentDimension: Dimension = {
 };
 
 const runtimeConfidenceIntervalDimension: Dimension = {
-  label: 'Runtime [95% CI]',
+  label: 'Avg time',
   tableConfig: {
     alignment: 'right',
   },
   format: (r: ResultStats) =>
-      formatConfidenceInterval(r.stats.meanCI, (n) => n.toFixed(3) + 'ms'),
+      formatConfidenceInterval(r.stats.meanCI, (n) => n.toFixed(1) + 'ms'),
 };
 
 const runtimePointEstimateDimension: Dimension = {
@@ -287,60 +300,69 @@ const runtimePointEstimateDimension: Dimension = {
       ansi.format(`[blue]{${r.stats.mean.toFixed(3)}} ms`),
 };
 
-const absoluteSlowdownDimension: Dimension = {
-  label: 'Slowdown [95% CI]',
-  tableConfig: {
-    alignment: 'right',
-  },
-  format: (r: ResultStats) => {
-    if (r.isBaseline === true || r.slowdown === undefined) {
-      return ansi.format(`[gray]{N/A        }`);
-    }
-    return formatConfidenceInterval(
-        r.slowdown.absolute,
-        (n: number) => colorizeSign(n, (n) => n.toFixed(3)) + 'ms');
-  },
-};
+function formatDifference({absolute, relative}: Slowdown): string {
+  let word, rel, abs;
+  if (absolute.low > 0 && relative.low > 0) {
+    word = `[bold red]{slower}`;
+    rel = `${percent(relative.low)}% [gray]{-} ${percent(relative.high)}%`;
+    abs =
+        `${absolute.low.toFixed(1)}ms [gray]{-} ${absolute.high.toFixed(1)}ms`;
 
-const relativeSlowdownDimension: Dimension = {
-  label: 'Relative [95% CI]',
-  tableConfig: {
-    alignment: 'right',
-  },
-  format: (r: ResultStats) => {
-    if (r.isBaseline === true || r.slowdown === undefined) {
-      return ansi.format(`[gray]{N/A        }`);
-    }
-    return formatConfidenceInterval(
-        r.slowdown.relative,
-        (n: number) => colorizeSign(n, (n) => (n * 100).toFixed(2) + '%'));
-  },
-};
+  } else if (absolute.high < 0 && relative.low < 0) {
+    word = `[bold green]{faster}`;
+    rel = `${percent(-relative.high)}% [gray]{-} ${percent(-relative.low)}%`;
+    abs = `${- absolute.high.toFixed(1)}ms [gray]{-} ${
+        - absolute.low.toFixed(1)}ms`;
 
-const directionDimension: Dimension = {
-  label: 'Direction',
-  tableConfig: {
-    alignment: 'center',
-  },
-  format: (r: ResultStats) => {
-    if (r.isBaseline === true || r.slowdown === undefined) {
-      return ansi.format(`[bold blue]{baseline}`);
-    }
-    if (r.slowdown.absolute.low > 0) {
-      return ansi.format(`[bold red]{slower}`);
-    } else if (r.slowdown.absolute.high < 0) {
-      return ansi.format(`[bold green]{faster}`);
-    } else {
-      return ansi.format(`[bold gray]{unsure}`);
-    }
+  } else {
+    word = `[bold blue]{unsure}`;
+    rel = `${colorizeSign(relative.low, (n) => percent(n))}% [gray]{-} ${
+        colorizeSign(relative.high, (n) => percent(n))}%`;
+    abs = `${colorizeSign(absolute.low, (n) => n.toFixed(1))}ms [gray]{-} ${
+        colorizeSign(absolute.high, (n) => n.toFixed(1))}ms`;
   }
-};
+  return ansi.format(`${word}\n${rel}\n${abs}`);
+}
 
-const standardDeviationDimension: Dimension = {
-  label: 'StdDev (CV)',
-  format: (r: ResultStats) => {
-    const sd = r.stats.standardDeviation;
-    const mean = r.stats.mean;
-    return `${sd.toFixed(2)}ms (${(sd / mean * 100).toFixed()}%)`;
+function percent(n: number): string {
+  return (n * 100).toFixed(0);
+}
+
+/**
+ * Create a function that will return the shortest unambiguous label for a
+ * result, given the full array of results.
+ */
+function makeUniqueLabelFn(results: BenchmarkResult[]):
+    (result: BenchmarkResult) => string {
+  const names = new Set();
+  const variants = new Set();
+  const implementations = new Set();
+  const versions = new Set();
+  const browsers = new Set();
+  for (const result of results) {
+    names.add(result.name);
+    variants.add(result.variant);
+    implementations.add(result.implementation);
+    versions.add(result.version);
+    browsers.add(result.browser.name);
   }
-};
+  return (result: BenchmarkResult) => {
+    const fields = [];
+    if (names.size > 1) {
+      fields.push(result.name);
+    }
+    if (variants.size > 1) {
+      fields.push(result.variant);
+    }
+    if (implementations.size > 1) {
+      fields.push(result.implementation);
+    }
+    if (versions.size > 1) {
+      fields.push(result.version);
+    }
+    if (browsers.size > 1) {
+      fields.push(result.browser.name);
+    }
+    return fields.join('\n');
+  };
+}
