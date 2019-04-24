@@ -194,7 +194,7 @@ export function horizontalHtmlResultTable({dimensions, results}: ResultTable):
   const rows: string[] = [];
   for (const d of dimensions) {
     const cells = [
-      `<th>${d.label}</th>`,
+      `<th align="right">${d.label}</th>`,
       ...results.map((r) => `<td>${ansiCellToHtml(d.format(r))}</td>`),
     ];
     rows.push(`<tr>${cells.join('')}</tr>`);
