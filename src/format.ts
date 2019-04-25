@@ -308,7 +308,7 @@ function formatDifference({absolute, relative}: Difference): string {
     abs =
         `${absolute.low.toFixed(2)}ms [gray]{-} ${absolute.high.toFixed(2)}ms`;
 
-  } else if (absolute.high < 0 && relative.low < 0) {
+  } else if (absolute.high < 0 && relative.high < 0) {
     word = `[bold green]{faster}`;
     rel = `${percent(-relative.high)}% [gray]{-} ${percent(-relative.low)}%`;
     abs = `${- absolute.high.toFixed(2)}ms [gray]{-} ${

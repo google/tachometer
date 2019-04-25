@@ -106,7 +106,7 @@ table summarizing all of the *differences* in runtimes, both in *absolute* and
 *relative* terms (percent-change).
 
 In this example screenshot we're comparing `for` loops, each running with a
-different number of iterations (1, 1000, 10001, and 3000):
+different number of iterations (1, 1000, 1001, and 3000):
 
 <img src="./images/screen2.png"></img>
 
