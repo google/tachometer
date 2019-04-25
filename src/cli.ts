@@ -228,7 +228,7 @@ async function manualMode(opts: Opts, specs: BenchmarkSpec[], server: Server) {
   console.log(`\nResults will appear below:\n`);
   (async function() {
     for await (const result of server.streamResults()) {
-      const resultStats = {result, stats: summaryStats(result.millis), vs: []};
+      const resultStats = {result, stats: summaryStats(result.millis)};
       console.log(verticalTermResultTable(manualResultTable(resultStats)));
     }
   })();
