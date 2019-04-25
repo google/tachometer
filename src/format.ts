@@ -108,7 +108,7 @@ export function automaticResultTable(results: ResultStats[]): AutomaticResults {
           }
           const diff = r.differences[i];
           if (diff === null) {
-            return '\n-       ';
+            return ansi.format('\n[gray]{-}       ');
           }
           return formatDifference(diff);
         },
@@ -291,7 +291,7 @@ const runtimeConfidenceIntervalDimension: Dimension = {
     alignment: 'right',
   },
   format: (r: ResultStats) =>
-      formatConfidenceInterval(r.stats.meanCI, (n) => n.toFixed(1) + 'ms'),
+      formatConfidenceInterval(r.stats.meanCI, (n) => n.toFixed(2) + 'ms'),
 };
 
 const runtimePointEstimateDimension: Dimension = {
@@ -306,20 +306,20 @@ function formatDifference({absolute, relative}: Difference): string {
     word = `[bold red]{slower}`;
     rel = `${percent(relative.low)}% [gray]{-} ${percent(relative.high)}%`;
     abs =
-        `${absolute.low.toFixed(1)}ms [gray]{-} ${absolute.high.toFixed(1)}ms`;
+        `${absolute.low.toFixed(2)}ms [gray]{-} ${absolute.high.toFixed(2)}ms`;
 
   } else if (absolute.high < 0 && relative.low < 0) {
     word = `[bold green]{faster}`;
     rel = `${percent(-relative.high)}% [gray]{-} ${percent(-relative.low)}%`;
-    abs = `${- absolute.high.toFixed(1)}ms [gray]{-} ${
-        - absolute.low.toFixed(1)}ms`;
+    abs = `${- absolute.high.toFixed(2)}ms [gray]{-} ${
+        - absolute.low.toFixed(2)}ms`;
 
   } else {
     word = `[bold blue]{unsure}`;
     rel = `${colorizeSign(relative.low, (n) => percent(n))}% [gray]{-} ${
         colorizeSign(relative.high, (n) => percent(n))}%`;
-    abs = `${colorizeSign(absolute.low, (n) => n.toFixed(1))}ms [gray]{-} ${
-        colorizeSign(absolute.high, (n) => n.toFixed(1))}ms`;
+    abs = `${colorizeSign(absolute.low, (n) => n.toFixed(2))}ms [gray]{-} ${
+        colorizeSign(absolute.high, (n) => n.toFixed(2))}ms`;
   }
   return ansi.format(`${word}\n${rel}\n${abs}`);
 }
