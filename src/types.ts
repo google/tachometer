@@ -61,7 +61,6 @@ export interface BenchmarkSpec {
   variant: string;
   browser: string;
   config: {};
-  paint: boolean;
 }
 
 // Note: sync with client/src/index.ts
@@ -78,11 +77,7 @@ export interface BenchmarkResult {
   implementation: string;
   version: string;
   variant: string;
-  // Millisecond interval between bench.start() and bench.stop().
   millis: number[];
-  // Millisecond interval between bench.start() and the end of the first paint
-  // which occurs after bench.stop()
-  paintMillis: number[];
   browser: {name: string, version: string};
   bytesSent: number;
 }

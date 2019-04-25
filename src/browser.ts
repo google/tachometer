@@ -16,13 +16,8 @@ import * as webdriver from 'selenium-webdriver';
 import * as chrome from 'selenium-webdriver/chrome';
 import * as firefox from 'selenium-webdriver/firefox';
 
-export interface MakeDriverOpts {
-  /** Turn on profiling that allows us to measure paint time. */
-  paint: boolean;
-}
-
 /**
- * Names of the browsers we can drive.
+ * Browsers we can drive.
  */
 export const validBrowsers = new Set([
   'chrome',
@@ -33,36 +28,33 @@ export const validBrowsers = new Set([
 ]);
 
 /**
+ * Browsers for which we can find the first contentful paint (FCP) time.
+ */
+export const fcpBrowsers = new Set([
+  'chrome',
+  'chrome-headless',
+]);
+
+/**
  * Configure a WebDriver suitable for benchmarking the given browser.
  */
-export async function makeDriver(
-    browser: string, makeOpts: MakeDriverOpts): Promise<webdriver.WebDriver> {
+export async function makeDriver(browser: string):
+    Promise<webdriver.WebDriver> {
   const headless = browser.endsWith('-headless');
   if (headless === true) {
     browser = browser.replace(/-headless$/, '');
   }
   return await new webdriver.Builder()
       .forBrowser(browser)
-      .setChromeOptions(chromeOpts(makeOpts, headless))
+      .setChromeOptions(chromeOpts(headless))
       .setFirefoxOptions(firefoxOpts(headless))
       .build();
 }
 
-function chromeOpts(
-    makeOpts: MakeDriverOpts, headless: boolean): chrome.Options {
+function chromeOpts(headless: boolean): chrome.Options {
   const opts = new chrome.Options();
   if (headless === true) {
     opts.addArguments('--headless');
-  }
-  // TODO Test and add Chrome options that reduce variation.
-  if (makeOpts.paint === true) {
-    const logging = new webdriver.logging.Preferences();
-    logging.setLevel(
-        webdriver.logging.Type.PERFORMANCE, webdriver.logging.Level.ALL);
-    opts.setLoggingPrefs(logging);
-    opts.setPerfLoggingPrefs({
-      traceCategories: ['devtools.timeline'].join(','),
-    } as unknown as chrome.IPerfLoggingPrefs);  // TODO Upstream type fixes.
   }
   return opts;
 }
@@ -100,26 +92,36 @@ export async function openAndSwitchToNewTab(driver: webdriver.WebDriver):
 }
 
 /**
- * Analyze the Chrome performance log to find the millisecond interval between
- * the start of the benchmark and the first paint event that followed the end of
- * the benchmark.
+ * Return the First Contentful Paint (FCP) time (millisecond interval since
+ * navigation) for the given driver. Polls every 100 milliseconds, and returns
+ * undefined if no FCP was found after 10 seconds.
+ *
+ * https://w3c.github.io/paint-timing/#first-contentful-paint
+ * https://developers.google.com/web/tools/lighthouse/audits/first-contentful-paint
  */
-export async function getPaintTime(driver: webdriver.WebDriver):
+export async function pollForFirstContentfulPaint(driver: webdriver.WebDriver):
     Promise<number|undefined> {
-  let benchStartCalled;
-  // TODO Do we need a loop to ensure we get all the logs?
-  const perfLogs =
-      await driver.manage().logs().get(webdriver.logging.Type.PERFORMANCE);
-  for (const entry of perfLogs) {
-    const {method, params} = JSON.parse(entry.message).message;
-    if (method === 'Tracing.dataCollected') {
-      if (params.name === 'TimeStamp') {
-        if (params.args.data.message === 'benchStartCalled') {
-          benchStartCalled = params.ts / 1000;
-        }
-      } else if (params.name === 'Paint' && benchStartCalled !== undefined) {
-        return ((params.ts + params.dur) / 1000) - benchStartCalled;
-      }
+  for (let waited = 0; waited <= 10000; waited += 100) {
+    await wait(100);
+    const entries = await driver.executeScript(
+                        'return window.performance.getEntriesByName(' +
+                        '"first-contentful-paint");') as PerformanceEntry[];
+    if (entries.length > 0) {
+      return entries[0].startTime;
     }
   }
 }
+
+/**
+ * https://developer.mozilla.org/en-US/docs/Web/API/PerformanceEntry
+ *
+ * Note a more complete interface for this is defined in the standard
+ * lib.dom.d.ts, but we don't want to depend on that since it would make all DOM
+ * types ambiently defined.
+ */
+interface PerformanceEntry {
+  name: string;
+  startTime: number;
+}
+
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));

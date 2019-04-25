@@ -20,7 +20,7 @@ import ProgressBar = require('progress');
 import ansi = require('ansi-escape-sequences');
 
 import {makeSession} from './session';
-import {validBrowsers, makeDriver, openAndSwitchToNewTab, getPaintTime} from './browser';
+import {validBrowsers, fcpBrowsers, makeDriver, openAndSwitchToNewTab, pollForFirstContentfulPaint} from './browser';
 import {BenchmarkResult, BenchmarkSpec} from './types';
 import {Server} from './server';
 import {Horizons, ResultStats, horizonsResolved, summaryStats, computeDifferences} from './stats';
@@ -114,10 +114,12 @@ const optDefs: commandLineUsage.OptionDefinition[] = [
     defaultValue: '',
   },
   {
-    name: 'paint',
-    description: 'Include next paint in measured interval',
-    type: Boolean,
-    defaultValue: false,
+    name: 'measure',
+    description: 'Which time interval to measure. Options:\n' +
+        '- callback: bench.start() to bench.stop() (default)\n' +
+        '-      fcp: first contentful paint',
+    type: String,
+    defaultValue: 'callback',
   },
   {
     name: 'horizon',
@@ -136,7 +138,7 @@ const optDefs: commandLineUsage.OptionDefinition[] = [
   },
   {
     name: 'github-check',
-    description: 'Post benchmark results as a GitHub Check. A JSON object' +
+    description: 'Post benchmark results as a GitHub Check. A JSON object ' +
         'with properties appId, installationId, repo, and commit.',
     type: String,
     defaultValue: '',
@@ -156,7 +158,7 @@ interface Opts {
   'sample-size': number;
   manual: boolean;
   save: string;
-  paint: boolean;
+  measure: 'callback'|'fcp';
   horizon: string;
   timeout: number;
   'github-check': string;
@@ -169,7 +171,6 @@ function combineResults(results: BenchmarkResult[]): BenchmarkResult {
   };
   for (const result of results) {
     combined.millis.push(...result.millis);
-    combined.paintMillis.push(...result.paintMillis);
   }
   return combined;
 }
@@ -186,6 +187,22 @@ export async function main() {
 
   if (opts['sample-size'] <= 0) {
     throw new Error('--sample-size must be > 0');
+  }
+
+  if (opts.measure !== 'callback' && opts.measure !== 'fcp') {
+    throw new Error(
+        `Expected --measure flag to be "callback" or "fcp" ` +
+        `but was "${opts.measure}"`);
+  }
+
+  if (opts.measure === 'fcp') {
+    for (const browser of opts.browser.split(',')) {
+      if (!fcpBrowsers.has(browser)) {
+        throw new Error(
+            `Browser ${browser} does not support the ` +
+            `first contentful paint (FCP) measurement`);
+      }
+    }
   }
 
   const specs = await specsFromOpts(opts);
@@ -302,7 +319,7 @@ async function automaticMode(
     // effects. There might even be additional interaction effects that
     // would require an entirely new browser to remove, but experience in
     // Chrome so far shows that new tabs are neccessary and sufficient.
-    const driver = await makeDriver(browser, opts);
+    const driver = await makeDriver(browser);
     const tabs = await driver.getAllWindowHandles();
     // We'll always launch new tabs from this initial blank tab.
     const initialTabHandle = tabs[0];
@@ -319,18 +336,24 @@ async function automaticMode(
     const {driver, initialTabHandle} = browsers.get(spec.browser)!;
     await openAndSwitchToNewTab(driver);
     await driver.get(run.url);
+
+    let fcp;
+    if (opts.measure === 'fcp') {
+      fcp = await pollForFirstContentfulPaint(driver)
+      throw new Error(
+          `Timed out waiting for first contentful paint from ${run.url}`);
+    }
+    // TODO We shouldn't need to wait for this result if we're measuring FCP.
     const result = await run.result;
+    if (fcp !== undefined) {
+      result.millis = [fcp];
+    }
+    specResults.get(spec)!.push(result);
+
     // Close the active tab (but not the whole browser, since the
     // initial blank tab is still open).
     await driver.close();
     await driver.switchTo().window(initialTabHandle);
-    if (opts.paint === true) {
-      const paintTime = await getPaintTime(driver);
-      if (paintTime !== undefined) {
-        result.paintMillis = [paintTime];
-      }
-    }
-    specResults.get(spec)!.push(result);
   };
 
   // Always collect our minimum number of samples.
@@ -364,11 +387,10 @@ async function automaticMode(
     for (const sr of specResults.values()) {
       results.push(combineResults(sr));
     }
-    const withStats = results.map(
-        (result): ResultStats => ({
-          result,
-          stats: summaryStats(opts.paint ? result.paintMillis : result.millis),
-        }));
+    const withStats = results.map((result): ResultStats => ({
+                                    result,
+                                    stats: summaryStats(result.millis),
+                                  }));
     return computeDifferences(withStats);
   };
 

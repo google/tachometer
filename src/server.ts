@@ -123,9 +123,6 @@ export class Server {
     if (spec.config !== undefined) {
       params.config = JSON.stringify(spec.config);
     }
-    if (spec.paint === true) {
-      params.paint = 'true';
-    }
     return `${this.url}/benchmarks/${spec.implementation}/` +
         (spec.version.label === 'default' ? '' :
                                             `versions/${spec.version.label}/`) +
@@ -229,7 +226,6 @@ export class Server {
       implementation,
       version,
       millis: [response.millis],
-      paintMillis: [],  // This will come from the performance logs.
       browser: {
         name: browser.name || '',
         version: browser.version || '',
