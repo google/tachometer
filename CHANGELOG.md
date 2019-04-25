@@ -13,6 +13,9 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 -   GitHub Check report is now formatted as HTML instead of ASCII.
 
+-   Remove standard deviation column, as it is rarely useful to interpret
+    directly.
+
 <!-- Add new, unreleased changes here. -->
 
 ## [0.1.0] 2019-04-17
