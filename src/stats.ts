@@ -35,11 +35,13 @@ export interface SummaryStats {
 export interface ResultStats {
   result: BenchmarkResult;
   stats: SummaryStats;
-  slowdown?: Slowdown;
-  isBaseline?: boolean;
 }
 
-export interface Slowdown {
+export interface ResultStatsWithDifferences extends ResultStats {
+  differences: Array<Difference|null>;
+}
+
+export interface Difference {
   absolute: ConfidenceInterval;
   relative: ConfidenceInterval;
 }
@@ -93,8 +95,8 @@ export interface Horizons {
 }
 
 /**
- * Return whether all slowdown confidence intervals are unambiguously located on
- * one side or the other of all given horizon values.
+ * Return whether all difference confidence intervals are unambiguously located
+ * on one side or the other of all given horizon values.
  *
  * For example, given the horizons 0 and 1:
  *
@@ -105,23 +107,31 @@ export interface Horizons {
  *                    <--->   true
  *        <----------->       false
  *
- *  |-------|-------|-------| ms slowdown
+ *  |-------|-------|-------| ms difference
  * -1       0       1       2
  */
 export function horizonsResolved(
-    resultStats: ResultStats[], horizons: Horizons): boolean {
-  for (const {isBaseline, slowdown} of resultStats) {
-    if (isBaseline === true || slowdown === undefined) {
+    resultStats: ResultStatsWithDifferences[], horizons: Horizons): boolean {
+  for (const {differences} of resultStats) {
+    if (differences === undefined) {
       continue;
     }
-    for (const horizon of horizons.absolute) {
-      if (intervalContains(slowdown.absolute, horizon)) {
-        return false;
+    // TODO We may want to offer more control over which particular set of
+    // differences we care about resolving. For the moment, a horizon of 1%
+    // means we'll try to resolve a 1% difference pairwise in both directions.
+    for (const diff of differences) {
+      if (diff === null) {
+        continue;
       }
-    }
-    for (const horizon of horizons.relative) {
-      if (intervalContains(slowdown.relative, horizon)) {
-        return false;
+      for (const horizon of horizons.absolute) {
+        if (intervalContains(diff.absolute, horizon)) {
+          return false;
+        }
+      }
+      for (const horizon of horizons.relative) {
+        if (intervalContains(diff.relative, horizon)) {
+          return false;
+        }
       }
     }
   }
@@ -133,39 +143,24 @@ function sumOf(data: number[]): number {
 }
 
 /**
- * Returns the benchmark result with the lowest mean duration.
+ * Given an array of results, return a new array of results where each result
+ * has additional statistics describing how it compares to each other result.
  */
-export function findFastest(stats: ResultStats[]): ResultStats {
-  return stats.reduce((a, b) => a.stats.mean < b.stats.mean ? a : b);
-}
-
-/**
- * Returns the benchmark result with the highest mean duration.
- */
-export function findSlowest(stats: ResultStats[]): ResultStats {
-  return stats.reduce((a, b) => a.stats.mean > b.stats.mean ? a : b);
-}
-
-/**
- * Given an array of results and a baseline for comparison, return a new array
- * of results where each result (apart from the baseline itself) has additional
- * statistics describing how much slower it is than the baseline.
- */
-export function computeSlowdowns(
-    stats: ResultStats[], baseline: ResultStats): ResultStats[] {
+export function computeDifferences(stats: ResultStats[]):
+    ResultStatsWithDifferences[] {
   return stats.map((result) => {
-    if (result === baseline) {
-      // No slowdown for the baseline.
-      return result;
-    }
     return {
       ...result,
-      slowdown: computeSlowdown(baseline.stats, result.stats),
+      differences: stats.map(
+          (other) => other === result ?
+              null :
+              computeDifference(other.stats, result.stats)),
     };
   });
 }
 
-export function computeSlowdown(a: SummaryStats, b: SummaryStats): Slowdown {
+export function computeDifference(
+    a: SummaryStats, b: SummaryStats): Difference {
   const meanA = samplingDistributionOfTheMean(a, a.size);
   const meanB = samplingDistributionOfTheMean(b, b.size);
   const diffAbs = samplingDistributionOfAbsoluteDifferenceOfMeans(meanA, meanB);

@@ -90,40 +90,40 @@ much more.
 - *Automatically continue sampling* until we have enough precision to answer the
   question you are asking. See [auto sampling](#auto-sampling).
 
-## One benchmark
+## Average runtime
 
-When you execute just one benchmark, you'll get a table with one main result
-column: the ***runtime*** of the benchmark, presented as a *95% confidence
-interval* (see [below](#confidence-intervals) for interpretation) for the number
-of milliseconds that elapsed between `bench.start()` and `bench.stop()`.
+When you execute just one benchmark, you'll get a single result: the ***average
+runtime*** of the benchmark, presented as a *95% confidence interval* (see
+[below](#confidence-intervals) for interpretation) for the number of
+milliseconds that elapsed between `bench.start()` and `bench.stop()`.
 
 <img src="./images/screen1.png"></img>
 
-## Multiple benchmarks
+## Difference table
 
-When you run multiple benchmarks together in the same session, you'll get a
-table with 1 row per benchmark, and 3 main result columns per row:
+When you run multiple benchmarks together in the same session, you'll get an NxN
+table summarizing all of the *differences* in runtimes, both in *absolute* and
+*relative* terms (percent-change).
 
-1. The ***runtime*** of each benchmark.
-2. The ***absolute difference*** versus the baseline (*"slowdown"* column).
-3. The ***percent difference*** versus the baseline (*"relative"* column).
+In this example screenshot we're comparing `for` loops, each running with a
+different number of iterations (1, 1000, 1001, and 3000):
 
 <img src="./images/screen2.png"></img>
 
-## Baseline
+This table tells us:
 
-The ***baseline*** is the result that the *difference* confidence intervals are
-relative to. The absolute difference is `result - baseline`, and the percent
-difference is `(result - baseline) / baseline`. Positive numbers (red) indicate
-a *slowdown* versus the baseline, and negative numbers (green) indicate a
-*speedup* versus the baseline. By default the *fastest* benchmark is chosen as
-the baseline, but you can change that with the `--baseline` flag.
+- 1 iteration was between 65% and 73% *faster* than 1000 iterations.
 
-Baseline flag option                | Description
-------------------------------------| -------------------------------
-`fastest`                           | Use the lowest estimated mean runtime as the baseline.
-`slowest`                           | Use the highest estimated mean runtime as the baseline.
-`name=<name>,version=<version>,...` | One or more comma-delimited `key=val` filters for narrowing down the baseline. At least one filter is required, and an error will be thrown if the selection is ambiguous. Valid filter keys: `name`, `variant`, `implementation`, `version`, `browser`.
+
+- 1000 iterations was between 179% and 263% *slower* than 1 iteration. Note that
+  the difference between *1-vs-1000* and *1000-vs-1* is the choice of which
+  runtime is used as the *reference* in the percent-change calculation, where
+  the reference runtime comes from the *column* labeled *"vs X"*.
+
+
+- The difference between 1000 and 1001 iterations was ambiguous. We can't tell
+  which is faster, because the difference was too small. 1000 iterations could
+  be as much as 13% faster, or as much as 21% slower, than 1001 iterations.
 
 ## Folder layout
 
@@ -326,13 +326,13 @@ until it is unambiguously placed on one side or the other of that horizon*.
 
 Example horizon    | Question
 ------------------ | -----------
-`0%`               | Is X faster or slower than the baseline *at all*?
-`10%`              | Is X faster or slower than the baseline by at least 10%?
-`+10%`             | Is X slower than the baseline by at least 10%?
-`-10%`             | Is X faster than the baseline by at least 10%?
+`0%`               | Is X faster or slower than Y *at all*?
+`10%`              | Is X faster or slower than Y by at least 10%?
+`+10%`             | Is X slower than Y by at least 10%?
+`-10%`             | Is X faster than Y by at least 10%?
 `-10%,+10%`        | (Same as `10%`)
-`0%,10%,100%`      | Is X at all, a little, or a lot slower or faster than the baseline?
-`0.5ms`            | Is X faster or slower than the baseline by at least 0.5 milliseconds?
+`0%,10%,100%`      | Is X at all, a little, or a lot slower or faster than Y?
+`0.5ms`            | Is X faster or slower than Y by at least 0.5 milliseconds?
 
 In the following visual example, we have set `--horizon=10%` meaning that we are
 interested in knowing whether A differs from B by at least 10% in either
@@ -379,7 +379,6 @@ Flag                      | Default     | Description
 `--variant` / `-v`        | `*`         | Which variants to run (`*` for all) ([details](#variants))
 `--package-version` / `-p`| *(none)*    | Specify one or more dependency versions ([details](#package-versions))
 `--browser` / `-b`        | `chrome`    | Which browsers to launch in automatic mode, comma-delimited (chrome, chrome-headless, firefox, firefox-headless, safari)
-`--baseline`              | `fastest`   | Which result to use as the baseline for comparison ([details](#baseline))
 `--sample-size` / `-n`    | `50`        | Minimum number of times to run each benchmark ([details](#sample-size)]
 `--horizon`               | `10%`       | The degrees of difference to try and resolve when auto-sampling ("N%" or "Nms", comma-delimited) ([details](#auto-sampling))
 `--timeout`               | `3`         | The maximum number of minutes to spend auto-sampling ([details](#auto-sampling))

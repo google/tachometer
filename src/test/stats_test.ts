@@ -12,7 +12,7 @@
 const jstat = require('jstat');
 
 import {assert} from 'chai';
-import {summaryStats, computeSlowdown, intervalContains} from '../stats';
+import {summaryStats, computeDifference, intervalContains} from '../stats';
 
 suite('statistics', function() {
   test('confidence intervals', function() {
@@ -55,17 +55,17 @@ suite('statistics', function() {
         const valuesB = randNormalValues(sampleSize, trueMeanB, stdDevB);
         const statsA = summaryStats(valuesA);
         const statsB = summaryStats(valuesB);
-        const slowdown = computeSlowdown(statsA, statsB);
+        const difference = computeDifference(statsA, statsB);
         if (intervalContains(statsA.meanCI, trueMeanA)) {
           numGoodA++;
         }
         if (intervalContains(statsB.meanCI, trueMeanB)) {
           numGoodB++;
         }
-        if (intervalContains(slowdown.absolute, trueAbsoluteDifference)) {
+        if (intervalContains(difference.absolute, trueAbsoluteDifference)) {
           numGoodAbsoluteDiff++;
         }
-        if (intervalContains(slowdown.relative, trueRelativeDifference)) {
+        if (intervalContains(difference.relative, trueRelativeDifference)) {
           numGoodRelativeDiff++;
         }
       }
