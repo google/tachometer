@@ -35,11 +35,13 @@ export interface SummaryStats {
 export interface ResultStats {
   result: BenchmarkResult;
   stats: SummaryStats;
-  isBaseline?: boolean;
-  differences?: Array<Slowdown|null>;
 }
 
-export interface Slowdown {
+export interface ResultStatsWithDifferences extends ResultStats {
+  differences: Array<Difference|null>;
+}
+
+export interface Difference {
   absolute: ConfidenceInterval;
   relative: ConfidenceInterval;
 }
@@ -105,11 +107,11 @@ export interface Horizons {
  *                    <--->   true
  *        <----------->       false
  *
- *  |-------|-------|-------| ms slowdown
+ *  |-------|-------|-------| ms difference
  * -1       0       1       2
  */
 export function horizonsResolved(
-    resultStats: ResultStats[], horizons: Horizons): boolean {
+    resultStats: ResultStatsWithDifferences[], horizons: Horizons): boolean {
   for (const {differences} of resultStats) {
     if (differences === undefined) {
       continue;
@@ -141,41 +143,24 @@ function sumOf(data: number[]): number {
 }
 
 /**
- * Returns the benchmark result with the lowest mean duration.
+ * Given an array of results, return a new array of results where each result
+ * has additional statistics describing how it compares to each other result.
  */
-export function findFastest(stats: ResultStats[]): ResultStats {
-  return stats.reduce((a, b) => a.stats.mean < b.stats.mean ? a : b);
-}
-
-/**
- * Returns the benchmark result with the highest mean duration.
- */
-export function findSlowest(stats: ResultStats[]): ResultStats {
-  return stats.reduce((a, b) => a.stats.mean > b.stats.mean ? a : b);
-}
-
-/**
- * Given an array of results and a baseline for comparison, return a new array
- * of results where each result (apart from the baseline itself) has additional
- * statistics describing how much slower it is than the baseline.
- */
-export function computeSlowdowns(stats: ResultStats[]): ResultStats[] {
+export function computeDifferences(stats: ResultStats[]):
+    ResultStatsWithDifferences[] {
   return stats.map((result) => {
     return {
       ...result,
-      differences:
-          computeDifferences(stats.map((stat) => stat.stats), result.stats),
+      differences: stats.map(
+          (other) => other === result ?
+              null :
+              computeDifference(other.stats, result.stats)),
     };
   });
 }
 
-function computeDifferences(
-    stats: SummaryStats[], baseline: SummaryStats): Array<Slowdown|null> {
-  return stats.map(
-      (stat) => stat === baseline ? null : computeSlowdown(stat, baseline));
-}
-
-export function computeSlowdown(a: SummaryStats, b: SummaryStats): Slowdown {
+export function computeDifference(
+    a: SummaryStats, b: SummaryStats): Difference {
   const meanA = samplingDistributionOfTheMean(a, a.size);
   const meanB = samplingDistributionOfTheMean(b, b.size);
   const diffAbs = samplingDistributionOfAbsoluteDifferenceOfMeans(meanA, meanB);

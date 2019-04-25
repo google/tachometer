@@ -14,7 +14,7 @@ import * as table from 'table';
 
 import ansi = require('ansi-escape-sequences');
 
-import {Slowdown, ConfidenceInterval, ResultStats} from './stats';
+import {Difference, ConfidenceInterval, ResultStats, ResultStatsWithDifferences} from './stats';
 import {BenchmarkResult} from './types';
 
 export const spinner = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'].map(
@@ -102,7 +102,7 @@ export function automaticResultTable(results: ResultStats[]): AutomaticResults {
         tableConfig: {
           alignment: 'right',
         },
-        format: (r: ResultStats) => {
+        format: (r: ResultStats&Partial<ResultStatsWithDifferences>) => {
           if (r.differences === undefined) {
             return '';
           }
@@ -300,7 +300,7 @@ const runtimePointEstimateDimension: Dimension = {
       ansi.format(`[blue]{${r.stats.mean.toFixed(3)}} ms`),
 };
 
-function formatDifference({absolute, relative}: Slowdown): string {
+function formatDifference({absolute, relative}: Difference): string {
   let word, rel, abs;
   if (absolute.low > 0 && relative.low > 0) {
     word = `[bold red]{slower}`;

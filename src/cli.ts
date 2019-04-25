@@ -23,8 +23,8 @@ import {makeSession} from './session';
 import {validBrowsers, makeDriver, openAndSwitchToNewTab, getPaintTime} from './browser';
 import {BenchmarkResult, BenchmarkSpec} from './types';
 import {Server} from './server';
-import {Horizons, ResultStats, horizonsResolved, summaryStats, findFastest, findSlowest, computeSlowdowns} from './stats';
-import {specMatchesFilter, specsFromOpts, SpecFilter} from './specs';
+import {Horizons, ResultStats, horizonsResolved, summaryStats, computeDifferences} from './stats';
+import {specsFromOpts} from './specs';
 import {AutomaticResults, verticalTermResultTable, horizontalTermResultTable, verticalHtmlResultTable, horizontalHtmlResultTable, automaticResultTable, manualResultTable, spinner} from './format';
 import {prepareVersionDirectories} from './versions';
 import * as github from './github';
@@ -93,14 +93,6 @@ const optDefs: commandLineUsage.OptionDefinition[] = [
     defaultValue: 'chrome',
   },
   {
-    name: 'baseline',
-    description:
-        'Which result to use as the baseline for comparison: "fastest", ' +
-        '"slowest", or e.g. "name=foo,version=bar,...".',
-    type: String,
-    defaultValue: 'fastest',
-  },
-  {
     name: 'sample-size',
     description: 'Minimum number of times to run each benchmark',
     alias: 'n',
@@ -161,7 +153,6 @@ interface Opts {
   variant: string;
   'package-version': string[];
   browser: string;
-  baseline: string;
   'sample-size': number;
   manual: boolean;
   save: string;
@@ -251,7 +242,6 @@ interface Browser {
 
 async function automaticMode(
     opts: Opts, specs: BenchmarkSpec[], server: Server) {
-  const pickBaseline = pickBaselineFn(specs, opts.baseline);
   const horizons = parseHorizonFlag(opts.horizon);
 
   let reportGitHubCheckResults;
@@ -379,10 +369,7 @@ async function automaticMode(
           result,
           stats: summaryStats(opts.paint ? result.paintMillis : result.millis),
         }));
-    const baseline = pickBaseline(withStats);
-    baseline.isBaseline = true;
-    const withSlowdowns = computeSlowdowns(withStats);
-    return withSlowdowns;
+    return computeDifferences(withStats);
   };
 
   let hitTimeout = false;
@@ -419,9 +406,9 @@ async function automaticMode(
   await Promise.all([...browsers.values()].map(({driver}) => driver.close()));
   await server.close();
 
-  const withSlowdowns = makeResults();
+  const withDifferences = makeResults();
   console.log();
-  const {fixed, unfixed} = automaticResultTable(withSlowdowns);
+  const {fixed, unfixed} = automaticResultTable(withDifferences);
   console.log(horizontalTermResultTable(fixed));
   console.log(verticalTermResultTable(unfixed));
 
@@ -433,7 +420,7 @@ async function automaticMode(
   }
 
   if (opts.save) {
-    const session = await makeSession(withSlowdowns.map((s) => s.result));
+    const session = await makeSession(withDifferences.map((s) => s.result));
     await fsExtra.writeJSON(opts.save, session);
   }
 
@@ -479,56 +466,4 @@ export function parseHorizonFlag(flag: string): Horizons {
     absolute: [...absolute].sort((a, b) => a - b),
     relative: [...relative].sort((a, b) => a - b),
   };
-}
-
-/**
- * Parse the --baseline flag in the context of the benchmarks we're
- * preparing to run, and return a function which, once we have results, will
- * be able to pick a single result to use as the baseline for comparison.
- */
-export function pickBaselineFn(specs: BenchmarkSpec[], flag: string):
-    (specs: ResultStats[]) => ResultStats {
-  // Special cases.
-  if (flag === 'fastest') {
-    return findFastest;
-  }
-  if (flag === 'slowest') {
-    return findSlowest;
-  }
-
-  // Try to select one benchmarks from the given key=val filters, e.g.
-  // "name=my-bench,variant=fun,implementation=lit-html,version=v1".
-  const filter: SpecFilter = {};
-  for (const keyVal of flag.split(',')) {
-    const [key, val] = keyVal.split('=').map((s) => s.trim());
-    if (key === '' || val === '' || val.includes('=')) {
-      throw new Error('Invalid baseline flag syntax');
-    }
-    if (key === 'name') {
-      filter.name = val;
-    } else if (key === 'variant') {
-      filter.variant = val;
-    } else if (key === 'implementation') {
-      filter.implementation = val;
-    } else if (key === 'version') {
-      filter.version = val;
-    } else if (key === 'browser') {
-      filter.browser = val;
-    } else {
-      throw new Error(`Invalid baseline flag key ${key}`);
-    }
-  }
-  const filtered = specs.filter((spec) => specMatchesFilter(spec, filter));
-  if (filtered.length === 0) {
-    throw new Error('No benchmarks matched by baseline flag');
-  }
-  if (filtered.length > 1) {
-    throw new Error('Ambiguous baseline flag');
-  }
-  const spec = filtered[0];
-  return (results) => results.find(
-             ({result}: ResultStats) => result.name === spec.name &&
-                 result.implementation === spec.implementation &&
-                 result.variant === spec.variant &&
-                 result.version === spec.version.label)!;
 }
