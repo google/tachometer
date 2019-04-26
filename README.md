@@ -1,8 +1,8 @@
 # tachometer [![Build Status](https://travis-ci.com/PolymerLabs/tachometer.svg?token=Mh2qsyGY69vaxbRhosnZ&branch=master)](https://travis-ci.com/PolymerLabs/tachometer) [![NPM  package](https://img.shields.io/npm/v/tachometer.svg)](https://npmjs.org/package/tachometer)
 
-> tachometer is a tool for running benchmarks in web browsers. It uses repeated
-sampling and statistics to reliably identify even the smallest differences in
-timing.
+> tachometer is a tool for running both micro and first-paint benchmarks in
+> multiple web browsers. It uses repeated sampling and statistics to reliably
+> identify even the smallest differences in timing.
 
 ## Why?
 
@@ -35,9 +35,10 @@ confidence in them.
   $ vim default/forloop/index.html
   ```
 
-3. Create a simple benchmark that just executes a for loop. tachometer
+3. Create a simple micro benchmark that just executes a for loop. tachometer
    benchmarks are just HTML files that import and call `bench.start()` and
-   `bench.stop()`.
+   `bench.stop()`. Note that when you are measuring [first contentful
+   paint](#first-contentful-paint-fcp), you don't need to call these functions.
 
   ```html
   <html>
@@ -89,6 +90,31 @@ much more.
 
 - *Automatically continue sampling* until we have enough precision to answer the
   question you are asking. See [auto sampling](#auto-sampling).
+
+## Measurement modes
+
+Tachometer currently supports two kinds of time interval measurements,
+controlled with the `--measure` flag.
+
+#### Callback
+
+By default, or when the `--measure` flag is set to **`callback`**, your page is
+responsible for calling the `start()` and `stop()` functions from the
+`/bench.js` module. This mode is appropriate for micro benchmarks, or any other
+kind of situation where you want full control over the beginning and end times.
+
+#### First Contentful Paint (FCP)
+
+When the `--measure` flag is set to **`fcp`**, then the [First Contentful Paint
+(FCP)](https://developers.google.com/web/tools/lighthouse/audits/first-contentful-paint)
+time will be automatically extracted from your page using the [Performance
+Timeline
+API](https://developer.mozilla.org/en-US/docs/Web/API/Performance_Timeline).
+This interval begins at initial navigation, and ends when the browser first
+renders any DOM content. Currently, only Chrome supports the
+[`first-contentful-paint`](https://www.w3.org/TR/paint-timing/#first-contentful-paint)
+performance timeline entry. In this mode, calling the `start()` and `stop()`
+functions is not required, and has no effect.
 
 ## Average runtime
 
@@ -232,7 +258,7 @@ against: the GitHub master branch, a local development git clone, and the latest
 1.x version published to NPM:
 
 ```sh
-tachometer
+tach
 --package-version=lit-html/master=lit-html@github:Polymer/lit-html#master \
 --package-version=lit-html/local=lit-html@$HOME/lit-html \
 --package-version=lit-html/1.x=lit-html@^1.0.0
@@ -382,4 +408,4 @@ Flag                      | Default     | Description
 `--sample-size` / `-n`    | `50`        | Minimum number of times to run each benchmark ([details](#sample-size)]
 `--horizon`               | `10%`       | The degrees of difference to try and resolve when auto-sampling ("N%" or "Nms", comma-delimited) ([details](#auto-sampling))
 `--timeout`               | `3`         | The maximum number of minutes to spend auto-sampling ([details](#auto-sampling))
-`--measure`               | `callback`, `fcp` | Which time interval to measure
+`--measure`               | `callback`  | Which time interval to measure (`callback`, `fcp`) ([details](#measurement-modes))
