@@ -65,14 +65,12 @@ export interface BenchmarkSpec {
 
 // Note: sync with client/src/index.ts
 export interface BenchmarkResponse {
-  runId?: string;
   urlPath: string;
   variant?: string;
   millis: number;
 }
 
 export interface BenchmarkResult {
-  runId: string|undefined;
   name: string;
   implementation: string;
   version: string;
@@ -80,12 +78,6 @@ export interface BenchmarkResult {
   millis: number[];
   browser: {name: string, version: string};
   bytesSent: number;
-}
-
-export interface PendingBenchmark {
-  id: string;
-  spec: BenchmarkSpec;
-  deferred: Deferred<BenchmarkResult>;
 }
 
 export interface BenchmarkSession {

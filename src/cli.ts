@@ -244,7 +244,10 @@ async function manualMode(opts: Opts, specs: BenchmarkSpec[], server: Server) {
   }
   console.log(`\nResults will appear below:\n`);
   (async function() {
-    for await (const result of server.streamResults()) {
+    while (true) {
+      server.beginSession();
+      const result = await server.nextCallback();
+      server.endSession();
       const resultStats = {result, stats: summaryStats(result.millis)};
       console.log(verticalTermResultTable(manualResultTable(resultStats)));
     }
@@ -332,22 +335,34 @@ async function automaticMode(
   }
 
   const runSpec = async (spec: BenchmarkSpec) => {
-    const run = server.runBenchmark(spec);
+    server.beginSession();
+    const url = server.specUrl(spec);
     const {driver, initialTabHandle} = browsers.get(spec.browser)!;
     await openAndSwitchToNewTab(driver);
-    await driver.get(run.url);
+    await driver.get(url);
 
-    let fcp;
+    let millis;
     if (opts.measure === 'fcp') {
-      fcp = await pollForFirstContentfulPaint(driver)
-      throw new Error(
-          `Timed out waiting for first contentful paint from ${run.url}`);
+      const fcp = await pollForFirstContentfulPaint(driver);
+      if (fcp === undefined) {
+        throw new Error(
+            `Timed out waiting for first contentful paint from ${url}`);
+      }
+      millis = [fcp];
+    } else {
+      const result = await server.nextCallback();
+      millis = result.millis;
     }
-    // TODO We shouldn't need to wait for this result if we're measuring FCP.
-    const result = await run.result;
-    if (fcp !== undefined) {
-      result.millis = [fcp];
-    }
+    const {bytesSent, browser} = server.endSession();
+    const result = {
+      name: spec.name,
+      implementation: spec.implementation,
+      version: spec.version.label,
+      variant: spec.variant,
+      millis,
+      bytesSent,
+      browser,
+    };
     specResults.get(spec)!.push(result);
 
     // Close the active tab (but not the whole browser, since the

@@ -21,7 +21,7 @@ import serve = require('koa-static');
 import bodyParser = require('koa-bodyparser');
 import {UAParser} from 'ua-parser-js';
 
-import {BenchmarkResponse, Deferred, BenchmarkSpec, BenchmarkResult, PendingBenchmark} from './types';
+import {BenchmarkResponse, Deferred, BenchmarkSpec, BenchmarkResult} from './types';
 
 export interface ServerOpts {
   host: string;
@@ -34,15 +34,10 @@ const clientLib = path.resolve(__dirname, '..', 'client', 'lib');
 export class Server {
   readonly url: string;
   private readonly server: net.Server;
-
-  // Even though we're running benchmarks in series, we give each run an id and
-  // make sure that we associate result messages with the correct run. This
-  // prevents any spurrious race conditions and enables one runner to launch
-  // multiple clients eventually.
-  private currentRunId = 0;
-  private currentRunBytes = 0;
-  private readonly pendingRuns = new Map<string, PendingBenchmark>();
-  private resultSubmitted = new Deferred<BenchmarkResult>();
+  private sessionPending = false;
+  private sessionBytes = 0;
+  private sessionUserAgent = '';
+  private deferredCallback = new Deferred<BenchmarkResult>();
 
   static start(opts: ServerOpts): Promise<Server> {
     const server = http.createServer();
@@ -76,9 +71,9 @@ export class Server {
 
     const app = new Koa();
     app.use(bodyParser());
-    app.use(mount('/submitResults', this.submitResults.bind(this)));
+    app.use(mount('/callback', this.callback.bind(this)));
     app.use(this.rewriteVersionUrls.bind(this));
-    app.use(this.recordBytesSent.bind(this));
+    app.use(this.instrumentRequests.bind(this));
     app.use(
         mount('/benchmarks', serve(opts.benchmarksDir, {index: 'index.html'})));
     app.use(this.serveBenchLib.bind(this));
@@ -92,31 +87,42 @@ export class Server {
     this.url = `http://${host}:${address.port}`;
   }
 
-  runBenchmark(spec: BenchmarkSpec):
-      {url: string, result: Promise<BenchmarkResult>} {
-    const id = (this.currentRunId++).toString();
-    const run: PendingBenchmark = {
-      id,
-      spec,
-      deferred: new Deferred<BenchmarkResult>()
-    };
-    this.pendingRuns.set(id, run);
+  /**
+   * Mark the beginning of a session and reset instrumentation.
+   */
+  beginSession() {
+    if (this.sessionPending === true) {
+      throw new Error('A session is already pending');
+    }
+    this.sessionPending = true;
+    this.sessionBytes = 0;
+    this.sessionUserAgent = '';
+  }
+
+  /**
+   * Mark the end of a session and return the data instrumented from it.
+   */
+  endSession(): {bytesSent: number, browser: {name: string, version: string}} {
+    if (this.sessionPending === false) {
+      throw new Error('No run is pending');
+    }
+    this.sessionPending = false;
+    const ua = new UAParser(this.sessionUserAgent).getBrowser();
     return {
-      url: this.specUrl(spec, id),
-      result: run.deferred.promise,
+      bytesSent: this.sessionBytes,
+      browser: {
+        name: ua.name || '',
+        version: ua.version || '',
+      },
     };
   }
 
-  specUrl(spec: BenchmarkSpec, id?: string): string {
+  specUrl(spec: BenchmarkSpec): string {
     const params: {
-      runId?: string,
       variant?: string,
       config?: string,
       paint?: 'true',
     } = {};
-    if (id !== undefined) {
-      params.runId = id;
-    }
     if (spec.variant !== undefined) {
       params.variant = spec.variant;
     }
@@ -129,10 +135,8 @@ export class Server {
         `${spec.name}/?${querystring.stringify(params)}`;
   }
 
-  async * streamResults(): AsyncIterableIterator<BenchmarkResult> {
-    while (true) {
-      yield await this.resultSubmitted.promise;
-    }
+  async nextCallback(): Promise<BenchmarkResult> {
+    return this.deferredCallback.promise;
   }
 
   async close() {
@@ -147,14 +151,15 @@ export class Server {
     });
   }
 
-  private async recordBytesSent(ctx: Koa.Context, next: () => Promise<void>):
+  private async instrumentRequests(ctx: Koa.Context, next: () => Promise<void>):
       Promise<void> {
+    this.sessionUserAgent = ctx.headers['user-agent'];
     // Note this assumes serial runs, as we guarantee in automatic mode. If we
     // ever wanted to support parallel requests, we would require some kind of
     // session tracking.
     await next();
     if (typeof ctx.response.length === 'number') {
-      this.currentRunBytes += ctx.response.length;
+      this.sessionBytes += ctx.response.length;
     } else if (ctx.status === 200) {
       console.log(
           `No response length for 200 response for ${ctx.url}, ` +
@@ -192,13 +197,8 @@ export class Server {
     return next();
   }
 
-  private async submitResults(ctx: Koa.Context) {
-    const bytesSent = this.currentRunBytes;
-    this.currentRunBytes = 0;  // Reset for next run.
-
+  private async callback(ctx: Koa.Context) {
     const response = ctx.request.body as BenchmarkResponse;
-    const browser = new UAParser(ctx.headers['user-agent']).getBrowser();
-
     // URLs paths will be one of these two forms:
     //   /benchmarks/<implementation>/<name>/...
     //   /benchmarks/<implementation>/versions/<version>/<name>/...
@@ -219,29 +219,21 @@ export class Server {
       name = urlParts[3];
     }
 
+    const ua = new UAParser(ctx.headers['user-agent']).getBrowser();
     const result: BenchmarkResult = {
-      runId: response.runId,
       name,
       variant: response.variant || '',
       implementation,
       version,
       millis: [response.millis],
       browser: {
-        name: browser.name || '',
-        version: browser.version || '',
+        name: ua.name || '',
+        version: ua.version || '',
       },
-      bytesSent,
+      bytesSent: this.sessionBytes,
     };
-    this.resultSubmitted.resolve(result);
-    this.resultSubmitted = new Deferred();
-    if (response.runId !== undefined) {
-      const pendingRun = this.pendingRuns.get(response.runId);
-      if (pendingRun === undefined) {
-        console.error('unknown run', response.runId);
-      } else {
-        pendingRun.deferred.resolve(result);
-      }
-    }
+    this.deferredCallback.resolve(result);
+    this.deferredCallback = new Deferred();
     ctx.body = 'ok';
   }
 }
