@@ -116,8 +116,8 @@ const optDefs: commandLineUsage.OptionDefinition[] = [
   {
     name: 'measure',
     description: 'Which time interval to measure. Options:\n' +
-        '- callback: bench.start() to bench.stop() (default)\n' +
-        '- fcp: first contentful paint',
+        'callback: bench.start() to bench.stop() (default)\n' +
+        'fcp: first contentful paint',
     type: String,
     defaultValue: 'callback',
   },
