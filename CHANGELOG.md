@@ -5,12 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](http://semver.org/).
 
-## Unreleased
-
-- Added support for measuring First Contentful Paint (FCP), enabled by setting
-  the `--measure=fcp` flag.
-
+<!-- ## Unreleased -->
 <!-- Add new, unreleased changes here. -->
+
+## [0.2.1] 2019-04-26
+
+-   Added support for measuring First Contentful Paint (FCP), enabled by setting
+    the `--measure=fcp` flag.
 
 ## [0.2.0] 2019-04-25
 
