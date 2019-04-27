@@ -11,25 +11,18 @@
 
 // Note: sync with runner/src/types.ts
 interface BenchmarkResponse {
-  runId?: string;
   urlPath: string;
   variant?: string;
   millis: number;
 }
 
 const url = new URL(window.location.href);
-const runId = url.searchParams.get('runId') || undefined;
 const variant = url.searchParams.get('variant') || undefined;
-const paint = url.searchParams.has('paint');
 
 export const config = JSON.parse(url.searchParams.get('config') || '{}');
 
 let startTime: number;
 export function start() {
-  // This gives us a timestamp we can find in the performance logs to compute
-  // the interval between now and the end of the paint that may happen after
-  // bench.stop() is called.
-  console.timeStamp('benchStartCalled');
   startTime = performance.now();
 }
 
@@ -37,29 +30,16 @@ export async function stop() {
   const end = performance.now();
   const runtime = end - startTime;
   console.log('benchmark runtime', runtime, 'ms');
-
-  const send = async () => {
-    const response: BenchmarkResponse = {
-      runId,
-      variant,
-      millis: runtime,
-      urlPath: url.pathname,
-    };
-    fetch('/submitResults', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(response),
-    });
+  const response: BenchmarkResponse = {
+    variant,
+    millis: runtime,
+    urlPath: url.pathname,
   };
-
-  if (paint === true) {
-    // Wait two RAFs before we indicate that we're done, because if the code
-    // that just finished executing triggers a paint, it's probably going to
-    // paint on the next frame, and we want to see that in the performance logs.
-    requestAnimationFrame(() => requestAnimationFrame(() => send()));
-  } else {
-    send();
-  }
+  fetch('/submitResults', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(response),
+  });
 }

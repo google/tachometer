@@ -61,36 +61,23 @@ export interface BenchmarkSpec {
   variant: string;
   browser: string;
   config: {};
-  paint: boolean;
 }
 
 // Note: sync with client/src/index.ts
 export interface BenchmarkResponse {
-  runId?: string;
   urlPath: string;
   variant?: string;
   millis: number;
 }
 
 export interface BenchmarkResult {
-  runId: string|undefined;
   name: string;
   implementation: string;
   version: string;
   variant: string;
-  // Millisecond interval between bench.start() and bench.stop().
   millis: number[];
-  // Millisecond interval between bench.start() and the end of the first paint
-  // which occurs after bench.stop()
-  paintMillis: number[];
   browser: {name: string, version: string};
   bytesSent: number;
-}
-
-export interface PendingBenchmark {
-  id: string;
-  spec: BenchmarkSpec;
-  deferred: Deferred<BenchmarkResult>;
 }
 
 export interface BenchmarkSession {
