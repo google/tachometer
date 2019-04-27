@@ -117,7 +117,7 @@ const optDefs: commandLineUsage.OptionDefinition[] = [
     name: 'measure',
     description: 'Which time interval to measure. Options:\n' +
         '- callback: bench.start() to bench.stop() (default)\n' +
-        '-      fcp: first contentful paint',
+        '- fcp: first contentful paint',
     type: String,
     defaultValue: 'callback',
   },
@@ -246,7 +246,7 @@ async function manualMode(opts: Opts, specs: BenchmarkSpec[], server: Server) {
   (async function() {
     while (true) {
       server.beginSession();
-      const result = await server.nextCallback();
+      const result = await server.nextResults();
       server.endSession();
       const resultStats = {result, stats: summaryStats(result.millis)};
       console.log(verticalTermResultTable(manualResultTable(resultStats)));
@@ -350,7 +350,7 @@ async function automaticMode(
       }
       millis = [fcp];
     } else {
-      const result = await server.nextCallback();
+      const result = await server.nextResults();
       millis = result.millis;
     }
     const {bytesSent, browser} = server.endSession();

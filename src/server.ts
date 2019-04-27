@@ -31,13 +31,16 @@ export interface ServerOpts {
 
 const clientLib = path.resolve(__dirname, '..', 'client', 'lib');
 
+class Session {
+  bytes: number = 0;
+  userAgent: string = '';
+}
+
 export class Server {
   readonly url: string;
   private readonly server: net.Server;
-  private sessionPending = false;
-  private sessionBytes = 0;
-  private sessionUserAgent = '';
-  private deferredCallback = new Deferred<BenchmarkResult>();
+  private session: Session|undefined;
+  private deferredResults = new Deferred<BenchmarkResult>();
 
   static start(opts: ServerOpts): Promise<Server> {
     const server = http.createServer();
@@ -71,7 +74,7 @@ export class Server {
 
     const app = new Koa();
     app.use(bodyParser());
-    app.use(mount('/callback', this.callback.bind(this)));
+    app.use(mount('/submitResults', this.submitResults.bind(this)));
     app.use(this.rewriteVersionUrls.bind(this));
     app.use(this.instrumentRequests.bind(this));
     app.use(
@@ -91,25 +94,24 @@ export class Server {
    * Mark the beginning of a session and reset instrumentation.
    */
   beginSession() {
-    if (this.sessionPending === true) {
+    if (this.session !== undefined) {
       throw new Error('A session is already pending');
     }
-    this.sessionPending = true;
-    this.sessionBytes = 0;
-    this.sessionUserAgent = '';
+    this.session = new Session();
   }
 
   /**
    * Mark the end of a session and return the data instrumented from it.
    */
   endSession(): {bytesSent: number, browser: {name: string, version: string}} {
-    if (this.sessionPending === false) {
-      throw new Error('No run is pending');
+    if (this.session === undefined) {
+      throw new Error('No session is pending');
     }
-    this.sessionPending = false;
-    const ua = new UAParser(this.sessionUserAgent).getBrowser();
+    const bytesSent = this.session.bytes;
+    const ua = new UAParser(this.session.userAgent).getBrowser();
+    this.session = undefined;
     return {
-      bytesSent: this.sessionBytes,
+      bytesSent,
       browser: {
         name: ua.name || '',
         version: ua.version || '',
@@ -135,8 +137,8 @@ export class Server {
         `${spec.name}/?${querystring.stringify(params)}`;
   }
 
-  async nextCallback(): Promise<BenchmarkResult> {
-    return this.deferredCallback.promise;
+  async nextResults(): Promise<BenchmarkResult> {
+    return this.deferredResults.promise;
   }
 
   async close() {
@@ -153,13 +155,17 @@ export class Server {
 
   private async instrumentRequests(ctx: Koa.Context, next: () => Promise<void>):
       Promise<void> {
-    this.sessionUserAgent = ctx.headers['user-agent'];
+    if (this.session === undefined) {
+      return next();
+    }
+
+    this.session.userAgent = ctx.headers['user-agent'];
     // Note this assumes serial runs, as we guarantee in automatic mode. If we
     // ever wanted to support parallel requests, we would require some kind of
     // session tracking.
     await next();
     if (typeof ctx.response.length === 'number') {
-      this.sessionBytes += ctx.response.length;
+      this.session.bytes += ctx.response.length;
     } else if (ctx.status === 200) {
       console.log(
           `No response length for 200 response for ${ctx.url}, ` +
@@ -197,7 +203,7 @@ export class Server {
     return next();
   }
 
-  private async callback(ctx: Koa.Context) {
+  private async submitResults(ctx: Koa.Context) {
     const response = ctx.request.body as BenchmarkResponse;
     // URLs paths will be one of these two forms:
     //   /benchmarks/<implementation>/<name>/...
@@ -230,10 +236,10 @@ export class Server {
         name: ua.name || '',
         version: ua.version || '',
       },
-      bytesSent: this.sessionBytes,
+      bytesSent: this.session !== undefined ? this.session.bytes : 0,
     };
-    this.deferredCallback.resolve(result);
-    this.deferredCallback = new Deferred();
+    this.deferredResults.resolve(result);
+    this.deferredResults = new Deferred();
     ctx.body = 'ok';
   }
 }

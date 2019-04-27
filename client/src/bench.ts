@@ -35,7 +35,7 @@ export async function stop() {
     millis: runtime,
     urlPath: url.pathname,
   };
-  fetch('/callback', {
+  fetch('/submitResults', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

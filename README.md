@@ -1,8 +1,8 @@
 # tachometer [![Build Status](https://travis-ci.com/PolymerLabs/tachometer.svg?token=Mh2qsyGY69vaxbRhosnZ&branch=master)](https://travis-ci.com/PolymerLabs/tachometer) [![NPM  package](https://img.shields.io/npm/v/tachometer.svg)](https://npmjs.org/package/tachometer)
 
-> tachometer is a tool for running both micro and first-paint benchmarks in
-> multiple web browsers. It uses repeated sampling and statistics to reliably
-> identify even the smallest differences in timing.
+> tachometer is a tool for running benchmarks in web browsers. It uses repeated
+> sampling and statistics to reliably identify even the smallest differences in
+> timing.
 
 ## Why?
 
