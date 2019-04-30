@@ -60,7 +60,9 @@ const optDefs: commandLineUsage.OptionDefinition[] = [
     name: 'benchmark',
     description: 'Which benchmarks to run (* for all)',
     type: String,
-    defaultValue: '*',
+    defaultValue: ['*'],
+    lazyMultiple: true,
+    defaultOption: true,
   },
   {
     name: 'implementation',
@@ -150,7 +152,7 @@ interface Opts {
   root: string;
   host: string;
   port: number[];
-  benchmark: string;
+  benchmark: string[];
   implementation: string;
   variant: string;
   'package-version': string[];

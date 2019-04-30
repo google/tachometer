@@ -24,7 +24,7 @@ const ignoreDirs = new Set([
 
 interface Opts {
   root: string;
-  benchmark: string;
+  benchmark: string[];
   implementation: string;
   variant: string;
   browser: string;
@@ -72,12 +72,12 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
   for (const implementation of impls) {
     const implDir = path.join(opts.root, implementation);
     let benchmarks;
-    if (opts.benchmark === '*') {
+    if (opts.benchmark.includes('*')) {
       benchmarks = await listDirs(implDir);
       benchmarks = benchmarks.filter(
           (implDir) => !implDir.startsWith('.') && !ignoreDirs.has(implDir));
     } else {
-      benchmarks = opts.benchmark.split(',');
+      benchmarks = opts.benchmark;
       const badNames = benchmarks.filter((dir) => ignoreDirs.has(dir));
       if (badNames.length > 0) {
         throw new Error(`Benchmarks cannot be named ${badNames.join(' or ')}`);
