@@ -21,7 +21,7 @@ import ansi = require('ansi-escape-sequences');
 
 import {makeSession} from './session';
 import {validBrowsers, fcpBrowsers, makeDriver, openAndSwitchToNewTab, pollForFirstContentfulPaint} from './browser';
-import {BenchmarkResult, BenchmarkSpec} from './types';
+import {BenchmarkResult, BenchmarkSpec, Measurement} from './types';
 import {Server} from './server';
 import {Horizons, ResultStats, horizonsResolved, summaryStats, computeDifferences} from './stats';
 import {specsFromOpts} from './specs';
@@ -151,7 +151,7 @@ export interface Opts {
   'sample-size': number;
   manual: boolean;
   save: string;
-  measure: 'callback'|'fcp';
+  measure: Measurement;
   horizon: string;
   timeout: number;
   'github-check': string;
