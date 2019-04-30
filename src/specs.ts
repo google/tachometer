@@ -14,6 +14,7 @@ import * as path from 'path';
 import * as url from 'url';
 
 import {validBrowsers} from './browser';
+import {Opts} from './cli';
 import {BenchmarkSpec, ConfigFormat} from './types';
 import {parsePackageVersions} from './versions';
 
@@ -22,15 +23,6 @@ const ignoreDirs = new Set([
   'common',
   'versions',
 ]);
-
-interface Opts {
-  root: string;
-  benchmark: string[];
-  implementation: string;
-  variant: string;
-  browser: string;
-  'package-version': string[];
-}
 
 /**
  * Derive the set of benchmark specifications we should run according to the
@@ -57,7 +49,9 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
 
   const remoteBenchmarks = [];
   const localBenchmarks = [];
-  for (const benchmark of opts.benchmark) {
+  // Benchmark names/URLs are the bare arguments not associated with a flag, so
+  // they are found in _unknown.
+  for (const benchmark of opts._unknown) {
     try {
       new url.URL(benchmark);
       remoteBenchmarks.push(benchmark);

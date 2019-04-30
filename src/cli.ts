@@ -57,14 +57,6 @@ const optDefs: commandLineUsage.OptionDefinition[] = [
     defaultValue: [8080, 8081, 8082, 8083, 0],
   },
   {
-    name: 'benchmark',
-    description: 'Which benchmarks to run (* for all)',
-    type: String,
-    defaultValue: ['*'],
-    lazyMultiple: true,
-    defaultOption: true,
-  },
-  {
     name: 'implementation',
     description: 'Which implementations to run (* for all)',
     alias: 'i',
@@ -147,12 +139,11 @@ const optDefs: commandLineUsage.OptionDefinition[] = [
   },
 ];
 
-interface Opts {
+export interface Opts {
   help: boolean;
   root: string;
   host: string;
   port: number[];
-  benchmark: string[];
   implementation: string;
   variant: string;
   'package-version': string[];
@@ -164,6 +155,15 @@ interface Opts {
   horizon: string;
   timeout: number;
   'github-check': string;
+
+  // Extra arguments not associated with a flag are put here. These are our
+  // benchmark names/URLs.
+  //
+  // Note we could also define a flag and set `defaultOption: true`, but then
+  // there would be two ways of specifying benchmark names/URLs. Also note the
+  // _unknown property is defined in commandLineArgs.CommandLineOptions, but we
+  // don't want to extend that because it includes `[propName: string]: any`.
+  _unknown: string[];
 }
 
 function combineResults(results: BenchmarkResult[]): BenchmarkResult {
@@ -178,7 +178,7 @@ function combineResults(results: BenchmarkResult[]): BenchmarkResult {
 }
 
 export async function main() {
-  const opts = commandLineArgs(optDefs) as Opts;
+  const opts = commandLineArgs(optDefs, {partial: true}) as Opts;
   if (opts.help) {
     console.log(commandLineUsage([{
       header: 'lit-benchmarks-runner',
