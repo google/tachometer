@@ -57,7 +57,7 @@ const optDefs: commandLineUsage.OptionDefinition[] = [
     defaultValue: [8080, 8081, 8082, 8083, 0],
   },
   {
-    name: 'name',
+    name: 'benchmark',
     description: 'Which benchmarks to run (* for all)',
     type: String,
     defaultValue: '*',
@@ -150,7 +150,7 @@ interface Opts {
   root: string;
   host: string;
   port: number[];
-  name: string;
+  benchmark: string;
   implementation: string;
   variant: string;
   'package-version': string[];
