@@ -71,7 +71,7 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
         name: url,
         // TODO Refactor so that we don't need to initialize all these fields
         // in the remote URL case.
-        implementation: '',
+        implementation: 'default',
         variant: '',
         config: {},
         version: {
