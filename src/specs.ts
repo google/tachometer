@@ -43,35 +43,34 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
     }
   }
 
-  const versions = parsePackageVersions(opts['package-version']);
-
-  const specs: BenchmarkSpec[] = [];
-
-  const remoteBenchmarks = [];
-  const localBenchmarks = [];
+  const remoteUrls = [];
+  const localNames = [];
   // Benchmark names/URLs are the bare arguments not associated with a flag, so
   // they are found in _unknown.
-  for (const benchmark of opts._unknown) {
+  for (const benchmark of opts._unknown || []) {
     try {
       new url.URL(benchmark);
-      remoteBenchmarks.push(benchmark);
+      remoteUrls.push(benchmark);
     } catch (e) {
       if (e.code === 'ERR_INVALID_URL') {
-        localBenchmarks.push(benchmark);
+        localNames.push(benchmark);
       } else {
         throw e;
       }
     }
   }
 
-  for (const url of remoteBenchmarks) {
+  const specs: BenchmarkSpec[] = [];
+  for (const url of remoteUrls) {
     for (const browser of browsers) {
       specs.push({
         url,
         browser,
+        // TODO Find a shorter unambiguous name since these can make the result
+        // table unwieldy, or do something smarter in the result table.
+        name: url,
         // TODO Refactor so that we don't need to initialize all these fields
         // in the remote URL case.
-        name: url,
         implementation: '',
         variant: '',
         config: {},
@@ -96,23 +95,25 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
     }
   }
 
+  const versions = parsePackageVersions(opts['package-version']);
+
   const variants = new Set(
       opts.variant.split(',').map((v) => v.trim()).filter((v) => v !== ''));
 
   for (const implementation of impls) {
     const implDir = path.join(opts.root, implementation);
     let benchmarks;
-    if (localBenchmarks.includes('*')) {
+    if (localNames.includes('*')) {
       benchmarks = await listDirs(implDir);
       benchmarks = benchmarks.filter(
           (implDir) => !implDir.startsWith('.') && !ignoreDirs.has(implDir));
     } else {
-      const badNames = localBenchmarks.filter((dir) => ignoreDirs.has(dir));
+      const badNames = localNames.filter((dir) => ignoreDirs.has(dir));
       if (badNames.length > 0) {
         throw new Error(`Benchmarks cannot be named ${badNames.join(' or ')}`);
       }
     }
-    for (const name of localBenchmarks) {
+    for (const name of localNames) {
       const benchDir = path.join(implDir, name);
       if (!await fsExtra.pathExists(benchDir)) {
         continue;

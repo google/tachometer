@@ -392,7 +392,13 @@ Note that, if the actual difference is very close to a horizon, then it is
 likely that the precision stopping condition will never be met, and the timeout
 will expire.
 
-## Flags
+## Usage
+
+```sh
+tach *
+tach my-bench-a my-bench-b
+tach http://example.com/a http://example.com/b
+```
 
 Flag                      | Default     | Description
 ------------------------- | ----------- | --------------------------------
@@ -400,7 +406,6 @@ Flag                      | Default     | Description
 `--root`                  | `./`        | Root directory to search for benchmarks
 `--host`                  | `127.0.0.1` | Which host to run on
 `--port`                  | `8080, 8081, ..., 0`| Which port to run on (comma-delimited preference list, `0` for random)
-`--benchmark`             | `*`         | Which benchmarks to run (`*` for all) ([details](#folder-layout))
 `--implementation` / `-i` | `*`         | Which implementations to run (`*` for all) ([details](#folder-layout))
 `--variant` / `-v`        | `*`         | Which variants to run (`*` for all) ([details](#variants))
 `--package-version` / `-p`| *(none)*    | Specify one or more dependency versions ([details](#package-versions))

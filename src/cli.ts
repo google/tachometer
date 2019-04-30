@@ -163,7 +163,7 @@ export interface Opts {
   // there would be two ways of specifying benchmark names/URLs. Also note the
   // _unknown property is defined in commandLineArgs.CommandLineOptions, but we
   // don't want to extend that because it includes `[propName: string]: any`.
-  _unknown: string[];
+  _unknown?: string[];
 }
 
 function combineResults(results: BenchmarkResult[]): BenchmarkResult {
@@ -180,10 +180,22 @@ function combineResults(results: BenchmarkResult[]): BenchmarkResult {
 export async function main() {
   const opts = commandLineArgs(optDefs, {partial: true}) as Opts;
   if (opts.help) {
-    console.log(commandLineUsage([{
-      header: 'lit-benchmarks-runner',
-      optionList: optDefs,
-    }]));
+    console.log(commandLineUsage([
+      {
+        header: 'tach',
+        content: 'https://github.com/PolymerLabs/tachometer',
+      },
+      {
+        header: 'Usage',
+        content: 'tach * \n' +
+            'tach my-bench-a my-bench-b\n' +
+            'tach http://example.com/a http://example.com/b'
+      },
+      {
+        header: 'Options',
+        optionList: optDefs,
+      },
+    ]));
     return;
   }
 
