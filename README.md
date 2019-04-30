@@ -98,14 +98,16 @@ controlled with the `--measure` flag.
 
 #### Callback
 
-By default, or when the `--measure` flag is set to **`callback`**, your page is
-responsible for calling the `start()` and `stop()` functions from the
-`/bench.js` module. This mode is appropriate for micro benchmarks, or any other
-kind of situation where you want full control over the beginning and end times.
+By default with local (non-URL) benchmarks, or when the `--measure` flag is set
+to **`callback`**, your page is responsible for calling the `start()` and
+`stop()` functions from the `/bench.js` module. This mode is appropriate for
+micro benchmarks, or any other kind of situation where you want full control
+over the beginning and end times.
 
 #### First Contentful Paint (FCP)
 
-When the `--measure` flag is set to **`fcp`**, then the [First Contentful Paint
+When the `--measure` flag is set to **`fcp`**, or when the benchmark is an
+external URL, then the [First Contentful Paint
 (FCP)](https://developers.google.com/web/tools/lighthouse/audits/first-contentful-paint)
 time will be automatically extracted from your page using the [Performance
 Timeline

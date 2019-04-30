@@ -65,6 +65,7 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
     for (const browser of browsers) {
       specs.push({
         url,
+        measurement: 'fcp',
         browser,
         // TODO Find a shorter unambiguous name since these can make the result
         // table unwieldy, or do something smarter in the result table.
@@ -131,6 +132,7 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
       const partialSpec = {
         name,
         implementation,
+        measurement: opts.measure,
       };
       if (config && config.variants && config.variants.length) {
         for (const variant of config.variants) {

@@ -209,7 +209,12 @@ export async function main() {
         `but was "${opts.measure}"`);
   }
 
-  if (opts.measure === 'fcp') {
+  const specs = await specsFromOpts(opts);
+  if (specs.length === 0) {
+    throw new Error('No benchmarks matched with the given flags');
+  }
+
+  if (opts.measure === 'fcp' || specs.find((spec) => spec.url !== undefined)) {
     for (const browser of opts.browser.split(',')) {
       if (!fcpBrowsers.has(browser)) {
         throw new Error(
@@ -217,11 +222,6 @@ export async function main() {
             `first contentful paint (FCP) measurement`);
       }
     }
-  }
-
-  const specs = await specsFromOpts(opts);
-  if (specs.length === 0) {
-    throw new Error('No benchmarks matched with the given flags');
   }
 
   await prepareVersionDirectories(opts.root, specs);
@@ -357,7 +357,7 @@ async function automaticMode(
     await driver.get(url);
 
     let millis;
-    if (opts.measure === 'fcp') {
+    if (spec.measurement === 'fcp') {
       const fcp = await pollForFirstContentfulPaint(driver);
       if (fcp !== undefined) {
         millis = [fcp];

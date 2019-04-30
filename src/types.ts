@@ -53,9 +53,13 @@ export interface NpmPackageJson {
   dependencies: PackageDependencyMap;
 }
 
+/** The kinds of intervals we can measure. */
+export type Measurement = 'callback'|'fcp';
+
 /** A specification of a benchmark to run. */
 export interface BenchmarkSpec {
   url?: string;
+  measurement: Measurement;
   name: string;
   implementation: string;
   version: PackageVersion;
