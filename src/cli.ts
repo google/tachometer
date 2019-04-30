@@ -242,7 +242,8 @@ async function manualMode(opts: Opts, specs: BenchmarkSpec[], server: Server) {
     console.log(
         `${spec.name} ${spec.variant} ` +
         `/ ${spec.implementation} ${spec.version.label}`);
-    console.log(ansi.format(`[yellow]{${server.specUrl(spec)}}`));
+    const url = spec.url !== undefined ? spec.url : server.specUrl(spec);
+    console.log(ansi.format(`[yellow]{${url}}`));
   }
   console.log(`\nResults will appear below:\n`);
   (async function() {
@@ -338,7 +339,7 @@ async function automaticMode(
 
   const runSpec = async (spec: BenchmarkSpec) => {
     server.beginSession();
-    const url = server.specUrl(spec);
+    const url = spec.url !== undefined ? spec.url : server.specUrl(spec);
     const {driver, initialTabHandle} = browsers.get(spec.browser)!;
     await openAndSwitchToNewTab(driver);
     await driver.get(url);
@@ -346,26 +347,31 @@ async function automaticMode(
     let millis;
     if (opts.measure === 'fcp') {
       const fcp = await pollForFirstContentfulPaint(driver);
-      if (fcp === undefined) {
-        throw new Error(
+      if (fcp !== undefined) {
+        millis = [fcp];
+      } else {
+        // This does very occasionally happen, unclear why. By not setting
+        // millis here, we'll just exclude this sample from the results.
+        console.error(
             `Timed out waiting for first contentful paint from ${url}`);
       }
-      millis = [fcp];
     } else {
       const result = await server.nextResults();
       millis = result.millis;
     }
     const {bytesSent, browser} = server.endSession();
-    const result = {
-      name: spec.name,
-      implementation: spec.implementation,
-      version: spec.version.label,
-      variant: spec.variant,
-      millis,
-      bytesSent,
-      browser,
-    };
-    specResults.get(spec)!.push(result);
+    if (millis !== undefined) {
+      const result = {
+        name: spec.name,
+        implementation: spec.implementation,
+        version: spec.version.label,
+        variant: spec.variant,
+        millis,
+        bytesSent,
+        browser,
+      };
+      specResults.get(spec)!.push(result);
+    }
 
     // Close the active tab (but not the whole browser, since the
     // initial blank tab is still open).

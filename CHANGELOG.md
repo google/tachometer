@@ -5,7 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](http://semver.org/).
 
-<!-- ## Unreleased -->
+## Unreleased
+
+-   Full URLs are now supported (e.g. `tach http://example.com`). Only
+    first-contentful-paint measurement is supported in this case.
+
+-   Benchmarks are now specified as bare arguments (e.g. `tach foo`) instead of
+    with the `--name` flag.
+
 <!-- Add new, unreleased changes here. -->
 
 ## [0.2.1] 2019-04-26

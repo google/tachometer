@@ -11,6 +11,7 @@
 
 import * as fsExtra from 'fs-extra';
 import * as path from 'path';
+import * as url from 'url';
 
 import {validBrowsers} from './browser';
 import {BenchmarkSpec, ConfigFormat} from './types';
@@ -53,6 +54,41 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
   const versions = parsePackageVersions(opts['package-version']);
 
   const specs: BenchmarkSpec[] = [];
+
+  const remoteBenchmarks = [];
+  const localBenchmarks = [];
+  for (const benchmark of opts.benchmark) {
+    try {
+      new url.URL(benchmark);
+      remoteBenchmarks.push(benchmark);
+    } catch (e) {
+      if (e.code === 'ERR_INVALID_URL') {
+        localBenchmarks.push(benchmark);
+      } else {
+        throw e;
+      }
+    }
+  }
+
+  for (const url of remoteBenchmarks) {
+    for (const browser of browsers) {
+      specs.push({
+        url,
+        browser,
+        // TODO Refactor so that we don't need to initialize all these fields
+        // in the remote URL case.
+        name: url,
+        implementation: '',
+        variant: '',
+        config: {},
+        version: {
+          label: '',
+          dependencyOverrides: {},
+        },
+      });
+    }
+  }
+
   let impls;
   if (opts.implementation === '*') {
     impls = await listDirs(opts.root);
@@ -72,18 +108,17 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
   for (const implementation of impls) {
     const implDir = path.join(opts.root, implementation);
     let benchmarks;
-    if (opts.benchmark.includes('*')) {
+    if (localBenchmarks.includes('*')) {
       benchmarks = await listDirs(implDir);
       benchmarks = benchmarks.filter(
           (implDir) => !implDir.startsWith('.') && !ignoreDirs.has(implDir));
     } else {
-      benchmarks = opts.benchmark;
-      const badNames = benchmarks.filter((dir) => ignoreDirs.has(dir));
+      const badNames = localBenchmarks.filter((dir) => ignoreDirs.has(dir));
       if (badNames.length > 0) {
         throw new Error(`Benchmarks cannot be named ${badNames.join(' or ')}`);
       }
     }
-    for (const name of benchmarks) {
+    for (const name of localBenchmarks) {
       const benchDir = path.join(implDir, name);
       if (!await fsExtra.pathExists(benchDir)) {
         continue;

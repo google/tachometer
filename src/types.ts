@@ -55,6 +55,7 @@ export interface NpmPackageJson {
 
 /** A specification of a benchmark to run. */
 export interface BenchmarkSpec {
+  url?: string;
   name: string;
   implementation: string;
   version: PackageVersion;
