@@ -21,7 +21,7 @@ import ansi = require('ansi-escape-sequences');
 
 import {makeSession} from './session';
 import {validBrowsers, fcpBrowsers, makeDriver, openAndSwitchToNewTab, pollForFirstContentfulPaint} from './browser';
-import {BenchmarkResult, BenchmarkSpec} from './types';
+import {BenchmarkResult, BenchmarkSpec, Measurement} from './types';
 import {Server} from './server';
 import {Horizons, ResultStats, horizonsResolved, summaryStats, computeDifferences} from './stats';
 import {specsFromOpts} from './specs';
@@ -55,12 +55,6 @@ const optDefs: commandLineUsage.OptionDefinition[] = [
         '0 for random, default [8080, 8081, ..., 0])',
     type: (flag: string) => flag.split(',').map(Number),
     defaultValue: [8080, 8081, 8082, 8083, 0],
-  },
-  {
-    name: 'name',
-    description: 'Which benchmarks to run (* for all)',
-    type: String,
-    defaultValue: '*',
   },
   {
     name: 'implementation',
@@ -145,12 +139,11 @@ const optDefs: commandLineUsage.OptionDefinition[] = [
   },
 ];
 
-interface Opts {
+export interface Opts {
   help: boolean;
   root: string;
   host: string;
   port: number[];
-  name: string;
   implementation: string;
   variant: string;
   'package-version': string[];
@@ -158,10 +151,19 @@ interface Opts {
   'sample-size': number;
   manual: boolean;
   save: string;
-  measure: 'callback'|'fcp';
+  measure: Measurement;
   horizon: string;
   timeout: number;
   'github-check': string;
+
+  // Extra arguments not associated with a flag are put here. These are our
+  // benchmark names/URLs.
+  //
+  // Note we could also define a flag and set `defaultOption: true`, but then
+  // there would be two ways of specifying benchmark names/URLs. Also note the
+  // _unknown property is defined in commandLineArgs.CommandLineOptions, but we
+  // don't want to extend that because it includes `[propName: string]: any`.
+  _unknown?: string[];
 }
 
 function combineResults(results: BenchmarkResult[]): BenchmarkResult {
@@ -176,12 +178,24 @@ function combineResults(results: BenchmarkResult[]): BenchmarkResult {
 }
 
 export async function main() {
-  const opts = commandLineArgs(optDefs) as Opts;
+  const opts = commandLineArgs(optDefs, {partial: true}) as Opts;
   if (opts.help) {
-    console.log(commandLineUsage([{
-      header: 'lit-benchmarks-runner',
-      optionList: optDefs,
-    }]));
+    console.log(commandLineUsage([
+      {
+        header: 'tach',
+        content: 'https://github.com/PolymerLabs/tachometer',
+      },
+      {
+        header: 'Usage',
+        content: 'tach * \n' +
+            'tach my-bench-a my-bench-b\n' +
+            'tach http://example.com/a http://example.com/b'
+      },
+      {
+        header: 'Options',
+        optionList: optDefs,
+      },
+    ]));
     return;
   }
 
@@ -195,7 +209,12 @@ export async function main() {
         `but was "${opts.measure}"`);
   }
 
-  if (opts.measure === 'fcp') {
+  const specs = await specsFromOpts(opts);
+  if (specs.length === 0) {
+    throw new Error('No benchmarks matched with the given flags');
+  }
+
+  if (opts.measure === 'fcp' || specs.find((spec) => spec.url !== undefined)) {
     for (const browser of opts.browser.split(',')) {
       if (!fcpBrowsers.has(browser)) {
         throw new Error(
@@ -203,11 +222,6 @@ export async function main() {
             `first contentful paint (FCP) measurement`);
       }
     }
-  }
-
-  const specs = await specsFromOpts(opts);
-  if (specs.length === 0) {
-    throw new Error('No benchmarks matched with the given flags');
   }
 
   await prepareVersionDirectories(opts.root, specs);
@@ -240,7 +254,8 @@ async function manualMode(opts: Opts, specs: BenchmarkSpec[], server: Server) {
     console.log(
         `${spec.name} ${spec.variant} ` +
         `/ ${spec.implementation} ${spec.version.label}`);
-    console.log(ansi.format(`[yellow]{${server.specUrl(spec)}}`));
+    const url = spec.url !== undefined ? spec.url : server.specUrl(spec);
+    console.log(ansi.format(`[yellow]{${url}}`));
   }
   console.log(`\nResults will appear below:\n`);
   (async function() {
@@ -336,34 +351,39 @@ async function automaticMode(
 
   const runSpec = async (spec: BenchmarkSpec) => {
     server.beginSession();
-    const url = server.specUrl(spec);
+    const url = spec.url !== undefined ? spec.url : server.specUrl(spec);
     const {driver, initialTabHandle} = browsers.get(spec.browser)!;
     await openAndSwitchToNewTab(driver);
     await driver.get(url);
 
     let millis;
-    if (opts.measure === 'fcp') {
+    if (spec.measurement === 'fcp') {
       const fcp = await pollForFirstContentfulPaint(driver);
-      if (fcp === undefined) {
-        throw new Error(
+      if (fcp !== undefined) {
+        millis = [fcp];
+      } else {
+        // This does very occasionally happen, unclear why. By not setting
+        // millis here, we'll just exclude this sample from the results.
+        console.error(
             `Timed out waiting for first contentful paint from ${url}`);
       }
-      millis = [fcp];
     } else {
       const result = await server.nextResults();
       millis = result.millis;
     }
     const {bytesSent, browser} = server.endSession();
-    const result = {
-      name: spec.name,
-      implementation: spec.implementation,
-      version: spec.version.label,
-      variant: spec.variant,
-      millis,
-      bytesSent,
-      browser,
-    };
-    specResults.get(spec)!.push(result);
+    if (millis !== undefined) {
+      const result = {
+        name: spec.name,
+        implementation: spec.implementation,
+        version: spec.version.label,
+        variant: spec.variant,
+        millis,
+        bytesSent,
+        browser,
+      };
+      specResults.get(spec)!.push(result);
+    }
 
     // Close the active tab (but not the whole browser, since the
     // initial blank tab is still open).

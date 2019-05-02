@@ -11,8 +11,10 @@
 
 import * as fsExtra from 'fs-extra';
 import * as path from 'path';
+import * as url from 'url';
 
 import {validBrowsers} from './browser';
+import {Opts} from './cli';
 import {BenchmarkSpec, ConfigFormat} from './types';
 import {parsePackageVersions} from './versions';
 
@@ -21,15 +23,6 @@ const ignoreDirs = new Set([
   'common',
   'versions',
 ]);
-
-interface Opts {
-  root: string;
-  name: string;
-  implementation: string;
-  variant: string;
-  browser: string;
-  'package-version': string[];
-}
 
 /**
  * Derive the set of benchmark specifications we should run according to the
@@ -50,9 +43,46 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
     }
   }
 
-  const versions = parsePackageVersions(opts['package-version']);
+  const remoteUrls = [];
+  const localNames = [];
+  // Benchmark names/URLs are the bare arguments not associated with a flag, so
+  // they are found in _unknown.
+  for (const benchmark of opts._unknown || []) {
+    try {
+      new url.URL(benchmark);
+      remoteUrls.push(benchmark);
+    } catch (e) {
+      if (e.code === 'ERR_INVALID_URL') {
+        localNames.push(benchmark);
+      } else {
+        throw e;
+      }
+    }
+  }
 
   const specs: BenchmarkSpec[] = [];
+  for (const url of remoteUrls) {
+    for (const browser of browsers) {
+      specs.push({
+        url,
+        measurement: 'fcp',
+        browser,
+        // TODO Find a shorter unambiguous name since these can make the result
+        // table unwieldy, or do something smarter in the result table.
+        name: url,
+        // TODO Refactor so that we don't need to initialize all these fields
+        // in the remote URL case.
+        implementation: 'default',
+        variant: '',
+        config: {},
+        version: {
+          label: '',
+          dependencyOverrides: {},
+        },
+      });
+    }
+  }
+
   let impls;
   if (opts.implementation === '*') {
     impls = await listDirs(opts.root);
@@ -66,24 +96,25 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
     }
   }
 
+  const versions = parsePackageVersions(opts['package-version']);
+
   const variants = new Set(
       opts.variant.split(',').map((v) => v.trim()).filter((v) => v !== ''));
 
   for (const implementation of impls) {
     const implDir = path.join(opts.root, implementation);
     let benchmarks;
-    if (opts.name === '*') {
+    if (localNames.includes('*')) {
       benchmarks = await listDirs(implDir);
       benchmarks = benchmarks.filter(
           (implDir) => !implDir.startsWith('.') && !ignoreDirs.has(implDir));
     } else {
-      benchmarks = opts.name.split(',');
-      const badNames = benchmarks.filter((dir) => ignoreDirs.has(dir));
+      const badNames = localNames.filter((dir) => ignoreDirs.has(dir));
       if (badNames.length > 0) {
         throw new Error(`Benchmarks cannot be named ${badNames.join(' or ')}`);
       }
     }
-    for (const name of benchmarks) {
+    for (const name of localNames) {
       const benchDir = path.join(implDir, name);
       if (!await fsExtra.pathExists(benchDir)) {
         continue;
@@ -101,6 +132,7 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
       const partialSpec = {
         name,
         implementation,
+        measurement: opts.measure,
       };
       if (config && config.variants && config.variants.length) {
         for (const variant of config.variants) {
