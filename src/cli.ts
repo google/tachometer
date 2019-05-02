@@ -29,7 +29,7 @@ import {AutomaticResults, verticalTermResultTable, horizontalTermResultTable, ve
 import {prepareVersionDirectories} from './versions';
 import * as github from './github';
 
-const optDefs: commandLineUsage.OptionDefinition[] = [
+export const optDefs: commandLineUsage.OptionDefinition[] = [
   {
     name: 'help',
     description: 'Show documentation',
