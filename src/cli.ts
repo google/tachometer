@@ -12,6 +12,7 @@
 require('source-map-support').install();
 
 import * as fsExtra from 'fs-extra';
+import * as path from 'path';
 import * as webdriver from 'selenium-webdriver';
 
 import commandLineArgs = require('command-line-args');
@@ -33,6 +34,12 @@ export const optDefs: commandLineUsage.OptionDefinition[] = [
   {
     name: 'help',
     description: 'Show documentation',
+    type: Boolean,
+    defaultValue: false,
+  },
+  {
+    name: 'version',
+    description: 'Show the installed version of tachometer',
     type: Boolean,
     defaultValue: false,
   },
@@ -141,6 +148,7 @@ export const optDefs: commandLineUsage.OptionDefinition[] = [
 
 export interface Opts {
   help: boolean;
+  version: boolean;
   root: string;
   host: string;
   port: number[];
@@ -177,13 +185,17 @@ function combineResults(results: BenchmarkResult[]): BenchmarkResult {
   return combined;
 }
 
+const getVersion = (): string =>
+    require(path.join(__dirname, '..', 'package.json')).version;
+
 export async function main() {
   const opts = commandLineArgs(optDefs, {partial: true}) as Opts;
+
   if (opts.help) {
     console.log(commandLineUsage([
       {
         header: 'tach',
-        content: 'https://github.com/PolymerLabs/tachometer',
+        content: `v${getVersion()}\nhttps://github.com/PolymerLabs/tachometer`,
       },
       {
         header: 'Usage',
@@ -196,6 +208,11 @@ export async function main() {
         optionList: optDefs,
       },
     ]));
+    return;
+  }
+
+  if (opts.version) {
+    console.log(getVersion());
     return;
   }
 

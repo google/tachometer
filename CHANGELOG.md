@@ -8,6 +8,8 @@ project adheres to [Semantic Versioning](http://semver.org/).
 <!-- ## Unreleased -->
 <!-- Add new, unreleased changes here. -->
 
+-   Add `--version` flag.
+
 ## [0.3.0] 2019-05-03
 
 -   Full URLs are now supported (e.g. `tach http://example.com`). Only
