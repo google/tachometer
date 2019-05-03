@@ -34,22 +34,6 @@ export interface ResultTable {
   results: ResultStats[];
 }
 
-/**
- * Create a manual mode result table.
- */
-export function manualResultTable(result: ResultStats): ResultTable {
-  const dimensions = [
-    benchmarkDimension,
-    variantDimension,
-    implementationDimension,
-    versionDimension,
-    browserDimension,
-    bytesSentDimension,
-    runtimePointEstimateDimension,
-  ];
-  return {dimensions, results: [result]};
-}
-
 export interface AutomaticResults {
   fixed: ResultTable;
   unfixed: ResultTable;
@@ -292,12 +276,6 @@ const runtimeConfidenceIntervalDimension: Dimension = {
   },
   format: (r: ResultStats) =>
       formatConfidenceInterval(r.stats.meanCI, (n) => n.toFixed(2) + 'ms'),
-};
-
-const runtimePointEstimateDimension: Dimension = {
-  label: 'Runtime',
-  format: (r: ResultStats) =>
-      ansi.format(`[blue]{${r.stats.mean.toFixed(3)}} ms`),
 };
 
 function formatDifference({absolute, relative}: Difference): string {

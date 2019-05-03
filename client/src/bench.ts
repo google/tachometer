@@ -11,13 +11,10 @@
 
 // Note: sync with runner/src/types.ts
 interface BenchmarkResponse {
-  urlPath: string;
-  variant?: string;
   millis: number;
 }
 
 const url = new URL(window.location.href);
-const variant = url.searchParams.get('variant') || undefined;
 
 export const config = JSON.parse(url.searchParams.get('config') || '{}');
 
@@ -31,9 +28,7 @@ export async function stop() {
   const runtime = end - startTime;
   console.log('benchmark runtime', runtime, 'ms');
   const response: BenchmarkResponse = {
-    variant,
     millis: runtime,
-    urlPath: url.pathname,
   };
   fetch('/submitResults', {
     method: 'POST',

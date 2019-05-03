@@ -70,8 +70,6 @@ export interface BenchmarkSpec {
 
 // Note: sync with client/src/index.ts
 export interface BenchmarkResponse {
-  urlPath: string;
-  variant?: string;
   millis: number;
 }
 

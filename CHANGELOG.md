@@ -5,8 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](http://semver.org/).
 
-<!-- ## Unreleased -->
-<!-- Add new, unreleased changes here. -->
+## Unreleased
+
+-   `--manual` mode no longer shows benchmark data (but it should only be used
+    for testing the web server anyway since it has no statistical significance).
 
 -   Add `--version` flag.
 

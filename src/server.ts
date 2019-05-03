@@ -12,7 +12,6 @@
 import * as http from 'http';
 import * as net from 'net';
 import * as path from 'path';
-import * as querystring from 'querystring';
 
 import Koa = require('koa');
 import mount = require('koa-mount');
@@ -21,7 +20,7 @@ import serve = require('koa-static');
 import bodyParser = require('koa-bodyparser');
 import {UAParser} from 'ua-parser-js';
 
-import {BenchmarkResponse, Deferred, BenchmarkSpec, BenchmarkResult} from './types';
+import {BenchmarkResponse, Deferred, BenchmarkSpec} from './types';
 
 export interface ServerOpts {
   host: string;
@@ -40,7 +39,7 @@ export class Server {
   readonly url: string;
   private readonly server: net.Server;
   private session: Session|undefined;
-  private deferredResults = new Deferred<BenchmarkResult>();
+  private deferredResults = new Deferred<BenchmarkResponse>();
 
   static start(opts: ServerOpts): Promise<Server> {
     const server = http.createServer();
@@ -121,24 +120,17 @@ export class Server {
   }
 
   specUrl(spec: BenchmarkSpec): string {
-    const params: {
-      variant?: string,
-      config?: string,
-      paint?: 'true',
-    } = {};
-    if (spec.variant !== undefined) {
-      params.variant = spec.variant;
-    }
-    if (spec.config !== undefined) {
-      params.config = JSON.stringify(spec.config);
+    let queryString = '';
+    if (spec.config !== undefined && Object.keys(spec.config).length > 0) {
+      queryString = '?config=' + JSON.stringify(spec.config);
     }
     return `${this.url}/benchmarks/${spec.implementation}/` +
         (spec.version.label === 'default' ? '' :
                                             `versions/${spec.version.label}/`) +
-        `${spec.name}/?${querystring.stringify(params)}`;
+        `${spec.name}/${queryString}`;
   }
 
-  async nextResults(): Promise<BenchmarkResult> {
+  async nextResults(): Promise<BenchmarkResponse> {
     return this.deferredResults.promise;
   }
 
@@ -206,41 +198,7 @@ export class Server {
   }
 
   private async submitResults(ctx: Koa.Context) {
-    const response = ctx.request.body as BenchmarkResponse;
-    // URLs paths will be one of these two forms:
-    //   /benchmarks/<implementation>/<name>/...
-    //   /benchmarks/<implementation>/versions/<version>/<name>/...
-    //  0 1          2                3        4         5      6
-    const urlParts = response.urlPath.split('/');
-    if (urlParts.length < 4 || urlParts[1] !== 'benchmarks') {
-      console.error(`Unexpected response urlPath ${response.urlPath}`);
-      return;
-    }
-    const implementation = urlParts[2];
-    let name, version;
-    // Note we assume that there are no benchmarks called "versions".
-    if (urlParts[3] === 'versions') {
-      version = urlParts[4];
-      name = urlParts[5];
-    } else {
-      version = 'default';
-      name = urlParts[3];
-    }
-
-    const ua = new UAParser(ctx.headers['user-agent']).getBrowser();
-    const result: BenchmarkResult = {
-      name,
-      variant: response.variant || '',
-      implementation,
-      version,
-      millis: [response.millis],
-      browser: {
-        name: ua.name || '',
-        version: ua.version || '',
-      },
-      bytesSent: this.session !== undefined ? this.session.bytes : 0,
-    };
-    this.deferredResults.resolve(result);
+    this.deferredResults.resolve(ctx.request.body as BenchmarkResponse);
     ctx.body = 'ok';
   }
 }

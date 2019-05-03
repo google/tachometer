@@ -26,7 +26,7 @@ import {BenchmarkResult, BenchmarkSpec, Measurement} from './types';
 import {Server} from './server';
 import {Horizons, ResultStats, horizonsResolved, summaryStats, computeDifferences} from './stats';
 import {specsFromOpts} from './specs';
-import {AutomaticResults, verticalTermResultTable, horizontalTermResultTable, verticalHtmlResultTable, horizontalHtmlResultTable, automaticResultTable, manualResultTable, spinner} from './format';
+import {AutomaticResults, verticalTermResultTable, horizontalTermResultTable, verticalHtmlResultTable, horizontalHtmlResultTable, automaticResultTable, spinner} from './format';
 import {prepareVersionDirectories} from './versions';
 import * as github from './github';
 
@@ -280,8 +280,7 @@ async function manualMode(opts: Opts, specs: BenchmarkSpec[], server: Server) {
       server.beginSession();
       const result = await server.nextResults();
       server.endSession();
-      const resultStats = {result, stats: summaryStats(result.millis)};
-      console.log(verticalTermResultTable(manualResultTable(resultStats)));
+      console.log(`${result.millis.toFixed(3)} ms`);
     }
   })();
 }
@@ -386,7 +385,7 @@ async function automaticMode(
       }
     } else {
       const result = await server.nextResults();
-      millis = result.millis;
+      millis = [result.millis];
     }
     const {bytesSent, browser} = server.endSession();
     if (millis !== undefined) {
