@@ -71,13 +71,6 @@ export const optDefs: commandLineUsage.OptionDefinition[] = [
     defaultValue: '*',
   },
   {
-    name: 'variant',
-    description: 'Which variant to run (* for all)',
-    alias: 'v',
-    type: String,
-    defaultValue: '*',
-  },
-  {
     name: 'package-version',
     description: 'Specify one or more dependency versions (see README)',
     alias: 'p',
@@ -153,7 +146,6 @@ export interface Opts {
   host: string;
   port: number[];
   implementation: string;
-  variant: string;
   'package-version': string[];
   browser: string;
   'sample-size': number;
@@ -269,7 +261,7 @@ async function manualMode(opts: Opts, specs: BenchmarkSpec[], server: Server) {
   for (const spec of specs) {
     console.log();
     console.log(
-        `${spec.name} ${spec.variant} ` +
+        `${spec.name}${spec.queryString} ` +
         `/ ${spec.implementation} ${spec.version.label}`);
     const url = spec.url !== undefined ? spec.url : server.specUrl(spec);
     console.log(ansi.format(`[yellow]{${url}}`));
@@ -394,7 +386,6 @@ async function automaticMode(
         queryString: spec.queryString,
         implementation: spec.implementation,
         version: spec.version.label,
-        variant: spec.variant,
         millis,
         bytesSent,
         browser,
@@ -417,8 +408,7 @@ async function automaticMode(
         status: [
           `${++run}/${numRuns}`,
           spec.browser,
-          spec.name,
-          spec.variant,
+          spec.name + spec.queryString,
           `${spec.implementation}@${spec.version.label}`,
         ].filter((part) => part !== '')
                     .join(' '),

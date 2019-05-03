@@ -14,10 +14,6 @@ interface BenchmarkResponse {
   millis: number;
 }
 
-const url = new URL(window.location.href);
-
-export const config = JSON.parse(url.searchParams.get('config') || '{}');
-
 let startTime: number;
 export function start() {
   startTime = performance.now();

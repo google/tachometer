@@ -120,16 +120,10 @@ export class Server {
   }
 
   specUrl(spec: BenchmarkSpec): string {
-    let queryString = '';
-    if (spec.config !== undefined && Object.keys(spec.config).length > 0) {
-      queryString = '?config=' + JSON.stringify(spec.config);
-    } else if (spec.queryString) {
-      queryString = spec.queryString;
-    }
     return `${this.url}/benchmarks/${spec.implementation}/` +
         (spec.version.label === 'default' ? '' :
                                             `versions/${spec.version.label}/`) +
-        `${spec.name}/${queryString}`;
+        `${spec.name}/${spec.queryString}`;
   }
 
   async nextResults(): Promise<BenchmarkResponse> {

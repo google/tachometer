@@ -15,7 +15,7 @@ import * as url from 'url';
 
 import {validBrowsers} from './browser';
 import {Opts} from './cli';
-import {BenchmarkSpec, ConfigFormat} from './types';
+import {BenchmarkSpec} from './types';
 import {parsePackageVersions} from './versions';
 
 const ignoreDirs = new Set([
@@ -79,8 +79,6 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
         // in the remote URL case.
         queryString: '',
         implementation: 'default',
-        variant: '',
-        config: {},
         version: {
           label: '',
           dependencyOverrides: {},
@@ -104,9 +102,6 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
 
   const versions = parsePackageVersions(opts['package-version']);
 
-  const variants = new Set(
-      opts.variant.split(',').map((v) => v.trim()).filter((v) => v !== ''));
-
   for (const implementation of impls) {
     const implDir = path.join(opts.root, implementation);
     let benchmarks;
@@ -125,14 +120,6 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
       if (!await fsExtra.pathExists(benchDir)) {
         continue;
       }
-      let config: ConfigFormat|undefined;
-      try {
-        config = await fsExtra.readJson(path.join(benchDir, 'benchmarks.json'));
-      } catch (e) {
-        if (e.code !== 'ENOENT') {
-          throw e;
-        }
-      }
       const implVersions = versions.get(implementation) ||
           [{label: 'default', dependencyOverrides: {}}];
       const partialSpec = {
@@ -141,34 +128,13 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
         implementation,
         measurement: opts.measure,
       };
-      if (config && config.variants && config.variants.length) {
-        for (const variant of config.variants) {
-          if (variant.name &&
-              (variants.has('*') || variants.has(variant.name))) {
-            for (const version of implVersions) {
-              for (const browser of browsers) {
-                specs.push({
-                  ...partialSpec,
-                  browser,
-                  version,
-                  variant: variant.name || '',
-                  config: variant.config || {},
-                });
-              }
-            }
-          }
-        }
-      } else if (opts.variant === '*') {
-        for (const version of implVersions) {
-          for (const browser of browsers) {
-            specs.push({
-              ...partialSpec,
-              browser,
-              version,
-              variant: '',
-              config: {},
-            });
-          }
+      for (const version of implVersions) {
+        for (const browser of browsers) {
+          specs.push({
+            ...partialSpec,
+            browser,
+            version,
+          });
         }
       }
     }
@@ -178,8 +144,8 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
     if (a.name !== b.name) {
       return a.name.localeCompare(b.name);
     }
-    if (a.variant !== b.variant) {
-      return a.variant.localeCompare(b.variant);
+    if (a.queryString !== b.queryString) {
+      return a.queryString.localeCompare(b.queryString);
     }
     if (a.implementation !== b.implementation) {
       return a.implementation.localeCompare(b.implementation);
@@ -206,7 +172,7 @@ async function listDirs(root: string): Promise<string[]> {
 export interface SpecFilter {
   name?: string;
   implementation?: string;
-  variant?: string;
+  queryString?: string;
   version?: string;
   browser?: string;
 }
@@ -224,7 +190,8 @@ export function specMatchesFilter(
       spec.implementation !== selector.implementation) {
     return false;
   }
-  if (selector.variant !== undefined && spec.variant !== selector.variant) {
+  if (selector.queryString !== undefined &&
+      spec.queryString !== selector.queryString) {
     return false;
   }
   if (selector.version !== undefined &&

@@ -31,13 +31,11 @@ suite('specsFromOpts', () => {
     assert.deepEqual(specs, [
       {
         browser: 'chrome',
-        config: {},
         implementation: 'default',
         measurement: 'fcp',
         name: 'http://example.com',
         queryString: '',
         url: 'http://example.com',
-        variant: '',
         version: {
           dependencyOverrides: {},
           label: '',

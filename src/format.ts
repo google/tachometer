@@ -53,7 +53,6 @@ export function automaticResultTable(results: ResultStats[]): AutomaticResults {
   const possiblyFixed = [
     benchmarkDimension,
     queryParamsDimension,
-    variantDimension,
     implementationDimension,
     versionDimension,
     browserDimension,
@@ -245,14 +244,6 @@ const queryParamsDimension: Dimension = {
       r.result.queryString || ansi.format('[gray]{<none>}'),
 };
 
-const variantDimension: Dimension = {
-  label: 'Variant',
-  tableConfig: {
-    alignment: 'right',
-  },
-  format: (r: ResultStats) => r.result.variant,
-};
-
 const implementationDimension: Dimension = {
   label: 'Impl',
   format: (r: ResultStats) => r.result.implementation,
@@ -323,14 +314,12 @@ function percent(n: number): string {
 function makeUniqueLabelFn(results: BenchmarkResult[]):
     (result: BenchmarkResult) => string {
   const names = new Set();
-  const variants = new Set();
   const queryStrings = new Set();
   const implementations = new Set();
   const versions = new Set();
   const browsers = new Set();
   for (const result of results) {
     names.add(result.name);
-    variants.add(result.variant);
     queryStrings.add(result.queryString);
     implementations.add(result.implementation);
     versions.add(result.version);
@@ -340,9 +329,6 @@ function makeUniqueLabelFn(results: BenchmarkResult[]):
     const fields = [];
     if (names.size > 1) {
       fields.push(result.name);
-    }
-    if (variants.size > 1) {
-      fields.push(result.variant);
     }
     if (queryStrings.size > 1) {
       fields.push(result.queryString || '<none>');

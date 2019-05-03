@@ -22,14 +22,6 @@ export class Deferred<T> {
   }
 }
 
-/** The expected format of a benchmarks.json configuration file. */
-export interface ConfigFormat {
-  variants?: Array<{
-    name?: string,
-    config?: {},
-  }>;
-}
-
 /**
  * A mapping from NPM package name to version specifier, as used in a
  * package.json's "dependencies" and "devDependencies".
@@ -64,9 +56,7 @@ export interface BenchmarkSpec {
   queryString: string;
   implementation: string;
   version: PackageVersion;
-  variant: string;
   browser: string;
-  config: {};
 }
 
 // Note: sync with client/src/index.ts
@@ -79,7 +69,6 @@ export interface BenchmarkResult {
   queryString: string;
   implementation: string;
   version: string;
-  variant: string;
   millis: number[];
   browser: {name: string, version: string};
   bytesSent: number;
