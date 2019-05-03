@@ -13,6 +13,9 @@ project adheres to [Semantic Versioning](http://semver.org/).
 -   Benchmarks are now specified as bare arguments (e.g. `tach foo`) instead of
     with the `--name` flag.
 
+-   Fix race condition where benchmarks that returned results quickly might not
+    be registered.
+
 <!-- Add new, unreleased changes here. -->
 
 ## [0.2.1] 2019-04-26

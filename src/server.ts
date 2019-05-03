@@ -98,6 +98,7 @@ export class Server {
       throw new Error('A session is already pending');
     }
     this.session = new Session();
+    this.deferredResults = new Deferred();
   }
 
   /**
@@ -155,17 +156,18 @@ export class Server {
 
   private async instrumentRequests(ctx: Koa.Context, next: () => Promise<void>):
       Promise<void> {
-    if (this.session === undefined) {
+    const session = this.session;
+    if (session === undefined) {
       return next();
     }
 
-    this.session.userAgent = ctx.headers['user-agent'];
+    session.userAgent = ctx.headers['user-agent'];
     // Note this assumes serial runs, as we guarantee in automatic mode. If we
     // ever wanted to support parallel requests, we would require some kind of
     // session tracking.
     await next();
     if (typeof ctx.response.length === 'number') {
-      this.session.bytes += ctx.response.length;
+      session.bytes += ctx.response.length;
     } else if (ctx.status === 200) {
       console.log(
           `No response length for 200 response for ${ctx.url}, ` +
@@ -239,7 +241,6 @@ export class Server {
       bytesSent: this.session !== undefined ? this.session.bytes : 0,
     };
     this.deferredResults.resolve(result);
-    this.deferredResults = new Deferred();
     ctx.body = 'ok';
   }
 }
