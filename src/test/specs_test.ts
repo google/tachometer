@@ -35,6 +35,7 @@ suite('specsFromOpts', () => {
         implementation: 'default',
         measurement: 'fcp',
         name: 'http://example.com',
+        queryString: '',
         url: 'http://example.com',
         variant: '',
         version: {

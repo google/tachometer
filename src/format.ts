@@ -52,6 +52,7 @@ export function automaticResultTable(results: ResultStats[]): AutomaticResults {
 
   const possiblyFixed = [
     benchmarkDimension,
+    queryParamsDimension,
     variantDimension,
     implementationDimension,
     versionDimension,
@@ -235,6 +236,15 @@ const benchmarkDimension: Dimension = {
   format: (r: ResultStats) => r.result.name,
 };
 
+const queryParamsDimension: Dimension = {
+  label: 'Params',
+  tableConfig: {
+    alignment: 'right',
+  },
+  format: (r: ResultStats) =>
+      r.result.queryString || ansi.format('[gray]{<none>}'),
+};
+
 const variantDimension: Dimension = {
   label: 'Variant',
   tableConfig: {
@@ -314,12 +324,14 @@ function makeUniqueLabelFn(results: BenchmarkResult[]):
     (result: BenchmarkResult) => string {
   const names = new Set();
   const variants = new Set();
+  const queryStrings = new Set();
   const implementations = new Set();
   const versions = new Set();
   const browsers = new Set();
   for (const result of results) {
     names.add(result.name);
     variants.add(result.variant);
+    queryStrings.add(result.queryString);
     implementations.add(result.implementation);
     versions.add(result.version);
     browsers.add(result.browser.name);
@@ -331,6 +343,9 @@ function makeUniqueLabelFn(results: BenchmarkResult[]):
     }
     if (variants.size > 1) {
       fields.push(result.variant);
+    }
+    if (queryStrings.size > 1) {
+      fields.push(result.queryString || '<none>');
     }
     if (implementations.size > 1) {
       fields.push(result.implementation);

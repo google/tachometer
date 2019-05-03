@@ -391,6 +391,7 @@ async function automaticMode(
     if (millis !== undefined) {
       const result = {
         name: spec.name,
+        queryString: spec.queryString,
         implementation: spec.implementation,
         version: spec.version.label,
         variant: spec.variant,

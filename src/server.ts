@@ -123,6 +123,8 @@ export class Server {
     let queryString = '';
     if (spec.config !== undefined && Object.keys(spec.config).length > 0) {
       queryString = '?config=' + JSON.stringify(spec.config);
+    } else if (spec.queryString) {
+      queryString = spec.queryString;
     }
     return `${this.url}/benchmarks/${spec.implementation}/` +
         (spec.version.label === 'default' ? '' :

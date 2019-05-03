@@ -44,7 +44,8 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
   }
 
   const remoteUrls = [];
-  const localNames = [];
+  const localNames: {name: string, queryString: string}[] = [];
+  let anyLocalNamesAreStar = false;
   // Benchmark names/URLs are the bare arguments not associated with a flag, so
   // they are found in _unknown.
   for (const benchmark of opts._unknown || []) {
@@ -53,7 +54,11 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
       remoteUrls.push(benchmark);
     } catch (e) {
       if (e.code === 'ERR_INVALID_URL') {
-        localNames.push(benchmark);
+        const [name, queryString] = splitQueryString(benchmark);
+        localNames.push({name, queryString});
+        if (name === '*') {
+          anyLocalNamesAreStar = true;
+        }
       } else {
         throw e;
       }
@@ -72,6 +77,7 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
         name: url,
         // TODO Refactor so that we don't need to initialize all these fields
         // in the remote URL case.
+        queryString: '',
         implementation: 'default',
         variant: '',
         config: {},
@@ -104,17 +110,17 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
   for (const implementation of impls) {
     const implDir = path.join(opts.root, implementation);
     let benchmarks;
-    if (localNames.includes('*')) {
+    if (anyLocalNamesAreStar === true) {
       benchmarks = await listDirs(implDir);
       benchmarks = benchmarks.filter(
           (implDir) => !implDir.startsWith('.') && !ignoreDirs.has(implDir));
     } else {
-      const badNames = localNames.filter((dir) => ignoreDirs.has(dir));
+      const badNames = localNames.filter(({name}) => ignoreDirs.has(name));
       if (badNames.length > 0) {
         throw new Error(`Benchmarks cannot be named ${badNames.join(' or ')}`);
       }
     }
-    for (const name of localNames) {
+    for (const {name, queryString} of localNames) {
       const benchDir = path.join(implDir, name);
       if (!await fsExtra.pathExists(benchDir)) {
         continue;
@@ -131,6 +137,7 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
           [{label: 'default', dependencyOverrides: {}}];
       const partialSpec = {
         name,
+        queryString,
         implementation,
         measurement: opts.measure,
       };
@@ -228,4 +235,9 @@ export function specMatchesFilter(
     return false;
   }
   return true;
+}
+
+function splitQueryString(path: string): [string, string] {
+  const q = path.indexOf('?');
+  return q === -1 ? [path, ''] : [path.substring(0, q), path.substring(q)];
 }

@@ -7,6 +7,9 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+-   Benchmark names can now include URL query strings (e.g. `tach
+    my-benchmark?foo=1&baz=2`) which will be included as-is in the launched URL.
+
 -   `--manual` mode no longer shows benchmark data (but it should only be used
     for testing the web server anyway since it has no statistical significance).
 

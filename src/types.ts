@@ -61,6 +61,7 @@ export interface BenchmarkSpec {
   url?: string;
   measurement: Measurement;
   name: string;
+  queryString: string;
   implementation: string;
   version: PackageVersion;
   variant: string;
@@ -75,6 +76,7 @@ export interface BenchmarkResponse {
 
 export interface BenchmarkResult {
   name: string;
+  queryString: string;
   implementation: string;
   version: string;
   variant: string;
