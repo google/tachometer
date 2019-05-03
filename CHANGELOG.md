@@ -5,7 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](http://semver.org/).
 
-## Unreleased
+<!-- ## Unreleased -->
+<!-- Add new, unreleased changes here. -->
+
+## [0.3.0] 2019-05-03
 
 -   Full URLs are now supported (e.g. `tach http://example.com`). Only
     first-contentful-paint measurement is supported in this case.
@@ -15,8 +18,6 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 -   Fix race condition where benchmarks that returned results quickly might not
     be registered.
-
-<!-- Add new, unreleased changes here. -->
 
 ## [0.2.1] 2019-04-26
 
