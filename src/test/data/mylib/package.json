@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "mylib": "0.0.0",
+    "otherlib": "0.0.0"
+  }
+}

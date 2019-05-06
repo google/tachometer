@@ -41,7 +41,7 @@ export interface PackageVersion {
 
 /** The subset of the format of an NPM package.json file we care about. */
 export interface NpmPackageJson {
-  name: string;
+  private: boolean;
   dependencies: PackageDependencyMap;
 }
 

@@ -26,6 +26,12 @@ export interface ServerOpts {
   host: string;
   ports: number[];
   benchmarksDir: string;
+  mountPoints: MountPoint[];
+}
+
+export interface MountPoint {
+  diskPath: string;
+  urlPath: string;
 }
 
 const clientLib = path.resolve(__dirname, '..', 'client', 'lib');
@@ -50,11 +56,11 @@ export class Server {
         if (ports.length === 0) {
           reject(`No ports available, tried: ${opts.ports.join(', ')}`);
         } else {
-          server.listen(
-              {host: opts.host, port: ports.shift()},
-              () => resolve(new Server(server, opts)));
+          server.listen({host: opts.host, port: ports.shift()});
         }
       };
+
+      server.on('listening', () => resolve(new Server(server, opts)));
 
       server.on('error', (e: {code?: string}) => {
         if (e.code === 'EADDRINUSE' || e.code === 'EACCES') {
@@ -70,17 +76,19 @@ export class Server {
 
   constructor(server: http.Server, opts: ServerOpts) {
     this.server = server;
-
     const app = new Koa();
+
     app.use(bodyParser());
     app.use(mount('/submitResults', this.submitResults.bind(this)));
-    app.use(this.rewriteVersionUrls.bind(this));
     app.use(this.instrumentRequests.bind(this));
+    app.use(this.serveBenchLib.bind(this));
+    for (const {diskPath, urlPath} of opts.mountPoints) {
+      app.use(mount(urlPath, serve(diskPath, {index: 'index.html'})));
+    }
     app.use(
         mount('/benchmarks', serve(opts.benchmarksDir, {index: 'index.html'})));
-    app.use(this.serveBenchLib.bind(this));
-    this.server.on('request', app.callback());
 
+    this.server.on('request', app.callback());
     const address = (this.server.address() as net.AddressInfo);
     let host = address.address;
     if (address.family === 'IPv6') {
@@ -150,9 +158,9 @@ export class Server {
     }
 
     session.userAgent = ctx.headers['user-agent'];
-    // Note this assumes serial runs, as we guarantee in automatic mode. If we
-    // ever wanted to support parallel requests, we would require some kind of
-    // session tracking.
+    // Note this assumes serial runs, as we guarantee in automatic mode.
+    // If we ever wanted to support parallel requests, we would require
+    // some kind of session tracking.
     await next();
     if (typeof ctx.response.length === 'number') {
       session.bytes += ctx.response.length;
@@ -169,28 +177,6 @@ export class Server {
     } else {
       await next();
     }
-  }
-
-  /**
-   * When serving specific versions, we want to serve any node_modules/ paths
-   * from that specific version directory (since that's the whole point of
-   * versions), but all other paths need to be re-mapped up to the grand-parent
-   * implementation directory (since that's where the actual benchmark code is).
-   */
-  private async rewriteVersionUrls(ctx: Koa.Context, next: () => Promise<void>):
-      Promise<void> {
-    const urlParts = ctx.url.split('/');
-    // We want to remap the first of these forms, but not the second or third:
-    //   /benchmarks/<implementation>/versions/<version>/<name>/...
-    //   /benchmarks/<implementation>/versions/<version>/node_modules/...
-    //   /benchmarks/<implementation>/<name>/...
-    //  0 1          2                3        4         5      6
-    if (urlParts[1] === 'benchmarks' && urlParts[3] === 'versions' &&
-        urlParts[5] !== 'node_modules') {
-      urlParts.splice(3, 2);  // Remove the "versions/<version>" part.
-      ctx.url = urlParts.join('/');
-    }
-    return next();
   }
 
   private async submitResults(ctx: Koa.Context) {
