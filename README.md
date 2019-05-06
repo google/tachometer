@@ -83,11 +83,6 @@ much more.
   regressions. See [package versions](#package-versions).
 
 
-- *Configure variants* of a benchmark from the command-line. For example we
-  can make the number of iterations in the example above a parameter so that
-  it can be configured from a JSON config file. See [variants](#variants).
-
-
 - *Automatically continue sampling* until we have enough precision to answer the
   question you are asking. See [auto sampling](#auto-sampling).
 
@@ -176,60 +171,6 @@ create a `default` (or any name) directory with no `package.json`.
 
 Finally, each **benchmark** directory contains a benchmark. Each benchmark
 directory must have an `index.html` file, which is what tachometer will launch.
-
-## Variants
-
-We often want to compare multiple versions of the same benchmark implementation,
-but with different configuration parameters. For example, we might want to see
-how the performance of some function scales with 1, 100, and 1000 invocations.
-Instead of writing a new benchmark for each of these numbers, we can instead use
-a configuration file to define ***variants***.
-
-If a `benchmarks.json` file is found in a `<benchmark>` directory, then it will
-be read to look for a list of variants in the following format:
-
-Field             | Description
-------------------| -------------------------------
-`variants`        | A list of variant objects for this benchmark
-`variants.name`   | A label for this variant for use on the command-line
-`variants.config` | An arbitrary object which will be passed to the benchmark function as `bench.config`
-
-For example, we might have this `benchmarks.json`:
-
-```js
-{
-  "variants": [
-    {
-      "name": "small",
-      "config": {
-        "iterations": 1
-      }
-    },
-    {
-      "name": "medium",
-      "config": {
-        "iterations": 100
-      }
-    },
-    {
-      "name": "large",
-      "config": {
-        "iterations": 1000
-      }
-    }
-  ]
-}
-```
-
-With an implementation like this:
-
-```js
-bench.start();
-for (let i = 0; i < bench.config.iterations; i++) {
-  doSomething();
-}
-bench.stop();
-```
 
 ## Package Versions
 
@@ -409,7 +350,6 @@ Flag                      | Default     | Description
 `--host`                  | `127.0.0.1` | Which host to run on
 `--port`                  | `8080, 8081, ..., 0`| Which port to run on (comma-delimited preference list, `0` for random)
 `--implementation` / `-i` | `*`         | Which implementations to run (`*` for all) ([details](#folder-layout))
-`--variant` / `-v`        | `*`         | Which variants to run (`*` for all) ([details](#variants))
 `--package-version` / `-p`| *(none)*    | Specify one or more dependency versions ([details](#package-versions))
 `--browser` / `-b`        | `chrome`    | Which browsers to launch in automatic mode, comma-delimited (chrome, chrome-headless, firefox, firefox-headless, safari)
 `--sample-size` / `-n`    | `50`        | Minimum number of times to run each benchmark ([details](#sample-size)]
