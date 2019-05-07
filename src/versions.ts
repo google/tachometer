@@ -139,12 +139,17 @@ export async function makeServerPlans(
     plans.push({
       specs: defaultSpecs,
       npmInstalls: [],
-      mountPoints: [],
+      mountPoints: [
+        {
+          urlPath: `/`,
+          diskPath: benchmarkRoot,
+        },
+      ],
     });
   }
 
   for (const [key, specs] of keySpecs.entries()) {
-    const [packageDir, implementation, label] = JSON.parse(key);
+    const [packageDir, , label] = JSON.parse(key);
     const dependencies = keyDeps.get(key);
     if (dependencies === undefined) {
       throw new Error(`Internal error: no deps for key ${key}`);
@@ -163,14 +168,13 @@ export async function makeServerPlans(
       }],
       mountPoints: [
         {
-          urlPath:
-              `/benchmarks/${implementation}/versions/${label}/node_modules`,
+          urlPath: `/${path.relative(benchmarkRoot, packageDir)}/node_modules`,
           diskPath: path.join(installDir, 'node_modules'),
         },
         {
-          urlPath: `/benchmarks/${implementation}/versions/${label}`,
-          diskPath: path.join(benchmarkRoot, implementation),
-        }
+          urlPath: `/`,
+          diskPath: benchmarkRoot,
+        },
       ],
     });
   }

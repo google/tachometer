@@ -121,10 +121,8 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
         name,
         measurement: opts.measure,
       };
+      const urlPath = `/${implementation}/${name}/`;
       for (const version of implVersions) {
-        const urlPath = version.label === 'default' ?
-            `/benchmarks/${implementation}/${name}/` :
-            `/benchmarks/${implementation}/versions/${version.label}/${name}/`;
         for (const browser of browsers) {
           specs.push({
             ...partialSpec,

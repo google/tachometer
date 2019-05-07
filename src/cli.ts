@@ -258,7 +258,6 @@ export async function main() {
     const server = await Server.start({
       host: opts.host,
       ports: opts.port,
-      benchmarksDir: opts.root,
       mountPoints,
     });
     for (const spec of specs) {

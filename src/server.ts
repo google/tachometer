@@ -25,7 +25,6 @@ import {BenchmarkResponse, Deferred} from './types';
 export interface ServerOpts {
   host: string;
   ports: number[];
-  benchmarksDir: string;
   mountPoints: MountPoint[];
 }
 
@@ -85,8 +84,6 @@ export class Server {
     for (const {diskPath, urlPath} of opts.mountPoints) {
       app.use(mount(urlPath, serve(diskPath, {index: 'index.html'})));
     }
-    app.use(
-        mount('/benchmarks', serve(opts.benchmarksDir, {index: 'index.html'})));
 
     this.server.on('request', app.callback());
     const address = (this.server.address() as net.AddressInfo);
