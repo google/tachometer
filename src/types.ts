@@ -77,7 +77,6 @@ export interface BenchmarkResponse {
 export interface BenchmarkResult {
   name: string;
   queryString: string;
-  implementation: string;
   version: string;
   millis: number[];
   browser: {name: string, version: string};
