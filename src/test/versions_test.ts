@@ -26,6 +26,7 @@ suite('versions', () => {
         name: 'mybench',
         url: {
           kind: 'local',
+          urlPath: '/benchmarks/mylib/versions/v1/mybench/',
           implementation: 'mylib',
           version: {
             label: 'v1',
@@ -42,6 +43,7 @@ suite('versions', () => {
         name: 'mybench',
         url: {
           kind: 'local',
+          urlPath: '/benchmarks/mylib/versions/v2/mybench/',
           implementation: 'mylib',
           version: {
             label: 'v2',
@@ -60,6 +62,7 @@ suite('versions', () => {
         name: 'mybench',
         url: {
           kind: 'local',
+          urlPath: '/benchmarks/mylib/mybench/',
           implementation: 'mylib',
           version: {
             label: 'default',
@@ -74,6 +77,7 @@ suite('versions', () => {
         name: 'otherbench',
         url: {
           kind: 'local',
+          urlPath: '/benchmarks/otherlib/otherbench/',
           implementation: 'otherlib',
           version: {
             label: 'default',

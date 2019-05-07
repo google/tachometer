@@ -60,6 +60,7 @@ export interface LocalUrl {
   kind: 'local';
   implementation: string;
   version: PackageVersion;
+  urlPath: string;
   queryString: string;
 }
 

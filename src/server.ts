@@ -20,7 +20,7 @@ import serve = require('koa-static');
 import bodyParser = require('koa-bodyparser');
 import {UAParser} from 'ua-parser-js';
 
-import {BenchmarkResponse, Deferred, BenchmarkSpec} from './types';
+import {BenchmarkResponse, Deferred} from './types';
 
 export interface ServerOpts {
   host: string;
@@ -125,17 +125,6 @@ export class Server {
         version: ua.version || '',
       },
     };
-  }
-
-  specUrl(spec: BenchmarkSpec): string {
-    if (spec.url.kind === 'remote') {
-      return spec.url.url;
-    }
-    return `${this.url}/benchmarks/${spec.url.implementation}/` +
-        (spec.url.version.label === 'default' ?
-             '' :
-             `versions/${spec.url.version.label}/`) +
-        `${spec.name}/${spec.url.queryString}`;
   }
 
   async nextResults(): Promise<BenchmarkResponse> {

@@ -275,6 +275,17 @@ export async function main() {
 
 type ServerMap = Map<BenchmarkSpec, Server>;
 
+function specUrl(spec: BenchmarkSpec, servers: ServerMap): string {
+  if (spec.url.kind === 'remote') {
+    return spec.url.url;
+  }
+  const server = servers.get(spec);
+  if (server === undefined) {
+    throw new Error('Internal error: no server for spec');
+  }
+  return server.url + spec.url.urlPath + spec.url.queryString;
+}
+
 /**
  * Let the user run benchmarks manually. This process will not exit until
  * the user sends a termination signal.
@@ -289,20 +300,12 @@ async function manualMode(
   const allServers = new Set<Server>([...servers.values()]);
   for (const spec of specs) {
     console.log();
-
-    if (spec.url.kind === 'remote') {
-      console.log(ansi.format(`[yellow]{${spec.url.url}}`));
-
-    } else {
-      const server = servers.get(spec);
-      if (server === undefined) {
-        throw new Error('Internal error: no server for spec');
-      }
+    if (spec.url.kind === 'local') {
       console.log(
           `${spec.name}${spec.url.queryString} ` +
           `/ ${spec.url.implementation} ${spec.url.version.label}`);
-      console.log(ansi.format(`[yellow]{${server.specUrl(spec)}}`));
     }
+    console.log(ansi.format(`[yellow]{${specUrl(spec, servers)}}`));
   }
 
   console.log(`\nResults will appear below:\n`);
@@ -403,21 +406,17 @@ async function automaticMode(
     specResults.set(spec, []);
   }
 
-
   const runSpec = async (spec: BenchmarkSpec) => {
     let server;
-    let url;
-    if (spec.url.kind === 'remote') {
-      url = spec.url.url;
-    } else {
+    if (spec.url.kind === 'local') {
       server = servers.get(spec);
       if (server === undefined) {
         throw new Error('Internal error: no server for spec');
       }
-      url = server.specUrl(spec);
       server.beginSession();
     }
 
+    const url = specUrl(spec, servers);
     const {driver, initialTabHandle} = browsers.get(spec.browser)!;
     await openAndSwitchToNewTab(driver);
     await driver.get(url);
