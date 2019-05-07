@@ -99,8 +99,26 @@ export async function makeServerPlans(
       continue;
     }
 
-    const key =
-        JSON.stringify([spec.url.implementation, spec.url.version.label]);
+    const diskPath =
+        path.join(benchmarkRoot, spec.url.implementation, spec.name);  // TODO
+    const kind = await fileKind(diskPath);
+    if (kind === undefined) {
+      throw new Error(`No such file or directory ${diskPath}`);
+    }
+    // TODO Verify there's an index.html file (but not here?)
+    const originalPackageJsonPath = await findPackageJsonPath(
+        kind === 'file' ? path.dirname(diskPath) : diskPath);
+    if (originalPackageJsonPath === undefined) {
+      throw new Error(`Could not find a package.json for ${diskPath}`);
+    }
+    const originalPackageJson = await fsExtra.readJson(originalPackageJsonPath);
+
+    // TODO Key should use the actual dependencies instead of the label.
+    const key = JSON.stringify([
+      path.dirname(originalPackageJsonPath),
+      spec.url.implementation,
+      spec.url.version.label,
+    ]);
     let arr = keySpecs.get(key);
     if (arr === undefined) {
       arr = [];
@@ -108,9 +126,6 @@ export async function makeServerPlans(
     }
     arr.push(spec);
 
-    const originalPackageJsonPath =
-        path.join(benchmarkRoot, spec.url.implementation, 'package.json');
-    const originalPackageJson = await fsExtra.readJson(originalPackageJsonPath);
     const newDeps = {
       ...originalPackageJson.dependencies,
       ...spec.url.version.dependencyOverrides,
@@ -129,16 +144,14 @@ export async function makeServerPlans(
   }
 
   for (const [key, specs] of keySpecs.entries()) {
-    const [implementation, label] = JSON.parse(key);
+    const [packageDir, implementation, label] = JSON.parse(key);
     const dependencies = keyDeps.get(key);
     if (dependencies === undefined) {
       throw new Error(`Internal error: no deps for key ${key}`);
     }
 
-    const originalPackageDir = path.join(benchmarkRoot, implementation);
-
     const installDir =
-        path.join(npmInstallRoot, hashStrings(originalPackageDir, label));
+        path.join(npmInstallRoot, hashStrings(packageDir, label));
     plans.push({
       specs,
       npmInstalls: [{
@@ -163,6 +176,38 @@ export async function makeServerPlans(
   }
 
   return plans;
+}
+
+async function fileKind(path: string): Promise<'file'|'dir'|undefined> {
+  try {
+    const stat = await fsExtra.stat(path);
+    if (stat.isDirectory()) {
+      return 'dir';
+    }
+    if (stat.isFile()) {
+      return 'file';
+    }
+  } catch (e) {
+    if (e.code !== 'ENOENT') {
+      throw e;
+    }
+  }
+}
+
+async function findPackageJsonPath(startDir: string):
+    Promise<string|undefined> {
+  let cur = path.resolve(startDir);
+  while (true) {
+    const possibleLocation = path.join(cur, 'package.json');
+    if (await fsExtra.pathExists(possibleLocation)) {
+      return possibleLocation;
+    }
+    const parentDir = path.resolve(cur, '..');
+    if (parentDir === cur) {
+      return undefined;
+    }
+    cur = parentDir;
+  }
 }
 
 export function hashStrings(...strings: string[]) {
