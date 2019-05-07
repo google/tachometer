@@ -27,7 +27,6 @@ suite('versions', () => {
         url: {
           kind: 'local',
           urlPath: '/mylib/mybench/',
-          implementation: 'mylib',
           version: {
             label: 'v1',
             dependencyOverrides: {
@@ -44,7 +43,6 @@ suite('versions', () => {
         url: {
           kind: 'local',
           urlPath: '/mylib/mybench/',
-          implementation: 'mylib',
           version: {
             label: 'v2',
             dependencyOverrides: {
@@ -63,7 +61,6 @@ suite('versions', () => {
         url: {
           kind: 'local',
           urlPath: '/mylib/mybench/',
-          implementation: 'mylib',
           version: {
             label: 'default',
             dependencyOverrides: {},
@@ -78,7 +75,6 @@ suite('versions', () => {
         url: {
           kind: 'local',
           urlPath: '/otherlib/otherbench/',
-          implementation: 'otherlib',
           version: {
             label: 'default',
             dependencyOverrides: {},

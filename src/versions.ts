@@ -99,8 +99,7 @@ export async function makeServerPlans(
       continue;
     }
 
-    const diskPath =
-        path.join(benchmarkRoot, spec.url.implementation, spec.name);  // TODO
+    const diskPath = path.join(benchmarkRoot, spec.url.urlPath);  // TODO
     const kind = await fileKind(diskPath);
     if (kind === undefined) {
       throw new Error(`No such file or directory ${diskPath}`);
@@ -116,7 +115,7 @@ export async function makeServerPlans(
     // TODO Key should use the actual dependencies instead of the label.
     const key = JSON.stringify([
       path.dirname(originalPackageJsonPath),
-      spec.url.implementation,
+      spec.url.urlPath,
       spec.url.version.label,
     ]);
     let arr = keySpecs.get(key);

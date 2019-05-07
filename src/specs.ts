@@ -131,7 +131,6 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
               kind: 'local',
               urlPath,
               queryString,
-              implementation,
               version,
             }
           });
@@ -153,8 +152,8 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
       }
     }
     if (a.url.kind === 'local' && b.url.kind === 'local') {
-      if (a.url.implementation !== b.url.implementation) {
-        return a.url.implementation.localeCompare(b.url.implementation);
+      if (a.url.urlPath !== b.url.urlPath) {
+        return a.url.urlPath.localeCompare(b.url.urlPath);
       }
       if (a.url.version.label !== b.url.version.label) {
         return a.url.version.label.localeCompare(b.url.version.label);
@@ -181,7 +180,7 @@ async function listDirs(root: string): Promise<string[]> {
 
 export interface SpecFilter {
   name?: string;
-  implementation?: string;
+  urlPath?: string;
   queryString?: string;
   version?: string;
   browser?: string;
@@ -196,9 +195,8 @@ export function specMatchesFilter(
   if (selector.name !== undefined && spec.name !== selector.name) {
     return false;
   }
-  if (selector.implementation !== undefined &&
-      (spec.url.kind !== 'local' ||
-       spec.url.implementation !== selector.implementation)) {
+  if (selector.urlPath !== undefined &&
+      (spec.url.kind !== 'local' || spec.url.urlPath !== selector.urlPath)) {
     return false;
   }
   if (selector.queryString !== undefined &&
