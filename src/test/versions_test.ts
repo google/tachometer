@@ -24,66 +24,75 @@ suite('versions', () => {
       // mybench running with two custom versions.
       {
         name: 'mybench',
-        implementation: 'mylib',
-        version: {
-          label: 'v1',
-          dependencyOverrides: {
-            mylib: '1.0.0',
+        url: {
+          kind: 'local',
+          implementation: 'mylib',
+          version: {
+            label: 'v1',
+            dependencyOverrides: {
+              mylib: '1.0.0',
+            },
           },
+          queryString: '',
         },
         measurement: 'fcp',
-        queryString: '',
         browser: 'chrome',
       },
       {
         name: 'mybench',
-        implementation: 'mylib',
-        version: {
-          label: 'v2',
-          dependencyOverrides: {
-            mylib: '2.0.0',
+        url: {
+          kind: 'local',
+          implementation: 'mylib',
+          version: {
+            label: 'v2',
+            dependencyOverrides: {
+              mylib: '2.0.0',
+            },
           },
+          queryString: '',
         },
         measurement: 'fcp',
-        queryString: '',
         browser: 'chrome',
       },
 
       // mybench and other bench only need the default server.
       {
         name: 'mybench',
-        implementation: 'mylib',
-        version: {
-          label: 'default',
-          dependencyOverrides: {},
+        url: {
+          kind: 'local',
+          implementation: 'mylib',
+          version: {
+            label: 'default',
+            dependencyOverrides: {},
+          },
+          queryString: '',
         },
         measurement: 'fcp',
-        queryString: '',
         browser: 'chrome',
       },
       {
         name: 'otherbench',
-        implementation: 'otherlib',
-        version: {
-          label: 'default',
-          dependencyOverrides: {},
+        url: {
+          kind: 'local',
+          implementation: 'otherlib',
+          version: {
+            label: 'default',
+            dependencyOverrides: {},
+          },
+          queryString: '',
         },
         measurement: 'fcp',
-        queryString: '',
         browser: 'chrome',
       },
 
       // A remote URL doesn't need a server.
       {
         name: 'http://example.com',
-        url: 'http://example.com',
-        implementation: '',
-        version: {
-          label: '',
-          dependencyOverrides: {},
+        url: {
+          kind: 'remote',
+          url: 'http://example.com',
         },
         measurement: 'fcp',
-        queryString: '',
         browser: 'chrome',
       },
     ];

@@ -288,22 +288,21 @@ async function manualMode(
   console.log('\nVisit these URLs in any browser:');
   const allServers = new Set<Server>([...servers.values()]);
   for (const spec of specs) {
-    let url;
-    if (spec.url !== undefined) {
-      url = spec.url;
+    console.log();
+
+    if (spec.url.kind === 'remote') {
+      console.log(ansi.format(`[yellow]{${spec.url.url}}`));
+
     } else {
       const server = servers.get(spec);
       if (server === undefined) {
         throw new Error('Internal error: no server for spec');
       }
-      url = server.specUrl(spec);
+      console.log(
+          `${spec.name}${spec.url.queryString} ` +
+          `/ ${spec.url.implementation} ${spec.url.version.label}`);
+      console.log(ansi.format(`[yellow]{${server.specUrl(spec)}}`));
     }
-
-    console.log();
-    console.log(
-        `${spec.name}${spec.queryString} ` +
-        `/ ${spec.implementation} ${spec.version.label}`);
-    console.log(ansi.format(`[yellow]{${url}}`));
   }
 
   console.log(`\nResults will appear below:\n`);
@@ -408,8 +407,8 @@ async function automaticMode(
   const runSpec = async (spec: BenchmarkSpec) => {
     let server;
     let url;
-    if (spec.url !== undefined) {
-      url = spec.url;
+    if (spec.url.kind === 'remote') {
+      url = spec.url.url;
     } else {
       server = servers.get(spec);
       if (server === undefined) {
@@ -451,9 +450,10 @@ async function automaticMode(
       }
       const result = {
         name: spec.name,
-        queryString: spec.queryString,
-        implementation: spec.implementation,
-        version: spec.version.label,
+        queryString: spec.url.kind === 'local' ? spec.url.queryString : '',
+        implementation: spec.url.kind === 'local' ? spec.url.implementation :
+                                                    '',
+        version: spec.url.kind === 'local' ? spec.url.version.label : '',
         millis,
         bytesSent,
         browser,
@@ -476,8 +476,10 @@ async function automaticMode(
         status: [
           `${++run}/${numRuns}`,
           spec.browser,
-          spec.name + spec.queryString,
-          `${spec.implementation}@${spec.version.label}`,
+          spec.name + (spec.url.kind === 'local' ? spec.url.queryString : ''),
+          spec.url.kind === 'local' ?
+              `${spec.url.implementation}@${spec.url.version.label}` :
+              '',
         ].filter((part) => part !== '')
                     .join(' '),
       });

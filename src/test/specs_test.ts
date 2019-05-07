@@ -31,15 +31,12 @@ suite('specsFromOpts', () => {
     assert.deepEqual(specs, [
       {
         browser: 'chrome',
-        implementation: 'default',
         measurement: 'fcp',
         name: 'http://example.com',
-        queryString: '',
-        url: 'http://example.com',
-        version: {
-          dependencyOverrides: {},
-          label: '',
-        }
+        url: {
+          kind: 'remote',
+          url: 'http://example.com',
+        },
       },
     ]);
   });

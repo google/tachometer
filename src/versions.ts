@@ -90,16 +90,17 @@ export async function makeServerPlans(
   const keyDeps = new Map<string, PackageDependencyMap>();
   const defaultSpecs = [];
   for (const spec of specs) {
-    if (spec.url !== undefined) {
+    if (spec.url.kind === 'remote') {
       // No server needed for remote URLs.
       continue;
     }
-    if (spec.version.label === 'default') {
+    if (spec.url.version.label === 'default') {
       defaultSpecs.push(spec);
       continue;
     }
 
-    const key = JSON.stringify([spec.implementation, spec.version.label]);
+    const key =
+        JSON.stringify([spec.url.implementation, spec.url.version.label]);
     let arr = keySpecs.get(key);
     if (arr === undefined) {
       arr = [];
@@ -108,11 +109,11 @@ export async function makeServerPlans(
     arr.push(spec);
 
     const originalPackageJsonPath =
-        path.join(benchmarkRoot, spec.implementation, 'package.json');
+        path.join(benchmarkRoot, spec.url.implementation, 'package.json');
     const originalPackageJson = await fsExtra.readJson(originalPackageJsonPath);
     const newDeps = {
       ...originalPackageJson.dependencies,
-      ...spec.version.dependencyOverrides,
+      ...spec.url.version.dependencyOverrides,
     };
     keyDeps.set(key, newDeps);
   }

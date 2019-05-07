@@ -69,20 +69,15 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
   for (const url of remoteUrls) {
     for (const browser of browsers) {
       specs.push({
-        url,
+        url: {
+          kind: 'remote',
+          url,
+        },
         measurement: 'fcp',
         browser,
         // TODO Find a shorter unambiguous name since these can make the result
         // table unwieldy, or do something smarter in the result table.
         name: url,
-        // TODO Refactor so that we don't need to initialize all these fields
-        // in the remote URL case.
-        queryString: '',
-        implementation: 'default',
-        version: {
-          label: '',
-          dependencyOverrides: {},
-        },
       });
     }
   }
@@ -124,8 +119,6 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
           [{label: 'default', dependencyOverrides: {}}];
       const partialSpec = {
         name,
-        queryString,
-        implementation,
         measurement: opts.measure,
       };
       for (const version of implVersions) {
@@ -133,7 +126,12 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
           specs.push({
             ...partialSpec,
             browser,
-            version,
+            url: {
+              kind: 'local',
+              queryString,
+              implementation,
+              version,
+            }
           });
         }
       }
@@ -144,14 +142,24 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
     if (a.name !== b.name) {
       return a.name.localeCompare(b.name);
     }
-    if (a.queryString !== b.queryString) {
-      return a.queryString.localeCompare(b.queryString);
+    if (a.url.kind !== b.url.kind) {
+      return a.url.kind.localeCompare(b.url.kind);
     }
-    if (a.implementation !== b.implementation) {
-      return a.implementation.localeCompare(b.implementation);
+    if (a.url.kind === 'remote' && b.url.kind === 'remote') {
+      if (a.url.url !== b.url.url) {
+        return a.url.url.localeCompare(b.url.url);
+      }
     }
-    if (a.version.label !== b.version.label) {
-      return a.version.label.localeCompare(b.version.label);
+    if (a.url.kind === 'local' && b.url.kind === 'local') {
+      if (a.url.implementation !== b.url.implementation) {
+        return a.url.implementation.localeCompare(b.url.implementation);
+      }
+      if (a.url.version.label !== b.url.version.label) {
+        return a.url.version.label.localeCompare(b.url.version.label);
+      }
+      if (a.url.queryString !== b.url.queryString) {
+        return a.url.queryString.localeCompare(b.url.queryString);
+      }
     }
     if (a.browser !== b.browser) {
       return a.browser.localeCompare(b.browser);
@@ -187,15 +195,18 @@ export function specMatchesFilter(
     return false;
   }
   if (selector.implementation !== undefined &&
-      spec.implementation !== selector.implementation) {
+      (spec.url.kind !== 'local' ||
+       spec.url.implementation !== selector.implementation)) {
     return false;
   }
   if (selector.queryString !== undefined &&
-      spec.queryString !== selector.queryString) {
+      (spec.url.kind !== 'local' ||
+       spec.url.queryString !== selector.queryString)) {
     return false;
   }
   if (selector.version !== undefined &&
-      spec.version.label !== selector.version) {
+      (spec.url.kind !== 'local' ||
+       spec.url.version.label !== selector.version)) {
     return false;
   }
   if (selector.browser !== undefined && spec.browser !== selector.browser) {

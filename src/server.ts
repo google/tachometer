@@ -128,10 +128,14 @@ export class Server {
   }
 
   specUrl(spec: BenchmarkSpec): string {
-    return `${this.url}/benchmarks/${spec.implementation}/` +
-        (spec.version.label === 'default' ? '' :
-                                            `versions/${spec.version.label}/`) +
-        `${spec.name}/${spec.queryString}`;
+    if (spec.url.kind === 'remote') {
+      return spec.url.url;
+    }
+    return `${this.url}/benchmarks/${spec.url.implementation}/` +
+        (spec.url.version.label === 'default' ?
+             '' :
+             `versions/${spec.url.version.label}/`) +
+        `${spec.name}/${spec.url.queryString}`;
   }
 
   async nextResults(): Promise<BenchmarkResponse> {
