@@ -11,33 +11,160 @@
 
 import {assert} from 'chai';
 
+import * as path from 'path';
+
 import {optDefs, Opts} from '../cli';
 import {specsFromOpts} from '../specs';
+import {BenchmarkSpec} from '../types';
 
 import commandLineArgs = require('command-line-args');
+
+const repoRoot = path.resolve(__dirname, '..', '..');
+const testData = path.resolve(repoRoot, 'src', 'test', 'data');
 
 const parse = (argv: string[]) =>
     commandLineArgs(optDefs, {argv, partial: true}) as Opts;
 
 suite('specsFromOpts', () => {
+  let prevCwd: string;
+  suiteSetup(() => {
+    prevCwd = process.cwd();
+    process.chdir(path.join(testData, 'mylib'));
+  });
+
+  suiteTeardown(() => {
+    process.chdir(prevCwd);
+  });
+
   test('nothing', async () => {
-    const specs = await specsFromOpts(parse([]));
-    assert.deepEqual(specs, []);
+    const actual = await specsFromOpts(parse([]));
+    assert.deepEqual(actual, []);
   });
 
   test('url', async () => {
     const argv = ['http://example.com'];
-    const specs = await specsFromOpts(parse(argv));
-    assert.deepEqual(specs, [
+    const actual = await specsFromOpts(parse(argv));
+    const expected: BenchmarkSpec[] = [
       {
-        browser: 'chrome',
-        measurement: 'fcp',
         name: 'http://example.com',
         url: {
           kind: 'remote',
           url: 'http://example.com',
         },
+        browser: 'chrome',
+        measurement: 'fcp',
       },
-    ]);
+    ];
+    assert.deepEqual(actual, expected);
+  });
+
+  test('local file', async () => {
+    const argv = ['mybench/index.html'];
+    const actual = await specsFromOpts(parse(argv));
+    const expected: BenchmarkSpec[] = [
+      {
+        name: 'mybench/index.html',
+        url: {
+          kind: 'local',
+          urlPath: '/mybench/index.html',
+          queryString: '',
+          version: {
+            label: 'default',
+            dependencyOverrides: {},
+          },
+        },
+        browser: 'chrome',
+        measurement: 'callback',
+      },
+    ];
+    assert.deepEqual(actual, expected);
+  });
+
+  test('local directory', async () => {
+    const argv = ['mybench'];
+    const actual = await specsFromOpts(parse(argv));
+    const expected: BenchmarkSpec[] = [
+      {
+        name: 'mybench',
+        url: {
+          kind: 'local',
+          urlPath: '/mybench/',
+          queryString: '',
+          version: {
+            label: 'default',
+            dependencyOverrides: {},
+          },
+        },
+        browser: 'chrome',
+        measurement: 'callback',
+      },
+    ];
+    assert.deepEqual(actual, expected);
+  });
+
+  test('local directory with query params', async () => {
+    const argv = ['mybench?foo=bar'];
+    const actual = await specsFromOpts(parse(argv));
+    const expected: BenchmarkSpec[] = [
+      {
+        name: 'mybench',
+        url: {
+          kind: 'local',
+          urlPath: '/mybench/',
+          queryString: '?foo=bar',
+          version: {
+            label: 'default',
+            dependencyOverrides: {},
+          },
+        },
+        browser: 'chrome',
+        measurement: 'callback',
+      },
+    ];
+    assert.deepEqual(actual, expected);
+  });
+
+  test('local directory with versions', async () => {
+    const argv = [
+      'mybench',
+      '--package-version=mylib@1.0.0',
+      '--package-version=mylib@2.0.0',
+    ];
+    const actual = await specsFromOpts(parse(argv));
+    const expected: BenchmarkSpec[] = [
+      {
+        name: 'mybench',
+        url: {
+          kind: 'local',
+          urlPath: '/mybench/',
+          queryString: '',
+          version: {
+            label: 'mylib@1.0.0',
+            dependencyOverrides: {
+              mylib: '1.0.0',
+            },
+          },
+        },
+        browser: 'chrome',
+        measurement: 'callback',
+      },
+      {
+        name: 'mybench',
+        url: {
+          kind: 'local',
+          urlPath: '/mybench/',
+          queryString: '',
+          version: {
+            label: 'mylib@2.0.0',
+            dependencyOverrides: {
+              mylib: '2.0.0',
+            },
+          },
+        },
+        browser: 'chrome',
+        measurement: 'callback',
+      },
+    ];
+    assert.deepEqual(actual, expected);
   });
 });

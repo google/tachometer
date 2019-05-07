@@ -67,13 +67,6 @@ export const optDefs: commandLineUsage.OptionDefinition[] = [
     defaultValue: [8080, 8081, 8082, 8083, 0],
   },
   {
-    name: 'implementation',
-    description: 'Which implementations to run (* for all)',
-    alias: 'i',
-    type: String,
-    defaultValue: '*',
-  },
-  {
     name: 'package-version',
     description: 'Specify one or more dependency versions (see README)',
     alias: 'p',
@@ -155,7 +148,6 @@ export interface Opts {
   root: string;
   host: string;
   port: number[];
-  implementation: string;
   'package-version': string[];
   'npm-install-dir': string;
   browser: string;

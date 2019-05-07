@@ -9,20 +9,13 @@
  * rights grant found at http://polymer.github.io/PATENTS.txt
  */
 
-import * as fsExtra from 'fs-extra';
 import * as path from 'path';
 import * as url from 'url';
 
 import {validBrowsers} from './browser';
 import {Opts} from './cli';
 import {BenchmarkSpec} from './types';
-import {parsePackageVersions} from './versions';
-
-const ignoreDirs = new Set([
-  'node_modules',
-  'common',
-  'versions',
-]);
+import {fileKind, parsePackageVersions} from './versions';
 
 /**
  * Derive the set of benchmark specifications we should run according to the
@@ -43,98 +36,86 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
     }
   }
 
-  const remoteUrls = [];
-  const localNames: {name: string, queryString: string}[] = [];
-  let anyLocalNamesAreStar = false;
+  const specs: BenchmarkSpec[] = [];
+
+  const addRemote = (url: string) => {
+    for (const browser of browsers) {
+      specs.push({
+        name: url,  // TODO Support aliases.
+        url: {
+          kind: 'remote',
+          url,
+        },
+        browser,
+        measurement: 'fcp',  // callback not supported
+      });
+    }
+  };
+
+  const versions = parsePackageVersions(opts['package-version']);
+  if (versions.length === 0) {
+    versions.push({label: 'default', dependencyOverrides: {}});
+  }
+
+  const addLocal = async (localPathAndQueryString: string) => {
+    const [localPath, queryString] = splitQueryString(localPathAndQueryString);
+
+    const serverRelativePath = path.relative(opts.root, localPath);
+    // TODO Test on Windows.
+    if (serverRelativePath.startsWith('..')) {
+      throw new Error(
+          `File or directory is not accessible from server root: ${localPath}`);
+    }
+
+    const kind = await fileKind(localPath);
+    if (kind === undefined) {
+      throw new Error(`No such file or directory: ${localPath}`);
+    }
+
+    // TODO Test on Windows.
+    let urlPath = `/${serverRelativePath.replace(path.win32.sep, '/')}`;
+    if (kind === 'dir') {
+      if (await fileKind(path.join(localPath, 'index.html')) !== 'file') {
+        throw new Error(
+            `Directory did not contain an index.html: ${localPath}`);
+      }
+      // We need a trailing slash when serving a directory. Our static server
+      // will serve index.html at both /foo and /foo/, without redirects. But
+      // these two forms will have baseURIs that resolve relative URLs
+      // differently, and we want the form that would work the same as
+      // /foo/index.html.
+      urlPath += '/';
+    }
+    const name = localPath;  // TODO Support aliases.
+
+    for (const browser of browsers) {
+      for (const version of versions) {
+        specs.push({
+          name,
+          browser,
+          measurement: opts.measure,
+          url: {
+            kind: 'local',
+            urlPath,
+            queryString,
+            version,
+          },
+        });
+      }
+    }
+  };
+
   // Benchmark names/URLs are the bare arguments not associated with a flag, so
   // they are found in _unknown.
   for (const benchmark of opts._unknown || []) {
     try {
       new url.URL(benchmark);
-      remoteUrls.push(benchmark);
+      addRemote(benchmark);
     } catch (e) {
       if (e.code === 'ERR_INVALID_URL') {
-        const [name, queryString] = splitQueryString(benchmark);
-        localNames.push({name, queryString});
-        if (name === '*') {
-          anyLocalNamesAreStar = true;
-        }
+        await addLocal(benchmark);
       } else {
         throw e;
-      }
-    }
-  }
-
-  const specs: BenchmarkSpec[] = [];
-  for (const url of remoteUrls) {
-    for (const browser of browsers) {
-      specs.push({
-        url: {
-          kind: 'remote',
-          url,
-        },
-        measurement: 'fcp',
-        browser,
-        // TODO Find a shorter unambiguous name since these can make the result
-        // table unwieldy, or do something smarter in the result table.
-        name: url,
-      });
-    }
-  }
-
-  let impls;
-  if (opts.implementation === '*') {
-    impls = await listDirs(opts.root);
-    impls = impls.filter((dir) => !dir.startsWith('.') && !ignoreDirs.has(dir));
-  } else {
-    impls = opts.implementation.split(',');
-    const badNames = impls.filter((dir) => ignoreDirs.has(dir));
-    if (badNames.length > 0) {
-      throw new Error(
-          `Implementations cannot be named ${badNames.join(' or ')}`);
-    }
-  }
-
-  const versions = parsePackageVersions(opts['package-version']);
-
-  for (const implementation of impls) {
-    const implDir = path.join(opts.root, implementation);
-    let benchmarks;
-    if (anyLocalNamesAreStar === true) {
-      benchmarks = await listDirs(implDir);
-      benchmarks = benchmarks.filter(
-          (implDir) => !implDir.startsWith('.') && !ignoreDirs.has(implDir));
-    } else {
-      const badNames = localNames.filter(({name}) => ignoreDirs.has(name));
-      if (badNames.length > 0) {
-        throw new Error(`Benchmarks cannot be named ${badNames.join(' or ')}`);
-      }
-    }
-    for (const {name, queryString} of localNames) {
-      const benchDir = path.join(implDir, name);
-      if (!await fsExtra.pathExists(benchDir)) {
-        continue;
-      }
-      const implVersions = versions.get(implementation) ||
-          [{label: 'default', dependencyOverrides: {}}];
-      const partialSpec = {
-        name,
-        measurement: opts.measure,
-      };
-      const urlPath = `/${implementation}/${name}/`;
-      for (const version of implVersions) {
-        for (const browser of browsers) {
-          specs.push({
-            ...partialSpec,
-            browser,
-            url: {
-              kind: 'local',
-              urlPath,
-              queryString,
-              version,
-            }
-          });
-        }
       }
     }
   }
@@ -169,13 +150,6 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
   });
 
   return specs;
-}
-
-async function listDirs(root: string): Promise<string[]> {
-  const files = await fsExtra.readdir(root);
-  const stats = await Promise.all(
-      files.map((name) => fsExtra.stat(path.join(root, name))));
-  return files.filter((_, idx) => stats[idx].isDirectory());
 }
 
 export interface SpecFilter {

@@ -18,52 +18,22 @@ import {MountPoint} from './server';
 import {BenchmarkSpec, NpmPackageJson, PackageDependencyMap, PackageVersion} from './types';
 
 /**
- * Parse an array of strings of the form:
- *   <implementation>/<label>=<pkg>@<version>[,<package>@<version>],...
+ * Parse an array of strings of the form <package>@<version>.
  */
-export function parsePackageVersions(flags: string[]):
-    Map<string, PackageVersion[]> {
-  const versions = new Map<string, PackageVersion[]>();
-  const uniqueImplLabels = new Set<string>();
-
+export function parsePackageVersions(flags: string[]): PackageVersion[] {
+  const versions: PackageVersion[] = [];
   for (const flag of flags) {
-    // Match <implementation>/<label>=<dependencyOverrides>
-    const flagMatch = flag.match(/(.+?)\/(?:(default)|(?:(.+?)=(.+)))/);
-    if (flagMatch === null) {
-      throw new Error(`Invalid package-version format: "${flag}"`);
+    // TODO Aliases.
+    const match = flag.match(/^(.+)@(.+)$/);
+    if (match === null) {
+      throw new Error(`Invalid package format ${flag}`);
     }
-    const [, implementation, isDefault, label, packageVersions] = flagMatch;
-    const dependencyOverrides: {[pkg: string]: string} = {};
-
-    if (isDefault === undefined) {
-      const implLabel = `${implementation}/${label}`;
-      if (uniqueImplLabels.has(implLabel)) {
-        throw new Error(
-            `package-version label "${implLabel}" was used more than once`);
-      }
-      uniqueImplLabels.add(implLabel);
-
-      for (const pv of packageVersions.split(',')) {
-        // Match each <pkg>@<version>
-        const pvMatch = pv.match(/(.+)@(.+)/);
-        if (pvMatch === null) {
-          throw new Error(
-              `Invalid package-version format: ` +
-              `"${pv}" is not a valid dependency version`);
-        }
-        const [, pkg, version] = pvMatch;
-        dependencyOverrides[pkg] = version;
-      }
-    }
-
-    let arr = versions.get(implementation);
-    if (arr === undefined) {
-      arr = [];
-      versions.set(implementation, arr);
-    }
-    arr.push({
-      label: isDefault !== undefined ? 'default' : label,
-      dependencyOverrides
+    const [, dep, version] = match;
+    versions.push({
+      label: `${dep}@${version}`,
+      dependencyOverrides: {
+        [dep]: version,
+      },
     });
   }
   return versions;
@@ -181,7 +151,7 @@ export async function makeServerPlans(
   return plans;
 }
 
-async function fileKind(path: string): Promise<'file'|'dir'|undefined> {
+export async function fileKind(path: string): Promise<'file'|'dir'|undefined> {
   try {
     const stat = await fsExtra.stat(path);
     if (stat.isDirectory()) {
@@ -235,9 +205,8 @@ async function npmInstall(cwd: string): Promise<void> {
 }
 
 /**
- * Set up an <implementation>/version/<label> directory by copying the parent
- * package.json, applying dependency overrides to it, and running "npm
- * install".
+ * Write the given package.json to the given directory and run "npm install"
+ * in it. Do nothing if the directory already exists.
  */
 export async function prepareVersionDirectory(
     {installDir, packageJson}: NpmInstall): Promise<void> {
