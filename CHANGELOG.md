@@ -12,6 +12,9 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 -   Variants no longer exist. Use URL query strings intead (see above).
 
+-   Custom package versions are now installed to the system's temp dir, instead
+    of into the project directory.
+
 -   `--manual` mode no longer shows benchmark data (but it should only be used
     for testing the web server anyway since it has no statistical significance).
 

@@ -10,6 +10,7 @@
  */
 
 import * as child_process from 'child_process';
+import * as crypto from 'crypto';
 import * as fsExtra from 'fs-extra';
 import * as path from 'path';
 
@@ -83,7 +84,8 @@ export interface NpmInstall {
 }
 
 export async function makeServerPlans(
-    benchmarkRoot: string, specs: BenchmarkSpec[]): Promise<ServerPlan[]> {
+    benchmarkRoot: string, npmInstallRoot: string, specs: BenchmarkSpec[]):
+    Promise<ServerPlan[]> {
   const keySpecs = new Map<string, BenchmarkSpec[]>();
   const keyDeps = new Map<string, PackageDependencyMap>();
   const defaultSpecs = [];
@@ -134,7 +136,8 @@ export async function makeServerPlans(
 
     const originalPackageDir = path.join(benchmarkRoot, implementation);
 
-    const installDir = path.join(originalPackageDir, 'versions', label);
+    const installDir =
+        path.join(npmInstallRoot, hashStrings(originalPackageDir, label));
     plans.push({
       specs,
       npmInstalls: [{
@@ -159,6 +162,12 @@ export async function makeServerPlans(
   }
 
   return plans;
+}
+
+export function hashStrings(...strings: string[]) {
+  return crypto.createHash('sha256')
+      .update(JSON.stringify(strings))
+      .digest('hex');
 }
 
 /**

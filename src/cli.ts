@@ -82,6 +82,13 @@ export const optDefs: commandLineUsage.OptionDefinition[] = [
     lazyMultiple: true,
   },
   {
+    name: 'npm-install-dir',
+    description: `Where to install custom package versions ` +
+        `(default ${defaultInstallDir})`,
+    type: String,
+    defaultValue: defaultInstallDir,
+  },
+  {
     name: 'browser',
     description: 'Which browsers to launch in automatic mode, ' +
         `comma-delimited (${[...validBrowsers].join(', ')})`,
@@ -150,6 +157,7 @@ export interface Opts {
   port: number[];
   implementation: string;
   'package-version': string[];
+  'npm-install-dir': string;
   browser: string;
   'sample-size': number;
   manual: boolean;
@@ -236,7 +244,8 @@ export async function main() {
     }
   }
 
-  const plans = await makeServerPlans(opts.root, specs);
+  const plans =
+      await makeServerPlans(opts.root, opts['npm-install-dir'], specs);
 
   for (const plan of plans) {
     for (const install of plan.npmInstalls) {

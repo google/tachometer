@@ -13,7 +13,7 @@ import {assert} from 'chai';
 import * as path from 'path';
 
 import {BenchmarkSpec} from '../types';
-import {makeServerPlans, ServerPlan} from '../versions';
+import {hashStrings, makeServerPlans, ServerPlan} from '../versions';
 
 const repoRoot = path.resolve(__dirname, '..', '..');
 const testData = path.resolve(repoRoot, 'src', 'test', 'data');
@@ -88,7 +88,11 @@ suite('versions', () => {
       },
     ];
 
-    const actual = await makeServerPlans(testData, specs);
+    const tempDir = '/tmp';
+    const actual = await makeServerPlans(testData, tempDir, specs);
+
+    const v1Hash = hashStrings(path.join(testData, 'mylib'), 'v1');
+    const v2Hash = hashStrings(path.join(testData, 'mylib'), 'v2');
 
     const expected: ServerPlan[] = [
       {
@@ -100,7 +104,7 @@ suite('versions', () => {
       {
         specs: [specs[0]],
         npmInstalls: [{
-          installDir: path.join(testData, 'mylib', 'versions', 'v1'),
+          installDir: path.join(tempDir, v1Hash),
           packageJson: {
             private: true,
             dependencies: {
@@ -111,8 +115,7 @@ suite('versions', () => {
         }],
         mountPoints: [
           {
-            diskPath:
-                path.join(testData, 'mylib', 'versions', 'v1', 'node_modules'),
+            diskPath: path.join(tempDir, v1Hash, 'node_modules'),
             urlPath: '/benchmarks/mylib/versions/v1/node_modules',
           },
           {
@@ -125,7 +128,7 @@ suite('versions', () => {
       {
         specs: [specs[1]],
         npmInstalls: [{
-          installDir: path.join(testData, 'mylib', 'versions', 'v2'),
+          installDir: path.join(tempDir, v2Hash),
           packageJson: {
             private: true,
             dependencies: {
@@ -136,8 +139,7 @@ suite('versions', () => {
         }],
         mountPoints: [
           {
-            diskPath:
-                path.join(testData, 'mylib', 'versions', 'v2', 'node_modules'),
+            diskPath: path.join(tempDir, v2Hash, 'node_modules'),
             urlPath: '/benchmarks/mylib/versions/v2/node_modules',
           },
           {
