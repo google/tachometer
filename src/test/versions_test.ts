@@ -24,66 +24,75 @@ suite('versions', () => {
       // mybench running with two custom versions.
       {
         name: 'mybench',
-        implementation: 'mylib',
-        version: {
-          label: 'v1',
-          dependencyOverrides: {
-            mylib: '1.0.0',
+        url: {
+          kind: 'local',
+          urlPath: '/mylib/mybench/',
+          version: {
+            label: 'v1',
+            dependencyOverrides: {
+              mylib: '1.0.0',
+            },
           },
+          queryString: '',
         },
         measurement: 'fcp',
-        queryString: '',
         browser: 'chrome',
       },
       {
         name: 'mybench',
-        implementation: 'mylib',
-        version: {
-          label: 'v2',
-          dependencyOverrides: {
-            mylib: '2.0.0',
+        url: {
+          kind: 'local',
+          urlPath: '/mylib/mybench/',
+          version: {
+            label: 'v2',
+            dependencyOverrides: {
+              mylib: '2.0.0',
+            },
           },
+          queryString: '',
         },
         measurement: 'fcp',
-        queryString: '',
         browser: 'chrome',
       },
 
       // mybench and other bench only need the default server.
       {
         name: 'mybench',
-        implementation: 'mylib',
-        version: {
-          label: 'default',
-          dependencyOverrides: {},
+        url: {
+          kind: 'local',
+          urlPath: '/mylib/mybench/',
+          version: {
+            label: 'default',
+            dependencyOverrides: {},
+          },
+          queryString: '',
         },
         measurement: 'fcp',
-        queryString: '',
         browser: 'chrome',
       },
       {
         name: 'otherbench',
-        implementation: 'otherlib',
-        version: {
-          label: 'default',
-          dependencyOverrides: {},
+        url: {
+          kind: 'local',
+          urlPath: '/otherlib/otherbench/',
+          version: {
+            label: 'default',
+            dependencyOverrides: {},
+          },
+          queryString: '',
         },
         measurement: 'fcp',
-        queryString: '',
         browser: 'chrome',
       },
 
       // A remote URL doesn't need a server.
       {
         name: 'http://example.com',
-        url: 'http://example.com',
-        implementation: '',
-        version: {
-          label: '',
-          dependencyOverrides: {},
+        url: {
+          kind: 'remote',
+          url: 'http://example.com',
         },
         measurement: 'fcp',
-        queryString: '',
         browser: 'chrome',
       },
     ];
@@ -98,7 +107,12 @@ suite('versions', () => {
       {
         specs: [specs[2], specs[3]],
         npmInstalls: [],
-        mountPoints: [],
+        mountPoints: [
+          {
+            diskPath: testData,
+            urlPath: '/',
+          },
+        ],
       },
 
       {
@@ -116,11 +130,11 @@ suite('versions', () => {
         mountPoints: [
           {
             diskPath: path.join(tempDir, v1Hash, 'node_modules'),
-            urlPath: '/benchmarks/mylib/versions/v1/node_modules',
+            urlPath: '/mylib/node_modules',
           },
           {
-            diskPath: path.join(testData, 'mylib'),
-            urlPath: '/benchmarks/mylib/versions/v1',
+            diskPath: testData,
+            urlPath: '/',
           },
         ],
       },
@@ -140,11 +154,11 @@ suite('versions', () => {
         mountPoints: [
           {
             diskPath: path.join(tempDir, v2Hash, 'node_modules'),
-            urlPath: '/benchmarks/mylib/versions/v2/node_modules',
+            urlPath: '/mylib/node_modules',
           },
           {
-            diskPath: path.join(testData, 'mylib'),
-            urlPath: '/benchmarks/mylib/versions/v2',
+            diskPath: testData,
+            urlPath: '/',
           },
         ],
       },

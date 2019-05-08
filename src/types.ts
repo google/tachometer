@@ -50,13 +50,22 @@ export type Measurement = 'callback'|'fcp';
 
 /** A specification of a benchmark to run. */
 export interface BenchmarkSpec {
-  url?: string;
+  url: LocalUrl|RemoteUrl;
   measurement: Measurement;
   name: string;
-  queryString: string;
-  implementation: string;
-  version: PackageVersion;
   browser: string;
+}
+
+export interface LocalUrl {
+  kind: 'local';
+  version: PackageVersion;
+  urlPath: string;
+  queryString: string;
+}
+
+export interface RemoteUrl {
+  kind: 'remote';
+  url: string;
 }
 
 // Note: sync with client/src/index.ts
@@ -67,10 +76,10 @@ export interface BenchmarkResponse {
 export interface BenchmarkResult {
   name: string;
   queryString: string;
-  implementation: string;
   version: string;
   millis: number[];
-  browser: {name: string, version: string};
+  browser: string;
+  userAgent: string;
   bytesSent: number;
 }
 

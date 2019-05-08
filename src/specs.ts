@@ -9,20 +9,13 @@
  * rights grant found at http://polymer.github.io/PATENTS.txt
  */
 
-import * as fsExtra from 'fs-extra';
 import * as path from 'path';
-import * as url from 'url';
+import {URL} from 'url';
 
 import {validBrowsers} from './browser';
 import {Opts} from './cli';
 import {BenchmarkSpec} from './types';
-import {parsePackageVersions} from './versions';
-
-const ignoreDirs = new Set([
-  'node_modules',
-  'common',
-  'versions',
-]);
+import {fileKind, parsePackageVersions} from './versions';
 
 /**
  * Derive the set of benchmark specifications we should run according to the
@@ -38,173 +31,145 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
   for (const b of browsers) {
     if (validBrowsers.has(b) === false) {
       throw new Error(
-          `Browser ${b} is not yet supported, ` +
+          `Browser ${b} is not supported, ` +
           `only ${[...validBrowsers].join(', ')} are currently supported`);
     }
   }
 
-  const remoteUrls = [];
-  const localNames: {name: string, queryString: string}[] = [];
-  let anyLocalNamesAreStar = false;
-  // Benchmark names/URLs are the bare arguments not associated with a flag, so
-  // they are found in _unknown.
-  for (const benchmark of opts._unknown || []) {
-    try {
-      new url.URL(benchmark);
-      remoteUrls.push(benchmark);
-    } catch (e) {
-      if (e.code === 'ERR_INVALID_URL') {
-        const [name, queryString] = splitQueryString(benchmark);
-        localNames.push({name, queryString});
-        if (name === '*') {
-          anyLocalNamesAreStar = true;
-        }
-      } else {
-        throw e;
-      }
-    }
-  }
-
   const specs: BenchmarkSpec[] = [];
-  for (const url of remoteUrls) {
-    for (const browser of browsers) {
-      specs.push({
-        url,
-        measurement: 'fcp',
-        browser,
-        // TODO Find a shorter unambiguous name since these can make the result
-        // table unwieldy, or do something smarter in the result table.
-        name: url,
-        // TODO Refactor so that we don't need to initialize all these fields
-        // in the remote URL case.
-        queryString: '',
-        implementation: 'default',
-        version: {
-          label: '',
-          dependencyOverrides: {},
-        },
-      });
-    }
-  }
-
-  let impls;
-  if (opts.implementation === '*') {
-    impls = await listDirs(opts.root);
-    impls = impls.filter((dir) => !dir.startsWith('.') && !ignoreDirs.has(dir));
-  } else {
-    impls = opts.implementation.split(',');
-    const badNames = impls.filter((dir) => ignoreDirs.has(dir));
-    if (badNames.length > 0) {
-      throw new Error(
-          `Implementations cannot be named ${badNames.join(' or ')}`);
-    }
-  }
 
   const versions = parsePackageVersions(opts['package-version']);
+  if (versions.length === 0) {
+    versions.push({label: 'default', dependencyOverrides: {}});
+  }
 
-  for (const implementation of impls) {
-    const implDir = path.join(opts.root, implementation);
-    let benchmarks;
-    if (anyLocalNamesAreStar === true) {
-      benchmarks = await listDirs(implDir);
-      benchmarks = benchmarks.filter(
-          (implDir) => !implDir.startsWith('.') && !ignoreDirs.has(implDir));
+  // Benchmark paths/URLs are the bare arguments not associated with a flag, so
+  // they are found in _unknown.
+  for (const argStr of opts._unknown || []) {
+    const arg = parseBenchmarkArgument(argStr);
+
+    if (arg.kind === 'remote') {
+      for (const browser of browsers) {
+        specs.push({
+          name: arg.alias || arg.url,
+          url: {
+            kind: 'remote',
+            url: arg.url,
+          },
+          browser,
+          measurement: 'fcp',  // callback not supported
+        });
+      }
+
     } else {
-      const badNames = localNames.filter(({name}) => ignoreDirs.has(name));
-      if (badNames.length > 0) {
-        throw new Error(`Benchmarks cannot be named ${badNames.join(' or ')}`);
+      const serverRelativePath = path.relative(opts.root, arg.diskPath);
+      // TODO Test on Windows.
+      if (serverRelativePath.startsWith('..')) {
+        throw new Error(
+            'File or directory is not accessible from server root:' +
+            arg.diskPath);
       }
-    }
-    for (const {name, queryString} of localNames) {
-      const benchDir = path.join(implDir, name);
-      if (!await fsExtra.pathExists(benchDir)) {
-        continue;
+
+      const kind = await fileKind(arg.diskPath);
+      if (kind === undefined) {
+        throw new Error(`No such file or directory: ${arg.diskPath}`);
       }
-      const implVersions = versions.get(implementation) ||
-          [{label: 'default', dependencyOverrides: {}}];
-      const partialSpec = {
-        name,
-        queryString,
-        implementation,
-        measurement: opts.measure,
-      };
-      for (const version of implVersions) {
-        for (const browser of browsers) {
+
+      // TODO Test on Windows.
+      let urlPath = `/${serverRelativePath.replace(path.win32.sep, '/')}`;
+      if (kind === 'dir') {
+        if (await fileKind(path.join(arg.diskPath, 'index.html')) !== 'file') {
+          throw new Error(
+              `Directory did not contain an index.html: ${arg.diskPath}`);
+        }
+        // We need a trailing slash when serving a directory. Our static server
+        // will serve index.html at both /foo and /foo/, without redirects. But
+        // these two forms will have baseURIs that resolve relative URLs
+        // differently, and we want the form that would work the same as
+        // /foo/index.html.
+        urlPath += '/';
+      }
+
+      for (const browser of browsers) {
+        for (const version of versions) {
           specs.push({
-            ...partialSpec,
+            name: arg.alias || serverRelativePath.replace(path.win32.sep, '/'),
             browser,
-            version,
+            measurement: opts.measure,
+            url: {
+              kind: 'local',
+              urlPath,
+              queryString: arg.queryString,
+              version,
+            },
           });
         }
       }
     }
   }
 
-  specs.sort((a, b) => {
-    if (a.name !== b.name) {
-      return a.name.localeCompare(b.name);
-    }
-    if (a.queryString !== b.queryString) {
-      return a.queryString.localeCompare(b.queryString);
-    }
-    if (a.implementation !== b.implementation) {
-      return a.implementation.localeCompare(b.implementation);
-    }
-    if (a.version.label !== b.version.label) {
-      return a.version.label.localeCompare(b.version.label);
-    }
-    if (a.browser !== b.browser) {
-      return a.browser.localeCompare(b.browser);
-    }
-    return 0;
-  });
-
   return specs;
 }
 
-async function listDirs(root: string): Promise<string[]> {
-  const files = await fsExtra.readdir(root);
-  const stats = await Promise.all(
-      files.map((name) => fsExtra.stat(path.join(root, name))));
-  return files.filter((_, idx) => stats[idx].isDirectory());
+function parseBenchmarkArgument(str: string):
+    {kind: 'remote', url: string, alias?: string}|
+    {kind: 'local', diskPath: string, queryString: string, alias?: string} {
+  if (isUrl(str)) {
+    // http://example.com
+    return {
+      kind: 'remote',
+      url: str,
+    };
+  }
+
+  if (str.includes('=')) {
+    const eq = str.indexOf('=');
+    const maybeUrl = str.substring(eq + 1);
+    if (isUrl(maybeUrl)) {
+      // foo=http://example.com
+      return {
+        kind: 'remote',
+        url: maybeUrl,
+        alias: str.substring(0, eq),
+      };
+    }
+  }
+
+  let queryString = '';
+  if (str.includes('?')) {
+    // a/b.html?a=b
+    // foo=a/b.html?a=b
+    const q = str.indexOf('?');
+    queryString = str.substring(q);
+    str = str.substring(0, q);
+  }
+
+  let alias = undefined;
+  if (str.includes('=')) {
+    // foo=a/b.html?a=b
+    // foo=a/b.html
+    const eq = str.indexOf('=');
+    alias = str.substring(0, eq);
+    str = str.substring(eq + 1);
+  }
+
+  // a/b.html
+  // a/b.html?a=b
+  // foo=a/b.html
+  // foo=a/b.html?a=b
+  return {
+    kind: 'local',
+    alias,
+    diskPath: str,
+    queryString: queryString,
+  };
 }
 
-export interface SpecFilter {
-  name?: string;
-  implementation?: string;
-  queryString?: string;
-  version?: string;
-  browser?: string;
-}
-
-/**
- * Return whether the given benchmark spec matches the given filter
- * configuration.
- */
-export function specMatchesFilter(
-    spec: BenchmarkSpec, selector: SpecFilter): boolean {
-  if (selector.name !== undefined && spec.name !== selector.name) {
+function isUrl(str: string): boolean {
+  try {
+    new URL(str);
+    return true;
+  } catch (e) {
     return false;
   }
-  if (selector.implementation !== undefined &&
-      spec.implementation !== selector.implementation) {
-    return false;
-  }
-  if (selector.queryString !== undefined &&
-      spec.queryString !== selector.queryString) {
-    return false;
-  }
-  if (selector.version !== undefined &&
-      spec.version.label !== selector.version) {
-    return false;
-  }
-  if (selector.browser !== undefined && spec.browser !== selector.browser) {
-    return false;
-  }
-  return true;
-}
-
-function splitQueryString(path: string): [string, string] {
-  const q = path.indexOf('?');
-  return q === -1 ? [path, ''] : [path.substring(0, q), path.substring(q)];
 }

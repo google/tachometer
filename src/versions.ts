@@ -18,52 +18,21 @@ import {MountPoint} from './server';
 import {BenchmarkSpec, NpmPackageJson, PackageDependencyMap, PackageVersion} from './types';
 
 /**
- * Parse an array of strings of the form:
- *   <implementation>/<label>=<pkg>@<version>[,<package>@<version>],...
+ * Parse an array of strings of the form <package>@<version>.
  */
-export function parsePackageVersions(flags: string[]):
-    Map<string, PackageVersion[]> {
-  const versions = new Map<string, PackageVersion[]>();
-  const uniqueImplLabels = new Set<string>();
-
+export function parsePackageVersions(flags: string[]): PackageVersion[] {
+  const versions: PackageVersion[] = [];
   for (const flag of flags) {
-    // Match <implementation>/<label>=<dependencyOverrides>
-    const flagMatch = flag.match(/(.+?)\/(?:(default)|(?:(.+?)=(.+)))/);
-    if (flagMatch === null) {
-      throw new Error(`Invalid package-version format: "${flag}"`);
+    const match = flag.match(/^(?:(.+)=)?(.+)@(.+)$/);
+    if (match === null) {
+      throw new Error(`Invalid package format ${flag}`);
     }
-    const [, implementation, isDefault, label, packageVersions] = flagMatch;
-    const dependencyOverrides: {[pkg: string]: string} = {};
-
-    if (isDefault === undefined) {
-      const implLabel = `${implementation}/${label}`;
-      if (uniqueImplLabels.has(implLabel)) {
-        throw new Error(
-            `package-version label "${implLabel}" was used more than once`);
-      }
-      uniqueImplLabels.add(implLabel);
-
-      for (const pv of packageVersions.split(',')) {
-        // Match each <pkg>@<version>
-        const pvMatch = pv.match(/(.+)@(.+)/);
-        if (pvMatch === null) {
-          throw new Error(
-              `Invalid package-version format: ` +
-              `"${pv}" is not a valid dependency version`);
-        }
-        const [, pkg, version] = pvMatch;
-        dependencyOverrides[pkg] = version;
-      }
-    }
-
-    let arr = versions.get(implementation);
-    if (arr === undefined) {
-      arr = [];
-      versions.set(implementation, arr);
-    }
-    arr.push({
-      label: isDefault !== undefined ? 'default' : label,
-      dependencyOverrides
+    const [, label, dep, version] = match;
+    versions.push({
+      label: label || `${dep}@${version}`,
+      dependencyOverrides: {
+        [dep]: version,
+      },
     });
   }
   return versions;
@@ -90,16 +59,33 @@ export async function makeServerPlans(
   const keyDeps = new Map<string, PackageDependencyMap>();
   const defaultSpecs = [];
   for (const spec of specs) {
-    if (spec.url !== undefined) {
+    if (spec.url.kind === 'remote') {
       // No server needed for remote URLs.
       continue;
     }
-    if (spec.version.label === 'default') {
+    if (spec.url.version.label === 'default') {
       defaultSpecs.push(spec);
       continue;
     }
 
-    const key = JSON.stringify([spec.implementation, spec.version.label]);
+    const diskPath = path.join(benchmarkRoot, spec.url.urlPath);  // TODO
+    const kind = await fileKind(diskPath);
+    if (kind === undefined) {
+      throw new Error(`No such file or directory ${diskPath}`);
+    }
+    const originalPackageJsonPath = await findPackageJsonPath(
+        kind === 'file' ? path.dirname(diskPath) : diskPath);
+    if (originalPackageJsonPath === undefined) {
+      throw new Error(`Could not find a package.json for ${diskPath}`);
+    }
+    const originalPackageJson = await fsExtra.readJson(originalPackageJsonPath);
+
+    // TODO Key should use the actual dependencies instead of the label.
+    const key = JSON.stringify([
+      path.dirname(originalPackageJsonPath),
+      spec.url.urlPath,
+      spec.url.version.label,
+    ]);
     let arr = keySpecs.get(key);
     if (arr === undefined) {
       arr = [];
@@ -107,12 +93,9 @@ export async function makeServerPlans(
     }
     arr.push(spec);
 
-    const originalPackageJsonPath =
-        path.join(benchmarkRoot, spec.implementation, 'package.json');
-    const originalPackageJson = await fsExtra.readJson(originalPackageJsonPath);
     const newDeps = {
       ...originalPackageJson.dependencies,
-      ...spec.version.dependencyOverrides,
+      ...spec.url.version.dependencyOverrides,
     };
     keyDeps.set(key, newDeps);
   }
@@ -123,21 +106,24 @@ export async function makeServerPlans(
     plans.push({
       specs: defaultSpecs,
       npmInstalls: [],
-      mountPoints: [],
+      mountPoints: [
+        {
+          urlPath: `/`,
+          diskPath: benchmarkRoot,
+        },
+      ],
     });
   }
 
   for (const [key, specs] of keySpecs.entries()) {
-    const [implementation, label] = JSON.parse(key);
+    const [packageDir, , label] = JSON.parse(key);
     const dependencies = keyDeps.get(key);
     if (dependencies === undefined) {
       throw new Error(`Internal error: no deps for key ${key}`);
     }
 
-    const originalPackageDir = path.join(benchmarkRoot, implementation);
-
     const installDir =
-        path.join(npmInstallRoot, hashStrings(originalPackageDir, label));
+        path.join(npmInstallRoot, hashStrings(packageDir, label));
     plans.push({
       specs,
       npmInstalls: [{
@@ -149,19 +135,50 @@ export async function makeServerPlans(
       }],
       mountPoints: [
         {
-          urlPath:
-              `/benchmarks/${implementation}/versions/${label}/node_modules`,
+          urlPath: `/${path.relative(benchmarkRoot, packageDir)}/node_modules`,
           diskPath: path.join(installDir, 'node_modules'),
         },
         {
-          urlPath: `/benchmarks/${implementation}/versions/${label}`,
-          diskPath: path.join(benchmarkRoot, implementation),
-        }
+          urlPath: `/`,
+          diskPath: benchmarkRoot,
+        },
       ],
     });
   }
 
   return plans;
+}
+
+export async function fileKind(path: string): Promise<'file'|'dir'|undefined> {
+  try {
+    const stat = await fsExtra.stat(path);
+    if (stat.isDirectory()) {
+      return 'dir';
+    }
+    if (stat.isFile()) {
+      return 'file';
+    }
+  } catch (e) {
+    if (e.code !== 'ENOENT') {
+      throw e;
+    }
+  }
+}
+
+async function findPackageJsonPath(startDir: string):
+    Promise<string|undefined> {
+  let cur = path.resolve(startDir);
+  while (true) {
+    const possibleLocation = path.join(cur, 'package.json');
+    if (await fsExtra.pathExists(possibleLocation)) {
+      return possibleLocation;
+    }
+    const parentDir = path.resolve(cur, '..');
+    if (parentDir === cur) {
+      return undefined;
+    }
+    cur = parentDir;
+  }
 }
 
 export function hashStrings(...strings: string[]) {
@@ -186,9 +203,8 @@ async function npmInstall(cwd: string): Promise<void> {
 }
 
 /**
- * Set up an <implementation>/version/<label> directory by copying the parent
- * package.json, applying dependency overrides to it, and running "npm
- * install".
+ * Write the given package.json to the given directory and run "npm install"
+ * in it. Do nothing if the directory already exists.
  */
 export async function prepareVersionDirectory(
     {installDir, packageJson}: NpmInstall): Promise<void> {

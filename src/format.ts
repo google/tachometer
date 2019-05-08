@@ -11,6 +11,7 @@
 
 import stripAnsi from 'strip-ansi';
 import * as table from 'table';
+import {UAParser} from 'ua-parser-js';
 
 import ansi = require('ansi-escape-sequences');
 
@@ -53,7 +54,6 @@ export function automaticResultTable(results: ResultStats[]): AutomaticResults {
   const possiblyFixed = [
     benchmarkDimension,
     queryParamsDimension,
-    implementationDimension,
     versionDimension,
     browserDimension,
     sampleSizeDimension,
@@ -244,20 +244,23 @@ const queryParamsDimension: Dimension = {
       r.result.queryString || ansi.format('[gray]{<none>}'),
 };
 
-const implementationDimension: Dimension = {
-  label: 'Impl',
-  format: (r: ResultStats) => r.result.implementation,
-};
-
 const versionDimension: Dimension = {
   label: 'Version',
-  format: (r: ResultStats) => r.result.version,
+  format: (r: ResultStats) => r.result.version || ansi.format('[gray]{<none>}'),
 };
 
 const browserDimension: Dimension = {
   label: 'Browser',
-  format: (r: ResultStats) =>
-      `${r.result.browser.name}\n${r.result.browser.version}`,
+  format: (r: ResultStats) => {
+    if (r.result.userAgent === '') {
+      // This happens with remote URLs, since we don't get a chance to
+      // instrument any requests to find the user agent.
+      // TODO We could make one no-op request just to probe the user agent.
+      return r.result.browser;
+    }
+    const ua = new UAParser(r.result.userAgent).getBrowser();
+    return `${r.result.browser}\n${ua.version}`;
+  },
 };
 
 const sampleSizeDimension: Dimension = {
@@ -315,15 +318,13 @@ function makeUniqueLabelFn(results: BenchmarkResult[]):
     (result: BenchmarkResult) => string {
   const names = new Set();
   const queryStrings = new Set();
-  const implementations = new Set();
   const versions = new Set();
   const browsers = new Set();
   for (const result of results) {
     names.add(result.name);
     queryStrings.add(result.queryString);
-    implementations.add(result.implementation);
     versions.add(result.version);
-    browsers.add(result.browser.name);
+    browsers.add(result.browser);
   }
   return (result: BenchmarkResult) => {
     const fields = [];
@@ -333,14 +334,11 @@ function makeUniqueLabelFn(results: BenchmarkResult[]):
     if (queryStrings.size > 1) {
       fields.push(result.queryString || '<none>');
     }
-    if (implementations.size > 1) {
-      fields.push(result.implementation);
-    }
     if (versions.size > 1) {
       fields.push(result.version);
     }
     if (browsers.size > 1) {
-      fields.push(result.browser.name);
+      fields.push(result.browser);
     }
     return fields.join('\n');
   };

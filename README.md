@@ -25,18 +25,8 @@ confidence in them.
   $ npm i tachometer
   ```
 
-2. Make a folder for your benchmarks. tachometer expects a particular file
-   layout (explained [below](#folder-layout)).
-
-  ```sh
-  $ mkdir benchmarks/
-  $ cd benchmarks/
-  $ mkdir -p default/forloop
-  $ vim default/forloop/index.html
-  ```
-
-3. Create a simple micro benchmark that just executes a for loop. tachometer
-   benchmarks are just HTML files that import and call `bench.start()` and
+2. Create a simple `forloop.html` micro benchmark that times a `for` loop.
+   tachometer benchmarks are HTML files that import and call `bench.start()` and
    `bench.stop()`. Note that when you are measuring [first contentful
    paint](#first-contentful-paint-fcp), you don't need to call these functions.
 
@@ -53,11 +43,11 @@ confidence in them.
   </html>
   ```
 
-4. Launch tachometer, which will automatically find your benchmark, launch
-   Chrome, and execute the benchmark 50 times.
+3. Launch tachometer, which will launch Chrome and execute the benchmark 50
+   times.
 
   ```sh
-  $ tach
+  $ tach forloop.html
   ```
 
   Along with some other information, tachometer will show you a range of
@@ -68,23 +58,23 @@ confidence in them.
 
 ## Features
 
-The above quick start shows the simplest way to use tachometer, but it can do
-much more.
-
-- *Compare benchmarks*. Run any number of benchmarks in the same session, see
-  which ones were faster or slower, and by how much. Compare different
-  benchmarks, different browsers, and different implementations or
-  configurations of the same benchmark. See [multiple
-  benchmarks](#multiple-benchmarks).
+- Measure your own [specific timings](#callback) with the `/bench.js` module, or
+  measure [First Contentful Paint](#first-contentful-paint-fcp) on any local or
+  remote URL.
 
 
-- *Configure different versions* of the same NPM dependency that your
-  benchmark uses. Compare competing implementation ideas, or detect
-  regressions. See [package versions](#package-versions).
+- [*Compare benchmarks*](#multiple-benchmarks) by round-robin between two or
+  more files, URLs, URL query string parameters, or browsers, to measure which
+  is faster or slower, and by how much, with statistical significance.
 
 
-- *Automatically continue sampling* until we have enough precision to answer the
-  question you are asking. See [auto sampling](#auto-sampling).
+- [*Swap dependency versions*](#swap-npm-dependency-versions) of any NPM package
+  you depend on, to compare published versions, remote GitHub branches, or local
+  git repos.
+
+
+- [*Automatically sample*](#auto-sampling) until we have enough precision to
+  answer the question you are asking.
 
 ## Measurement modes
 
@@ -148,74 +138,32 @@ This table tells us:
   which is faster, because the difference was too small. 1000 iterations could
   be as much as 13% faster, or as much as 21% slower, than 1001 iterations.
 
-## Folder layout
+## Swap NPM dependencies
+
+Tachometer has specialized support for swapping in custom versions of any NPM
+dependency in your `package.json`. This can be used to compare the same
+benchmark against one or more versions of a library it depends on.
+
+Use the `--package-version` flag to specify a version to swap in, with format
+`[label=]package@version`.
 
 ```
-<root>/
-└── <implementation>/
-    ├── package.json
-    └── <benchmark>/
-        ├── index.html
-        └── index.js
-```
-
-The **root** directory is where tachometer looks for your benchmarks. By default
-it is the current working directory, but you can change it with the `--root`
-flag (see [flags](#flags)).
-
-Benchmarks are next organized into **implementation** directories, each with
-their own optional `package.json`. Since one supported use cases is to compare
-equivalent benchmarks using different underlying implementations, this layer
-exists to isolate those NPM dependencies. For simple use cases, you can just
-create a `default` (or any name) directory with no `package.json`.
-
-Finally, each **benchmark** directory contains a benchmark. Each benchmark
-directory must have an `index.html` file, which is what tachometer will launch.
-
-## Package Versions
-
-By default, the version of a dependency library that a benchmark runs against is
-the one installed by NPM according to the implementation directory's
-`package.json` (usually the latest stable release).
-
-However, it is often useful to run a benchmark on a specific dependency version,
-or across *multiple versions of the same dependency*, e.g. to see the difference
-between two different published versions, or between the GitHub master branch
-and a local development branch.
-
-Use the `--package-version` flag to specify a different version of a dependency
-library to install and run against, instead of the default one. To specify
-multiple versions, use the flag multiple times. The format of this flag is:
-
-`<implementation>/<label>=<pkg>@<version>[,<pkg@version>],...]`
-
-Part              | Description
------------------ | -----------
-`implementation`  | The implementation directory name whose dependencies we are changing (e.g. `lit-html`).
-`label`           | An arbitrary concise name for this version (e.g. `master`, `local`, `1.x`).
-`pkg`             | The NPM package name (e.g. `lit-html`). Must already appear in the implementation's `package.json`.
-`version`         | Any valid [NPM version descriptor](https://docs.npmjs.com/files/package.json#dependencies) (e.g. `Polymer/lit-html#master`, `$HOME/lit-html`, `^1.0.0`).
-
-For example, here we configure 3 versions of `lit-html` to run benchmarks
-against: the GitHub master branch, a local development git clone, and the latest
-1.x version published to NPM:
-
-```sh
-tach
---package-version=lit-html/master=lit-html@github:Polymer/lit-html#master \
---package-version=lit-html/local=lit-html@$HOME/lit-html \
---package-version=lit-html/1.x=lit-html@^1.0.0
+tach mybench.html \
+  --package-version=mylib@1.0.0 \
+  --package-version=master=mylib@github:MyOrg/mylib#master
 ```
 
 When you use the `--package-version` flag, the following happens:
-- A directory `<implementation>/versions/<label>` is created.
-- A copy of `<implementation>/package.json` is written to `.../<label>/package.json`
-  and modified according to the new dependency versions you specified.
-- `npm install` is run in this directory.
-- Benchmarks are run from URLs of the form `<implementation>/versions/<label>`.
-  URL paths within `node_modules/` are served from the version directory (to get
-  your new versions), while other URLs (i.e. the benchmarks themselves) are
-  mapped back to the main `<implementation>` directory.
+
+1. The `package.json` file closest to your benchmark HTML file is found.
+
+2. A copy of this `package.json`, with the new dependency version swapped in, is
+   written to the system's temp directory (use `--npm-install-dir` to change
+   this location), and `npm install` is run in that directory.
+
+3. A separate server is started for each custom NPM installation, where any
+   request for the benchmark's `node_modules/` directory is served from that
+   location.
 
 ## Confidence intervals
 
@@ -337,10 +285,24 @@ will expire.
 
 ## Usage
 
+Run a benchmark from a local file:
 ```sh
-tach *
-tach my-bench-a my-bench-b
-tach http://example.com/a http://example.com/b
+tach foo.html
+```
+
+Compare a benchmark with different URL parameters:
+```sh
+tach foo.html?i=1 foo.html?i=2
+```
+
+Benchmark `index.html` in a directory:
+```sh
+tach foo/bar
+```
+
+Benchmark First Contentful Paint time of a remote URL:
+```sh
+tach http://example.com
 ```
 
 Flag                      | Default     | Description
@@ -349,8 +311,7 @@ Flag                      | Default     | Description
 `--root`                  | `./`        | Root directory to search for benchmarks
 `--host`                  | `127.0.0.1` | Which host to run on
 `--port`                  | `8080, 8081, ..., 0`| Which port to run on (comma-delimited preference list, `0` for random)
-`--implementation` / `-i` | `*`         | Which implementations to run (`*` for all) ([details](#folder-layout))
-`--package-version` / `-p`| *(none)*    | Specify one or more dependency versions ([details](#package-versions))
+`--package-version` / `-p`| *(none)*    | Specify an NPM package version to swap in ([details](#swap-npm-dependency-versions))
 `--browser` / `-b`        | `chrome`    | Which browsers to launch in automatic mode, comma-delimited (chrome, chrome-headless, firefox, firefox-headless, safari)
 `--sample-size` / `-n`    | `50`        | Minimum number of times to run each benchmark ([details](#sample-size)]
 `--horizon`               | `10%`       | The degrees of difference to try and resolve when auto-sampling ("N%" or "Nms", comma-delimited) ([details](#auto-sampling))

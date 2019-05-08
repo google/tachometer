@@ -28,6 +28,7 @@
   "homepage": "https://github.com/PolymerLabs/tachometer#readme",
   "dependencies": {
     "@types/ansi-escape-sequences": "^4.0.0",
+    "@types/chai-as-promised": "^7.1.0",
     "@types/command-line-args": "^5.0.0",
     "@types/command-line-usage": "^5.0.1",
     "@types/fs-extra": "^5.0.3",
@@ -44,6 +45,7 @@
     "@types/table": "^4.0.5",
     "@types/ua-parser-js": "^0.7.32",
     "ansi-escape-sequences": "^4.0.1",
+    "chai-as-promised": "^7.1.1",
     "chromedriver": "^2.45.0",
     "command-line-args": "^5.0.2",
     "command-line-usage": "^5.0.5",

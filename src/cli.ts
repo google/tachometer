@@ -67,15 +67,8 @@ export const optDefs: commandLineUsage.OptionDefinition[] = [
     defaultValue: [8080, 8081, 8082, 8083, 0],
   },
   {
-    name: 'implementation',
-    description: 'Which implementations to run (* for all)',
-    alias: 'i',
-    type: String,
-    defaultValue: '*',
-  },
-  {
     name: 'package-version',
-    description: 'Specify one or more dependency versions (see README)',
+    description: 'Specify an NPM package version to swap in (see README)',
     alias: 'p',
     type: String,
     defaultValue: [],
@@ -155,7 +148,6 @@ export interface Opts {
   root: string;
   host: string;
   port: number[];
-  implementation: string;
   'package-version': string[];
   'npm-install-dir': string;
   browser: string;
@@ -202,9 +194,19 @@ export async function main() {
       },
       {
         header: 'Usage',
-        content: 'tach * \n' +
-            'tach my-bench-a my-bench-b\n' +
-            'tach http://example.com/a http://example.com/b'
+        content: `
+Run a benchmark from a local file:
+$ tach foo.html
+
+Compare a benchmark with different URL parameters:
+$ tach foo.html?i=1 foo.html?i=2
+
+Benchmark index.html in a directory:
+$ tach foo/bar
+
+Benchmark a remote URL's First Contentful Paint time:
+$ tach http://example.com
+`,
       },
       {
         header: 'Options',
@@ -234,7 +236,7 @@ export async function main() {
     throw new Error('No benchmarks matched with the given flags');
   }
 
-  if (opts.measure === 'fcp' || specs.find((spec) => spec.url !== undefined)) {
+  if (specs.find((spec) => spec.measurement === 'fcp')) {
     for (const browser of opts.browser.split(',')) {
       if (!fcpBrowsers.has(browser)) {
         throw new Error(
@@ -247,24 +249,22 @@ export async function main() {
   const plans =
       await makeServerPlans(opts.root, opts['npm-install-dir'], specs);
 
-  for (const plan of plans) {
-    for (const install of plan.npmInstalls) {
-      await prepareVersionDirectory(install);
-    }
-  }
-
   const servers = new Map<BenchmarkSpec, Server>();
-  for (const {specs, mountPoints} of plans) {
-    const server = await Server.start({
-      host: opts.host,
-      ports: opts.port,
-      benchmarksDir: opts.root,
-      mountPoints,
-    });
-    for (const spec of specs) {
-      servers.set(spec, server);
-    }
+  const promises = [];
+  for (const {npmInstalls, mountPoints, specs} of plans) {
+    promises.push(...npmInstalls.map(prepareVersionDirectory));
+    promises.push((async () => {
+      const server = await Server.start({
+        host: opts.host,
+        ports: opts.port,
+        mountPoints,
+      });
+      for (const spec of specs) {
+        servers.set(spec, server);
+      }
+    })());
   }
+  await Promise.all(promises);
 
   if (opts.manual === true) {
     await manualMode(opts, specs, servers);
@@ -274,6 +274,17 @@ export async function main() {
 }
 
 type ServerMap = Map<BenchmarkSpec, Server>;
+
+function specUrl(spec: BenchmarkSpec, servers: ServerMap): string {
+  if (spec.url.kind === 'remote') {
+    return spec.url.url;
+  }
+  const server = servers.get(spec);
+  if (server === undefined) {
+    throw new Error('Internal error: no server for spec');
+  }
+  return server.url + spec.url.urlPath + spec.url.queryString;
+}
 
 /**
  * Let the user run benchmarks manually. This process will not exit until
@@ -288,39 +299,27 @@ async function manualMode(
   console.log('\nVisit these URLs in any browser:');
   const allServers = new Set<Server>([...servers.values()]);
   for (const spec of specs) {
-    let url;
-    if (spec.url !== undefined) {
-      url = spec.url;
-    } else {
-      const server = servers.get(spec);
-      if (server === undefined) {
-        throw new Error('Internal error: no server for spec');
-      }
-      url = server.specUrl(spec);
-    }
-
     console.log();
-    console.log(
-        `${spec.name}${spec.queryString} ` +
-        `/ ${spec.implementation} ${spec.version.label}`);
-    console.log(ansi.format(`[yellow]{${url}}`));
+    if (spec.url.kind === 'local') {
+      console.log(
+          `${spec.name}${spec.url.queryString}` +
+          (spec.url.version.label !== 'default' ?
+               ` [@${spec.url.version.label}]` :
+               ''));
+    }
+    console.log(ansi.format(`[yellow]{${specUrl(spec, servers)}}`));
   }
 
   console.log(`\nResults will appear below:\n`);
-  (async function() {
-    while (true) {
-      const resultPromises = [];
-      for (const server of allServers) {
-        server.beginSession();
-        resultPromises.push(server.nextResults());
-      }
-      const result = await Promise.race(resultPromises);
-      console.log(`${result.millis.toFixed(3)} ms`);
-      for (const server of allServers) {
+  for (const server of [...allServers]) {
+    (async function() {
+      while (true) {
+        const result = await server.nextResults();
         server.endSession();
+        console.log(`${result.millis.toFixed(3)} ms`);
       }
-    }
-  })();
+    })();
+  }
 }
 
 interface Browser {
@@ -404,21 +403,16 @@ async function automaticMode(
     specResults.set(spec, []);
   }
 
-
   const runSpec = async (spec: BenchmarkSpec) => {
     let server;
-    let url;
-    if (spec.url !== undefined) {
-      url = spec.url;
-    } else {
+    if (spec.url.kind === 'local') {
       server = servers.get(spec);
       if (server === undefined) {
         throw new Error('Internal error: no server for spec');
       }
-      url = server.specUrl(spec);
-      server.beginSession();
     }
 
+    const url = specUrl(spec, servers);
     const {driver, initialTabHandle} = browsers.get(spec.browser)!;
     await openAndSwitchToNewTab(driver);
     await driver.get(url);
@@ -443,20 +437,20 @@ async function automaticMode(
     }
     if (millis !== undefined) {
       let bytesSent = 0;
-      let browser = {name: '', version: ''};
+      let userAgent = '';
       if (server !== undefined) {
         const session = server.endSession();
         bytesSent = session.bytesSent;
-        browser = session.browser;
+        userAgent = session.userAgent;
       }
-      const result = {
+      const result: BenchmarkResult = {
         name: spec.name,
-        queryString: spec.queryString,
-        implementation: spec.implementation,
-        version: spec.version.label,
+        queryString: spec.url.kind === 'local' ? spec.url.queryString : '',
+        version: spec.url.kind === 'local' ? spec.url.version.label : '',
         millis,
         bytesSent,
-        browser,
+        browser: spec.browser,
+        userAgent,
       };
       specResults.get(spec)!.push(result);
     }
@@ -476,8 +470,8 @@ async function automaticMode(
         status: [
           `${++run}/${numRuns}`,
           spec.browser,
-          spec.name + spec.queryString,
-          `${spec.implementation}@${spec.version.label}`,
+          spec.name + (spec.url.kind === 'local' ? spec.url.queryString : ''),
+          spec.url.kind === 'local' ? `[@${spec.url.version.label}]` : '',
         ].filter((part) => part !== '')
                     .join(' '),
       });
