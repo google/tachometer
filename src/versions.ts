@@ -23,14 +23,13 @@ import {BenchmarkSpec, NpmPackageJson, PackageDependencyMap, PackageVersion} fro
 export function parsePackageVersions(flags: string[]): PackageVersion[] {
   const versions: PackageVersion[] = [];
   for (const flag of flags) {
-    // TODO Aliases.
-    const match = flag.match(/^(.+)@(.+)$/);
+    const match = flag.match(/^(?:(.+)=)?(.+)@(.+)$/);
     if (match === null) {
       throw new Error(`Invalid package format ${flag}`);
     }
-    const [, dep, version] = match;
+    const [, label, dep, version] = match;
     versions.push({
-      label: `${dep}@${version}`,
+      label: label || `${dep}@${version}`,
       dependencyOverrides: {
         [dep]: version,
       },

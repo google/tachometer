@@ -192,7 +192,7 @@ suite('specsFromOpts', () => {
     const argv = [
       'mybench',
       '--package-version=mylib@1.0.0',
-      '--package-version=mylib@2.0.0',
+      '--package-version=v2=mylib@2.0.0',
     ];
     const actual = await specsFromOpts(parse(argv));
     const expected: BenchmarkSpec[] = [
@@ -219,7 +219,7 @@ suite('specsFromOpts', () => {
           urlPath: '/mybench/',
           queryString: '',
           version: {
-            label: 'mylib@2.0.0',
+            label: 'v2',
             dependencyOverrides: {
               mylib: '2.0.0',
             },
