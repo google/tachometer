@@ -108,35 +108,6 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
     }
   }
 
-  specs.sort((a, b) => {
-    if (a.name !== b.name) {
-      return a.name.localeCompare(b.name);
-    }
-    if (a.url.kind !== b.url.kind) {
-      return a.url.kind.localeCompare(b.url.kind);
-    }
-    if (a.url.kind === 'remote' && b.url.kind === 'remote') {
-      if (a.url.url !== b.url.url) {
-        return a.url.url.localeCompare(b.url.url);
-      }
-    }
-    if (a.url.kind === 'local' && b.url.kind === 'local') {
-      if (a.url.urlPath !== b.url.urlPath) {
-        return a.url.urlPath.localeCompare(b.url.urlPath);
-      }
-      if (a.url.version.label !== b.url.version.label) {
-        return a.url.version.label.localeCompare(b.url.version.label);
-      }
-      if (a.url.queryString !== b.url.queryString) {
-        return a.url.queryString.localeCompare(b.url.queryString);
-      }
-    }
-    if (a.browser !== b.browser) {
-      return a.browser.localeCompare(b.browser);
-    }
-    return 0;
-  });
-
   return specs;
 }
 
