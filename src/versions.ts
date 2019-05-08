@@ -10,9 +10,11 @@
  */
 
 import * as child_process from 'child_process';
+import * as crypto from 'crypto';
 import * as fsExtra from 'fs-extra';
 import * as path from 'path';
 
+import {MountPoint} from './server';
 import {BenchmarkSpec, NpmPackageJson, PackageDependencyMap, PackageVersion} from './types';
 
 /**
@@ -67,20 +69,105 @@ export function parsePackageVersions(flags: string[]):
   return versions;
 }
 
-/**
- * Create a copy of an NPM package.json object, but with some or all of its
- * dependencies overriden according to the given override map.
- */
-function overrideNpmDependencies(
-    packageJson: NpmPackageJson,
-    overrides: PackageDependencyMap): NpmPackageJson {
-  return {
-    ...packageJson,
-    dependencies: {
-      ...packageJson.dependencies,
-      ...overrides,
+export interface ServerPlan {
+  /** The benchmarks this server will handle. */
+  specs: BenchmarkSpec[];
+  /** NPM installations needed for this server. */
+  npmInstalls: NpmInstall[];
+  /** URL to disk path mappings. */
+  mountPoints: MountPoint[];
+}
+
+export interface NpmInstall {
+  installDir: string;
+  packageJson: NpmPackageJson;
+}
+
+export async function makeServerPlans(
+    benchmarkRoot: string, npmInstallRoot: string, specs: BenchmarkSpec[]):
+    Promise<ServerPlan[]> {
+  const keySpecs = new Map<string, BenchmarkSpec[]>();
+  const keyDeps = new Map<string, PackageDependencyMap>();
+  const defaultSpecs = [];
+  for (const spec of specs) {
+    if (spec.url !== undefined) {
+      // No server needed for remote URLs.
+      continue;
     }
-  };
+    if (spec.version.label === 'default') {
+      defaultSpecs.push(spec);
+      continue;
+    }
+
+    const key = JSON.stringify([spec.implementation, spec.version.label]);
+    let arr = keySpecs.get(key);
+    if (arr === undefined) {
+      arr = [];
+      keySpecs.set(key, arr);
+    }
+    arr.push(spec);
+
+    const originalPackageJsonPath =
+        path.join(benchmarkRoot, spec.implementation, 'package.json');
+    const originalPackageJson = await fsExtra.readJson(originalPackageJsonPath);
+    const newDeps = {
+      ...originalPackageJson.dependencies,
+      ...spec.version.dependencyOverrides,
+    };
+    keyDeps.set(key, newDeps);
+  }
+
+  const plans = [];
+
+  if (defaultSpecs.length > 0) {
+    plans.push({
+      specs: defaultSpecs,
+      npmInstalls: [],
+      mountPoints: [],
+    });
+  }
+
+  for (const [key, specs] of keySpecs.entries()) {
+    const [implementation, label] = JSON.parse(key);
+    const dependencies = keyDeps.get(key);
+    if (dependencies === undefined) {
+      throw new Error(`Internal error: no deps for key ${key}`);
+    }
+
+    const originalPackageDir = path.join(benchmarkRoot, implementation);
+
+    const installDir =
+        path.join(npmInstallRoot, hashStrings(originalPackageDir, label));
+    plans.push({
+      specs,
+      npmInstalls: [{
+        installDir,
+        packageJson: {
+          private: true,
+          dependencies,
+        }
+      }],
+      mountPoints: [
+        {
+          urlPath:
+              `/benchmarks/${implementation}/versions/${label}/node_modules`,
+          diskPath: path.join(installDir, 'node_modules'),
+        },
+        {
+          urlPath: `/benchmarks/${implementation}/versions/${label}`,
+          diskPath: path.join(benchmarkRoot, implementation),
+        }
+      ],
+    });
+  }
+
+  return plans;
+}
+
+export function hashStrings(...strings: string[]) {
+  return crypto.createHash('sha256')
+      .update(JSON.stringify(strings))
+      .digest('hex');
 }
 
 /**
@@ -99,35 +186,22 @@ async function npmInstall(cwd: string): Promise<void> {
 }
 
 /**
- * Set up all <implementation>/version/<label> directories by copying the parent
- * package.json, applying dependency overrides to it, and running "npm install".
+ * Set up an <implementation>/version/<label> directory by copying the parent
+ * package.json, applying dependency overrides to it, and running "npm
+ * install".
  */
-export async function prepareVersionDirectories(
-    benchmarksDir: string, specs: BenchmarkSpec[]): Promise<void> {
-  for (const spec of specs) {
-    if (spec.version.label === 'default') {
-      // This is just the main implementation installation. We assume it's
-      // already been setup by the main npm install process.
-      continue;
-    }
-    const implDir = path.join(benchmarksDir, spec.implementation);
-    const versionDir = path.join(implDir, 'versions', spec.version.label);
-    if (await fsExtra.pathExists(versionDir)) {
-      // TODO(aomarks) If the user specified new dependencies for the same
-      // version label, it probably makes sense to delete the version directory
-      // and install it again. We could read the package.json and check if the
-      // versions differ.
-      continue;
-    }
-    console.log(`Installing ${spec.implementation}/${spec.version.label} ...`);
-    await fsExtra.ensureDir(versionDir);
-    const packageJson =
-        await fsExtra.readJson(path.join(implDir, 'package.json')) as
-        NpmPackageJson;
-    const newPackageJson =
-        overrideNpmDependencies(packageJson, spec.version.dependencyOverrides);
-    await fsExtra.writeJson(
-        path.join(versionDir, 'package.json'), newPackageJson, {spaces: 2});
-    await npmInstall(versionDir);
+export async function prepareVersionDirectory(
+    {installDir, packageJson}: NpmInstall): Promise<void> {
+  if (await fsExtra.pathExists(installDir)) {
+    // TODO(aomarks) If the user specified new dependencies for the same
+    // version label, it probably makes sense to delete the version directory
+    // and install it again. We could read the package.json and check if the
+    // versions differ.
+    return;
   }
+  console.log(`\nInstalling ${installDir} ...`);
+  await fsExtra.ensureDir(installDir);
+  await fsExtra.writeJson(
+      path.join(installDir, 'package.json'), packageJson, {spaces: 2});
+  await npmInstall(installDir);
 }

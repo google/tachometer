@@ -14,6 +14,7 @@ require('source-map-support').install();
 import * as fsExtra from 'fs-extra';
 import * as path from 'path';
 import * as webdriver from 'selenium-webdriver';
+import * as os from 'os';
 
 import commandLineArgs = require('command-line-args');
 import commandLineUsage = require('command-line-usage');
@@ -27,8 +28,10 @@ import {Server} from './server';
 import {Horizons, ResultStats, horizonsResolved, summaryStats, computeDifferences} from './stats';
 import {specsFromOpts} from './specs';
 import {AutomaticResults, verticalTermResultTable, horizontalTermResultTable, verticalHtmlResultTable, horizontalHtmlResultTable, automaticResultTable, spinner} from './format';
-import {prepareVersionDirectories} from './versions';
+import {prepareVersionDirectory, makeServerPlans} from './versions';
 import * as github from './github';
+
+const defaultInstallDir = path.join(os.tmpdir(), 'tachometer', 'versions');
 
 export const optDefs: commandLineUsage.OptionDefinition[] = [
   {
@@ -77,6 +80,13 @@ export const optDefs: commandLineUsage.OptionDefinition[] = [
     type: String,
     defaultValue: [],
     lazyMultiple: true,
+  },
+  {
+    name: 'npm-install-dir',
+    description: `Where to install custom package versions ` +
+        `(default ${defaultInstallDir})`,
+    type: String,
+    defaultValue: defaultInstallDir,
   },
   {
     name: 'browser',
@@ -147,6 +157,7 @@ export interface Opts {
   port: number[];
   implementation: string;
   'package-version': string[];
+  'npm-install-dir': string;
   browser: string;
   'sample-size': number;
   manual: boolean;
@@ -233,46 +244,81 @@ export async function main() {
     }
   }
 
-  await prepareVersionDirectories(opts.root, specs);
+  const plans =
+      await makeServerPlans(opts.root, opts['npm-install-dir'], specs);
 
-  const server = await Server.start({
-    host: opts.host,
-    ports: opts.port,
-    benchmarksDir: opts.root,
-  });
+  for (const plan of plans) {
+    for (const install of plan.npmInstalls) {
+      await prepareVersionDirectory(install);
+    }
+  }
+
+  const servers = new Map<BenchmarkSpec, Server>();
+  for (const {specs, mountPoints} of plans) {
+    const server = await Server.start({
+      host: opts.host,
+      ports: opts.port,
+      benchmarksDir: opts.root,
+      mountPoints,
+    });
+    for (const spec of specs) {
+      servers.set(spec, server);
+    }
+  }
 
   if (opts.manual === true) {
-    await manualMode(opts, specs, server);
+    await manualMode(opts, specs, servers);
   } else {
-    await automaticMode(opts, specs, server);
+    await automaticMode(opts, specs, servers);
   }
 }
+
+type ServerMap = Map<BenchmarkSpec, Server>;
 
 /**
  * Let the user run benchmarks manually. This process will not exit until
  * the user sends a termination signal.
  */
-async function manualMode(opts: Opts, specs: BenchmarkSpec[], server: Server) {
+async function manualMode(
+    opts: Opts, specs: BenchmarkSpec[], servers: ServerMap) {
   if (opts.save) {
     throw new Error(`Can't save results in manual mode`);
   }
 
-  console.log('Visit these URLs in any browser:');
+  console.log('\nVisit these URLs in any browser:');
+  const allServers = new Set<Server>([...servers.values()]);
   for (const spec of specs) {
+    let url;
+    if (spec.url !== undefined) {
+      url = spec.url;
+    } else {
+      const server = servers.get(spec);
+      if (server === undefined) {
+        throw new Error('Internal error: no server for spec');
+      }
+      url = server.specUrl(spec);
+    }
+
     console.log();
     console.log(
         `${spec.name}${spec.queryString} ` +
         `/ ${spec.implementation} ${spec.version.label}`);
-    const url = spec.url !== undefined ? spec.url : server.specUrl(spec);
     console.log(ansi.format(`[yellow]{${url}}`));
   }
+
   console.log(`\nResults will appear below:\n`);
   (async function() {
     while (true) {
-      server.beginSession();
-      const result = await server.nextResults();
-      server.endSession();
+      const resultPromises = [];
+      for (const server of allServers) {
+        server.beginSession();
+        resultPromises.push(server.nextResults());
+      }
+      const result = await Promise.race(resultPromises);
       console.log(`${result.millis.toFixed(3)} ms`);
+      for (const server of allServers) {
+        server.endSession();
+      }
     }
   })();
 }
@@ -284,7 +330,7 @@ interface Browser {
 }
 
 async function automaticMode(
-    opts: Opts, specs: BenchmarkSpec[], server: Server) {
+    opts: Opts, specs: BenchmarkSpec[], servers: ServerMap) {
   const horizons = parseHorizonFlag(opts.horizon);
 
   let reportGitHubCheckResults;
@@ -352,14 +398,27 @@ async function automaticMode(
     browsers.set(browser, {name: browser, driver, initialTabHandle});
   }
 
+  const allServers = new Set<Server>([...servers.values()]);
   const specResults = new Map<BenchmarkSpec, BenchmarkResult[]>();
   for (const spec of specs) {
     specResults.set(spec, []);
   }
 
+
   const runSpec = async (spec: BenchmarkSpec) => {
-    server.beginSession();
-    const url = spec.url !== undefined ? spec.url : server.specUrl(spec);
+    let server;
+    let url;
+    if (spec.url !== undefined) {
+      url = spec.url;
+    } else {
+      server = servers.get(spec);
+      if (server === undefined) {
+        throw new Error('Internal error: no server for spec');
+      }
+      url = server.specUrl(spec);
+      server.beginSession();
+    }
+
     const {driver, initialTabHandle} = browsers.get(spec.browser)!;
     await openAndSwitchToNewTab(driver);
     await driver.get(url);
@@ -376,11 +435,20 @@ async function automaticMode(
             `Timed out waiting for first contentful paint from ${url}`);
       }
     } else {
+      if (server === undefined) {
+        throw new Error('Internal error: no server for spec');
+      }
       const result = await server.nextResults();
       millis = [result.millis];
     }
-    const {bytesSent, browser} = server.endSession();
     if (millis !== undefined) {
+      let bytesSent = 0;
+      let browser = {name: '', version: ''};
+      if (server !== undefined) {
+        const session = server.endSession();
+        bytesSent = session.bytesSent;
+        browser = session.browser;
+      }
       const result = {
         name: spec.name,
         queryString: spec.queryString,
@@ -468,7 +536,7 @@ async function automaticMode(
 
   // Close the browsers by closing each of their last remaining tabs.
   await Promise.all([...browsers.values()].map(({driver}) => driver.close()));
-  await server.close();
+  await Promise.all([...allServers].map((server) => server.close()));
 
   const withDifferences = makeResults();
   console.log();
