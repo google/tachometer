@@ -7,16 +7,23 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
--   Benchmark names can now include URL query strings (e.g. `tach
-    my-benchmark?foo=1&baz=2`) which will be included as-is in the launched URL.
+-   Benchmarks are now specified as arbitrary paths to local HTML files or
+    directories (containing an `index.html`). Benchmarks are no longer required
+    to be laid out in any particular directory structure. E.g. you can now
+    invoke as `tach foo.html` or `tach myalias=foo/bar/baz`. There is no longer
+    a concept of *implementations*.
 
--   Variants no longer exist. Use URL query strings intead (see above).
+-   Local benchmark files can now include URL query strings (e.g. `tach
+    foo.html?a=b`) which will be included as-is in the launched URL.
+
+-   Variants no longer exist. Use URL query strings instead (see above).
 
 -   Custom package versions are now installed to the system's temp dir, instead
     of into the project directory.
 
--   `--manual` mode no longer shows benchmark data (but it should only be used
-    for testing the web server anyway since it has no statistical significance).
+-   `--manual` mode no longer shows benchmark names and other metadata (but it
+    should only be used for testing the web server anyway since it has no
+    statistical significance).
 
 -   Add `--version` flag.
 
