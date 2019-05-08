@@ -240,23 +240,22 @@ export async function main() {
   const plans =
       await makeServerPlans(opts.root, opts['npm-install-dir'], specs);
 
-  for (const plan of plans) {
-    for (const install of plan.npmInstalls) {
-      await prepareVersionDirectory(install);
-    }
-  }
-
   const servers = new Map<BenchmarkSpec, Server>();
-  for (const {specs, mountPoints} of plans) {
-    const server = await Server.start({
-      host: opts.host,
-      ports: opts.port,
-      mountPoints,
-    });
-    for (const spec of specs) {
-      servers.set(spec, server);
-    }
+  const promises = [];
+  for (const {npmInstalls, mountPoints, specs} of plans) {
+    promises.push(...npmInstalls.map(prepareVersionDirectory));
+    promises.push((async () => {
+      const server = await Server.start({
+        host: opts.host,
+        ports: opts.port,
+        mountPoints,
+      });
+      for (const spec of specs) {
+        servers.set(spec, server);
+      }
+    })());
   }
+  await Promise.all(promises);
 
   if (opts.manual === true) {
     await manualMode(opts, specs, servers);
