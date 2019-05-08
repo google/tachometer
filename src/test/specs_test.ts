@@ -9,8 +9,8 @@
  * rights grant found at http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from 'chai';
-
+import * as chai from 'chai';
+import * as chaiAsPromised from 'chai-as-promised';
 import * as path from 'path';
 
 import {optDefs, Opts} from '../cli';
@@ -18,6 +18,9 @@ import {specsFromOpts} from '../specs';
 import {BenchmarkSpec} from '../types';
 
 import commandLineArgs = require('command-line-args');
+
+chai.use(chaiAsPromised);
+const {assert} = chai;
 
 const repoRoot = path.resolve(__dirname, '..', '..');
 const testData = path.resolve(repoRoot, 'src', 'test', 'data');
@@ -227,5 +230,30 @@ suite('specsFromOpts', () => {
       },
     ];
     assert.deepEqual(actual, expected);
+  });
+
+  suite('errors', () => {
+    test('no such file', async () => {
+      const argv = ['not-a-file'];
+      await assert.isRejected(specsFromOpts(parse(argv)), /no such file/i);
+    });
+
+    test('not accessible from server root', async () => {
+      const argv = [repoRoot];
+      await assert.isRejected(
+          specsFromOpts(parse(argv)), /not accessible from server root/i);
+    });
+
+    test('did not contain an index.html', async () => {
+      const argv = ['noindex'];
+      await assert.isRejected(
+          specsFromOpts(parse(argv)), /did not contain an index\.html/i);
+    });
+
+    test('browser not supported', async () => {
+      const argv = ['mybench', '--browser=potato'];
+      await assert.isRejected(
+          specsFromOpts(parse(argv)), /browser potato is not supported/i);
+    });
   });
 });
