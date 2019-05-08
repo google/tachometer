@@ -78,7 +78,8 @@ export interface BenchmarkResult {
   queryString: string;
   version: string;
   millis: number[];
-  browser: {name: string, version: string};
+  browser: string;
+  userAgent: string;
   bytesSent: number;
 }
 

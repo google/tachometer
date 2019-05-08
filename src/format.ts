@@ -11,6 +11,7 @@
 
 import stripAnsi from 'strip-ansi';
 import * as table from 'table';
+import {UAParser} from 'ua-parser-js';
 
 import ansi = require('ansi-escape-sequences');
 
@@ -245,13 +246,21 @@ const queryParamsDimension: Dimension = {
 
 const versionDimension: Dimension = {
   label: 'Version',
-  format: (r: ResultStats) => r.result.version,
+  format: (r: ResultStats) => r.result.version || ansi.format('[gray]{<none>}'),
 };
 
 const browserDimension: Dimension = {
   label: 'Browser',
-  format: (r: ResultStats) =>
-      `${r.result.browser.name}\n${r.result.browser.version}`,
+  format: (r: ResultStats) => {
+    if (r.result.userAgent === '') {
+      // This happens with remote URLs, since we don't get a chance to
+      // instrument any requests to find the user agent.
+      // TODO We could make one no-op request just to probe the user agent.
+      return r.result.browser;
+    }
+    const ua = new UAParser(r.result.userAgent).getBrowser();
+    return `${r.result.browser}\n${ua.version}`;
+  },
 };
 
 const sampleSizeDimension: Dimension = {
@@ -315,7 +324,7 @@ function makeUniqueLabelFn(results: BenchmarkResult[]):
     names.add(result.name);
     queryStrings.add(result.queryString);
     versions.add(result.version);
-    browsers.add(result.browser.name);
+    browsers.add(result.browser);
   }
   return (result: BenchmarkResult) => {
     const fields = [];
@@ -329,7 +338,7 @@ function makeUniqueLabelFn(results: BenchmarkResult[]):
       fields.push(result.version);
     }
     if (browsers.size > 1) {
-      fields.push(result.browser.name);
+      fields.push(result.browser);
     }
     return fields.join('\n');
   };

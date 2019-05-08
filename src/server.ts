@@ -18,7 +18,6 @@ import mount = require('koa-mount');
 import send = require('koa-send');
 import serve = require('koa-static');
 import bodyParser = require('koa-bodyparser');
-import {UAParser} from 'ua-parser-js';
 
 import {BenchmarkResponse, Deferred} from './types';
 
@@ -35,15 +34,15 @@ export interface MountPoint {
 
 const clientLib = path.resolve(__dirname, '..', 'client', 'lib');
 
-class Session {
-  bytes: number = 0;
-  userAgent: string = '';
+interface Session {
+  bytesSent: number;
+  userAgent: string;
 }
 
 export class Server {
   readonly url: string;
   private readonly server: net.Server;
-  private session: Session|undefined;
+  private session: Session = {bytesSent: 0, userAgent: ''};
   private deferredResults = new Deferred<BenchmarkResponse>();
 
   static start(opts: ServerOpts): Promise<Server> {
@@ -95,33 +94,14 @@ export class Server {
   }
 
   /**
-   * Mark the beginning of a session and reset instrumentation.
+   * Mark the end of one session, return the data instrumented from it, and
+   * begin a new session.
    */
-  beginSession() {
-    if (this.session !== undefined) {
-      throw new Error('A session is already pending');
-    }
-    this.session = new Session();
+  endSession(): Session {
+    const session = this.session;
+    this.session = {bytesSent: 0, userAgent: ''};
     this.deferredResults = new Deferred();
-  }
-
-  /**
-   * Mark the end of a session and return the data instrumented from it.
-   */
-  endSession(): {bytesSent: number, browser: {name: string, version: string}} {
-    if (this.session === undefined) {
-      throw new Error('No session is pending');
-    }
-    const bytesSent = this.session.bytes;
-    const ua = new UAParser(this.session.userAgent).getBrowser();
-    this.session = undefined;
-    return {
-      bytesSent,
-      browser: {
-        name: ua.name || '',
-        version: ua.version || '',
-      },
-    };
+    return session;
   }
 
   async nextResults(): Promise<BenchmarkResponse> {
@@ -153,7 +133,7 @@ export class Server {
     // some kind of session tracking.
     await next();
     if (typeof ctx.response.length === 'number') {
-      session.bytes += ctx.response.length;
+      session.bytesSent += ctx.response.length;
     } else if (ctx.status === 200) {
       console.log(
           `No response length for 200 response for ${ctx.url}, ` +

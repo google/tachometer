@@ -302,20 +302,15 @@ async function manualMode(
   }
 
   console.log(`\nResults will appear below:\n`);
-  (async function() {
-    while (true) {
-      const resultPromises = [];
-      for (const server of allServers) {
-        server.beginSession();
-        resultPromises.push(server.nextResults());
-      }
-      const result = await Promise.race(resultPromises);
-      console.log(`${result.millis.toFixed(3)} ms`);
-      for (const server of allServers) {
+  for (const server of [...allServers]) {
+    (async function() {
+      while (true) {
+        const result = await server.nextResults();
         server.endSession();
+        console.log(`${result.millis.toFixed(3)} ms`);
       }
-    }
-  })();
+    })();
+  }
 }
 
 interface Browser {
@@ -406,7 +401,6 @@ async function automaticMode(
       if (server === undefined) {
         throw new Error('Internal error: no server for spec');
       }
-      server.beginSession();
     }
 
     const url = specUrl(spec, servers);
@@ -434,19 +428,20 @@ async function automaticMode(
     }
     if (millis !== undefined) {
       let bytesSent = 0;
-      let browser = {name: '', version: ''};
+      let userAgent = '';
       if (server !== undefined) {
         const session = server.endSession();
         bytesSent = session.bytesSent;
-        browser = session.browser;
+        userAgent = session.userAgent;
       }
-      const result = {
+      const result: BenchmarkResult = {
         name: spec.name,
         queryString: spec.url.kind === 'local' ? spec.url.queryString : '',
         version: spec.url.kind === 'local' ? spec.url.version.label : '',
         millis,
         bytesSent,
-        browser,
+        browser: spec.browser,
+        userAgent,
       };
       specResults.get(spec)!.push(result);
     }
