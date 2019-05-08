@@ -226,7 +226,7 @@ export async function main() {
     throw new Error('No benchmarks matched with the given flags');
   }
 
-  if (opts.measure === 'fcp' || specs.find((spec) => spec.url !== undefined)) {
+  if (specs.find((spec) => spec.measurement === 'fcp')) {
     for (const browser of opts.browser.split(',')) {
       if (!fcpBrowsers.has(browser)) {
         throw new Error(

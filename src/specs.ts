@@ -105,7 +105,7 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
           });
         }
       }
-    };
+    }
   }
 
   specs.sort((a, b) => {
