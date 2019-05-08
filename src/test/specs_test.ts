@@ -41,12 +41,29 @@ suite('specsFromOpts', () => {
     assert.deepEqual(actual, []);
   });
 
-  test('url', async () => {
+  test('remote url', async () => {
     const argv = ['http://example.com'];
     const actual = await specsFromOpts(parse(argv));
     const expected: BenchmarkSpec[] = [
       {
         name: 'http://example.com',
+        url: {
+          kind: 'remote',
+          url: 'http://example.com',
+        },
+        browser: 'chrome',
+        measurement: 'fcp',
+      },
+    ];
+    assert.deepEqual(actual, expected);
+  });
+
+  test('remote url with label', async () => {
+    const argv = ['potato=http://example.com'];
+    const actual = await specsFromOpts(parse(argv));
+    const expected: BenchmarkSpec[] = [
+      {
+        name: 'potato',
         url: {
           kind: 'remote',
           url: 'http://example.com',
@@ -80,8 +97,30 @@ suite('specsFromOpts', () => {
     assert.deepEqual(actual, expected);
   });
 
+  test('local file with label', async () => {
+    const argv = ['potato=mybench/index.html'];
+    const actual = await specsFromOpts(parse(argv));
+    const expected: BenchmarkSpec[] = [
+      {
+        name: 'potato',
+        url: {
+          kind: 'local',
+          urlPath: '/mybench/index.html',
+          queryString: '',
+          version: {
+            label: 'default',
+            dependencyOverrides: {},
+          },
+        },
+        browser: 'chrome',
+        measurement: 'callback',
+      },
+    ];
+    assert.deepEqual(actual, expected);
+  });
+
   test('local directory', async () => {
-    const argv = ['mybench'];
+    const argv = ['mybench/'];
     const actual = await specsFromOpts(parse(argv));
     const expected: BenchmarkSpec[] = [
       {
@@ -108,6 +147,28 @@ suite('specsFromOpts', () => {
     const expected: BenchmarkSpec[] = [
       {
         name: 'mybench',
+        url: {
+          kind: 'local',
+          urlPath: '/mybench/',
+          queryString: '?foo=bar',
+          version: {
+            label: 'default',
+            dependencyOverrides: {},
+          },
+        },
+        browser: 'chrome',
+        measurement: 'callback',
+      },
+    ];
+    assert.deepEqual(actual, expected);
+  });
+
+  test('local directory with query params and label', async () => {
+    const argv = ['potato=mybench?foo=bar'];
+    const actual = await specsFromOpts(parse(argv));
+    const expected: BenchmarkSpec[] = [
+      {
+        name: 'potato',
         url: {
           kind: 'local',
           urlPath: '/mybench/',

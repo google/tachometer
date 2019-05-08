@@ -74,7 +74,6 @@ export async function makeServerPlans(
     if (kind === undefined) {
       throw new Error(`No such file or directory ${diskPath}`);
     }
-    // TODO Verify there's an index.html file (but not here?)
     const originalPackageJsonPath = await findPackageJsonPath(
         kind === 'file' ? path.dirname(diskPath) : diskPath);
     if (originalPackageJsonPath === undefined) {

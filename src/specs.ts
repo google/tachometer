@@ -10,7 +10,7 @@
  */
 
 import * as path from 'path';
-import * as url from 'url';
+import {URL} from 'url';
 
 import {validBrowsers} from './browser';
 import {Opts} from './cli';
@@ -38,86 +38,74 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
 
   const specs: BenchmarkSpec[] = [];
 
-  const addRemote = (url: string) => {
-    for (const browser of browsers) {
-      specs.push({
-        name: url,  // TODO Support aliases.
-        url: {
-          kind: 'remote',
-          url,
-        },
-        browser,
-        measurement: 'fcp',  // callback not supported
-      });
-    }
-  };
-
   const versions = parsePackageVersions(opts['package-version']);
   if (versions.length === 0) {
     versions.push({label: 'default', dependencyOverrides: {}});
   }
 
-  const addLocal = async (localPathAndQueryString: string) => {
-    const [localPath, queryString] = splitQueryString(localPathAndQueryString);
+  // Benchmark paths/URLs are the bare arguments not associated with a flag, so
+  // they are found in _unknown.
+  for (const argStr of opts._unknown || []) {
+    const arg = parseBenchmarkArgument(argStr);
 
-    const serverRelativePath = path.relative(opts.root, localPath);
-    // TODO Test on Windows.
-    if (serverRelativePath.startsWith('..')) {
-      throw new Error(
-          `File or directory is not accessible from server root: ${localPath}`);
-    }
-
-    const kind = await fileKind(localPath);
-    if (kind === undefined) {
-      throw new Error(`No such file or directory: ${localPath}`);
-    }
-
-    // TODO Test on Windows.
-    let urlPath = `/${serverRelativePath.replace(path.win32.sep, '/')}`;
-    if (kind === 'dir') {
-      if (await fileKind(path.join(localPath, 'index.html')) !== 'file') {
-        throw new Error(
-            `Directory did not contain an index.html: ${localPath}`);
-      }
-      // We need a trailing slash when serving a directory. Our static server
-      // will serve index.html at both /foo and /foo/, without redirects. But
-      // these two forms will have baseURIs that resolve relative URLs
-      // differently, and we want the form that would work the same as
-      // /foo/index.html.
-      urlPath += '/';
-    }
-    const name = localPath;  // TODO Support aliases.
-
-    for (const browser of browsers) {
-      for (const version of versions) {
+    if (arg.kind === 'remote') {
+      for (const browser of browsers) {
         specs.push({
-          name,
-          browser,
-          measurement: opts.measure,
+          name: arg.alias || arg.url,
           url: {
-            kind: 'local',
-            urlPath,
-            queryString,
-            version,
+            kind: 'remote',
+            url: arg.url,
           },
+          browser,
+          measurement: 'fcp',  // callback not supported
         });
       }
-    }
-  };
 
-  // Benchmark names/URLs are the bare arguments not associated with a flag, so
-  // they are found in _unknown.
-  for (const benchmark of opts._unknown || []) {
-    try {
-      new url.URL(benchmark);
-      addRemote(benchmark);
-    } catch (e) {
-      if (e.code === 'ERR_INVALID_URL') {
-        await addLocal(benchmark);
-      } else {
-        throw e;
+    } else {
+      const serverRelativePath = path.relative(opts.root, arg.diskPath);
+      // TODO Test on Windows.
+      if (serverRelativePath.startsWith('..')) {
+        throw new Error(
+            'File or directory is not accessible from server root:' +
+            arg.diskPath);
       }
-    }
+
+      const kind = await fileKind(arg.diskPath);
+      if (kind === undefined) {
+        throw new Error(`No such file or directory: ${arg.diskPath}`);
+      }
+
+      // TODO Test on Windows.
+      let urlPath = `/${serverRelativePath.replace(path.win32.sep, '/')}`;
+      if (kind === 'dir') {
+        if (await fileKind(path.join(arg.diskPath, 'index.html')) !== 'file') {
+          throw new Error(
+              `Directory did not contain an index.html: ${arg.diskPath}`);
+        }
+        // We need a trailing slash when serving a directory. Our static server
+        // will serve index.html at both /foo and /foo/, without redirects. But
+        // these two forms will have baseURIs that resolve relative URLs
+        // differently, and we want the form that would work the same as
+        // /foo/index.html.
+        urlPath += '/';
+      }
+
+      for (const browser of browsers) {
+        for (const version of versions) {
+          specs.push({
+            name: arg.alias || serverRelativePath.replace(path.win32.sep, '/'),
+            browser,
+            measurement: opts.measure,
+            url: {
+              kind: 'local',
+              urlPath,
+              queryString: arg.queryString,
+              version,
+            },
+          });
+        }
+      }
+    };
   }
 
   specs.sort((a, b) => {
@@ -150,6 +138,69 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
   });
 
   return specs;
+}
+
+function parseBenchmarkArgument(str: string):
+    {kind: 'remote', url: string, alias?: string}|
+    {kind: 'local', diskPath: string, queryString: string, alias?: string} {
+  if (isUrl(str)) {
+    // http://example.com
+    return {
+      kind: 'remote',
+      url: str,
+    };
+  }
+
+  if (str.includes('=')) {
+    const eq = str.indexOf('=');
+    const maybeUrl = str.substring(eq + 1);
+    if (isUrl(maybeUrl)) {
+      // foo=http://example.com
+      return {
+        kind: 'remote',
+        url: maybeUrl,
+        alias: str.substring(0, eq),
+      };
+    }
+  }
+
+  let queryString = '';
+  if (str.includes('?')) {
+    // a/b.html?a=b
+    // foo=a/b.html?a=b
+    const q = str.indexOf('?');
+    queryString = str.substring(q);
+    str = str.substring(0, q);
+  }
+
+  let alias = undefined;
+  if (str.includes('=')) {
+    // foo=a/b.html?a=b
+    // foo=a/b.html
+    const eq = str.indexOf('=');
+    alias = str.substring(0, eq);
+    str = str.substring(eq + 1);
+  }
+
+  // a/b.html
+  // a/b.html?a=b
+  // foo=a/b.html
+  // foo=a/b.html?a=b
+  return {
+    kind: 'local',
+    alias,
+    diskPath: str,
+    queryString: queryString,
+  };
+}
+
+function isUrl(str: string): boolean {
+  try {
+    new URL(str);
+    return true;
+  } catch (e) {
+    return false;
+  }
 }
 
 export interface SpecFilter {
@@ -187,9 +238,4 @@ export function specMatchesFilter(
     return false;
   }
   return true;
-}
-
-function splitQueryString(path: string): [string, string] {
-  const q = path.indexOf('?');
-  return q === -1 ? [path, ''] : [path.substring(0, q), path.substring(q)];
 }
