@@ -68,7 +68,7 @@ export const optDefs: commandLineUsage.OptionDefinition[] = [
   },
   {
     name: 'package-version',
-    description: 'Specify one or more dependency versions (see README)',
+    description: 'Specify an NPM package version to swap in (see README)',
     alias: 'p',
     type: String,
     defaultValue: [],
@@ -194,9 +194,10 @@ export async function main() {
       },
       {
         header: 'Usage',
-        content: 'tach * \n' +
-            'tach my-bench-a my-bench-b\n' +
-            'tach http://example.com/a http://example.com/b'
+        content: 'tach foo.html\n' +
+            'tach foo.html?i=1 foo.html?i=2\n' +
+            'tach bar/baz\n' +
+            'tach http://example.com\n'
       },
       {
         header: 'Options',
