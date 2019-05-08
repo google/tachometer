@@ -285,10 +285,23 @@ will expire.
 
 ## Usage
 
+Run a benchmark from a local file:
 ```sh
 tach foo.html
+```
+
+Compare a benchmark with different URL parameters:
+```sh
 tach foo.html?i=1 foo.html?i=2
-tach bar/baz
+```
+
+Benchmark `index.html` in a directory:
+```sh
+tach foo/bar
+```
+
+Benchmark First Contentful Paint time of a remote URL:
+```sh
 tach http://example.com
 ```
 

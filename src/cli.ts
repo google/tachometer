@@ -194,10 +194,19 @@ export async function main() {
       },
       {
         header: 'Usage',
-        content: 'tach foo.html\n' +
-            'tach foo.html?i=1 foo.html?i=2\n' +
-            'tach bar/baz\n' +
-            'tach http://example.com\n'
+        content: `
+Run a benchmark from a local file:
+$ tach foo.html
+
+Compare a benchmark with different URL parameters:
+$ tach foo.html?i=1 foo.html?i=2
+
+Benchmark index.html in a directory:
+$ tach foo/bar
+
+Benchmark a remote URL's First Contentful Paint time:
+$ tach http://example.com
+`,
       },
       {
         header: 'Options',
