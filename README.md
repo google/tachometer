@@ -298,7 +298,6 @@ Flag                      | Default     | Description
 `--root`                  | `./`        | Root directory to search for benchmarks
 `--host`                  | `127.0.0.1` | Which host to run on
 `--port`                  | `8080, 8081, ..., 0`| Which port to run on (comma-delimited preference list, `0` for random)
-`--variant` / `-v`        | `*`         | Which variants to run (`*` for all) ([details](#variants))
 `--package-version` / `-p`| *(none)*    | Specify an NPM package version to swap in ([details](#swap-npm-dependency-versions))
 `--browser` / `-b`        | `chrome-headless` | Which browsers to launch in automatic mode, comma-delimited (chrome, chrome-headless, firefox, firefox-headless, safari)
 `--sample-size` / `-n`    | `50`        | Minimum number of times to run each benchmark ([details](#sample-size)]
