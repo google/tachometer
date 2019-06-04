@@ -48,6 +48,11 @@ export interface NpmPackageJson {
 /** The kinds of intervals we can measure. */
 export type Measurement = 'callback'|'fcp';
 
+/** Return whether the given value is a valid measurement. */
+export function isMeasurement(val: unknown): val is Measurement {
+  return val === 'callback' || val === 'fcp';
+}
+
 /** A specification of a benchmark to run. */
 export interface BenchmarkSpec {
   url: LocalUrl|RemoteUrl;

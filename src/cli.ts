@@ -67,6 +67,12 @@ export const optDefs: commandLineUsage.OptionDefinition[] = [
     defaultValue: [8080, 8081, 8082, 8083, 0],
   },
   {
+    name: 'config',
+    description: 'Path to JSON config file (see README for format)',
+    type: String,
+    defaultValue: '',
+  },
+  {
     name: 'package-version',
     description: 'Specify an NPM package version to swap in (see README)',
     alias: 'p',

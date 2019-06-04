@@ -165,7 +165,7 @@ function parseBenchmarkArgument(str: string):
   };
 }
 
-function isUrl(str: string): boolean {
+export function isUrl(str: string): boolean {
   try {
     new URL(str);
     return true;

@@ -283,6 +283,40 @@ Note that, if the actual difference is very close to a horizon, then it is
 likely that the precision stopping condition will never be met, and the timeout
 will expire.
 
+## Config file
+
+Use the `--config` flag to control tachometer with a JSON configuration file.
+Everything you can do with flags can also be done with the config file. It is
+easier to use a config file for complex benchmark configurations.
+
+```json
+{
+  "root": "./benchmarks",
+  "timeout": 3,
+  "benchmarks": [
+    {
+      "name": "foo",
+      "path": "foo/index.html",
+      "params": {
+        "baz": 37
+      },
+      "browser": "chrome",
+      "measure": "fcp"
+    },
+  ],
+}
+```
+
+By default, all rows and columns are visible.
+
+If at least one row is `show`, then the default visibility is `hide` (like the
+"solo" button on an audio mixer).
+
+
+If all visibilities are `auto` (the default), then all visibilites are `show`.
+If all visibilities are `auto` or `show`, then the default visibility is `hide`.
+If all visibilities are `auto` or `hide`, then the default visibility is `show`.
+
 ## Usage
 
 Run a benchmark from a local file:
@@ -311,6 +345,7 @@ Flag                      | Default     | Description
 `--root`                  | `./`        | Root directory to search for benchmarks
 `--host`                  | `127.0.0.1` | Which host to run on
 `--port`                  | `8080, 8081, ..., 0`| Which port to run on (comma-delimited preference list, `0` for random)
+`--config`                | *(none)*    | Path to JSON config file ([details](#config-file))
 `--package-version` / `-p`| *(none)*    | Specify an NPM package version to swap in ([details](#swap-npm-dependency-versions))
 `--browser` / `-b`        | `chrome`    | Which browsers to launch in automatic mode, comma-delimited (chrome, chrome-headless, firefox, firefox-headless, safari)
 `--sample-size` / `-n`    | `50`        | Minimum number of times to run each benchmark ([details](#sample-size)]
