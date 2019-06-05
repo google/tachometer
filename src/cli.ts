@@ -229,10 +229,6 @@ $ tach http://example.com
     return;
   }
 
-  if (opts['sample-size'] <= 0) {
-    throw new Error('--sample-size must be > 0');
-  }
-
   if (opts.measure !== 'callback' && opts.measure !== 'fcp') {
     throw new Error(
         `Expected --measure flag to be "callback" or "fcp" ` +
@@ -245,8 +241,13 @@ $ tach http://example.com
   } else {
     config = {
       root: opts.root,
+      sampleSize: opts['sample-size'],
       benchmarks: await specsFromOpts(opts),
-    }
+    };
+  }
+
+  if (config.sampleSize <= 1) {
+    throw new Error('--sample-size must be > 1');
   }
 
   if (config.benchmarks.length === 0) {
@@ -284,9 +285,9 @@ $ tach http://example.com
   await Promise.all(promises);
 
   if (opts.manual === true) {
-    await manualMode(opts, config.benchmarks, servers);
+    await manualMode(config, opts, config.benchmarks, servers);
   } else {
-    await automaticMode(opts, config.benchmarks, servers);
+    await automaticMode(config, opts, config.benchmarks, servers);
   }
 }
 
@@ -308,7 +309,7 @@ function specUrl(spec: BenchmarkSpec, servers: ServerMap): string {
  * the user sends a termination signal.
  */
 async function manualMode(
-    opts: Opts, specs: BenchmarkSpec[], servers: ServerMap) {
+    _config: Config, opts: Opts, specs: BenchmarkSpec[], servers: ServerMap) {
   if (opts.save) {
     throw new Error(`Can't save results in manual mode`);
   }
@@ -346,7 +347,7 @@ interface Browser {
 }
 
 async function automaticMode(
-    opts: Opts, specs: BenchmarkSpec[], servers: ServerMap) {
+    config: Config, opts: Opts, specs: BenchmarkSpec[], servers: ServerMap) {
   const horizons = parseHorizonFlag(opts.horizon);
 
   let reportGitHubCheckResults;
@@ -394,7 +395,7 @@ async function automaticMode(
   console.log('Running benchmarks\n');
 
   const bar = new ProgressBar('[:bar] :status', {
-    total: specs.length * opts['sample-size'],
+    total: specs.length * config.sampleSize,
     width: 58,
   });
 
@@ -479,9 +480,9 @@ async function automaticMode(
   };
 
   // Always collect our minimum number of samples.
-  const numRuns = specs.length * opts['sample-size'];
+  const numRuns = specs.length * config.sampleSize;
   let run = 0;
-  for (let sample = 0; sample < opts['sample-size']; sample++) {
+  for (let sample = 0; sample < config.sampleSize; sample++) {
     for (const spec of specs) {
       bar.tick(0, {
         status: [

@@ -18,6 +18,7 @@ suite('config', () => {
     test('fully specified', () => {
       const config = {
         root: '/my/root',
+        sampleSize: 52,
         benchmarks: [{
           name: 'example',
           url: 'http://example.com',
@@ -27,6 +28,7 @@ suite('config', () => {
       };
       const expected: Config = {
         root: '/my/root',
+        sampleSize: 52,
         benchmarks: [{
           name: 'example',
           url: {kind: 'remote', url: 'http://example.com'},
@@ -51,6 +53,7 @@ suite('config', () => {
       };
       const expected: Config = {
         root: '.',
+        sampleSize: 50,
         benchmarks: [
           {
             name: 'http://example.com?foo=bar',
@@ -106,6 +109,7 @@ suite('config', () => {
       };
       const expected: Config = {
         root: '.',
+        sampleSize: 50,
         benchmarks: [
           {
             name: 'http://example.com',
@@ -242,6 +246,30 @@ suite('config', () => {
         assert.throws(
             () => parseConfigFile(config),
             'config.benchmarks[0].measurement is not one of enum values: callback');
+      });
+
+      test('sampleSize too small', () => {
+        const config = {
+          sampleSize: 1,
+          benchmarks: [{
+            url: 'http://example.com',
+          }],
+        };
+        assert.throws(
+            () => parseConfigFile(config),
+            'config.sampleSize must have a minimum value of 2');
+      });
+
+      test('non-integer sampleSize', () => {
+        const config = {
+          sampleSize: 2.1,
+          benchmarks: [{
+            url: 'http://example.com',
+          }],
+        };
+        assert.throws(
+            () => parseConfigFile(config),
+            'config.sampleSize is not of a type(s) integer');
       });
     });
   });

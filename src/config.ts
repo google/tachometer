@@ -21,6 +21,13 @@ import {BenchmarkSpec, Measurement} from './types';
  */
 export interface ConfigFile {
   root?: string;
+
+  /**
+   * @TJS-type integer
+   * @TJS-minimum 2
+   */
+  sampleSize?: number;
+
   /** @TJS-minItems 1 */
   benchmarks: ConfigFileBenchmark[];
 }
@@ -41,6 +48,7 @@ interface ConfigFileBenchmark {
  */
 export interface Config {
   root: string;
+  sampleSize: number;
   benchmarks: BenchmarkSpec[];
 }
 
@@ -66,6 +74,7 @@ export function parseConfigFile(parsedJson: unknown): Config {
 
   return {
     root: validated.root || '.',
+    sampleSize: validated.sampleSize || 50,
     benchmarks,
   };
 }
@@ -133,7 +142,8 @@ function parseBenchmark(benchmark: ConfigFileBenchmark):
 }
 
 function applyDefaults(partialSpec: Partial<BenchmarkSpec>): BenchmarkSpec {
-  let {url, name, measurement, browser} = partialSpec;
+  const url = partialSpec.url;
+  let {name, measurement, browser} = partialSpec;
   if (url === undefined) {
     // Note we can't validate this with jsonschema, because we only need to
     // ensure we have a URL after recursive expansion; so at any given level the
