@@ -61,10 +61,6 @@ suite('versions', () => {
         url: {
           kind: 'local',
           urlPath: '/mylib/mybench/',
-          version: {
-            label: 'default',
-            dependencyOverrides: {},
-          },
           queryString: '',
         },
         measurement: 'fcp',
@@ -75,10 +71,6 @@ suite('versions', () => {
         url: {
           kind: 'local',
           urlPath: '/otherlib/otherbench/',
-          version: {
-            label: 'default',
-            dependencyOverrides: {},
-          },
           queryString: '',
         },
         measurement: 'fcp',

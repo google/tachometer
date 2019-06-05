@@ -14,7 +14,7 @@ import {URL} from 'url';
 
 import {validBrowsers} from './browser';
 import {Opts} from './cli';
-import {BenchmarkSpec} from './types';
+import {BenchmarkSpec, PackageVersion} from './types';
 import {fileKind, parsePackageVersions} from './versions';
 
 /**
@@ -38,9 +38,10 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
 
   const specs: BenchmarkSpec[] = [];
 
-  const versions = parsePackageVersions(opts['package-version']);
+  const versions: Array<PackageVersion|undefined> =
+      parsePackageVersions(opts['package-version']);
   if (versions.length === 0) {
-    versions.push({label: 'default', dependencyOverrides: {}});
+    versions.push(undefined);
   }
 
   // Benchmark paths/URLs are the bare arguments not associated with a flag, so

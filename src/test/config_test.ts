@@ -107,10 +107,6 @@ suite('config', () => {
               kind: 'local',
               urlPath: './local/path',
               queryString: '?foo=bar',
-              version: {
-                label: 'default',
-                dependencyOverrides: {},
-              },
             },
             measurement: 'callback',
             browser: 'chrome',

@@ -117,25 +117,18 @@ function parseBenchmark(benchmark: ConfigFileBenchmark):
         queryString = '';
       }
 
-      let version;
-      if (benchmark.packageVersions !== undefined) {
-        version = {
-          label: benchmark.packageVersions.label,
-          dependencyOverrides: benchmark.packageVersions.dependencies,
-        };
-      } else {
-        version = {
-          label: 'default',
-          dependencyOverrides: {},
-        };
-      }
-
       spec.url = {
         kind: 'local',
         urlPath,
         queryString,
-        version,
       };
+
+      if (benchmark.packageVersions !== undefined) {
+        spec.url.version = {
+          label: benchmark.packageVersions.label,
+          dependencyOverrides: benchmark.packageVersions.dependencies,
+        };
+      }
     }
   }
 
@@ -161,8 +154,8 @@ function applyDefaults(partialSpec: Partial<BenchmarkSpec>): BenchmarkSpec {
   let {name, measurement, browser} = partialSpec;
   if (url === undefined) {
     // Note we can't validate this with jsonschema, because we only need to
-    // ensure we have a URL after recursive expansion; so at any given level the
-    // URL could be optional.
+    // ensure we have a URL after recursive expansion; so at any given level
+    // the URL could be optional.
     throw new Error('No URL specified');
   }
   if (url.kind === 'remote') {

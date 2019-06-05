@@ -321,9 +321,8 @@ async function manualMode(
     if (spec.url.kind === 'local') {
       console.log(
           `${spec.name}${spec.url.queryString}` +
-          (spec.url.version.label !== 'default' ?
-               ` [@${spec.url.version.label}]` :
-               ''));
+          (spec.url.version !== undefined ? ` [@${spec.url.version.label}]` :
+                                            ''));
     }
     console.log(ansi.format(`[yellow]{${specUrl(spec, servers)}}`));
   }
@@ -464,7 +463,9 @@ async function automaticMode(
       const result: BenchmarkResult = {
         name: spec.name,
         queryString: spec.url.kind === 'local' ? spec.url.queryString : '',
-        version: spec.url.kind === 'local' ? spec.url.version.label : '',
+        version: spec.url.kind === 'local' && spec.url.version !== undefined ?
+            spec.url.version.label :
+            '',
         millis,
         bytesSent,
         browser: spec.browser,
@@ -489,7 +490,9 @@ async function automaticMode(
           `${++run}/${numRuns}`,
           spec.browser,
           spec.name + (spec.url.kind === 'local' ? spec.url.queryString : ''),
-          spec.url.kind === 'local' ? `[@${spec.url.version.label}]` : '',
+          spec.url.kind === 'local' && spec.url.version !== undefined ?
+              `[@${spec.url.version.label}]` :
+              '',
         ].filter((part) => part !== '')
                     .join(' '),
       });

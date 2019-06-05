@@ -58,7 +58,7 @@ export interface BenchmarkSpec {
 
 export interface LocalUrl {
   kind: 'local';
-  version: PackageVersion;
+  version?: PackageVersion;
   urlPath: string;
   queryString: string;
 }
