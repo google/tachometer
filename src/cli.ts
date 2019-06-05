@@ -235,18 +235,29 @@ $ tach http://example.com
         `but was "${opts.measure}"`);
   }
 
+  // These options are only controlled by flags.
+  const baseConfig = {
+    mode: (opts.manual === true ? 'manual' : 'automatic') as
+        ('manual' | 'automatic'),
+    savePath: opts.save,
+    githubCheck: opts['github-check'] ?
+        github.parseCheckFlag(opts['github-check']) :
+        undefined,
+  };
   let config: Config;
   if (opts.config) {
-    config = parseConfigFile(opts.config);
+    config = {
+      ...baseConfig,
+      ...parseConfigFile(opts.config),
+    };
   } else {
     config = {
+      ...baseConfig,
       root: opts.root,
       sampleSize: opts['sample-size'],
       timeout: opts.timeout,
       autoSampleConditions: parseHorizons(opts.horizon.split(',')),
       benchmarks: await specsFromOpts(opts),
-      mode: opts.manual === true ? 'manual' : 'automatic',
-      savePath: opts.save,
     };
   }
 
@@ -291,7 +302,7 @@ $ tach http://example.com
   if (config.mode === 'manual') {
     await manualMode(config, config.benchmarks, servers);
   } else {
-    await automaticMode(config, opts, config.benchmarks, servers);
+    await automaticMode(config, config.benchmarks, servers);
   }
 }
 
@@ -350,11 +361,10 @@ interface Browser {
 }
 
 async function automaticMode(
-    config: Config, opts: Opts, specs: BenchmarkSpec[], servers: ServerMap) {
+    config: Config, specs: BenchmarkSpec[], servers: ServerMap) {
   let reportGitHubCheckResults;
-  if (opts['github-check'] !== '') {
-    const {appId, installationId, repo, commit} =
-        github.parseCheckFlag(opts['github-check']);
+  if (config.githubCheck !== undefined) {
+    const {appId, installationId, repo, commit} = config.githubCheck;
 
     // We can directly store our GitHub App private key as a secret Travis
     // environment variable (as opposed to committing it as a file and

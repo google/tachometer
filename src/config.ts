@@ -13,6 +13,7 @@ import * as jsonschema from 'jsonschema';
 
 import {Browser} from './browser';
 import {parseHorizons} from './cli';
+import {CheckConfig} from './github';
 import {isUrl} from './specs';
 import {Horizons} from './stats';
 import {BenchmarkSpec, Measurement, PackageDependencyMap} from './types';
@@ -70,6 +71,7 @@ export interface Config {
   autoSampleConditions: Horizons;
   mode: 'automatic'|'manual';
   savePath: string;
+  githubCheck?: CheckConfig;
 }
 
 /**
