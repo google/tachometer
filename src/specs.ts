@@ -14,8 +14,9 @@ import {URL} from 'url';
 
 import {validBrowsers} from './browser';
 import {Opts} from './cli';
+import {urlFromLocalPath} from './config';
 import {BenchmarkSpec, PackageVersion} from './types';
-import {fileKind, parsePackageVersions} from './versions';
+import {parsePackageVersions} from './versions';
 
 /**
  * Derive the set of benchmark specifications we should run according to the
@@ -63,38 +64,16 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
       }
 
     } else {
-      const serverRelativePath = path.relative(opts.root, arg.diskPath);
-      // TODO Test on Windows.
-      if (serverRelativePath.startsWith('..')) {
-        throw new Error(
-            'File or directory is not accessible from server root:' +
-            arg.diskPath);
+      const urlPath = await urlFromLocalPath(opts.root, arg.diskPath);
+      let name = arg.alias;
+      if (name === undefined) {
+        const serverRelativePath = path.relative(opts.root, arg.diskPath);
+        name = serverRelativePath.replace(path.win32.sep, '/');
       }
-
-      const kind = await fileKind(arg.diskPath);
-      if (kind === undefined) {
-        throw new Error(`No such file or directory: ${arg.diskPath}`);
-      }
-
-      // TODO Test on Windows.
-      let urlPath = `/${serverRelativePath.replace(path.win32.sep, '/')}`;
-      if (kind === 'dir') {
-        if (await fileKind(path.join(arg.diskPath, 'index.html')) !== 'file') {
-          throw new Error(
-              `Directory did not contain an index.html: ${arg.diskPath}`);
-        }
-        // We need a trailing slash when serving a directory. Our static server
-        // will serve index.html at both /foo and /foo/, without redirects. But
-        // these two forms will have baseURIs that resolve relative URLs
-        // differently, and we want the form that would work the same as
-        // /foo/index.html.
-        urlPath += '/';
-      }
-
       for (const browser of browsers) {
         for (const version of versions) {
           specs.push({
-            name: arg.alias || serverRelativePath.replace(path.win32.sep, '/'),
+            name,
             browser,
             measurement: opts.measure,
             url: {

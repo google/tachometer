@@ -9,15 +9,33 @@
  * rights grant found at http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from 'chai';
+import * as chai from 'chai';
+import * as chaiAsPromised from 'chai-as-promised';
+import * as path from 'path';
+
+chai.use(chaiAsPromised);
+const {assert} = chai;
 
 import {Config, parseConfigFile} from '../config';
 
+const repoRoot = path.resolve(__dirname, '..', '..');
+const testData = path.resolve(repoRoot, 'src', 'test', 'data');
+
 suite('config', () => {
   suite('parseConfigFile', () => {
-    test('fully specified', () => {
+    let prevCwd: string;
+    suiteSetup(() => {
+      prevCwd = process.cwd();
+      process.chdir(path.join(testData, 'mylib'));
+    });
+
+    suiteTeardown(() => {
+      process.chdir(prevCwd);
+    });
+
+    test('fully specified', async () => {
       const config = {
-        root: '/my/root',
+        root: '.',
         sampleSize: 52,
         timeout: 7,
         autoSampleConditions: ['0ms', '1ms', '2%', '+3%'],
@@ -32,7 +50,7 @@ suite('config', () => {
             name: 'local',
             browser: 'firefox',
             measurement: 'callback',
-            url: '/my/local.html?foo=bar',
+            url: 'mybench/index.html?foo=bar',
             packageVersions: {
               label: 'master',
               dependencies: {
@@ -44,7 +62,7 @@ suite('config', () => {
         ],
       };
       const expected: Config = {
-        root: '/my/root',
+        root: '.',
         sampleSize: 52,
         timeout: 7,
         autoSampleConditions: {
@@ -69,7 +87,7 @@ suite('config', () => {
             measurement: 'callback',
             url: {
               kind: 'local',
-              urlPath: '/my/local.html',
+              urlPath: '/mybench/index.html',
               queryString: '?foo=bar',
               version: {
                 label: 'master',
@@ -82,18 +100,18 @@ suite('config', () => {
           },
         ],
       };
-      const actual = parseConfigFile(config);
+      const actual = await parseConfigFile(config);
       assert.deepEqual(actual, expected);
     });
 
-    test('defaults applied', () => {
+    test('defaults applied', async () => {
       const config = {
         benchmarks: [
           {
             url: 'http://example.com?foo=bar',
           },
           {
-            url: './local/path?foo=bar',
+            url: 'mybench/index.html?foo=bar',
           },
         ],
       };
@@ -118,10 +136,10 @@ suite('config', () => {
             browser: 'chrome',
           },
           {
-            name: './local/path?foo=bar',
+            name: '/mybench/index.html?foo=bar',
             url: {
               kind: 'local',
-              urlPath: './local/path',
+              urlPath: '/mybench/index.html',
               queryString: '?foo=bar',
             },
             measurement: 'callback',
@@ -129,11 +147,11 @@ suite('config', () => {
           },
         ],
       };
-      const actual = parseConfigFile(config);
+      const actual = await parseConfigFile(config);
       assert.deepEqual(actual, expected);
     });
 
-    test('expanded twice deep', () => {
+    test('expanded twice deep', async () => {
       const config = {
         root: '.',
         benchmarks: [{
@@ -193,56 +211,56 @@ suite('config', () => {
           },
         ],
       };
-      const actual = parseConfigFile(config);
+      const actual = await parseConfigFile(config);
       assert.deepEqual(actual, expected);
     });
 
     suite('errors', () => {
-      test('invalid top-level type', () => {
+      test('invalid top-level type', async () => {
         const config = 42;
-        assert.throws(
-            () => parseConfigFile(config), 'config is not of a type(s) object');
+        await assert.isRejected(
+            parseConfigFile(config), 'config is not of a type(s) object');
       });
 
-      test('invalid benchmarks array type', () => {
+      test('invalid benchmarks array type', async () => {
         const config = {
           benchmarks: 42,
         };
-        assert.throws(
-            () => parseConfigFile(config),
+        await assert.isRejected(
+            parseConfigFile(config),
             'config.benchmarks is not of a type(s) array');
       });
 
-      test('invalid benchmark type', () => {
+      test('invalid benchmark type', async () => {
         const config = {
           benchmarks: [42],
         };
-        assert.throws(
-            () => parseConfigFile(config),
+        await assert.isRejected(
+            parseConfigFile(config),
             'config.benchmarks[0] is not of a type(s) object');
       });
 
-      test('empty benchmarks array', () => {
+      test('empty benchmarks array', async () => {
         const config = {
           benchmarks: [],
         };
-        assert.throws(
-            () => parseConfigFile(config),
+        await assert.isRejected(
+            parseConfigFile(config),
             'config.benchmarks does not meet minimum length of 1');
       });
 
-      test('invalid expand type', () => {
+      test('invalid expand type', async () => {
         const config = {
           benchmarks: [
             {expand: 42},
           ],
         };
-        assert.throws(
-            () => parseConfigFile(config),
+        await assert.isRejected(
+            parseConfigFile(config),
             'config.benchmarks[0].expand is not of a type(s) array');
       });
 
-      test('unknown top-level property', () => {
+      test('unknown top-level property', async () => {
         const config = {
           nonsense: 'potato',
           benchmarks: [
@@ -251,12 +269,11 @@ suite('config', () => {
             },
           ],
         };
-        assert.throws(
-            () => parseConfigFile(config),
-            'config additionalProperty "nonsense"');
+        await assert.isRejected(
+            parseConfigFile(config), 'config additionalProperty "nonsense"');
       });
 
-      test('unknown benchmark property', () => {
+      test('unknown benchmark property', async () => {
         const config = {
           benchmarks: [
             {
@@ -265,70 +282,70 @@ suite('config', () => {
             },
           ],
         };
-        assert.throws(
-            () => parseConfigFile(config),
+        await assert.isRejected(
+            parseConfigFile(config),
             'config.benchmarks[0] additionalProperty "nonsense"');
       });
 
-      test('missing url', () => {
+      test('missing url', async () => {
         const config = {
           benchmarks: [{
             browser: 'chrome',
             measurement: 'fcp',
           }],
         };
-        assert.throws(() => parseConfigFile(config), /no url specified/i);
+        await assert.isRejected(parseConfigFile(config), /no url specified/i);
       });
 
-      test('unsupported browser', () => {
+      test('unsupported browser', async () => {
         const config = {
           benchmarks: [{
             url: 'http://example.com',
             browser: 'potato',
           }],
         };
-        assert.throws(
-            () => parseConfigFile(config),
+        await assert.isRejected(
+            parseConfigFile(config),
             'config.benchmarks[0].browser is not one of enum values: chrome');
       });
 
-      test('invalid measurement', () => {
+      test('invalid measurement', async () => {
         const config = {
           benchmarks: [{
             url: 'http://example.com',
             measurement: 'potato',
           }],
         };
-        assert.throws(
-            () => parseConfigFile(config),
+        await assert.isRejected(
+            parseConfigFile(config),
             'config.benchmarks[0].measurement is not one of enum values: callback');
       });
 
-      test('sampleSize too small', () => {
+      test('sampleSize too small', async () => {
         const config = {
           sampleSize: 1,
           benchmarks: [{
             url: 'http://example.com',
           }],
         };
-        assert.throws(
-            () => parseConfigFile(config),
+        await assert.isRejected(
+            parseConfigFile(config),
             'config.sampleSize must have a minimum value of 2');
       });
 
-      test('non-integer sampleSize', () => {
+      test('non-integer sampleSize', async () => {
         const config = {
           sampleSize: 2.1,
           benchmarks: [{
             url: 'http://example.com',
           }],
         };
-        assert.throws(
-            () => parseConfigFile(config),
+        await assert.isRejected(
+            parseConfigFile(config),
             'config.sampleSize is not of a type(s) integer');
       });
 
-      test('missing package version label', () => {
+      test('missing package version label', async () => {
         const config = {
           benchmarks: [
             {
@@ -341,8 +358,8 @@ suite('config', () => {
             },
           ],
         };
-        assert.throws(
-            () => parseConfigFile(config),
+        await assert.isRejected(
+            parseConfigFile(config),
             'config.benchmarks[0].packageVersions requires property "label"');
       });
     });

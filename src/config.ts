@@ -10,6 +10,7 @@
  */
 
 import * as jsonschema from 'jsonschema';
+import * as path from 'path';
 
 import {Browser} from './browser';
 import {parseHorizons} from './cli';
@@ -17,6 +18,7 @@ import {CheckConfig} from './github';
 import {isUrl} from './specs';
 import {Horizons} from './stats';
 import {BenchmarkSpec, Measurement, PackageDependencyMap} from './types';
+import {fileKind} from './versions';
 
 /**
  * Expected format of the top-level JSON config file. Note this interface is
@@ -78,7 +80,7 @@ export interface Config {
  * Validate the given JSON object parsed from a config file, and expand it into
  * a fully specified configuration.
  */
-export function parseConfigFile(parsedJson: unknown): Config {
+export async function parseConfigFile(parsedJson: unknown): Promise<Config> {
   const schema = require('./config.schema.json');
   const result =
       jsonschema.validate(parsedJson, schema, {propertyName: 'config'});
@@ -87,15 +89,16 @@ export function parseConfigFile(parsedJson: unknown): Config {
   }
   const validated = parsedJson as ConfigFile;
 
+  const root = validated.root || '.';
   const benchmarks: BenchmarkSpec[] = [];
   for (const benchmark of validated.benchmarks) {
-    for (const partial of parseBenchmark(benchmark)) {
+    for (const partial of await parseBenchmark(benchmark, root)) {
       benchmarks.push(applyDefaults(partial));
     }
   }
 
   return {
-    root: validated.root || '.',
+    root,
     sampleSize: validated.sampleSize || 50,
     timeout: validated.timeout || 3,
     autoSampleConditions:
@@ -108,8 +111,8 @@ export function parseConfigFile(parsedJson: unknown): Config {
   };
 }
 
-function parseBenchmark(benchmark: ConfigFileBenchmark):
-    Array<Partial<BenchmarkSpec>> {
+async function parseBenchmark(benchmark: ConfigFileBenchmark, root: string):
+    Promise<Array<Partial<BenchmarkSpec>>> {
   const spec: Partial<BenchmarkSpec> = {};
 
   if (benchmark.name !== undefined) {
@@ -142,7 +145,7 @@ function parseBenchmark(benchmark: ConfigFileBenchmark):
 
       spec.url = {
         kind: 'local',
-        urlPath,
+        urlPath: await urlFromLocalPath(root, urlPath),
         queryString,
       };
 
@@ -158,7 +161,7 @@ function parseBenchmark(benchmark: ConfigFileBenchmark):
   if (benchmark.expand !== undefined && benchmark.expand.length > 0) {
     const expanded = [];
     for (const expansion of benchmark.expand) {
-      for (const expandedSpec of parseBenchmark(expansion)) {
+      for (const expandedSpec of await parseBenchmark(expansion, root)) {
         expanded.push({
           ...spec,
           ...expandedSpec,
@@ -200,4 +203,39 @@ function applyDefaults(partialSpec: Partial<BenchmarkSpec>): BenchmarkSpec {
     browser = 'chrome';
   }
   return {name, url, browser, measurement};
+}
+
+/**
+ * Derives the URL that we'll use to benchmark using the given HTML file or
+ * directory on disk, relative to the root directory we'll be serving. Throws if
+ * it's a file that doesn't exist, or a directory without an index.html.
+ */
+export async function urlFromLocalPath(
+    rootDir: string, diskPath: string): Promise<string> {
+  const serverRelativePath = path.relative(rootDir, diskPath);
+  // TODO Test on Windows.
+  if (serverRelativePath.startsWith('..')) {
+    throw new Error(
+        'File or directory is not accessible from server root: ' + diskPath);
+  }
+
+  const kind = await fileKind(diskPath);
+  if (kind === undefined) {
+    throw new Error(`No such file or directory: ${diskPath}`);
+  }
+
+  // TODO Test on Windows.
+  let urlPath = `/${serverRelativePath.replace(path.win32.sep, '/')}`;
+  if (kind === 'dir') {
+    if (await fileKind(path.join(diskPath, 'index.html')) !== 'file') {
+      throw new Error(`Directory did not contain an index.html: ${diskPath}`);
+    }
+    // We need a trailing slash when serving a directory. Our static server
+    // will serve index.html at both /foo and /foo/, without redirects. But
+    // these two forms will have baseURIs that resolve relative URLs
+    // differently, and we want the form that would work the same as
+    // /foo/index.html.
+    urlPath += '/';
+  }
+  return urlPath;
 }

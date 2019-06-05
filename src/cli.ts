@@ -248,7 +248,7 @@ $ tach http://example.com
   if (opts.config) {
     config = {
       ...baseConfig,
-      ...parseConfigFile(await fsExtra.readJson(opts.config)),
+      ...await parseConfigFile(await fsExtra.readJson(opts.config)),
     };
   } else {
     config = {
