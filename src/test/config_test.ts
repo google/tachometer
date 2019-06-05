@@ -51,6 +51,8 @@ suite('config', () => {
           absolute: [-1, 0, 1],
           relative: [-0.02, 0.02, 0.03],
         },
+        mode: 'automatic',
+        savePath: '',
         benchmarks: [
           {
             name: 'remote',
@@ -103,6 +105,8 @@ suite('config', () => {
           absolute: [],
           relative: [0],
         },
+        mode: 'automatic',
+        savePath: '',
         benchmarks: [
           {
             name: 'http://example.com?foo=bar',
@@ -160,6 +164,8 @@ suite('config', () => {
           absolute: [],
           relative: [0],
         },
+        mode: 'automatic',
+        savePath: '',
         benchmarks: [
           {
             name: 'http://example.com',

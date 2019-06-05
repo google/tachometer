@@ -68,6 +68,8 @@ export interface Config {
   timeout: number;
   benchmarks: BenchmarkSpec[];
   autoSampleConditions: Horizons;
+  mode: 'automatic'|'manual';
+  savePath: string;
 }
 
 /**
@@ -97,6 +99,10 @@ export function parseConfigFile(parsedJson: unknown): Config {
     autoSampleConditions:
         parseHorizons(validated.autoSampleConditions || ['0%']),
     benchmarks,
+
+    // These are only controlled by flags currently.
+    mode: 'automatic',
+    savePath: '',
   };
 }
 

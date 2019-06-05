@@ -245,6 +245,8 @@ $ tach http://example.com
       timeout: opts.timeout,
       autoSampleConditions: parseHorizons(opts.horizon.split(',')),
       benchmarks: await specsFromOpts(opts),
+      mode: opts.manual === true ? 'manual' : 'automatic',
+      savePath: opts.save,
     };
   }
 
@@ -286,8 +288,8 @@ $ tach http://example.com
   }
   await Promise.all(promises);
 
-  if (opts.manual === true) {
-    await manualMode(config, opts, config.benchmarks, servers);
+  if (config.mode === 'manual') {
+    await manualMode(config, config.benchmarks, servers);
   } else {
     await automaticMode(config, opts, config.benchmarks, servers);
   }
@@ -311,8 +313,8 @@ function specUrl(spec: BenchmarkSpec, servers: ServerMap): string {
  * the user sends a termination signal.
  */
 async function manualMode(
-    _config: Config, opts: Opts, specs: BenchmarkSpec[], servers: ServerMap) {
-  if (opts.save) {
+    config: Config, specs: BenchmarkSpec[], servers: ServerMap) {
+  if (config.savePath) {
     throw new Error(`Can't save results in manual mode`);
   }
 
@@ -566,9 +568,9 @@ async function automaticMode(
     console.log('Consider a longer --timeout or different --horizon');
   }
 
-  if (opts.save) {
+  if (config.savePath) {
     const session = await makeSession(withDifferences.map((s) => s.result));
-    await fsExtra.writeJSON(opts.save, session);
+    await fsExtra.writeJSON(config.savePath, session);
   }
 
   if (reportGitHubCheckResults !== undefined) {
