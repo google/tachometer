@@ -11,7 +11,8 @@
   },
   "scripts": {
     "prepare": "npm run build",
-    "build": "rm -rf lib/ client/lib/ && tsc && tsc -p client/ && npm run lint",
+    "build": "rm -rf lib/ client/lib/ && mkdir lib/ && npm run generate-json-schema && tsc && tsc -p client/ && npm run lint",
+    "generate-json-schema": "typescript-json-schema tsconfig.json ConfigFile --include src/config.ts --required --noExtraProps > lib/config.schema.json",
     "lint": "tslint --project . --format stylish",
     "format": "find src/ client/src/ -name \"*.ts\" | xargs clang-format --style=file -i",
     "test": "npm run build && mocha"
@@ -52,6 +53,7 @@
     "fs-extra": "^8.0.1",
     "geckodriver": "^1.14.1",
     "got": "^9.6.0",
+    "jsonschema": "^1.2.4",
     "jsonwebtoken": "^8.5.1",
     "jstat": "^1.7.1",
     "koa": "^2.5.1",
@@ -75,6 +77,7 @@
     "clang-format": "^1.2.4",
     "mocha": "^6.0.2",
     "tslint": "^5.12.1",
-    "typescript": "^3.2.0"
+    "typescript": "^3.2.0",
+    "typescript-json-schema": "^0.38.3"
   }
 }

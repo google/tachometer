@@ -140,15 +140,17 @@ suite('config', () => {
     suite('errors', () => {
       test('invalid top-level type', () => {
         const config = 42;
-        assert.throws(() => parseConfig(config), /invalid config format/i);
+        assert.throws(
+            () => parseConfig(config), 'config is not of a type(s) object');
       });
 
-      test('invalid benchmarks type', () => {
+      test('invalid benchmarks array type', () => {
         const config = {
           benchmarks: 42,
         };
         assert.throws(
-            () => parseConfig(config), /benchmarks must be an array/i);
+            () => parseConfig(config),
+            'config.benchmarks is not of a type(s) array');
       });
 
       test('invalid benchmark type', () => {
@@ -156,7 +158,17 @@ suite('config', () => {
           benchmarks: [42],
         };
         assert.throws(
-            () => parseConfig(config), /benchmark must be an object/i);
+            () => parseConfig(config),
+            'config.benchmarks[0] is not of a type(s) object');
+      });
+
+      test('empty benchmarks array', () => {
+        const config = {
+          benchmarks: [],
+        };
+        assert.throws(
+            () => parseConfig(config),
+            'config.benchmarks does not meet minimum length of 1');
       });
 
       test('invalid expand type', () => {
@@ -165,15 +177,36 @@ suite('config', () => {
             {expand: 42},
           ],
         };
-        assert.throws(() => parseConfig(config), /expand must be an array/i);
+        assert.throws(
+            () => parseConfig(config),
+            'config.benchmarks[0].expand is not of a type(s) array');
       });
 
-      test('unknown key', () => {
+      test('unknown top-level property', () => {
         const config = {
-          url: 'http://example.com',
           nonsense: 'potato',
+          benchmarks: [
+            {
+              url: 'http://example.com',
+            },
+          ],
         };
-        assert.throws(() => parseConfig(config), /unknown config key/i);
+        assert.throws(
+            () => parseConfig(config), 'config additionalProperty "nonsense"');
+      });
+
+      test('unknown benchmark property', () => {
+        const config = {
+          benchmarks: [
+            {
+              nonsense: 'potato',
+              url: 'http://example.com',
+            },
+          ],
+        };
+        assert.throws(
+            () => parseConfig(config),
+            'config.benchmarks[0] additionalProperty "nonsense"');
       });
 
       test('missing url', () => {
@@ -193,7 +226,9 @@ suite('config', () => {
             browser: 'potato',
           }],
         };
-        assert.throws(() => parseConfig(config), /browser not supported/i);
+        assert.throws(
+            () => parseConfig(config),
+            'config.benchmarks[0].browser is not one of enum values: chrome');
       });
 
       test('invalid measurement', () => {
@@ -203,7 +238,9 @@ suite('config', () => {
             measurement: 'potato',
           }],
         };
-        assert.throws(() => parseConfig(config), /invalid measurement/i);
+        assert.throws(
+            () => parseConfig(config),
+            'config.benchmarks[0].measurement is not one of enum values: callback');
       });
     });
   });

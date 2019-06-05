@@ -16,9 +16,6 @@ import * as webdriver from 'selenium-webdriver';
 import * as chrome from 'selenium-webdriver/chrome';
 import * as firefox from 'selenium-webdriver/firefox';
 
-/**
- * Browsers we can drive.
- */
 export type Browser =
     'chrome'|'chrome-headless'|'firefox'|'firefox-headless'|'safari';
 
@@ -32,13 +29,6 @@ export const validBrowsers = new Set([
   'firefox-headless',
   'safari',
 ]);
-
-/**
- * Return whether the given value is a valid browser.
- */
-export function isBrowser(val: unknown): val is Browser {
-  return typeof val === 'string' && validBrowsers.has(val);
-}
 
 /**
  * Browsers for which we can find the first contentful paint (FCP) time.

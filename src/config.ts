@@ -9,145 +9,137 @@
  * rights grant found at http://polymer.github.io/PATENTS.txt
  */
 
-import {isBrowser} from './browser';
-import {isUrl} from './specs';
-import {BenchmarkSpec, isMeasurement} from './types';
+import * as jsonschema from 'jsonschema';
 
+import {Browser} from './browser';
+import {isUrl} from './specs';
+import {BenchmarkSpec, Measurement} from './types';
+
+/**
+ * Expected format of the top-level JSON config file. Note this interface is
+ * used to generate the JSON schema for validation.
+ */
+export interface ConfigFile {
+  root?: string;
+  /** @TJS-minItems 1 */
+  benchmarks: ConfigFileBenchmark[];
+}
+
+/**
+ * Expected format of a benchmark in a JSON config file.
+ */
+interface ConfigFileBenchmark {
+  url?: string;
+  name?: string;
+  browser?: Browser;
+  measurement?: Measurement;
+  expand?: ConfigFileBenchmark[];
+}
+
+/**
+ * Validated and fully specified configuration.
+ */
 export interface Config {
   root: string;
   benchmarks: BenchmarkSpec[];
 }
 
-export function parseConfig(raw: unknown): Config {
-  if (!(raw instanceof Object)) {
-    throw new Error(`Invalid config format`);
+/**
+ * Validate the given JSON object parsed from a config file, and expand it into
+ * a fully specified configuration.
+ */
+export function parseConfig(parsedJson: unknown): Config {
+  const schema = require('./config.schema.json');
+  const result =
+      jsonschema.validate(parsedJson, schema, {propertyName: 'config'});
+  if (result.errors.length > 0) {
+    throw new Error(result.errors[0].toString());
   }
+  const validated = parsedJson as ConfigFile;
 
-  let root = '.';
-  const rawBenchmarks = [];
-  for (const [key, val] of Object.entries(raw)) {
-    if (key === 'root' && val) {
-      root = val;
-
-    } else if (key === 'benchmarks') {
-      if (val instanceof Array) {
-        rawBenchmarks.push(...val);
-      } else {
-        throw new Error(`benchmarks must be an array: ${val}`);
-      }
-
-    } else {
-      throw new Error(`Unknown config key: ${key}`);
-    }
-  }
-
-  if (rawBenchmarks.length === 0) {
-    throw new Error('At least one benchmark is required');
-  }
   const benchmarks: BenchmarkSpec[] = [];
-  for (const rawBenchmark of rawBenchmarks) {
-    for (const partial of parseRawBenchmark(rawBenchmark)) {
+  for (const benchmark of validated.benchmarks) {
+    for (const partial of parseBenchmark(benchmark)) {
       benchmarks.push(applyDefaults(partial));
     }
   }
 
-  return {root, benchmarks};
+  return {
+    root: validated.root || '.',
+    benchmarks,
+  };
 }
 
-function parseRawBenchmark(raw: unknown): Array<Partial<BenchmarkSpec>> {
-  if (!(raw instanceof Object)) {
-    throw new Error(`Benchmark must be an object`);
+function parseBenchmark(benchmark: ConfigFileBenchmark):
+    Array<Partial<BenchmarkSpec>> {
+  const spec: Partial<BenchmarkSpec> = {};
+
+  if (benchmark.name !== undefined) {
+    spec.name = benchmark.name;
+  }
+  if (benchmark.browser !== undefined) {
+    spec.browser = benchmark.browser;
+  }
+  if (benchmark.measurement !== undefined) {
+    spec.measurement = benchmark.measurement;
   }
 
-  const parsed: Partial<BenchmarkSpec> = {};
-  const expansions = [];
-  for (const [key, val] of Object.entries(raw)) {
-    if (key === 'name' && val) {
-      parsed.name = String(val);
-
-    } else if (key === 'url' && val) {
-      if (typeof val !== 'string') {
-        throw new Error('url must be string');
-      }
-
-      if (isUrl(val)) {
-        parsed.url = {
-          kind: 'remote',
-          url: val,
-        };
-      } else {
-        let urlPath, queryString;
-        const q = val.indexOf('?');
-        if (q !== -1) {
-          urlPath = val.substring(0, q);
-          queryString = val.substring(q);
-        } else {
-          urlPath = val;
-          queryString = '';
-        }
-
-        parsed.url = {
-          kind: 'local',
-          urlPath,
-          queryString,
-          // TODO
-          version: {
-            label: 'default',
-            dependencyOverrides: {},
-          },
-        };
-      }
-
-    } else if (key === 'browser' && val) {
-      if (isBrowser(val)) {
-        parsed.browser = val;
-      } else {
-        throw new Error(`Browser not supported: ${val}`);
-      }
-
-    } else if (key === 'measurement' && val) {
-      if (isMeasurement(val)) {
-        parsed.measurement = val;
-      } else {
-        throw new Error(`Invalid measurement: ${val}`);
-      }
-
-    } else if (key === 'expand') {
-      if (val instanceof Array) {
-        expansions.push(...val);
-      } else {
-        throw new Error(`expand must be an array`);
-      }
-
+  const url = benchmark.url;
+  if (url !== undefined) {
+    if (isUrl(url)) {
+      spec.url = {
+        kind: 'remote',
+        url,
+      };
     } else {
-      throw new Error(`Unknown config key: ${key}`);
+      let urlPath, queryString;
+      const q = url.indexOf('?');
+      if (q !== -1) {
+        urlPath = url.substring(0, q);
+        queryString = url.substring(q);
+      } else {
+        urlPath = url;
+        queryString = '';
+      }
+
+      spec.url = {
+        kind: 'local',
+        urlPath,
+        queryString,
+        // TODO
+        version: {
+          label: 'default',
+          dependencyOverrides: {},
+        },
+      };
     }
   }
 
-  if (expansions.length > 0) {
+  if (benchmark.expand !== undefined && benchmark.expand.length > 0) {
     const expanded = [];
-    for (const expansion of expansions) {
-      for (const parsedExpansion of parseRawBenchmark(expansion)) {
+    for (const expansion of benchmark.expand) {
+      for (const expandedSpec of parseBenchmark(expansion)) {
         expanded.push({
-          ...parsed,
-          ...parsedExpansion,
+          ...spec,
+          ...expandedSpec,
         });
       }
     }
     return expanded;
 
   } else {
-    return [parsed];
+    return [spec];
   }
 }
 
-function applyDefaults(partial: Partial<BenchmarkSpec>): BenchmarkSpec {
-  const url = partial.url;
+function applyDefaults(partialSpec: Partial<BenchmarkSpec>): BenchmarkSpec {
+  let {url, name, measurement, browser} = partialSpec;
   if (url === undefined) {
+    // Note we can't validate this with jsonschema, because we only need to
+    // ensure we have a URL after recursive expansion; so at any given level the
+    // URL could be optional.
     throw new Error('No URL specified');
   }
-  let name = partial.name;
-  let measurement = partial.measurement;
   if (url.kind === 'remote') {
     if (name === undefined) {
       name = url.url;
@@ -163,9 +155,8 @@ function applyDefaults(partial: Partial<BenchmarkSpec>): BenchmarkSpec {
       measurement = 'callback';
     }
   }
-  let browser = 'chrome';
-  if (partial.browser !== undefined) {
-    browser = partial.browser;
+  if (browser === undefined) {
+    browser = 'chrome';
   }
   return {name, url, browser, measurement};
 }
