@@ -19,22 +19,59 @@ suite('config', () => {
       const config = {
         root: '/my/root',
         sampleSize: 52,
-        benchmarks: [{
-          name: 'example',
-          url: 'http://example.com',
-          measurement: 'fcp',
-          browser: 'chrome',
-        }],
+        benchmarks: [
+          {
+            name: 'remote',
+            browser: 'chrome',
+            measurement: 'fcp',
+            url: 'http://example.com?foo=bar',
+          },
+          {
+            name: 'local',
+            browser: 'firefox',
+            measurement: 'callback',
+            url: '/my/local.html?foo=bar',
+            packageVersions: {
+              label: 'master',
+              dependencies: {
+                'foo': 'github:Polymer/foo#master',
+                'bar': '=1.2.3',
+              },
+            },
+          },
+        ],
       };
       const expected: Config = {
         root: '/my/root',
         sampleSize: 52,
-        benchmarks: [{
-          name: 'example',
-          url: {kind: 'remote', url: 'http://example.com'},
-          measurement: 'fcp',
-          browser: 'chrome',
-        }],
+        benchmarks: [
+          {
+            name: 'remote',
+            browser: 'chrome',
+            measurement: 'fcp',
+            url: {
+              kind: 'remote',
+              url: 'http://example.com?foo=bar',
+            },
+          },
+          {
+            name: 'local',
+            browser: 'firefox',
+            measurement: 'callback',
+            url: {
+              kind: 'local',
+              urlPath: '/my/local.html',
+              queryString: '?foo=bar',
+              version: {
+                label: 'master',
+                dependencyOverrides: {
+                  'foo': 'github:Polymer/foo#master',
+                  'bar': '=1.2.3',
+                },
+              },
+            },
+          },
+        ],
       };
       const actual = parseConfigFile(config);
       assert.deepEqual(actual, expected);
@@ -270,6 +307,24 @@ suite('config', () => {
         assert.throws(
             () => parseConfigFile(config),
             'config.sampleSize is not of a type(s) integer');
+      });
+
+      test('missing package version label', () => {
+        const config = {
+          benchmarks: [
+            {
+              url: '/my/local.index',
+              packageVersions: {
+                dependencies: {
+                  'foo': '=1.2.3',
+                },
+              },
+            },
+          ],
+        };
+        assert.throws(
+            () => parseConfigFile(config),
+            'config.benchmarks[0].packageVersions requires property "label"');
       });
     });
   });

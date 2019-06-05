@@ -13,7 +13,7 @@ import * as jsonschema from 'jsonschema';
 
 import {Browser} from './browser';
 import {isUrl} from './specs';
-import {BenchmarkSpec, Measurement} from './types';
+import {BenchmarkSpec, Measurement, PackageDependencyMap} from './types';
 
 /**
  * Expected format of the top-level JSON config file. Note this interface is
@@ -41,6 +41,12 @@ interface ConfigFileBenchmark {
   browser?: Browser;
   measurement?: Measurement;
   expand?: ConfigFileBenchmark[];
+  packageVersions?: ConfigFilePackageVersion;
+}
+
+interface ConfigFilePackageVersion {
+  label: string;
+  dependencies: PackageDependencyMap;
 }
 
 /**
@@ -111,15 +117,24 @@ function parseBenchmark(benchmark: ConfigFileBenchmark):
         queryString = '';
       }
 
+      let version;
+      if (benchmark.packageVersions !== undefined) {
+        version = {
+          label: benchmark.packageVersions.label,
+          dependencyOverrides: benchmark.packageVersions.dependencies,
+        };
+      } else {
+        version = {
+          label: 'default',
+          dependencyOverrides: {},
+        };
+      }
+
       spec.url = {
         kind: 'local',
         urlPath,
         queryString,
-        // TODO
-        version: {
-          label: 'default',
-          dependencyOverrides: {},
-        },
+        version,
       };
     }
   }
