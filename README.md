@@ -292,30 +292,18 @@ easier to use a config file for complex benchmark configurations.
 ```json
 {
   "root": "./benchmarks",
+  "sampleSize": 50,
   "timeout": 3,
   "benchmarks": [
     {
       "name": "foo",
-      "path": "foo/index.html",
-      "params": {
-        "baz": 37
-      },
+      "url": "foo/bar.html?baz=213",
       "browser": "chrome",
       "measure": "fcp"
     },
   ],
 }
 ```
-
-By default, all rows and columns are visible.
-
-If at least one row is `show`, then the default visibility is `hide` (like the
-"solo" button on an audio mixer).
-
-
-If all visibilities are `auto` (the default), then all visibilites are `show`.
-If all visibilities are `auto` or `show`, then the default visibility is `hide`.
-If all visibilities are `auto` or `hide`, then the default visibility is `show`.
 
 ## Usage
 

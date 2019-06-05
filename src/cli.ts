@@ -243,6 +243,7 @@ $ tach http://example.com
       root: opts.root,
       sampleSize: opts['sample-size'],
       timeout: opts.timeout,
+      autoSampleConditions: parseHorizons(opts.horizon.split(',')),
       benchmarks: await specsFromOpts(opts),
     };
   }
@@ -348,8 +349,6 @@ interface Browser {
 
 async function automaticMode(
     config: Config, opts: Opts, specs: BenchmarkSpec[], servers: ServerMap) {
-  const horizons = parseHorizonFlag(opts.horizon);
-
   let reportGitHubCheckResults;
   if (opts['github-check'] !== '') {
     const {appId, installationId, repo, commit} =
@@ -528,7 +527,7 @@ async function automaticMode(
     let run = 0;
     let sample = 0;
     while (true) {
-      if (horizonsResolved(makeResults(), horizons)) {
+      if (horizonsResolved(makeResults(), config.autoSampleConditions)) {
         console.log();
         break;
       }
@@ -563,7 +562,7 @@ async function automaticMode(
   if (hitTimeout === true) {
     console.log(ansi.format(
         `[bold red]{NOTE} Hit ${config.timeout} minute auto-sample timeout` +
-        ` trying to resolve ${opts.horizon} horizon(s)`));
+        ` trying to resolve horizon(s)`));
     console.log('Consider a longer --timeout or different --horizon');
   }
 
@@ -577,14 +576,13 @@ async function automaticMode(
   }
 }
 
-/** Parse the --horizon flag into signed horizon values. */
-export function parseHorizonFlag(flag: string): Horizons {
+/** Parse horizon flags into signed horizon values. */
+export function parseHorizons(strs: string[]): Horizons {
   const absolute = new Set<number>();
   const relative = new Set<number>();
-  const strs = flag.split(',');
   for (const str of strs) {
     if (!str.match(/^[-+]?(\d*\.)?\d+(ms|%)$/)) {
-      throw new Error(`Invalid --horizon ${flag}`);
+      throw new Error(`Invalid horizon ${str}`);
     }
 
     let num;

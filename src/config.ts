@@ -12,7 +12,9 @@
 import * as jsonschema from 'jsonschema';
 
 import {Browser} from './browser';
+import {parseHorizons} from './cli';
 import {isUrl} from './specs';
+import {Horizons} from './stats';
 import {BenchmarkSpec, Measurement, PackageDependencyMap} from './types';
 
 /**
@@ -33,6 +35,8 @@ export interface ConfigFile {
    * @TJS-minimum 0
    */
   timeout?: number;
+
+  autoSampleConditions?: string[];
 
   /** @TJS-minItems 1 */
   benchmarks: ConfigFileBenchmark[];
@@ -63,6 +67,7 @@ export interface Config {
   sampleSize: number;
   timeout: number;
   benchmarks: BenchmarkSpec[];
+  autoSampleConditions: Horizons;
 }
 
 /**
@@ -89,6 +94,8 @@ export function parseConfigFile(parsedJson: unknown): Config {
     root: validated.root || '.',
     sampleSize: validated.sampleSize || 50,
     timeout: validated.timeout || 3,
+    autoSampleConditions:
+        parseHorizons(validated.autoSampleConditions || ['0%']),
     benchmarks,
   };
 }

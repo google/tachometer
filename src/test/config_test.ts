@@ -20,6 +20,7 @@ suite('config', () => {
         root: '/my/root',
         sampleSize: 52,
         timeout: 7,
+        autoSampleConditions: ['0ms', '1ms', '2%', '+3%'],
         benchmarks: [
           {
             name: 'remote',
@@ -46,6 +47,10 @@ suite('config', () => {
         root: '/my/root',
         sampleSize: 52,
         timeout: 7,
+        autoSampleConditions: {
+          absolute: [-1, 0, 1],
+          relative: [-0.02, 0.02, 0.03],
+        },
         benchmarks: [
           {
             name: 'remote',
@@ -94,6 +99,10 @@ suite('config', () => {
         root: '.',
         sampleSize: 50,
         timeout: 3,
+        autoSampleConditions: {
+          absolute: [],
+          relative: [0],
+        },
         benchmarks: [
           {
             name: 'http://example.com?foo=bar',
@@ -147,6 +156,10 @@ suite('config', () => {
         root: '.',
         sampleSize: 50,
         timeout: 3,
+        autoSampleConditions: {
+          absolute: [],
+          relative: [0],
+        },
         benchmarks: [
           {
             name: 'http://example.com',
