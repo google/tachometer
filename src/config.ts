@@ -28,6 +28,12 @@ export interface ConfigFile {
    */
   sampleSize?: number;
 
+  /**
+   * @TJS-type integer
+   * @TJS-minimum 0
+   */
+  timeout?: number;
+
   /** @TJS-minItems 1 */
   benchmarks: ConfigFileBenchmark[];
 }
@@ -55,6 +61,7 @@ interface ConfigFilePackageVersion {
 export interface Config {
   root: string;
   sampleSize: number;
+  timeout: number;
   benchmarks: BenchmarkSpec[];
 }
 
@@ -81,6 +88,7 @@ export function parseConfigFile(parsedJson: unknown): Config {
   return {
     root: validated.root || '.',
     sampleSize: validated.sampleSize || 50,
+    timeout: validated.timeout || 3,
     benchmarks,
   };
 }

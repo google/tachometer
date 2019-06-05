@@ -242,6 +242,7 @@ $ tach http://example.com
     config = {
       root: opts.root,
       sampleSize: opts['sample-size'],
+      timeout: opts.timeout,
       benchmarks: await specsFromOpts(opts),
     };
   }
@@ -520,9 +521,9 @@ async function automaticMode(
   };
 
   let hitTimeout = false;
-  if (opts.timeout > 0) {
+  if (config.timeout > 0) {
     console.log();
-    const timeoutMs = opts.timeout * 60 * 1000;  // minutes -> millis
+    const timeoutMs = config.timeout * 60 * 1000;  // minutes -> millis
     const startMs = Date.now();
     let run = 0;
     let sample = 0;
@@ -561,7 +562,7 @@ async function automaticMode(
 
   if (hitTimeout === true) {
     console.log(ansi.format(
-        `[bold red]{NOTE} Hit ${opts.timeout} minute auto-sample timeout` +
+        `[bold red]{NOTE} Hit ${config.timeout} minute auto-sample timeout` +
         ` trying to resolve ${opts.horizon} horizon(s)`));
     console.log('Consider a longer --timeout or different --horizon');
   }

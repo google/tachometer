@@ -19,6 +19,7 @@ suite('config', () => {
       const config = {
         root: '/my/root',
         sampleSize: 52,
+        timeout: 7,
         benchmarks: [
           {
             name: 'remote',
@@ -44,6 +45,7 @@ suite('config', () => {
       const expected: Config = {
         root: '/my/root',
         sampleSize: 52,
+        timeout: 7,
         benchmarks: [
           {
             name: 'remote',
@@ -91,6 +93,7 @@ suite('config', () => {
       const expected: Config = {
         root: '.',
         sampleSize: 50,
+        timeout: 3,
         benchmarks: [
           {
             name: 'http://example.com?foo=bar',
@@ -143,6 +146,7 @@ suite('config', () => {
       const expected: Config = {
         root: '.',
         sampleSize: 50,
+        timeout: 3,
         benchmarks: [
           {
             name: 'http://example.com',
