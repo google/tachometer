@@ -29,6 +29,7 @@ import {Horizons, ResultStats, horizonsResolved, summaryStats, computeDifference
 import {specsFromOpts} from './specs';
 import {AutomaticResults, verticalTermResultTable, horizontalTermResultTable, verticalHtmlResultTable, horizontalHtmlResultTable, automaticResultTable, spinner} from './format';
 import {prepareVersionDirectory, makeServerPlans} from './versions';
+import {parseConfigFile, Config} from './config';
 import * as github from './github';
 
 const defaultInstallDir = path.join(os.tmpdir(), 'tachometer', 'versions');
@@ -154,6 +155,7 @@ export interface Opts {
   root: string;
   host: string;
   port: number[];
+  config: string;
   'package-version': string[];
   'npm-install-dir': string;
   browser: string;
@@ -237,12 +239,21 @@ $ tach http://example.com
         `but was "${opts.measure}"`);
   }
 
-  const specs = await specsFromOpts(opts);
-  if (specs.length === 0) {
+  let config: Config;
+  if (opts.config) {
+    config = parseConfigFile(opts.config);
+  } else {
+    config = {
+      root: opts.root,
+      benchmarks: await specsFromOpts(opts),
+    }
+  }
+
+  if (config.benchmarks.length === 0) {
     throw new Error('No benchmarks matched with the given flags');
   }
 
-  if (specs.find((spec) => spec.measurement === 'fcp')) {
+  if (config.benchmarks.find((spec) => spec.measurement === 'fcp')) {
     for (const browser of opts.browser.split(',')) {
       if (!fcpBrowsers.has(browser)) {
         throw new Error(
@@ -252,8 +263,8 @@ $ tach http://example.com
     }
   }
 
-  const plans =
-      await makeServerPlans(opts.root, opts['npm-install-dir'], specs);
+  const plans = await makeServerPlans(
+      config.root, opts['npm-install-dir'], config.benchmarks);
 
   const servers = new Map<BenchmarkSpec, Server>();
   const promises = [];
@@ -273,9 +284,9 @@ $ tach http://example.com
   await Promise.all(promises);
 
   if (opts.manual === true) {
-    await manualMode(opts, specs, servers);
+    await manualMode(opts, config.benchmarks, servers);
   } else {
-    await automaticMode(opts, specs, servers);
+    await automaticMode(opts, config.benchmarks, servers);
   }
 }
 

@@ -48,7 +48,7 @@ export interface Config {
  * Validate the given JSON object parsed from a config file, and expand it into
  * a fully specified configuration.
  */
-export function parseConfig(parsedJson: unknown): Config {
+export function parseConfigFile(parsedJson: unknown): Config {
   const schema = require('./config.schema.json');
   const result =
       jsonschema.validate(parsedJson, schema, {propertyName: 'config'});

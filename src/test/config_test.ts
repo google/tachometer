@@ -11,10 +11,10 @@
 
 import {assert} from 'chai';
 
-import {Config, parseConfig} from '../config';
+import {Config, parseConfigFile} from '../config';
 
 suite('config', () => {
-  suite('parseConfig', () => {
+  suite('parseConfigFile', () => {
     test('fully specified', () => {
       const config = {
         root: '/my/root',
@@ -34,7 +34,7 @@ suite('config', () => {
           browser: 'chrome',
         }],
       };
-      const actual = parseConfig(config);
+      const actual = parseConfigFile(config);
       assert.deepEqual(actual, expected);
     });
 
@@ -77,7 +77,7 @@ suite('config', () => {
           },
         ],
       };
-      const actual = parseConfig(config);
+      const actual = parseConfigFile(config);
       assert.deepEqual(actual, expected);
     });
 
@@ -133,7 +133,7 @@ suite('config', () => {
           },
         ],
       };
-      const actual = parseConfig(config);
+      const actual = parseConfigFile(config);
       assert.deepEqual(actual, expected);
     });
 
@@ -141,7 +141,7 @@ suite('config', () => {
       test('invalid top-level type', () => {
         const config = 42;
         assert.throws(
-            () => parseConfig(config), 'config is not of a type(s) object');
+            () => parseConfigFile(config), 'config is not of a type(s) object');
       });
 
       test('invalid benchmarks array type', () => {
@@ -149,7 +149,7 @@ suite('config', () => {
           benchmarks: 42,
         };
         assert.throws(
-            () => parseConfig(config),
+            () => parseConfigFile(config),
             'config.benchmarks is not of a type(s) array');
       });
 
@@ -158,7 +158,7 @@ suite('config', () => {
           benchmarks: [42],
         };
         assert.throws(
-            () => parseConfig(config),
+            () => parseConfigFile(config),
             'config.benchmarks[0] is not of a type(s) object');
       });
 
@@ -167,7 +167,7 @@ suite('config', () => {
           benchmarks: [],
         };
         assert.throws(
-            () => parseConfig(config),
+            () => parseConfigFile(config),
             'config.benchmarks does not meet minimum length of 1');
       });
 
@@ -178,7 +178,7 @@ suite('config', () => {
           ],
         };
         assert.throws(
-            () => parseConfig(config),
+            () => parseConfigFile(config),
             'config.benchmarks[0].expand is not of a type(s) array');
       });
 
@@ -192,7 +192,8 @@ suite('config', () => {
           ],
         };
         assert.throws(
-            () => parseConfig(config), 'config additionalProperty "nonsense"');
+            () => parseConfigFile(config),
+            'config additionalProperty "nonsense"');
       });
 
       test('unknown benchmark property', () => {
@@ -205,7 +206,7 @@ suite('config', () => {
           ],
         };
         assert.throws(
-            () => parseConfig(config),
+            () => parseConfigFile(config),
             'config.benchmarks[0] additionalProperty "nonsense"');
       });
 
@@ -216,7 +217,7 @@ suite('config', () => {
             measurement: 'fcp',
           }],
         };
-        assert.throws(() => parseConfig(config), /no url specified/i);
+        assert.throws(() => parseConfigFile(config), /no url specified/i);
       });
 
       test('unsupported browser', () => {
@@ -227,7 +228,7 @@ suite('config', () => {
           }],
         };
         assert.throws(
-            () => parseConfig(config),
+            () => parseConfigFile(config),
             'config.benchmarks[0].browser is not one of enum values: chrome');
       });
 
@@ -239,7 +240,7 @@ suite('config', () => {
           }],
         };
         assert.throws(
-            () => parseConfig(config),
+            () => parseConfigFile(config),
             'config.benchmarks[0].measurement is not one of enum values: callback');
       });
     });
