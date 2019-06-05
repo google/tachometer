@@ -286,20 +286,58 @@ will expire.
 ## Config file
 
 Use the `--config` flag to control tachometer with a JSON configuration file.
-Everything you can do with flags can also be done with the config file. It is
-easier to use a config file for complex benchmark configurations.
+Defaults are the same as the corresponding command-line flags.
 
 ```json
 {
   "root": "./benchmarks",
   "sampleSize": 50,
   "timeout": 3,
+  "autoSampleConditions": ["0%", "1%"],
   "benchmarks": [
     {
       "name": "foo",
-      "url": "foo/bar.html?baz=213",
+      "url": "foo/bar.html?baz=123",
       "browser": "chrome",
-      "measure": "fcp"
+      "measure": "fcp",
+      "packageVersions": {
+        "label": "master",
+        "dependencies": {
+          "mylib": "github:Polymer/mylib#master",
+        },
+      }
+    },
+  ],
+}
+```
+
+Use the `expand` property in a benchmark object to recursively generate multiple
+variations of the same benchmark configuration. For example, to test the same
+benchmark with two different versions:
+
+```json
+{
+  "benchmarks": [
+    {
+      "url": "foo/bar.html",
+      "expand": [
+        {
+          "packageVersions": {
+            "label": "v1",
+            "dependencies": {
+              "mylib": "^1.0.0",
+            },
+          },
+        },
+        {
+          "packageVersions": {
+            "label": "master",
+            "dependencies": {
+              "mylib": "github:Polymer/mylib#master",
+            },
+          },
+        },
+      ],
     },
   ],
 }
