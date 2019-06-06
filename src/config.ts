@@ -91,8 +91,8 @@ export async function parseConfigFile(parsedJson: unknown): Promise<Config> {
   const root = validated.root || '.';
   const benchmarks: BenchmarkSpec[] = [];
   for (const benchmark of validated.benchmarks) {
-    for (const partial of await parseBenchmark(benchmark, root)) {
-      benchmarks.push(applyDefaults(partial));
+    for (const expanded of applyExpansions(benchmark)) {
+      benchmarks.push(applyDefaults(await parseBenchmark(expanded, root)));
     }
   }
 
@@ -111,7 +111,7 @@ export async function parseConfigFile(parsedJson: unknown): Promise<Config> {
 }
 
 async function parseBenchmark(benchmark: ConfigFileBenchmark, root: string):
-    Promise<Array<Partial<BenchmarkSpec>>> {
+    Promise<Partial<BenchmarkSpec>> {
   const spec: Partial<BenchmarkSpec> = {};
 
   if (benchmark.name !== undefined) {
@@ -157,21 +157,23 @@ async function parseBenchmark(benchmark: ConfigFileBenchmark, root: string):
     }
   }
 
-  if (benchmark.expand !== undefined && benchmark.expand.length > 0) {
-    const expanded = [];
-    for (const expansion of benchmark.expand) {
-      for (const expandedSpec of await parseBenchmark(expansion, root)) {
-        expanded.push({
-          ...spec,
-          ...expandedSpec,
-        });
-      }
-    }
-    return expanded;
+  return spec;
+}
 
-  } else {
-    return [spec];
+function applyExpansions(bench: ConfigFileBenchmark): ConfigFileBenchmark[] {
+  if (bench.expand === undefined || bench.expand.length === 0) {
+    return [bench];
   }
+  const expanded = [];
+  for (const expansion of bench.expand) {
+    for (const expandedBench of applyExpansions(expansion)) {
+      expanded.push({
+        ...bench,
+        ...expandedBench,
+      });
+    }
+  }
+  return expanded;
 }
 
 function applyDefaults(partialSpec: Partial<BenchmarkSpec>): BenchmarkSpec {
