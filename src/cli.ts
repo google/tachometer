@@ -334,7 +334,7 @@ async function automaticMode(
 
   let reportGitHubCheckResults;
   if (opts['github-check'] !== '') {
-    const {appId, installationId, repo, commit} =
+    const {label, appId, installationId, repo, commit} =
         github.parseCheckFlag(opts['github-check']);
 
     // We can directly store our GitHub App private key as a secret Travis
@@ -363,14 +363,14 @@ async function automaticMode(
     // Create the initial Check Run run now, so that it will show up in the
     // GitHub UI as pending.
     const checkId =
-        await github.createCheckRun({repo, commit, installationToken});
+        await github.createCheckRun({label, repo, commit, installationToken});
 
     // We'll call this after we're done to complete the Check Run.
     reportGitHubCheckResults = async ({fixed, unfixed}: AutomaticResults) => {
       const markdown = horizontalHtmlResultTable(fixed) + '\n' +
           verticalHtmlResultTable(unfixed);
       await github.completeCheckRun(
-          {repo, installationToken, checkId, markdown});
+          {label, repo, installationToken, checkId, markdown});
     };
   }
 
