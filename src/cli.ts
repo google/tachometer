@@ -300,9 +300,9 @@ $ tach http://example.com
   await Promise.all(promises);
 
   if (config.mode === 'manual') {
-    await manualMode(config, config.benchmarks, servers);
+    await manualMode(config, servers);
   } else {
-    await automaticMode(config, config.benchmarks, servers);
+    await automaticMode(config, servers);
   }
 }
 
@@ -323,15 +323,14 @@ function specUrl(spec: BenchmarkSpec, servers: ServerMap): string {
  * Let the user run benchmarks manually. This process will not exit until
  * the user sends a termination signal.
  */
-async function manualMode(
-    config: Config, specs: BenchmarkSpec[], servers: ServerMap) {
+async function manualMode(config: Config, servers: ServerMap) {
   if (config.savePath) {
     throw new Error(`Can't save results in manual mode`);
   }
 
   console.log('\nVisit these URLs in any browser:');
   const allServers = new Set<Server>([...servers.values()]);
-  for (const spec of specs) {
+  for (const spec of config.benchmarks) {
     console.log();
     if (spec.url.kind === 'local') {
       console.log(
@@ -360,8 +359,7 @@ interface Browser {
   initialTabHandle: string;
 }
 
-async function automaticMode(
-    config: Config, specs: BenchmarkSpec[], servers: ServerMap) {
+async function automaticMode(config: Config, servers: ServerMap) {
   let reportGitHubCheckResults;
   if (config.githubCheck !== undefined) {
     const {appId, installationId, repo, commit} = config.githubCheck;
@@ -405,6 +403,7 @@ async function automaticMode(
 
   console.log('Running benchmarks\n');
 
+  const specs = config.benchmarks;
   const bar = new ProgressBar('[:bar] :status', {
     total: specs.length * config.sampleSize,
     width: 58,
