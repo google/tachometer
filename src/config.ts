@@ -34,7 +34,6 @@ export interface ConfigFile {
   sampleSize?: number;
 
   /**
-   * @TJS-type integer
    * @TJS-minimum 0
    */
   timeout?: number;
@@ -99,8 +98,8 @@ export async function parseConfigFile(parsedJson: unknown): Promise<Config> {
 
   return {
     root,
-    sampleSize: validated.sampleSize || 50,
-    timeout: validated.timeout || 3,
+    sampleSize: validated.sampleSize === undefined ? 50 : validated.sampleSize,
+    timeout: validated.timeout === undefined ? 3 : validated.timeout,
     autoSampleConditions:
         parseHorizons(validated.autoSampleConditions || ['0%']),
     benchmarks,
