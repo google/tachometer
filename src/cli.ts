@@ -256,7 +256,7 @@ $ tach http://example.com
       root: opts.root,
       sampleSize: opts['sample-size'],
       timeout: opts.timeout,
-      autoSampleConditions: parseHorizons(opts.horizon.split(',')),
+      horizons: parseHorizons(opts.horizon.split(',')),
       benchmarks: await specsFromOpts(opts),
     };
   }
@@ -539,7 +539,7 @@ async function automaticMode(
     let run = 0;
     let sample = 0;
     while (true) {
-      if (horizonsResolved(makeResults(), config.autoSampleConditions)) {
+      if (horizonsResolved(makeResults(), config.horizons)) {
         console.log();
         break;
       }

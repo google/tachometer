@@ -38,7 +38,7 @@ export interface ConfigFile {
    */
   timeout?: number;
 
-  autoSampleConditions?: string[];
+  horizons?: string[];
 
   /** @TJS-minItems 1 */
   benchmarks: ConfigFileBenchmark[];
@@ -69,7 +69,7 @@ export interface Config {
   sampleSize: number;
   timeout: number;
   benchmarks: BenchmarkSpec[];
-  autoSampleConditions: Horizons;
+  horizons: Horizons;
   mode: 'automatic'|'manual';
   savePath: string;
   githubCheck?: CheckConfig;
@@ -100,8 +100,7 @@ export async function parseConfigFile(parsedJson: unknown): Promise<Config> {
     root,
     sampleSize: validated.sampleSize === undefined ? 50 : validated.sampleSize,
     timeout: validated.timeout === undefined ? 3 : validated.timeout,
-    autoSampleConditions:
-        parseHorizons(validated.autoSampleConditions || ['0%']),
+    horizons: parseHorizons(validated.horizons || ['0%']),
     benchmarks,
 
     // These are only controlled by flags currently.
