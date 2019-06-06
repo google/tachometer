@@ -18,13 +18,16 @@ import mount = require('koa-mount');
 import send = require('koa-send');
 import serve = require('koa-static');
 import bodyParser = require('koa-bodyparser');
+import {nodeResolve} from 'koa-node-resolve';
 
 import {BenchmarkResponse, Deferred} from './types';
 
 export interface ServerOpts {
   host: string;
   ports: number[];
+  root: string;
   mountPoints: MountPoint[];
+  resolveBareModules: boolean;
 }
 
 export interface MountPoint {
@@ -80,6 +83,14 @@ export class Server {
     app.use(mount('/submitResults', this.submitResults.bind(this)));
     app.use(this.instrumentRequests.bind(this));
     app.use(this.serveBenchLib.bind(this));
+
+    if (opts.resolveBareModules === true) {
+      app.use(nodeResolve({
+        root: opts.root,
+        // Only log errors.
+        logger: {...console, debug: undefined, info: undefined},
+      }));
+    }
     for (const {diskPath, urlPath} of opts.mountPoints) {
       app.use(mount(urlPath, serve(diskPath, {index: 'index.html'})));
     }

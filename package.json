@@ -59,6 +59,7 @@
     "koa": "^2.5.1",
     "koa-bodyparser": "^4.2.1",
     "koa-mount": "^4.0.0",
+    "koa-node-resolve": "^1.0.0-pre.2",
     "koa-router": "^7.4.0",
     "koa-send": "^5.0.0",
     "koa-static": "^5.0.0",
@@ -73,6 +74,7 @@
   "devDependencies": {
     "@types/chai": "^4.1.7",
     "@types/mocha": "^5.2.6",
+    "@types/parse5": "^5.0.0",
     "chai": "^4.2.0",
     "clang-format": "^1.2.4",
     "mocha": "^6.0.2",

@@ -39,6 +39,7 @@ suite('config', () => {
         sampleSize: 52,
         timeout: 7,
         autoSampleConditions: ['0ms', '1ms', '2%', '+3%'],
+        resolveBareModules: false,
         benchmarks: [
           {
             name: 'remote',
@@ -69,6 +70,7 @@ suite('config', () => {
           absolute: [-1, 0, 1],
           relative: [-0.02, 0.02, 0.03],
         },
+        resolveBareModules: false,
         mode: 'automatic',
         savePath: '',
         benchmarks: [
@@ -123,6 +125,7 @@ suite('config', () => {
           absolute: [],
           relative: [0],
         },
+        resolveBareModules: true,
         mode: 'automatic',
         savePath: '',
         benchmarks: [
@@ -182,6 +185,7 @@ suite('config', () => {
           absolute: [],
           relative: [0],
         },
+        resolveBareModules: true,
         mode: 'automatic',
         savePath: '',
         benchmarks: [
