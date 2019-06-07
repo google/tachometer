@@ -385,7 +385,7 @@ interface Browser {
 async function automaticMode(config: Config, servers: ServerMap) {
   let reportGitHubCheckResults;
   if (config.githubCheck !== undefined) {
-    const {appId, installationId, repo, commit} = config.githubCheck;
+    const {label, appId, installationId, repo, commit} = config.githubCheck;
 
     // We can directly store our GitHub App private key as a secret Travis
     // environment variable (as opposed to committing it as a file and
@@ -413,14 +413,14 @@ async function automaticMode(config: Config, servers: ServerMap) {
     // Create the initial Check Run run now, so that it will show up in the
     // GitHub UI as pending.
     const checkId =
-        await github.createCheckRun({repo, commit, installationToken});
+        await github.createCheckRun({label, repo, commit, installationToken});
 
     // We'll call this after we're done to complete the Check Run.
     reportGitHubCheckResults = async ({fixed, unfixed}: AutomaticResults) => {
       const markdown = horizontalHtmlResultTable(fixed) + '\n' +
           verticalHtmlResultTable(unfixed);
       await github.completeCheckRun(
-          {repo, installationToken, checkId, markdown});
+          {label, repo, installationToken, checkId, markdown});
     };
   }
 

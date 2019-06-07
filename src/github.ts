@@ -29,6 +29,7 @@ import * as jsonwebtoken from 'jsonwebtoken';
  * tab in the GitHub UI.
  */
 export interface CheckConfig {
+  label: string;
   appId: number;
   installationId: number;
   repo: string;
@@ -47,6 +48,7 @@ export function parseCheckFlag(flag: string): CheckConfig {
         `with properties: appId, installationId, repo, and commit.`);
   }
   return {
+    label: String(parsed.label || 'Tachometer Benchmarks'),
     appId: Number(parsed.appId),
     installationId: Number(parsed.installationId),
     repo: String(parsed.repo),
@@ -97,10 +99,12 @@ export async function getInstallationToken(
  * Create a new GitHub Check Run (a single invocation of a Check on some commit)
  * and return its identifier.
  */
-export async function createCheckRun(
-    {repo, commit, installationToken}:
-        {repo: string, commit: string, installationToken: string}):
-    Promise<string> {
+export async function createCheckRun({label, repo, commit, installationToken}: {
+  label: string,
+  repo: string,
+  commit: string,
+  installationToken: string
+}): Promise<string> {
   const resp =
       await got.post(`https://api.github.com/repos/${repo}/check-runs`, {
         headers: {
@@ -110,7 +114,7 @@ export async function createCheckRun(
         // https://developer.github.com/v3/checks/runs/#parameters
         body: JSON.stringify({
           head_sha: commit,
-          name: 'Tachometer Benchmarks',
+          name: label,
         }),
       });
   const data = JSON.parse(resp.body) as {id: string};
@@ -122,7 +126,8 @@ export async function createCheckRun(
  * complete.
  */
 export async function completeCheckRun(
-    {repo, installationToken, checkId, markdown}: {
+    {label, repo, installationToken, checkId, markdown}: {
+      label: string,
       repo: string,
       checkId: string,
       markdown: string,
@@ -136,14 +141,14 @@ export async function completeCheckRun(
         },
         // https://developer.github.com/v3/checks/runs/#parameters-1
         body: JSON.stringify({
-          name: 'Tachometer Benchmarks',
+          name: label,
           completed_at: new Date().toISOString(),
           // Note that in the future we will likely want to be able to report
           // a failing check (e.g. if there appears to be a difference greater
           // than some threshold).
           conclusion: 'neutral',
           output: {
-            title: 'Tachometer Benchmarks',
+            title: label,
             summary: 'Benchmark results',
             text: markdown,
           }
