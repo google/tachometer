@@ -287,9 +287,24 @@ $ tach http://example.com
       throw new Error(
           '--resolve-bare-modules cannot be specified when using --config');
     }
+    const rawConfigObj = await fsExtra.readJson(opts.config);
+    const validatedConfigObj = await parseConfigFile(rawConfigObj);
+
+    // Add the $schema field to the original config file if it's absent.
+    // We only want to do this if the file validated though, so we don't mutate
+    // a file that's not actually a tachometer config file.
+    if (!('$schema' in rawConfigObj)) {
+      // Extra IDE features can be activated if the config file has a schema.
+      const withSchema = {
+        '$schema': 'https://unpkg.com/tachometer/lib/config.schema.json',
+        ...rawConfigObj,
+      };
+      await fsExtra.writeFile(opts.config, JSON.stringify(withSchema, null, 2));
+    }
+
     config = {
       ...baseConfig,
-      ...await parseConfigFile(await fsExtra.readJson(opts.config)),
+      ...validatedConfigObj,
     };
 
   } else {

@@ -60,6 +60,14 @@ export interface ConfigFile {
    * specifiers to paths.
    */
   resolveBareModules?: boolean;
+
+  /**
+   * An optional reference to the JSON Schema for this file.
+   *
+   * If none is given, and the file is a valid tachometer config file,
+   * tachometer will write back to the config file to give this a value.
+   */
+  $schema?: string;
 }
 
 /**
@@ -167,7 +175,6 @@ export async function parseConfigFile(parsedJson: unknown): Promise<Config> {
     throw new Error(result.errors[0].toString());
   }
   const validated = parsedJson as ConfigFile;
-
   const root = validated.root || '.';
   const benchmarks: BenchmarkSpec[] = [];
   for (const benchmark of validated.benchmarks) {
