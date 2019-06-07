@@ -17,7 +17,7 @@ import {parseHorizons} from './cli';
 import {CheckConfig} from './github';
 import {isUrl} from './specs';
 import {Horizons} from './stats';
-import {BenchmarkSpec, Measurement, PackageDependencyMap} from './types';
+import {BenchmarkSpec, LocalUrl, Measurement, PackageDependencyMap, RemoteUrl} from './types';
 import {fileKind} from './versions';
 
 /**
@@ -135,6 +135,19 @@ export interface Config {
   githubCheck?: CheckConfig;
 }
 
+export const defaultRoot = '.';
+export const defaultBrowser: Browser = 'chrome';
+export const defaultSampleSize = 50;
+export const defaultTimeout = 3;
+export const defaultHorizons = ['0%'];
+
+export function defaultMeasurement(url: LocalUrl|RemoteUrl): Measurement {
+  if (url.kind === 'remote') {
+    return 'fcp';
+  }
+  return 'callback';
+}
+
 /**
  * Validate the given JSON object parsed from a config file, and expand it into
  * a fully specified configuration.
@@ -158,9 +171,11 @@ export async function parseConfigFile(parsedJson: unknown): Promise<Config> {
 
   return {
     root,
-    sampleSize: validated.sampleSize === undefined ? 50 : validated.sampleSize,
-    timeout: validated.timeout === undefined ? 3 : validated.timeout,
-    horizons: parseHorizons(validated.horizons || ['0%']),
+    sampleSize: validated.sampleSize !== undefined ? validated.sampleSize :
+                                                     defaultSampleSize,
+    timeout: validated.timeout !== undefined ? validated.timeout :
+                                               defaultTimeout,
+    horizons: parseHorizons(validated.horizons || defaultHorizons),
     benchmarks,
 
     // These are only controlled by flags currently.
@@ -248,19 +263,16 @@ function applyDefaults(partialSpec: Partial<BenchmarkSpec>): BenchmarkSpec {
     if (name === undefined) {
       name = url.url;
     }
-    if (measurement === undefined) {
-      measurement = 'fcp';
-    }
   } else {
     if (name === undefined) {
       name = url.urlPath + url.queryString;
     }
-    if (measurement === undefined) {
-      measurement = 'callback';
-    }
   }
   if (browser === undefined) {
-    browser = 'chrome';
+    browser = defaultBrowser;
+  }
+  if (measurement === undefined) {
+    measurement = defaultMeasurement(url);
   }
   return {name, url, browser, measurement};
 }

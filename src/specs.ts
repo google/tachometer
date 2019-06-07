@@ -14,8 +14,8 @@ import {URL} from 'url';
 
 import {validBrowsers} from './browser';
 import {Opts} from './cli';
-import {urlFromLocalPath} from './config';
-import {BenchmarkSpec, PackageVersion} from './types';
+import {defaultBrowser, defaultMeasurement, defaultRoot, urlFromLocalPath} from './config';
+import {BenchmarkSpec, LocalUrl, PackageVersion, RemoteUrl} from './types';
 import {parsePackageVersions} from './versions';
 
 /**
@@ -24,8 +24,10 @@ import {parsePackageVersions} from './versions';
  * benchmarks/ directory.
  */
 export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
-  const browsers = new Set(
-      opts.browser.replace(/\s+/, '').split(',').filter((b) => b !== ''));
+  const browsers = new Set((opts.browser || defaultBrowser)
+                               .replace(/\s+/, '')
+                               .split(',')
+                               .filter((b) => b !== ''));
   if (browsers.size === 0) {
     throw new Error('At least one --browser must be specified');
   }
@@ -51,37 +53,45 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
     const arg = parseBenchmarkArgument(argStr);
 
     if (arg.kind === 'remote') {
+      const url: RemoteUrl = {
+        kind: 'remote',
+        url: arg.url,
+      };
+      const measurement =
+          opts.measure !== undefined ? opts.measure : defaultMeasurement(url);
       for (const browser of browsers) {
         specs.push({
           name: arg.alias || arg.url,
-          url: {
-            kind: 'remote',
-            url: arg.url,
-          },
           browser,
-          measurement: 'fcp',  // callback not supported
+          measurement,
+          url,
         });
       }
 
     } else {
-      const urlPath = await urlFromLocalPath(opts.root, arg.diskPath);
+      const root = opts.root || defaultRoot;
+      const urlPath = await urlFromLocalPath(root, arg.diskPath);
       let name = arg.alias;
       if (name === undefined) {
-        const serverRelativePath = path.relative(opts.root, arg.diskPath);
+        const serverRelativePath = path.relative(root, arg.diskPath);
         name = serverRelativePath.replace(path.win32.sep, '/');
       }
       for (const browser of browsers) {
         for (const version of versions) {
+          const url: LocalUrl = {
+            kind: 'local',
+            urlPath,
+            queryString: arg.queryString,
+            version,
+          };
+          const measurement = opts.measure !== undefined ?
+              opts.measure :
+              defaultMeasurement(url);
           specs.push({
             name,
             browser,
-            measurement: opts.measure,
-            url: {
-              kind: 'local',
-              urlPath,
-              queryString: arg.queryString,
-              version,
-            },
+            measurement,
+            url,
           });
         }
       }
