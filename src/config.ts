@@ -25,22 +25,34 @@ import {fileKind} from './versions';
  * used to generate the JSON schema for validation.
  */
 export interface ConfigFile {
+  /**
+   * Root directory to serve benchmarks from (default current directory).
+   */
   root?: string;
 
   /**
+   * Minimum number of times to run each benchmark (default 50).
    * @TJS-type integer
    * @TJS-minimum 2
    */
   sampleSize?: number;
 
   /**
+   * The maximum number of minutes to spend auto-sampling (default 3).
    * @TJS-minimum 0
    */
   timeout?: number;
 
+  /**
+   * The degrees of difference to try and resolve when auto-sampling
+   * (e.g. 0ms, +1ms, -1ms, 0%, +1%, -1%, default 0%).
+   */
   horizons?: string[];
 
-  /** @TJS-minItems 1 */
+  /**
+   * Benchmarks to run.
+   * @TJS-minItems 1
+   */
   benchmarks: ConfigFileBenchmark[];
 }
 
@@ -48,16 +60,64 @@ export interface ConfigFile {
  * Expected format of a benchmark in a JSON config file.
  */
 interface ConfigFileBenchmark {
+  /**
+   * A fully qualified URL, or a local path to an HTML file or directory. If a
+   * directory, must contain an index.html. Query parameters are permitted on
+   * local paths (e.g. "my/benchmark.html?foo=bar").
+   */
   url?: string;
+
+  /**
+   * An optional label for this benchmark. Defaults to the URL.
+   */
   name?: string;
+
+  /**
+   * Which browser to run the benchmark in.
+   *
+   * Options:
+   *   - chrome (default)
+   *   - chrome-headless
+   *   - firefox
+   *   - firefox-headless
+   *   - safari
+   */
   browser?: Browser;
+
+  /**
+   * Which time interval to measure.
+   *
+   * Options:
+   *   - callback: bench.start() to bench.stop() (default for fully qualified
+   *     URLs.
+   *   - fcp: first contentful paint (default for local paths)
+   */
   measurement?: Measurement;
-  expand?: ConfigFileBenchmark[];
+
+  /**
+   * Optional NPM dependency overrides to apply and install. Only supported with
+   * local paths.
+   */
   packageVersions?: ConfigFilePackageVersion;
+
+  /**
+   * Recursively expand this benchmark configuration with any number of
+   * variations. Useful for testing the same base configuration with e.g.
+   * multiple browers or package versions.
+   */
+  expand?: ConfigFileBenchmark[];
 }
 
 interface ConfigFilePackageVersion {
+  /**
+   * Required label to identify this version map.
+   */
   label: string;
+
+  /**
+   * Map from NPM package to version. Any version syntax supported by NPM is
+   * supported here.
+   */
   dependencies: PackageDependencyMap;
 }
 
