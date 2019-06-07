@@ -156,7 +156,6 @@ export const optDefs: commandLineUsage.OptionDefinition[] = [
     description: 'Whether to automatically convert ES module imports with ' +
         'bare module specifiers to paths.',
     type: booleanString,
-    defaultValue: 'true',
   },
 ];
 
@@ -190,7 +189,7 @@ export interface Opts {
   horizon: string|undefined;
   timeout: number|undefined;
   'github-check': string;
-  'resolve-bare-modules': boolean;
+  'resolve-bare-modules': boolean|undefined;
 
   // Extra arguments not associated with a flag are put here. These are our
   // benchmark names/URLs.
@@ -284,6 +283,10 @@ $ tach http://example.com
     if (opts.measure !== undefined) {
       throw new Error('--measure cannot be specified when using --config');
     }
+    if (opts['resolve-bare-modules'] !== undefined) {
+      throw new Error(
+          '--resolve-bare-modules cannot be specified when using --config');
+    }
     config = {
       ...baseConfig,
       ...await parseConfigFile(await fsExtra.readJson(opts.config)),
@@ -300,7 +303,9 @@ $ tach http://example.com
           opts.horizon !== undefined ? opts.horizon.split(',') :
                                        defaultHorizons),
       benchmarks: await specsFromOpts(opts),
-      resolveBareModules: opts['resolve-bare-modules'],
+      resolveBareModules: opts['resolve-bare-modules'] !== undefined ?
+          opts['resolve-bare-modules'] :
+          true,
     };
   }
 
