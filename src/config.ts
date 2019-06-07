@@ -9,7 +9,6 @@
  * rights grant found at http://polymer.github.io/PATENTS.txt
  */
 
-import * as fs from 'fs-extra';
 import * as jsonschema from 'jsonschema';
 import * as path from 'path';
 
@@ -162,8 +161,7 @@ export function defaultMeasurement(url: LocalUrl|RemoteUrl): Measurement {
  * Validate the given JSON object parsed from a config file, and expand it into
  * a fully specified configuration.
  */
-export async function parseConfigFile(
-    parsedJson: unknown, configFilename?: string): Promise<Config> {
+export async function parseConfigFile(parsedJson: unknown): Promise<Config> {
   const schema = require('./config.schema.json');
   const result =
       jsonschema.validate(parsedJson, schema, {propertyName: 'config'});
@@ -171,12 +169,6 @@ export async function parseConfigFile(
     throw new Error(result.errors[0].toString());
   }
   const validated = parsedJson as ConfigFile;
-  if (!('$schema' in validated) && configFilename) {
-    // Extra IDE features can be activated if the config file has a schema.
-    validated.$schema = 'https://unpkg.com/tachometer/lib/config.schema.json';
-    await fs.writeFile(configFilename, JSON.stringify(validated, null, 2));
-  }
-
   const root = validated.root || '.';
   const benchmarks: BenchmarkSpec[] = [];
   for (const benchmark of validated.benchmarks) {
