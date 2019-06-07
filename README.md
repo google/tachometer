@@ -283,65 +283,15 @@ Note that, if the actual difference is very close to a horizon, then it is
 likely that the precision stopping condition will never be met, and the timeout
 will expire.
 
-## Config file
+## JavaScript module imports
 
-Use the `--config` flag to control tachometer with a JSON configuration file.
-Defaults are the same as the corresponding command-line flags.
+JavaScript module imports with *bare module specifiers* (e.g. `import {foo} from
+'mylib';`) will be automatically transformed to browser-compatible *path*
+imports using Node-style module resolution (e.g.`import {foo} from
+'./node_modules/mylib/index.js';`).
 
-```json
-{
-  "root": "./benchmarks",
-  "sampleSize": 50,
-  "timeout": 3,
-  "autoSampleConditions": ["0%", "1%"],
-  "benchmarks": [
-    {
-      "name": "foo",
-      "url": "foo/bar.html?baz=123",
-      "browser": "chrome",
-      "measure": "fcp",
-      "packageVersions": {
-        "label": "master",
-        "dependencies": {
-          "mylib": "github:Polymer/mylib#master",
-        },
-      }
-    },
-  ],
-}
-```
-
-Use the `expand` property in a benchmark object to recursively generate multiple
-variations of the same benchmark configuration. For example, to test the same
-benchmark with two different versions:
-
-```json
-{
-  "benchmarks": [
-    {
-      "url": "foo/bar.html",
-      "expand": [
-        {
-          "packageVersions": {
-            "label": "v1",
-            "dependencies": {
-              "mylib": "^1.0.0",
-            },
-          },
-        },
-        {
-          "packageVersions": {
-            "label": "master",
-            "dependencies": {
-              "mylib": "github:Polymer/mylib#master",
-            },
-          },
-        },
-      ],
-    },
-  ],
-}
-```
+This feature can be disabled with the `--resolve-bare-modules=false` flag, or
+the `resolveBareModules: false` JSON config file property.
 
 ## Usage
 
@@ -371,7 +321,6 @@ Flag                      | Default     | Description
 `--root`                  | `./`        | Root directory to search for benchmarks
 `--host`                  | `127.0.0.1` | Which host to run on
 `--port`                  | `8080, 8081, ..., 0`| Which port to run on (comma-delimited preference list, `0` for random)
-`--config`                | *(none)*    | Path to JSON config file ([details](#config-file))
 `--package-version` / `-p`| *(none)*    | Specify an NPM package version to swap in ([details](#swap-npm-dependency-versions))
 `--browser` / `-b`        | `chrome`    | Which browsers to launch in automatic mode, comma-delimited (chrome, chrome-headless, firefox, firefox-headless, safari)
 `--sample-size` / `-n`    | `50`        | Minimum number of times to run each benchmark ([details](#sample-size)]
