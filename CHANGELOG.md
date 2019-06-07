@@ -10,6 +10,13 @@ project adheres to [Semantic Versioning](http://semver.org/).
 -   Add `--config` flag to configure benchmarks through a JSON configuration
     file instead of flags. See `README.md` for format details.
 
+-   JavaScript imports with bare module specifiers (e.g. `import {foo} from
+    'mylib';`) will now be automatically transformed to browser-compatible path
+    imports using Node-style module resolution (e.g.`import {foo} from
+    './node_modules/mylib/index.js';`). This feature can be disabled with the
+    `--resolve-bare-modules=false` flag or the `resolveBareModules: false` JSON
+    config file property.
+
 <!-- Add new, unreleased changes here. -->
 
 ## [0.4.1] 2019-06-06

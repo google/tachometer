@@ -54,6 +54,12 @@ export interface ConfigFile {
    * @TJS-minItems 1
    */
   benchmarks: ConfigFileBenchmark[];
+
+  /**
+   * Whether to automatically convert ES module imports with bare module
+   * specifiers to paths.
+   */
+  resolveBareModules?: boolean;
 }
 
 /**
@@ -133,6 +139,7 @@ export interface Config {
   mode: 'automatic'|'manual';
   savePath: string;
   githubCheck?: CheckConfig;
+  resolveBareModules: boolean;
 }
 
 export const defaultRoot = '.';
@@ -177,6 +184,9 @@ export async function parseConfigFile(parsedJson: unknown): Promise<Config> {
                                                defaultTimeout,
     horizons: parseHorizons(validated.horizons || defaultHorizons),
     benchmarks,
+    resolveBareModules: validated.resolveBareModules === undefined ?
+        true :
+        validated.resolveBareModules,
 
     // These are only controlled by flags currently.
     mode: 'automatic',

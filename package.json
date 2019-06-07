@@ -28,6 +28,7 @@
   },
   "homepage": "https://github.com/PolymerLabs/tachometer#readme",
   "dependencies": {
+    "@babel/parser": "^7.4.5",
     "@types/ansi-escape-sequences": "^4.0.0",
     "@types/chai-as-promised": "^7.1.0",
     "@types/command-line-args": "^5.0.0",
@@ -59,6 +60,7 @@
     "koa": "^2.5.1",
     "koa-bodyparser": "^4.2.1",
     "koa-mount": "^4.0.0",
+    "koa-node-resolve": "^1.0.0-pre.3",
     "koa-router": "^7.4.0",
     "koa-send": "^5.0.0",
     "koa-static": "^5.0.0",
@@ -71,6 +73,7 @@
     "ua-parser-js": "^0.7.19"
   },
   "devDependencies": {
+    "@babel/types": "^7.4.4",
     "@types/chai": "^4.1.7",
     "@types/mocha": "^5.2.6",
     "chai": "^4.2.0",

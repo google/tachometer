@@ -283,6 +283,16 @@ Note that, if the actual difference is very close to a horizon, then it is
 likely that the precision stopping condition will never be met, and the timeout
 will expire.
 
+## JavaScript module imports
+
+JavaScript module imports with *bare module specifiers* (e.g. `import {foo} from
+'mylib';`) will be automatically transformed to browser-compatible *path*
+imports using Node-style module resolution (e.g.`import {foo} from
+'./node_modules/mylib/index.js';`).
+
+This feature can be disabled with the `--resolve-bare-modules=false` flag, or
+the `resolveBareModules: false` JSON config file property.
+
 ## Config file
 
 Use the `--config` flag to control tachometer with a JSON configuration file.

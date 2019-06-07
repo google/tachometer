@@ -151,7 +151,26 @@ export const optDefs: commandLineUsage.OptionDefinition[] = [
     type: String,
     defaultValue: '',
   },
+  {
+    name: 'resolve-bare-modules',
+    description: 'Whether to automatically convert ES module imports with ' +
+        'bare module specifiers to paths.',
+    type: booleanString,
+  },
 ];
+
+/**
+ * Boolean flags that default to true are not supported
+ * (https://github.com/75lb/command-line-args/issues/71).
+ */
+function booleanString(str: string): boolean {
+  if (str === 'true' || str === '') {
+    return true;
+  } else if (str === 'false') {
+    return false;
+  }
+  throw new Error(`Invalid boolean flag value: ${str}`);
+}
 
 export interface Opts {
   help: boolean;
@@ -170,6 +189,7 @@ export interface Opts {
   horizon: string|undefined;
   timeout: number|undefined;
   'github-check': string;
+  'resolve-bare-modules': boolean|undefined;
 
   // Extra arguments not associated with a flag are put here. These are our
   // benchmark names/URLs.
@@ -263,6 +283,10 @@ $ tach http://example.com
     if (opts.measure !== undefined) {
       throw new Error('--measure cannot be specified when using --config');
     }
+    if (opts['resolve-bare-modules'] !== undefined) {
+      throw new Error(
+          '--resolve-bare-modules cannot be specified when using --config');
+    }
     config = {
       ...baseConfig,
       ...await parseConfigFile(await fsExtra.readJson(opts.config)),
@@ -279,6 +303,9 @@ $ tach http://example.com
           opts.horizon !== undefined ? opts.horizon.split(',') :
                                        defaultHorizons),
       benchmarks: await specsFromOpts(opts),
+      resolveBareModules: opts['resolve-bare-modules'] !== undefined ?
+          opts['resolve-bare-modules'] :
+          true,
     };
   }
 
@@ -313,7 +340,9 @@ $ tach http://example.com
       const server = await Server.start({
         host: opts.host,
         ports: opts.port,
+        root: config.root,
         mountPoints,
+        resolveBareModules: config.resolveBareModules,
       });
       for (const spec of specs) {
         servers.set(spec, server);
