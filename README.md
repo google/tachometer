@@ -313,7 +313,8 @@ Defaults are the same as the corresponding command-line flags.
 
 Use the `expand` property in a benchmark object to recursively generate multiple
 variations of the same benchmark configuration. For example, to test the same
-benchmark with two different versions:
+benchmark file with two different browsers, you can use `expand` instead of
+duplicating the entire benchmark configuration:
 
 ```json
 {
@@ -322,22 +323,29 @@ benchmark with two different versions:
       "url": "foo/bar.html",
       "expand": [
         {
-          "packageVersions": {
-            "label": "v1",
-            "dependencies": {
-              "mylib": "^1.0.0",
-            },
-          },
+          "browser": "chrome"
         },
         {
-          "packageVersions": {
-            "label": "master",
-            "dependencies": {
-              "mylib": "github:Polymer/mylib#master",
-            },
-          },
+          "browser": "firefox"
         },
       ],
+    },
+  ],
+}
+```
+
+Which is equivalent to:
+
+```json
+{
+  "benchmarks": [
+    {
+      "url": "foo/bar.html",
+      "browser": "chrome"
+    },
+    {
+      "url": "foo/bar.html",
+      "browser": "firefox"
     },
   ],
 }
