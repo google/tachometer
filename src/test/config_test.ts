@@ -11,7 +11,9 @@
 
 import * as chai from 'chai';
 import * as chaiAsPromised from 'chai-as-promised';
+import * as fs from 'fs-extra';
 import * as path from 'path';
+import * as tmp from 'tmp';
 
 chai.use(chaiAsPromised);
 const {assert} = chai;
@@ -218,6 +220,25 @@ suite('config', () => {
       const actual = await parseConfigFile(config);
       assert.deepEqual(actual, expected);
     });
+
+    test(
+        'it updates an on-disk config file with the schema, if absent',
+        async () => {
+          const config = {
+            benchmarks: [{
+              url: 'http://example.com?foo=bar',
+            }],
+          };
+          const expectedUpdatedConfig = {
+            $schema: 'https://unpkg.com/tachometer/lib/config.schema.json',
+            ...config
+          };
+          const tempFile = tmp.fileSync();
+          fs.writeJSONSync(tempFile.name, config);
+          await parseConfigFile(config, tempFile.name);
+          assert.deepEqual(
+              fs.readJsonSync(tempFile.name), expectedUpdatedConfig);
+        });
 
     suite('errors', () => {
       test('invalid top-level type', async () => {

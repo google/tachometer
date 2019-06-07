@@ -76,9 +76,11 @@
     "@babel/types": "^7.4.4",
     "@types/chai": "^4.1.7",
     "@types/mocha": "^5.2.6",
+    "@types/tmp": "^0.1.0",
     "chai": "^4.2.0",
     "clang-format": "^1.2.4",
     "mocha": "^6.0.2",
+    "tmp": "^0.1.0",
     "tslint": "^5.12.1",
     "typescript": "^3.2.0",
     "typescript-json-schema": "^0.38.3"
