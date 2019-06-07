@@ -63,7 +63,7 @@ export async function makeServerPlans(
       // No server needed for remote URLs.
       continue;
     }
-    if (spec.url.version.label === 'default') {
+    if (spec.url.version === undefined) {
       defaultSpecs.push(spec);
       continue;
     }

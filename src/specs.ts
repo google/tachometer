@@ -14,8 +14,9 @@ import {URL} from 'url';
 
 import {validBrowsers} from './browser';
 import {Opts} from './cli';
-import {BenchmarkSpec} from './types';
-import {fileKind, parsePackageVersions} from './versions';
+import {defaultBrowser, defaultMeasurement, defaultRoot, urlFromLocalPath} from './config';
+import {BenchmarkSpec, LocalUrl, PackageVersion, RemoteUrl} from './types';
+import {parsePackageVersions} from './versions';
 
 /**
  * Derive the set of benchmark specifications we should run according to the
@@ -23,8 +24,10 @@ import {fileKind, parsePackageVersions} from './versions';
  * benchmarks/ directory.
  */
 export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
-  const browsers = new Set(
-      opts.browser.replace(/\s+/, '').split(',').filter((b) => b !== ''));
+  const browsers = new Set((opts.browser || defaultBrowser)
+                               .replace(/\s+/, '')
+                               .split(',')
+                               .filter((b) => b !== ''));
   if (browsers.size === 0) {
     throw new Error('At least one --browser must be specified');
   }
@@ -38,9 +41,10 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
 
   const specs: BenchmarkSpec[] = [];
 
-  const versions = parsePackageVersions(opts['package-version']);
+  const versions: Array<PackageVersion|undefined> =
+      parsePackageVersions(opts['package-version']);
   if (versions.length === 0) {
-    versions.push({label: 'default', dependencyOverrides: {}});
+    versions.push(undefined);
   }
 
   // Benchmark paths/URLs are the bare arguments not associated with a flag, so
@@ -49,59 +53,45 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
     const arg = parseBenchmarkArgument(argStr);
 
     if (arg.kind === 'remote') {
+      const url: RemoteUrl = {
+        kind: 'remote',
+        url: arg.url,
+      };
+      const measurement =
+          opts.measure !== undefined ? opts.measure : defaultMeasurement(url);
       for (const browser of browsers) {
         specs.push({
           name: arg.alias || arg.url,
-          url: {
-            kind: 'remote',
-            url: arg.url,
-          },
           browser,
-          measurement: 'fcp',  // callback not supported
+          measurement,
+          url,
         });
       }
 
     } else {
-      const serverRelativePath = path.relative(opts.root, arg.diskPath);
-      // TODO Test on Windows.
-      if (serverRelativePath.startsWith('..')) {
-        throw new Error(
-            'File or directory is not accessible from server root:' +
-            arg.diskPath);
+      const root = opts.root || defaultRoot;
+      const urlPath = await urlFromLocalPath(root, arg.diskPath);
+      let name = arg.alias;
+      if (name === undefined) {
+        const serverRelativePath = path.relative(root, arg.diskPath);
+        name = serverRelativePath.replace(path.win32.sep, '/');
       }
-
-      const kind = await fileKind(arg.diskPath);
-      if (kind === undefined) {
-        throw new Error(`No such file or directory: ${arg.diskPath}`);
-      }
-
-      // TODO Test on Windows.
-      let urlPath = `/${serverRelativePath.replace(path.win32.sep, '/')}`;
-      if (kind === 'dir') {
-        if (await fileKind(path.join(arg.diskPath, 'index.html')) !== 'file') {
-          throw new Error(
-              `Directory did not contain an index.html: ${arg.diskPath}`);
-        }
-        // We need a trailing slash when serving a directory. Our static server
-        // will serve index.html at both /foo and /foo/, without redirects. But
-        // these two forms will have baseURIs that resolve relative URLs
-        // differently, and we want the form that would work the same as
-        // /foo/index.html.
-        urlPath += '/';
-      }
-
       for (const browser of browsers) {
         for (const version of versions) {
+          const url: LocalUrl = {
+            kind: 'local',
+            urlPath,
+            queryString: arg.queryString,
+            version,
+          };
+          const measurement = opts.measure !== undefined ?
+              opts.measure :
+              defaultMeasurement(url);
           specs.push({
-            name: arg.alias || serverRelativePath.replace(path.win32.sep, '/'),
+            name,
             browser,
-            measurement: opts.measure,
-            url: {
-              kind: 'local',
-              urlPath,
-              queryString: arg.queryString,
-              version,
-            },
+            measurement,
+            url,
           });
         }
       }
@@ -165,7 +155,7 @@ function parseBenchmarkArgument(str: string):
   };
 }
 
-function isUrl(str: string): boolean {
+export function isUrl(str: string): boolean {
   try {
     new URL(str);
     return true;

@@ -16,6 +16,9 @@ import * as webdriver from 'selenium-webdriver';
 import * as chrome from 'selenium-webdriver/chrome';
 import * as firefox from 'selenium-webdriver/firefox';
 
+export type Browser =
+    'chrome'|'chrome-headless'|'firefox'|'firefox-headless'|'safari';
+
 /**
  * Browsers we can drive.
  */

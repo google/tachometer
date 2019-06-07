@@ -283,6 +283,74 @@ Note that, if the actual difference is very close to a horizon, then it is
 likely that the precision stopping condition will never be met, and the timeout
 will expire.
 
+## Config file
+
+Use the `--config` flag to control tachometer with a JSON configuration file.
+Defaults are the same as the corresponding command-line flags.
+
+```json
+{
+  "root": "./benchmarks",
+  "sampleSize": 50,
+  "timeout": 3,
+  "autoSampleConditions": ["0%", "1%"],
+  "benchmarks": [
+    {
+      "name": "foo",
+      "url": "foo/bar.html?baz=123",
+      "browser": "chrome",
+      "measure": "fcp",
+      "packageVersions": {
+        "label": "master",
+        "dependencies": {
+          "mylib": "github:Polymer/mylib#master",
+        },
+      }
+    },
+  ],
+}
+```
+
+Use the `expand` property in a benchmark object to recursively generate multiple
+variations of the same benchmark configuration. For example, to test the same
+benchmark file with two different browsers, you can use `expand` instead of
+duplicating the entire benchmark configuration:
+
+```json
+{
+  "benchmarks": [
+    {
+      "url": "foo/bar.html",
+      "expand": [
+        {
+          "browser": "chrome"
+        },
+        {
+          "browser": "firefox"
+        },
+      ],
+    },
+  ],
+}
+```
+
+Which is equivalent to:
+
+```json
+{
+  "benchmarks": [
+    {
+      "url": "foo/bar.html",
+      "browser": "chrome"
+    },
+    {
+      "url": "foo/bar.html",
+      "browser": "firefox"
+    },
+  ],
+}
+```
+
 ## Usage
 
 Run a benchmark from a local file:
@@ -311,6 +379,7 @@ Flag                      | Default     | Description
 `--root`                  | `./`        | Root directory to search for benchmarks
 `--host`                  | `127.0.0.1` | Which host to run on
 `--port`                  | `8080, 8081, ..., 0`| Which port to run on (comma-delimited preference list, `0` for random)
+`--config`                | *(none)*    | Path to JSON config file ([details](#config-file))
 `--package-version` / `-p`| *(none)*    | Specify an NPM package version to swap in ([details](#swap-npm-dependency-versions))
 `--browser` / `-b`        | `chrome`    | Which browsers to launch in automatic mode, comma-delimited (chrome, chrome-headless, firefox, firefox-headless, safari)
 `--sample-size` / `-n`    | `50`        | Minimum number of times to run each benchmark ([details](#sample-size)]

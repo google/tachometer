@@ -5,7 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](http://semver.org/).
 
-<!-- ## Unreleased -->
+## Unreleased
+
+-   Add `--config` flag to configure benchmarks through a JSON configuration
+    file instead of flags. See `README.md` for format details.
+
 <!-- Add new, unreleased changes here. -->
 
 ## [0.4.1] 2019-06-06

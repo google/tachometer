@@ -29,6 +29,7 @@ import {Horizons, ResultStats, horizonsResolved, summaryStats, computeDifference
 import {specsFromOpts} from './specs';
 import {AutomaticResults, verticalTermResultTable, horizontalTermResultTable, verticalHtmlResultTable, horizontalHtmlResultTable, automaticResultTable, spinner} from './format';
 import {prepareVersionDirectory, makeServerPlans} from './versions';
+import {parseConfigFile, Config, defaultRoot, defaultBrowser, defaultSampleSize, defaultTimeout, defaultHorizons} from './config';
 import * as github from './github';
 
 const defaultInstallDir = path.join(os.tmpdir(), 'tachometer', 'versions');
@@ -49,9 +50,8 @@ export const optDefs: commandLineUsage.OptionDefinition[] = [
   {
     name: 'root',
     description:
-        'Root directory to search for benchmarks (default current directory)',
+        `Root directory to search for benchmarks (default ${defaultRoot})`,
     type: String,
-    defaultValue: './',
   },
   {
     name: 'host',
@@ -65,6 +65,12 @@ export const optDefs: commandLineUsage.OptionDefinition[] = [
         '0 for random, default [8080, 8081, ..., 0])',
     type: (flag: string) => flag.split(',').map(Number),
     defaultValue: [8080, 8081, 8082, 8083, 0],
+  },
+  {
+    name: 'config',
+    description: 'Path to JSON config file (see README for format)',
+    type: String,
+    defaultValue: '',
   },
   {
     name: 'package-version',
@@ -84,17 +90,17 @@ export const optDefs: commandLineUsage.OptionDefinition[] = [
   {
     name: 'browser',
     description: 'Which browsers to launch in automatic mode, ' +
-        `comma-delimited (${[...validBrowsers].join(', ')})`,
+        `comma-delimited (${[...validBrowsers].join(', ')}) ` +
+        `(default ${defaultBrowser})`,
     alias: 'b',
     type: String,
-    defaultValue: 'chrome',
   },
   {
     name: 'sample-size',
-    description: 'Minimum number of times to run each benchmark',
+    description: 'Minimum number of times to run each benchmark' +
+        ` (default ${defaultSampleSize})`,
     alias: 'n',
     type: Number,
-    defaultValue: 50,
   },
   {
     name: 'manual',
@@ -115,23 +121,28 @@ export const optDefs: commandLineUsage.OptionDefinition[] = [
     description: 'Which time interval to measure. Options:\n' +
         '* callback: bench.start() to bench.stop() (default)\n' +
         '*      fcp: first contentful paint',
-    type: String,
-    defaultValue: 'callback',
+    type: (str: string): string => {
+      if (str !== 'callback' && str !== 'fcp') {
+        throw new Error(
+            `Expected --measure flag to be "callback" or "fcp" ` +
+            `but was "${str}"`);
+      }
+      return str;
+    },
   },
   {
     name: 'horizon',
     description:
         'The degrees of difference to try and resolve when auto-sampling ' +
-        '(milliseconds, comma-delimited, optionally signed, default 0%)',
+        '(milliseconds, comma-delimited, optionally signed, ' +
+        `default ${defaultHorizons.join(',')})`,
     type: String,
-    defaultValue: '0%'
   },
   {
     name: 'timeout',
     description: 'The maximum number of minutes to spend auto-sampling ' +
-        '(default 3).',
+        `(default ${defaultTimeout}).`,
     type: Number,
-    defaultValue: 3,
   },
   {
     name: 'github-check',
@@ -145,18 +156,19 @@ export const optDefs: commandLineUsage.OptionDefinition[] = [
 export interface Opts {
   help: boolean;
   version: boolean;
-  root: string;
+  root: string|undefined;
   host: string;
   port: number[];
+  config: string;
   'package-version': string[];
   'npm-install-dir': string;
-  browser: string;
-  'sample-size': number;
+  browser: string|undefined;
+  'sample-size': number|undefined;
   manual: boolean;
   save: string;
-  measure: Measurement;
-  horizon: string;
-  timeout: number;
+  measure: Measurement|undefined;
+  horizon: string|undefined;
+  timeout: number|undefined;
   'github-check': string;
 
   // Extra arguments not associated with a flag are put here. These are our
@@ -221,33 +233,77 @@ $ tach http://example.com
     return;
   }
 
-  if (opts['sample-size'] <= 0) {
-    throw new Error('--sample-size must be > 0');
+  // These options are only controlled by flags.
+  const baseConfig = {
+    mode: (opts.manual === true ? 'manual' : 'automatic') as
+        ('manual' | 'automatic'),
+    savePath: opts.save,
+    githubCheck: opts['github-check'] ?
+        github.parseCheckFlag(opts['github-check']) :
+        undefined,
+  };
+
+  let config: Config;
+  if (opts.config) {
+    if (opts.root !== undefined) {
+      throw new Error('--root cannot be specified when using --config');
+    }
+    if (opts.browser !== undefined) {
+      throw new Error('--browser cannot be specified when using --config');
+    }
+    if (opts['sample-size'] !== undefined) {
+      throw new Error('--sample-size cannot be specified when using --config');
+    }
+    if (opts.timeout !== undefined) {
+      throw new Error('--timeout cannot be specified when using --config');
+    }
+    if (opts.horizon !== undefined) {
+      throw new Error('--horizon cannot be specified when using --config');
+    }
+    if (opts.measure !== undefined) {
+      throw new Error('--measure cannot be specified when using --config');
+    }
+    config = {
+      ...baseConfig,
+      ...await parseConfigFile(await fsExtra.readJson(opts.config)),
+    };
+
+  } else {
+    config = {
+      ...baseConfig,
+      root: opts.root !== undefined ? opts.root : defaultRoot,
+      sampleSize: opts['sample-size'] !== undefined ? opts['sample-size'] :
+                                                      defaultSampleSize,
+      timeout: opts.timeout !== undefined ? opts.timeout : defaultTimeout,
+      horizons: parseHorizons(
+          opts.horizon !== undefined ? opts.horizon.split(',') :
+                                       defaultHorizons),
+      benchmarks: await specsFromOpts(opts),
+    };
   }
 
-  if (opts.measure !== 'callback' && opts.measure !== 'fcp') {
-    throw new Error(
-        `Expected --measure flag to be "callback" or "fcp" ` +
-        `but was "${opts.measure}"`);
+  if (config.sampleSize <= 1) {
+    throw new Error('--sample-size must be > 1');
   }
 
-  const specs = await specsFromOpts(opts);
-  if (specs.length === 0) {
+  if (config.timeout < 0) {
+    throw new Error('--timeout must be >= 0');
+  }
+
+  if (config.benchmarks.length === 0) {
     throw new Error('No benchmarks matched with the given flags');
   }
 
-  if (specs.find((spec) => spec.measurement === 'fcp')) {
-    for (const browser of opts.browser.split(',')) {
-      if (!fcpBrowsers.has(browser)) {
-        throw new Error(
-            `Browser ${browser} does not support the ` +
-            `first contentful paint (FCP) measurement`);
-      }
+  for (const spec of config.benchmarks) {
+    if (!fcpBrowsers.has(spec.browser)) {
+      throw new Error(
+          `Browser ${spec.browser} does not support the ` +
+          `first contentful paint (FCP) measurement`);
     }
   }
 
-  const plans =
-      await makeServerPlans(opts.root, opts['npm-install-dir'], specs);
+  const plans = await makeServerPlans(
+      config.root, opts['npm-install-dir'], config.benchmarks);
 
   const servers = new Map<BenchmarkSpec, Server>();
   const promises = [];
@@ -266,10 +322,10 @@ $ tach http://example.com
   }
   await Promise.all(promises);
 
-  if (opts.manual === true) {
-    await manualMode(opts, specs, servers);
+  if (config.mode === 'manual') {
+    await manualMode(config, servers);
   } else {
-    await automaticMode(opts, specs, servers);
+    await automaticMode(config, servers);
   }
 }
 
@@ -290,22 +346,20 @@ function specUrl(spec: BenchmarkSpec, servers: ServerMap): string {
  * Let the user run benchmarks manually. This process will not exit until
  * the user sends a termination signal.
  */
-async function manualMode(
-    opts: Opts, specs: BenchmarkSpec[], servers: ServerMap) {
-  if (opts.save) {
+async function manualMode(config: Config, servers: ServerMap) {
+  if (config.savePath) {
     throw new Error(`Can't save results in manual mode`);
   }
 
   console.log('\nVisit these URLs in any browser:');
   const allServers = new Set<Server>([...servers.values()]);
-  for (const spec of specs) {
+  for (const spec of config.benchmarks) {
     console.log();
     if (spec.url.kind === 'local') {
       console.log(
           `${spec.name}${spec.url.queryString}` +
-          (spec.url.version.label !== 'default' ?
-               ` [@${spec.url.version.label}]` :
-               ''));
+          (spec.url.version !== undefined ? ` [@${spec.url.version.label}]` :
+                                            ''));
     }
     console.log(ansi.format(`[yellow]{${specUrl(spec, servers)}}`));
   }
@@ -328,14 +382,10 @@ interface Browser {
   initialTabHandle: string;
 }
 
-async function automaticMode(
-    opts: Opts, specs: BenchmarkSpec[], servers: ServerMap) {
-  const horizons = parseHorizonFlag(opts.horizon);
-
+async function automaticMode(config: Config, servers: ServerMap) {
   let reportGitHubCheckResults;
-  if (opts['github-check'] !== '') {
-    const {label, appId, installationId, repo, commit} =
-        github.parseCheckFlag(opts['github-check']);
+  if (config.githubCheck !== undefined) {
+    const {label, appId, installationId, repo, commit} = config.githubCheck;
 
     // We can directly store our GitHub App private key as a secret Travis
     // environment variable (as opposed to committing it as a file and
@@ -376,8 +426,9 @@ async function automaticMode(
 
   console.log('Running benchmarks\n');
 
+  const specs = config.benchmarks;
   const bar = new ProgressBar('[:bar] :status', {
-    total: specs.length * opts['sample-size'],
+    total: specs.length * config.sampleSize,
     width: 58,
   });
 
@@ -446,7 +497,9 @@ async function automaticMode(
       const result: BenchmarkResult = {
         name: spec.name,
         queryString: spec.url.kind === 'local' ? spec.url.queryString : '',
-        version: spec.url.kind === 'local' ? spec.url.version.label : '',
+        version: spec.url.kind === 'local' && spec.url.version !== undefined ?
+            spec.url.version.label :
+            '',
         millis,
         bytesSent,
         browser: spec.browser,
@@ -462,16 +515,18 @@ async function automaticMode(
   };
 
   // Always collect our minimum number of samples.
-  const numRuns = specs.length * opts['sample-size'];
+  const numRuns = specs.length * config.sampleSize;
   let run = 0;
-  for (let sample = 0; sample < opts['sample-size']; sample++) {
+  for (let sample = 0; sample < config.sampleSize; sample++) {
     for (const spec of specs) {
       bar.tick(0, {
         status: [
           `${++run}/${numRuns}`,
           spec.browser,
           spec.name + (spec.url.kind === 'local' ? spec.url.queryString : ''),
-          spec.url.kind === 'local' ? `[@${spec.url.version.label}]` : '',
+          spec.url.kind === 'local' && spec.url.version !== undefined ?
+              `[@${spec.url.version.label}]` :
+              '',
         ].filter((part) => part !== '')
                     .join(' '),
       });
@@ -499,14 +554,14 @@ async function automaticMode(
   };
 
   let hitTimeout = false;
-  if (opts.timeout > 0) {
+  if (config.timeout > 0) {
     console.log();
-    const timeoutMs = opts.timeout * 60 * 1000;  // minutes -> millis
+    const timeoutMs = config.timeout * 60 * 1000;  // minutes -> millis
     const startMs = Date.now();
     let run = 0;
     let sample = 0;
     while (true) {
-      if (horizonsResolved(makeResults(), horizons)) {
+      if (horizonsResolved(makeResults(), config.horizons)) {
         console.log();
         break;
       }
@@ -540,14 +595,14 @@ async function automaticMode(
 
   if (hitTimeout === true) {
     console.log(ansi.format(
-        `[bold red]{NOTE} Hit ${opts.timeout} minute auto-sample timeout` +
-        ` trying to resolve ${opts.horizon} horizon(s)`));
+        `[bold red]{NOTE} Hit ${config.timeout} minute auto-sample timeout` +
+        ` trying to resolve horizon(s)`));
     console.log('Consider a longer --timeout or different --horizon');
   }
 
-  if (opts.save) {
+  if (config.savePath) {
     const session = await makeSession(withDifferences.map((s) => s.result));
-    await fsExtra.writeJSON(opts.save, session);
+    await fsExtra.writeJSON(config.savePath, session);
   }
 
   if (reportGitHubCheckResults !== undefined) {
@@ -555,14 +610,13 @@ async function automaticMode(
   }
 }
 
-/** Parse the --horizon flag into signed horizon values. */
-export function parseHorizonFlag(flag: string): Horizons {
+/** Parse horizon flags into signed horizon values. */
+export function parseHorizons(strs: string[]): Horizons {
   const absolute = new Set<number>();
   const relative = new Set<number>();
-  const strs = flag.split(',');
   for (const str of strs) {
     if (!str.match(/^[-+]?(\d*\.)?\d+(ms|%)$/)) {
-      throw new Error(`Invalid --horizon ${flag}`);
+      throw new Error(`Invalid horizon ${str}`);
     }
 
     let num;
