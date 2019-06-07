@@ -296,8 +296,8 @@ $ tach http://example.com
     if (!('$schema' in rawConfigObj)) {
       // Extra IDE features can be activated if the config file has a schema.
       const withSchema = {
+        '$schema': 'https://unpkg.com/tachometer/lib/config.schema.json',
         ...rawConfigObj,
-        '$schema': 'https://unpkg.com/tachometer/lib/config.schema.json'
       };
       await fsExtra.writeFile(opts.config, JSON.stringify(withSchema, null, 2));
     }
