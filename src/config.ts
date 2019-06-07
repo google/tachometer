@@ -61,6 +61,12 @@ export interface ConfigFile {
    */
   resolveBareModules?: boolean;
 
+  /**
+   * An optional reference to the JSON Schema for this file.
+   *
+   * If none is given, and the file is a valid tachometer config file,
+   * tachometer will write back to the config file to give this a value.
+   */
   $schema?: string;
 }
 
