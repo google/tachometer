@@ -5,7 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](http://semver.org/).
 
-## Unreleased
+<!-- ## Unreleased -->
+<!-- Add new, unreleased changes here. -->
+
+## [0.4.2] 2019-06-07
 
 -   Add `--config` flag to configure benchmarks through a JSON configuration
     file instead of flags. See `README.md` for format details.
@@ -16,8 +19,6 @@ project adheres to [Semantic Versioning](http://semver.org/).
     './node_modules/mylib/index.js';`). This feature can be disabled with the
     `--resolve-bare-modules=false` flag or the `resolveBareModules: false` JSON
     config file property.
-
-<!-- Add new, unreleased changes here. -->
 
 ## [0.4.1] 2019-06-06
 
