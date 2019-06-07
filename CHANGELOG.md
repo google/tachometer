@@ -19,6 +19,10 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 <!-- Add new, unreleased changes here. -->
 
+## [0.4.1] 2019-06-06
+
+-   A `label` can now be set in the GitHub check JSON object.
+
 ## [0.4.0] 2019-05-08
 
 -   Benchmarks are now specified as arbitrary paths to local HTML files or

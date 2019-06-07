@@ -38,7 +38,7 @@ suite('config', () => {
         root: '.',
         sampleSize: 52,
         timeout: 7,
-        autoSampleConditions: ['0ms', '1ms', '2%', '+3%'],
+        horizons: ['0ms', '1ms', '2%', '+3%'],
         resolveBareModules: false,
         benchmarks: [
           {
@@ -66,7 +66,7 @@ suite('config', () => {
         root: '.',
         sampleSize: 52,
         timeout: 7,
-        autoSampleConditions: {
+        horizons: {
           absolute: [-1, 0, 1],
           relative: [-0.02, 0.02, 0.03],
         },
@@ -121,7 +121,7 @@ suite('config', () => {
         root: '.',
         sampleSize: 50,
         timeout: 3,
-        autoSampleConditions: {
+        horizons: {
           absolute: [],
           relative: [0],
         },
@@ -181,7 +181,7 @@ suite('config', () => {
         root: '.',
         sampleSize: 50,
         timeout: 3,
-        autoSampleConditions: {
+        horizons: {
           absolute: [],
           relative: [0],
         },
