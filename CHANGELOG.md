@@ -5,7 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](http://semver.org/).
 
-## Unreleased
+<!-- ## Unreleased -->
+<!-- Add new, unreleased changes here. -->
+
+## [0.4.3] 2019-06-08
 
 -   Automatically update config files with a `$schema` property, pointing to the
     JSON schema for the file on unpkg. This will provide in-editor contextual
@@ -13,8 +16,6 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 -   Add `tachometer` bin alias, so that `npx tachometer` can be used (previously
     the binary could only be invoked as `tach`).
-
-<!-- Add new, unreleased changes here. -->
 
 ## [0.4.2] 2019-06-07
 
