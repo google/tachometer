@@ -9,6 +9,7 @@
  * rights grant found at http://polymer.github.io/PATENTS.txt
  */
 
+import * as fsExtra from 'fs-extra';
 import * as jsonschema from 'jsonschema';
 import * as path from 'path';
 
@@ -19,6 +20,9 @@ import {isUrl} from './specs';
 import {Horizons} from './stats';
 import {BenchmarkSpec, LocalUrl, Measurement, PackageDependencyMap, RemoteUrl} from './types';
 import {fileKind} from './versions';
+
+const {version: tachometerVersion} =
+    require('../package.json') as {version: string};
 
 /**
  * Expected format of the top-level JSON config file. Note this interface is
@@ -327,4 +331,25 @@ export async function urlFromLocalPath(
     urlPath += '/';
   }
   return urlPath;
+}
+
+export async function writeBackSchemaIfNeeded(
+    rawConfigObj: Partial<ConfigFile>, configFile: string) {
+  // Add the $schema field to the original config file if it's absent.
+  // We only want to do this if the file validated though, so we don't mutate
+  // a file that's not actually a tachometer config file.
+  if (!('$schema' in rawConfigObj) ||
+      (rawConfigObj.$schema &&
+       rawConfigObj.$schema.startsWith('https://unpkg.com/tachometer'))) {
+    // Extra IDE features can be activated if the config file has a schema.
+    const withSchema = {
+      '$schema': ``,  // write it empty, to get the key ordering correct
+      ...rawConfigObj,
+    };
+    // Then write the value, ensuring that we overwrite rawConfigObj.$schema
+    withSchema.$schema = `https://unpkg.com/tachometer@${
+        tachometerVersion}/lib/config.schema.json`;
+    const contents = JSON.stringify(withSchema, null, 2);
+    await fsExtra.writeFile(configFile, contents, {encoding: 'utf-8'});
+  }
 }

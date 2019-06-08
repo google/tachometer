@@ -29,7 +29,7 @@ import {Horizons, ResultStats, horizonsResolved, summaryStats, computeDifference
 import {specsFromOpts} from './specs';
 import {AutomaticResults, verticalTermResultTable, horizontalTermResultTable, verticalHtmlResultTable, horizontalHtmlResultTable, automaticResultTable, spinner} from './format';
 import {prepareVersionDirectory, makeServerPlans} from './versions';
-import {parseConfigFile, Config, defaultRoot, defaultBrowser, defaultSampleSize, defaultTimeout, defaultHorizons} from './config';
+import {parseConfigFile, Config, defaultRoot, defaultBrowser, defaultSampleSize, defaultTimeout, defaultHorizons, writeBackSchemaIfNeeded} from './config';
 import * as github from './github';
 
 const defaultInstallDir = path.join(os.tmpdir(), 'tachometer', 'versions');
@@ -290,17 +290,7 @@ $ tach http://example.com
     const rawConfigObj = await fsExtra.readJson(opts.config);
     const validatedConfigObj = await parseConfigFile(rawConfigObj);
 
-    // Add the $schema field to the original config file if it's absent.
-    // We only want to do this if the file validated though, so we don't mutate
-    // a file that's not actually a tachometer config file.
-    if (!('$schema' in rawConfigObj)) {
-      // Extra IDE features can be activated if the config file has a schema.
-      const withSchema = {
-        '$schema': 'https://unpkg.com/tachometer/lib/config.schema.json',
-        ...rawConfigObj,
-      };
-      await fsExtra.writeFile(opts.config, JSON.stringify(withSchema, null, 2));
-    }
+    await writeBackSchemaIfNeeded(rawConfigObj, opts.config);
 
     config = {
       ...baseConfig,
