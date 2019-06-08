@@ -335,17 +335,14 @@ export async function writeBackSchemaIfNeeded(
   // Add the $schema field to the original config file if it's absent.
   // We only want to do this if the file validated though, so we don't mutate
   // a file that's not actually a tachometer config file.
-  if (!('$schema' in rawConfigObj) ||
-      (rawConfigObj.$schema &&
-       rawConfigObj.$schema.startsWith('https://unpkg.com/tachometer'))) {
+  if (!('$schema' in rawConfigObj)) {
+    const $schema =
+        'https://raw.githubusercontent.com/Polymer/tachometer/master/config.schema.json';
     // Extra IDE features can be activated if the config file has a schema.
     const withSchema = {
-      '$schema': ``,  // write it empty, to get the key ordering correct
+      $schema,
       ...rawConfigObj,
     };
-    // Then write the value, ensuring that we overwrite rawConfigObj.$schema
-    withSchema.$schema =
-        `https://raw.githubusercontent.com/Polymer/tachometer/master/config.schema.json`;
     const contents = JSON.stringify(withSchema, null, 2);
     await fsExtra.writeFile(configFile, contents, {encoding: 'utf-8'});
   }
