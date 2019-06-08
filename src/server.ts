@@ -9,7 +9,6 @@
  * rights grant found at http://polymer.github.io/PATENTS.txt
  */
 
-import {parse as babelParse} from '@babel/parser';
 import * as http from 'http';
 import * as net from 'net';
 import * as path from 'path';
@@ -86,19 +85,7 @@ export class Server {
     app.use(this.serveBenchLib.bind(this));
 
     if (opts.resolveBareModules === true) {
-      app.use(nodeResolve({
-        root: opts.root,
-        // Only log errors.
-        logger: {...console, debug: undefined, info: undefined},
-        // Enable latest JS syntax.
-        jsParser: (js) => babelParse(js, {
-          sourceType: 'unambiguous',
-          plugins: [
-            'dynamicImport',
-            'importMeta',
-          ],
-        }),
-      }));
+      app.use(nodeResolve({root: opts.root}));
     }
     for (const {diskPath, urlPath} of opts.mountPoints) {
       app.use(mount(urlPath, serve(diskPath, {index: 'index.html'})));

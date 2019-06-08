@@ -1,13 +1,14 @@
 {
   "name": "tachometer",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "Web benchmark runner",
   "main": "index.js",
   "directories": {
     "lib": "lib"
   },
   "bin": {
-    "tach": "bin/tach.js"
+    "tach": "bin/tach.js",
+    "tachometer": "bin/tach.js"
   },
   "scripts": {
     "prepare": "npm run build",
@@ -28,7 +29,6 @@
   },
   "homepage": "https://github.com/PolymerLabs/tachometer#readme",
   "dependencies": {
-    "@babel/parser": "^7.4.5",
     "@types/ansi-escape-sequences": "^4.0.0",
     "@types/chai-as-promised": "^7.1.0",
     "@types/command-line-args": "^5.0.0",
@@ -60,7 +60,7 @@
     "koa": "^2.5.1",
     "koa-bodyparser": "^4.2.1",
     "koa-mount": "^4.0.0",
-    "koa-node-resolve": "^1.0.0-pre.3",
+    "koa-node-resolve": "^1.0.0-pre.4",
     "koa-router": "^7.4.0",
     "koa-send": "^5.0.0",
     "koa-static": "^5.0.0",
@@ -73,14 +73,12 @@
     "ua-parser-js": "^0.7.19"
   },
   "devDependencies": {
-    "@babel/types": "^7.4.4",
+    "@types/babel__generator": "^7.0.2",
     "@types/chai": "^4.1.7",
     "@types/mocha": "^5.2.6",
-    "@types/tmp": "^0.1.0",
     "chai": "^4.2.0",
     "clang-format": "^1.2.4",
     "mocha": "^6.0.2",
-    "tmp": "^0.1.0",
     "tslint": "^5.12.1",
     "typescript": "^3.2.0",
     "typescript-json-schema": "^0.38.3"
