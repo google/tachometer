@@ -7,10 +7,9 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
--   Automatically update config files with a $schema property, pointing to
-    the JSON schema for the file on unpkg. This will provide in-editor
-    contextual help for many IDEs (like VS Code) when writing
-    tachometer config files.
+-   Automatically update config files with a `$schema` property, pointing to the
+    JSON schema for the file on unpkg. This will provide in-editor contextual
+    help for many IDEs (like VS Code) when writing tachometer config files.
 
 -   Add `tachometer` bin alias, so that `npx tachometer` can be used (previously
     the binary could only be invoked as `tach`).
