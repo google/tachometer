@@ -85,7 +85,13 @@ export class Server {
     app.use(this.serveBenchLib.bind(this));
 
     if (opts.resolveBareModules === true) {
-      app.use(nodeResolve({root: opts.root}));
+      app.use(nodeResolve({
+        root: opts.root,
+        // TODO Use default logging options after issues resolved:
+        // https://github.com/Polymer/koa-node-resolve/issues/16
+        // https://github.com/Polymer/koa-node-resolve/issues/17
+        logger: false,
+      }));
     }
     for (const {diskPath, urlPath} of opts.mountPoints) {
       app.use(mount(urlPath, serve(diskPath, {index: 'index.html'})));
