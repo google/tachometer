@@ -9,6 +9,7 @@
  * rights grant found at http://polymer.github.io/PATENTS.txt
  */
 
+import * as fsExtra from 'fs-extra';
 import * as jsonschema from 'jsonschema';
 import * as path from 'path';
 
@@ -168,7 +169,7 @@ export function defaultMeasurement(url: LocalUrl|RemoteUrl): Measurement {
  * a fully specified configuration.
  */
 export async function parseConfigFile(parsedJson: unknown): Promise<Config> {
-  const schema = require('./config.schema.json');
+  const schema = require('../config.schema.json');
   const result =
       jsonschema.validate(parsedJson, schema, {propertyName: 'config'});
   if (result.errors.length > 0) {
@@ -327,4 +328,22 @@ export async function urlFromLocalPath(
     urlPath += '/';
   }
   return urlPath;
+}
+
+export async function writeBackSchemaIfNeeded(
+    rawConfigObj: Partial<ConfigFile>, configFile: string) {
+  // Add the $schema field to the original config file if it's absent.
+  // We only want to do this if the file validated though, so we don't mutate
+  // a file that's not actually a tachometer config file.
+  if (!('$schema' in rawConfigObj)) {
+    const $schema =
+        'https://raw.githubusercontent.com/Polymer/tachometer/master/config.schema.json';
+    // Extra IDE features can be activated if the config file has a schema.
+    const withSchema = {
+      $schema,
+      ...rawConfigObj,
+    };
+    const contents = JSON.stringify(withSchema, null, 2);
+    await fsExtra.writeFile(configFile, contents, {encoding: 'utf-8'});
+  }
 }
