@@ -12,6 +12,9 @@ project adheres to [Semantic Versioning](http://semver.org/).
     contextual help for many IDEs (like VS Code) when writing
     tachometer config files.
 
+-   Add `tachometer` bin alias, so that `npx tachometer` can be used (previously
+    the binary could only be invoked as `tach`).
+
 <!-- Add new, unreleased changes here. -->
 
 ## [0.4.2] 2019-06-07

@@ -7,7 +7,8 @@
     "lib": "lib"
   },
   "bin": {
-    "tach": "bin/tach.js"
+    "tach": "bin/tach.js",
+    "tachometer": "bin/tach.js"
   },
   "scripts": {
     "prepare": "npm run build",
