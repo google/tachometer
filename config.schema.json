@@ -1,0 +1,121 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "additionalProperties": false,
+    "definitions": {
+        "ConfigFileBenchmark": {
+            "additionalProperties": false,
+            "description": "Expected format of a benchmark in a JSON config file.",
+            "properties": {
+                "browser": {
+                    "description": "Which browser to run the benchmark in.\n\nOptions:\n   - chrome (default)\n   - chrome-headless\n   - firefox\n   - firefox-headless\n   - safari",
+                    "enum": [
+                        "chrome",
+                        "chrome-headless",
+                        "firefox",
+                        "firefox-headless",
+                        "safari"
+                    ],
+                    "type": "string"
+                },
+                "expand": {
+                    "description": "Recursively expand this benchmark configuration with any number of\nvariations. Useful for testing the same base configuration with e.g.\nmultiple browers or package versions.",
+                    "items": {
+                        "$ref": "#/definitions/ConfigFileBenchmark"
+                    },
+                    "type": "array"
+                },
+                "measurement": {
+                    "description": "Which time interval to measure.\n\nOptions:\n   - callback: bench.start() to bench.stop() (default for fully qualified\n     URLs.\n   - fcp: first contentful paint (default for local paths)",
+                    "enum": [
+                        "callback",
+                        "fcp"
+                    ],
+                    "type": "string"
+                },
+                "name": {
+                    "description": "An optional label for this benchmark. Defaults to the URL.",
+                    "type": "string"
+                },
+                "packageVersions": {
+                    "$ref": "#/definitions/ConfigFilePackageVersion",
+                    "description": "Optional NPM dependency overrides to apply and install. Only supported with\nlocal paths."
+                },
+                "url": {
+                    "description": "A fully qualified URL, or a local path to an HTML file or directory. If a\ndirectory, must contain an index.html. Query parameters are permitted on\nlocal paths (e.g. \"my/benchmark.html?foo=bar\").",
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "ConfigFilePackageVersion": {
+            "additionalProperties": false,
+            "properties": {
+                "dependencies": {
+                    "$ref": "#/definitions/PackageDependencyMap",
+                    "description": "Map from NPM package to version. Any version syntax supported by NPM is\nsupported here."
+                },
+                "label": {
+                    "description": "Required label to identify this version map.",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "dependencies",
+                "label"
+            ],
+            "type": "object"
+        },
+        "PackageDependencyMap": {
+            "additionalProperties": {
+                "type": "string"
+            },
+            "description": "A mapping from NPM package name to version specifier, as used in a\npackage.json's \"dependencies\" and \"devDependencies\".",
+            "type": "object"
+        }
+    },
+    "description": "Expected format of the top-level JSON config file. Note this interface is\nused to generate the JSON schema for validation.",
+    "properties": {
+        "$schema": {
+            "description": "An optional reference to the JSON Schema for this file.\n\nIf none is given, and the file is a valid tachometer config file,\ntachometer will write back to the config file to give this a value.",
+            "type": "string"
+        },
+        "benchmarks": {
+            "description": "Benchmarks to run.",
+            "items": {
+                "$ref": "#/definitions/ConfigFileBenchmark"
+            },
+            "minItems": 1,
+            "type": "array"
+        },
+        "horizons": {
+            "description": "The degrees of difference to try and resolve when auto-sampling\n(e.g. 0ms, +1ms, -1ms, 0%, +1%, -1%, default 0%).",
+            "items": {
+                "type": "string"
+            },
+            "type": "array"
+        },
+        "resolveBareModules": {
+            "description": "Whether to automatically convert ES module imports with bare module\nspecifiers to paths.",
+            "type": "boolean"
+        },
+        "root": {
+            "description": "Root directory to serve benchmarks from (default current directory).",
+            "type": "string"
+        },
+        "sampleSize": {
+            "description": "Minimum number of times to run each benchmark (default 50).",
+            "minimum": 2,
+            "type": "integer"
+        },
+        "timeout": {
+            "description": "The maximum number of minutes to spend auto-sampling (default 3).",
+            "minimum": 0,
+            "type": "number"
+        }
+    },
+    "required": [
+        "benchmarks"
+    ],
+    "type": "object"
+}
+

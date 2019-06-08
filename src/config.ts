@@ -21,9 +21,6 @@ import {Horizons} from './stats';
 import {BenchmarkSpec, LocalUrl, Measurement, PackageDependencyMap, RemoteUrl} from './types';
 import {fileKind} from './versions';
 
-const {version: tachometerVersion} =
-    require('../package.json') as {version: string};
-
 /**
  * Expected format of the top-level JSON config file. Note this interface is
  * used to generate the JSON schema for validation.
@@ -172,7 +169,7 @@ export function defaultMeasurement(url: LocalUrl|RemoteUrl): Measurement {
  * a fully specified configuration.
  */
 export async function parseConfigFile(parsedJson: unknown): Promise<Config> {
-  const schema = require('./config.schema.json');
+  const schema = require('../config.schema.json');
   const result =
       jsonschema.validate(parsedJson, schema, {propertyName: 'config'});
   if (result.errors.length > 0) {
@@ -347,8 +344,8 @@ export async function writeBackSchemaIfNeeded(
       ...rawConfigObj,
     };
     // Then write the value, ensuring that we overwrite rawConfigObj.$schema
-    withSchema.$schema = `https://unpkg.com/tachometer@${
-        tachometerVersion}/lib/config.schema.json`;
+    withSchema.$schema =
+        `https://raw.githubusercontent.com/Polymer/tachometer/master/config.schema.json`;
     const contents = JSON.stringify(withSchema, null, 2);
     await fsExtra.writeFile(configFile, contents, {encoding: 'utf-8'});
   }
