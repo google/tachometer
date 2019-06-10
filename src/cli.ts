@@ -432,7 +432,7 @@ async function automaticMode(config: Config, servers: ServerMap) {
     // spaces will get unescaped by Bash, and we'll unescape newlines ourselves.
     //
     //     cat <GITHUB_PEM_FILE>.pem \
-    //         | awk '{printf "%s\\\\n", $0}' | sed 's/ /\\ // // /g'
+    //         | awk '{printf "%s\\\\n", $0}' | sed 's/ /\\ /g'
     const appPrivateKey =
         (process.env.GITHUB_APP_PRIVATE_KEY || '').trim().replace(/\\n/g, '\n');
     if (appPrivateKey === '') {
