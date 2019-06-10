@@ -8,9 +8,13 @@ project adheres to [Semantic Versioning](http://semver.org/).
 <!-- ## Unreleased -->
 <!-- Add new, unreleased changes here. -->
 
+## [0.4.5] 2019-06-10
+
+-   Fix `$schema` property URL automatically added to config files.
+
 ## [0.4.4] 2019-06-08
 
--  Remove noisy debug logging for bare module import resolution.
+-   Remove noisy debug logging for bare module import resolution.
 
 ## [0.4.3] 2019-06-08
 
