@@ -12,7 +12,7 @@
 import * as path from 'path';
 import {URL} from 'url';
 
-import {validBrowsers} from './browser';
+import {parseAndValidateBrowser} from './browser';
 import {Opts} from './cli';
 import {defaultBrowser, defaultMeasurement, defaultRoot, urlFromLocalPath} from './config';
 import {BenchmarkSpec, LocalUrl, PackageVersion, RemoteUrl} from './types';
@@ -32,11 +32,7 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
     throw new Error('At least one --browser must be specified');
   }
   for (const b of browsers) {
-    if (validBrowsers.has(b) === false) {
-      throw new Error(
-          `Browser ${b} is not supported, ` +
-          `only ${[...validBrowsers].join(', ')} are currently supported`);
-    }
+    parseAndValidateBrowser(b);
   }
 
   const specs: BenchmarkSpec[] = [];

@@ -22,7 +22,7 @@ import ProgressBar = require('progress');
 import ansi = require('ansi-escape-sequences');
 
 import {makeSession} from './session';
-import {validBrowsers, fcpBrowsers, makeDriver, openAndSwitchToNewTab, pollForFirstContentfulPaint} from './browser';
+import {supportedBrowsers, parseAndValidateBrowser, fcpBrowsers, makeDriver, openAndSwitchToNewTab, pollForFirstContentfulPaint} from './browser';
 import {BenchmarkResult, BenchmarkSpec, Measurement} from './types';
 import {Server} from './server';
 import {Horizons, ResultStats, horizonsResolved, summaryStats, computeDifferences} from './stats';
@@ -90,7 +90,7 @@ export const optDefs: commandLineUsage.OptionDefinition[] = [
   {
     name: 'browser',
     description: 'Which browsers to launch in automatic mode, ' +
-        `comma-delimited (${[...validBrowsers].join(', ')}) ` +
+        `comma-delimited (${[...supportedBrowsers].join(', ')}) ` +
         `(default ${defaultBrowser})`,
     alias: 'b',
     type: String,
@@ -327,7 +327,8 @@ $ tach http://example.com
   }
 
   for (const spec of config.benchmarks) {
-    if (spec.measurement === 'fcp' && !fcpBrowsers.has(spec.browser)) {
+    const browserConfig = parseAndValidateBrowser(spec.browser);
+    if (spec.measurement === 'fcp' && !fcpBrowsers.has(browserConfig.name)) {
       throw new Error(
           `Browser ${spec.browser} does not support the ` +
           `first contentful paint (FCP) measurement`);
@@ -475,7 +476,7 @@ async function automaticMode(config: Config, servers: ServerMap) {
     // effects. There might even be additional interaction effects that
     // would require an entirely new browser to remove, but experience in
     // Chrome so far shows that new tabs are neccessary and sufficient.
-    const driver = await makeDriver(browser);
+    const driver = await makeDriver(parseAndValidateBrowser(browser));
     const tabs = await driver.getAllWindowHandles();
     // We'll always launch new tabs from this initial blank tab.
     const initialTabHandle = tabs[0];

@@ -8,13 +8,6 @@
             "properties": {
                 "browser": {
                     "description": "Which browser to run the benchmark in.\n\nOptions:\n   - chrome (default)\n   - chrome-headless\n   - firefox\n   - firefox-headless\n   - safari",
-                    "enum": [
-                        "chrome",
-                        "chrome-headless",
-                        "firefox",
-                        "firefox-headless",
-                        "safari"
-                    ],
                     "type": "string"
                 },
                 "expand": {
