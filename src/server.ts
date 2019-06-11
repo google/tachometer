@@ -44,6 +44,7 @@ interface Session {
 
 export class Server {
   readonly url: string;
+  readonly port: number;
   private readonly server: net.Server;
   private session: Session = {bytesSent: 0, userAgent: ''};
   private deferredResults = new Deferred<BenchmarkResponse>();
@@ -103,7 +104,8 @@ export class Server {
     if (address.family === 'IPv6') {
       host = `[${host}]`;
     }
-    this.url = `http://${host}:${address.port}`;
+    this.port = address.port;
+    this.url = `http://${host}:${this.port}`;
   }
 
   /**

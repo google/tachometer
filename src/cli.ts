@@ -60,8 +60,16 @@ export const optDefs: commandLineUsage.OptionDefinition[] = [
     defaultValue: '127.0.0.1',
   },
   {
+    name: 'remote-accessible-host',
+    description: 'When using a browser over a remote WebDriver connection, ' +
+        'the URL that those browsers should use to access the local ' +
+        'tachometer server (default to value of --host).',
+    type: String,
+    defaultValue: '',
+  },
+  {
     name: 'port',
-    description: 'Which port to run on (comma-delimited preference list, ' +
+    description: 'Which ports to run on (comma-delimited preference list, ' +
         '0 for random, default [8080, 8081, ..., 0])',
     type: (flag: string) => flag.split(',').map(Number),
     defaultValue: [8080, 8081, 8082, 8083, 0],
@@ -124,8 +132,8 @@ export const optDefs: commandLineUsage.OptionDefinition[] = [
     type: (str: string): string => {
       if (str !== 'callback' && str !== 'fcp') {
         throw new Error(
-            `Expected --measure flag to be "callback" or "fcp" ` +
-            `but was "${str}"`);
+            `Expected --measure flag to be 'callback' or 'fcp' ` +
+            `but was '${str}'`);
       }
       return str;
     },
@@ -190,6 +198,7 @@ export interface Opts {
   timeout: number|undefined;
   'github-check': string;
   'resolve-bare-modules': boolean|undefined;
+  'remote-accessible-host': string;
 
   // Extra arguments not associated with a flag are put here. These are our
   // benchmark names/URLs.
@@ -261,6 +270,7 @@ $ tach http://example.com
     githubCheck: opts['github-check'] ?
         github.parseCheckFlag(opts['github-check']) :
         undefined,
+    remoteAccessibleHost: opts['remote-accessible-host'],
   };
 
   let config: Config;
@@ -371,13 +381,21 @@ $ tach http://example.com
 
 type ServerMap = Map<BenchmarkSpec, Server>;
 
-function specUrl(spec: BenchmarkSpec, servers: ServerMap): string {
+function specUrl(
+    spec: BenchmarkSpec, servers: ServerMap, config: Config): string {
   if (spec.url.kind === 'remote') {
     return spec.url.url;
   }
   const server = servers.get(spec);
   if (server === undefined) {
     throw new Error('Internal error: no server for spec');
+  }
+  if (config.remoteAccessibleHost !== '') {
+    const browser = parseAndValidateBrowser(spec.browser);
+    if (browser.remoteUrl !== '') {
+      return 'http://' + config.remoteAccessibleHost + ':' + server.port +
+          spec.url.urlPath + spec.url.queryString;
+    }
   }
   return server.url + spec.url.urlPath + spec.url.queryString;
 }
@@ -401,7 +419,7 @@ async function manualMode(config: Config, servers: ServerMap) {
           (spec.url.version !== undefined ? ` [@${spec.url.version.label}]` :
                                             ''));
     }
-    console.log(ansi.format(`[yellow]{${specUrl(spec, servers)}}`));
+    console.log(ansi.format(`[yellow]{${specUrl(spec, servers, config)}}`));
   }
 
   console.log(`\nResults will appear below:\n`);
@@ -502,7 +520,7 @@ async function automaticMode(config: Config, servers: ServerMap) {
       }
     }
 
-    const url = specUrl(spec, servers);
+    const url = specUrl(spec, servers, config);
     const {driver, initialTabHandle} = browsers.get(spec.browser)!;
     await openAndSwitchToNewTab(driver);
     await driver.get(url);
