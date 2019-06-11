@@ -16,6 +16,7 @@ import * as webdriver from 'selenium-webdriver';
 import * as chrome from 'selenium-webdriver/chrome';
 import * as firefox from 'selenium-webdriver/firefox';
 import * as edge from 'selenium-webdriver/edge';
+import {isUrl} from './util';
 
 /** Tachometer browser names. Often but not always equal to WebDriver's. */
 export type BrowserName = 'chrome'|'firefox'|'safari'|'edge';
@@ -40,6 +41,8 @@ export interface BrowserConfig {
   name: BrowserName;
   /** Whether to run in headless mode. */
   headless: boolean;
+  /** A remote WebDriver server to launch the browser from. */
+  remoteUrl: string;
 }
 
 /**
@@ -47,8 +50,21 @@ export interface BrowserConfig {
  *
  *   chrome
  *   chrome-headless
+ *   chrome@<remote-selenium-server>
  */
 export function parseAndValidateBrowser(str: string): BrowserConfig {
+  let remoteUrl = '';
+  const at = str.indexOf('@');
+  if (at !== -1) {
+    remoteUrl = str.substring(at + 1);
+    if (remoteUrl === '') {
+      throw new Error('Invalid browser: expected URL after "@"');
+    }
+    if (!isUrl(remoteUrl)) {
+      throw new Error(`Invalid remote URL "${remoteUrl}"`);
+    }
+    str = str.substring(0, at);
+  }
   const headless = str.endsWith('-headless');
   if (headless === true) {
     str = str.replace(/-headless$/, '');
@@ -62,7 +78,7 @@ export function parseAndValidateBrowser(str: string): BrowserConfig {
   if (headless === true && !headlessBrowsers.has(name)) {
     throw new Error(`Browser ${name} does not support headless mode.`);
   }
-  return {name, headless};
+  return {name, headless, remoteUrl};
 }
 
 /**
@@ -75,7 +91,9 @@ export async function makeDriver(config: BrowserConfig):
   builder.forBrowser(webdriverName);
   builder.setChromeOptions(chromeOpts(config));
   builder.setFirefoxOptions(firefoxOpts(config));
-  if (config.name === 'edge') {
+  if (config.remoteUrl !== '') {
+    builder.usingServer(config.remoteUrl);
+  } else if (config.name === 'edge') {
     // There appears to be bug where WebDriver doesn't automatically start or
     // find an Edge service and throws "Cannot read property 'start' of null"
     // so we need to start the service ourselves.

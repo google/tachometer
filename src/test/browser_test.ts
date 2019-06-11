@@ -18,6 +18,7 @@ suite('browser', () => {
       assert.deepEqual(parseAndValidateBrowser('chrome'), {
         name: 'chrome',
         headless: false,
+        remoteUrl: '',
       });
     });
 
@@ -25,6 +26,7 @@ suite('browser', () => {
       assert.deepEqual(parseAndValidateBrowser('chrome-headless'), {
         name: 'chrome',
         headless: true,
+        remoteUrl: '',
       });
     });
 
@@ -32,6 +34,7 @@ suite('browser', () => {
       assert.deepEqual(parseAndValidateBrowser('firefox'), {
         name: 'firefox',
         headless: false,
+        remoteUrl: '',
       });
     });
 
@@ -39,6 +42,7 @@ suite('browser', () => {
       assert.deepEqual(parseAndValidateBrowser('firefox-headless'), {
         name: 'firefox',
         headless: true,
+        remoteUrl: '',
       });
     });
 
@@ -46,7 +50,25 @@ suite('browser', () => {
       assert.deepEqual(parseAndValidateBrowser('safari'), {
         name: 'safari',
         headless: false,
+        remoteUrl: '',
       });
+    });
+
+    test('chrome remote', () => {
+      assert.deepEqual(parseAndValidateBrowser('chrome@http://example.com'), {
+        name: 'chrome',
+        headless: false,
+        remoteUrl: 'http://example.com',
+      });
+    });
+
+    test('chrome-headless remote', () => {
+      assert.deepEqual(
+          parseAndValidateBrowser('chrome-headless@http://example.com'), {
+            name: 'chrome',
+            headless: true,
+            remoteUrl: 'http://example.com',
+          });
     });
 
     suite('errors', () => {
@@ -60,6 +82,18 @@ suite('browser', () => {
         assert.throws(
             () => parseAndValidateBrowser('safari-headless'),
             /browser safari does not support headless/i);
+      });
+
+      test('empty remote url', () => {
+        assert.throws(
+            () => parseAndValidateBrowser('chrome@'),
+            /expected url after "@"/i);
+      });
+
+      test('invalid remote url', () => {
+        assert.throws(
+            () => parseAndValidateBrowser('chrome@potato'),
+            /invalid remote url "potato"/i);
       });
     });
   });
