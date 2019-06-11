@@ -16,9 +16,9 @@ import * as path from 'path';
 import {parseAndValidateBrowser} from './browser';
 import {parseHorizons} from './cli';
 import {CheckConfig} from './github';
-import {isUrl} from './specs';
 import {Horizons} from './stats';
 import {BenchmarkSpec, LocalUrl, Measurement, PackageDependencyMap, RemoteUrl} from './types';
+import {isUrl} from './util';
 import {fileKind} from './versions';
 
 /**

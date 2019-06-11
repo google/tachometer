@@ -10,12 +10,12 @@
  */
 
 import * as path from 'path';
-import {URL} from 'url';
 
 import {parseAndValidateBrowser} from './browser';
 import {Opts} from './cli';
 import {defaultBrowser, defaultMeasurement, defaultRoot, urlFromLocalPath} from './config';
 import {BenchmarkSpec, LocalUrl, PackageVersion, RemoteUrl} from './types';
+import {isUrl} from './util';
 import {parsePackageVersions} from './versions';
 
 /**
@@ -149,13 +149,4 @@ function parseBenchmarkArgument(str: string):
     diskPath: str,
     queryString: queryString,
   };
-}
-
-export function isUrl(str: string): boolean {
-  try {
-    new URL(str);
-    return true;
-  } catch (e) {
-    return false;
-  }
 }
