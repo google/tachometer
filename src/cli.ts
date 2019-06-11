@@ -327,7 +327,7 @@ $ tach http://example.com
   }
 
   for (const spec of config.benchmarks) {
-    if (!fcpBrowsers.has(spec.browser)) {
+    if (spec.measurement === 'fcp' && !fcpBrowsers.has(spec.browser)) {
       throw new Error(
           `Browser ${spec.browser} does not support the ` +
           `first contentful paint (FCP) measurement`);
