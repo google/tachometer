@@ -9,6 +9,8 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 -   Add support for Edge in Windows (`--browser=edge`).
 
+-   Add support for Internet Explorer in Windows (`--browser=ie`).
+
 -   Add support for remote WebDriver with e.g.
     `--browser=chrome@http://<remote-selenium-server>`. See `README` for more
     details.

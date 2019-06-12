@@ -322,10 +322,11 @@ chrome  | yes      | yes
 firefox | yes      | no
 safari  | no       | no
 edge    | no       | no
+ie      | no       | no
 
 To launch a headless browser, append `-headless` to the browser name (e.g. `--browser=chrome-headless`).
 
-Tachometer comes with WebDriver plugins for Chrome, Safari, and Firefox.
+Tachometer comes with WebDriver plugins for Chrome, Safari, Firefox, and IE.
 
 For Edge, follow the [Microsoft WebDriver
 installation](https://developer.microsoft.com/en-us/microsoft-edge/tools/webdriver/)
@@ -496,7 +497,7 @@ Flag                      | Default     | Description
 `--port`                  | `8080, 8081, ..., 0`| Which port to run on (comma-delimited preference list, `0` for random)
 `--config`                | *(none)*    | Path to JSON config file ([details](#config-file))
 `--package-version` / `-p`| *(none)*    | Specify an NPM package version to swap in ([details](#swap-npm-dependency-versions))
-`--browser` / `-b`        | `chrome`    | Which browsers to launch in automatic mode, comma-delimited (chrome, firefox, safari, edge) ([details](#browsers))
+`--browser` / `-b`        | `chrome`    | Which browsers to launch in automatic mode, comma-delimited (chrome, firefox, safari, edge, ie) ([details](#browsers))
 `--sample-size` / `-n`    | `50`        | Minimum number of times to run each benchmark ([details](#sample-size)]
 `--horizon`               | `10%`       | The degrees of difference to try and resolve when auto-sampling ("N%" or "Nms", comma-delimited) ([details](#auto-sampling))
 `--timeout`               | `3`         | The maximum number of minutes to spend auto-sampling ([details](#auto-sampling))

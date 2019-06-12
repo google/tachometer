@@ -54,6 +54,7 @@
     "fs-extra": "^8.0.1",
     "geckodriver": "^1.14.1",
     "got": "^9.6.0",
+    "iedriver": "^3.14.1",
     "jsonschema": "^1.2.4",
     "jsonwebtoken": "^8.5.1",
     "jstat": "^1.7.1",
