@@ -58,9 +58,10 @@ confidence in them.
 
 ## Features
 
-- Measure your own [specific timings](#callback) with the `/bench.js` module, or
-  measure [First Contentful Paint](#first-contentful-paint-fcp) on any local or
-  remote URL.
+- Measure your own [specific timings](#callback) with the `/bench.js` module, by
+  setting the [window.tachometerResult](#global-result) global, or measure
+  [First Contentful Paint](#first-contentful-paint-fcp) on any local or remote
+  URL.
 
 
 - [*Compare benchmarks*](#multiple-benchmarks) by round-robin between two or
@@ -92,6 +93,22 @@ to **`callback`**, your page is responsible for calling the `start()` and
 `stop()` functions from the `/bench.js` module. This mode is appropriate for
 micro benchmarks, or any other kind of situation where you want full control
 over the beginning and end times.
+
+#### Global result
+
+When the `--measure` flag is set to `global`, then you can assign an arbitrary
+millisecond result to the `window.tachometerResult` global. In this mode,
+tachometer will poll until it finds a result assigned here.
+
+```javascript
+const start = performance.now();
+for (const i = 0; i < 1000; i++) { }
+window.tachometerResult = performance.now() - start;
+```
+
+This mode is appropriate when you need full control of the measured time, or
+when you can't use callback mode because you are not using tachometer's built-in
+server.
 
 #### First Contentful Paint (FCP)
 
@@ -483,5 +500,5 @@ Flag                      | Default     | Description
 `--sample-size` / `-n`    | `50`        | Minimum number of times to run each benchmark ([details](#sample-size)]
 `--horizon`               | `10%`       | The degrees of difference to try and resolve when auto-sampling ("N%" or "Nms", comma-delimited) ([details](#auto-sampling))
 `--timeout`               | `3`         | The maximum number of minutes to spend auto-sampling ([details](#auto-sampling))
-`--measure`               | `callback`  | Which time interval to measure (`callback`, `fcp`) ([details](#measurement-modes))
+`--measure`               | `callback`  | Which time interval to measure (`callback`, `global`, `fcp`) ([details](#measurement-modes))
 `--remote-accessible-host`| matches `--host` | When using a browser over a remote WebDriver connection, the URL that those browsers should use to access the local tachometer server ([details](#remote-control))

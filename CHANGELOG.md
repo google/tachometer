@@ -13,6 +13,10 @@ project adheres to [Semantic Versioning](http://semver.org/).
     `--browser=chrome@http://<remote-selenium-server>`. See `README` for more
     details.
 
+-   Add `--measure=global` mode, where the benchmark assigns an arbitrary
+    millisecond result to `window.tachometerResult`, and tachometer will poll
+    until it is found.
+
 -   Fix bug where no browser other than Chrome could be launched.
 
 -   Fix bug where process did not exit on most exceptions.

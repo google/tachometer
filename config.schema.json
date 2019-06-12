@@ -21,7 +21,8 @@
                     "description": "Which time interval to measure.\n\nOptions:\n   - callback: bench.start() to bench.stop() (default for fully qualified\n     URLs.\n   - fcp: first contentful paint (default for local paths)",
                     "enum": [
                         "callback",
-                        "fcp"
+                        "fcp",
+                        "global"
                     ],
                     "type": "string"
                 },
