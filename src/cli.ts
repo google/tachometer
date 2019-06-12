@@ -22,8 +22,8 @@ import ProgressBar = require('progress');
 import ansi = require('ansi-escape-sequences');
 
 import {makeSession} from './session';
-import {supportedBrowsers, parseAndValidateBrowser, fcpBrowsers, makeDriver, openAndSwitchToNewTab, pollForFirstContentfulPaint} from './browser';
-import {BenchmarkResult, BenchmarkSpec, Measurement} from './types';
+import {supportedBrowsers, parseAndValidateBrowser, fcpBrowsers, makeDriver, openAndSwitchToNewTab, pollForGlobalResult, pollForFirstContentfulPaint} from './browser';
+import {BenchmarkResult, BenchmarkSpec, measurements, Measurement} from './types';
 import {Server} from './server';
 import {Horizons, ResultStats, horizonsResolved, summaryStats, computeDifferences} from './stats';
 import {specsFromOpts} from './specs';
@@ -127,12 +127,14 @@ export const optDefs: commandLineUsage.OptionDefinition[] = [
   {
     name: 'measure',
     description: 'Which time interval to measure. Options:\n' +
-        '* callback: bench.start() to bench.stop() (default)\n' +
+        '* callback: call bench.start() and bench.stop() (default)\n' +
+        '*   global: set window.tachometerResult = <milliseconds>\n' +
         '*      fcp: first contentful paint',
     type: (str: string): string => {
-      if (str !== 'callback' && str !== 'fcp') {
+      if (!measurements.has(str as Measurement)) {
         throw new Error(
-            `Expected --measure flag to be 'callback' or 'fcp' ` +
+            `Expected --measure flag to be one of: ` +
+            `${[...measurements.values()].join(', ')} ` +
             `but was '${str}'`);
       }
       return str;
@@ -536,13 +538,20 @@ async function automaticMode(config: Config, servers: ServerMap) {
         console.error(
             `Timed out waiting for first contentful paint from ${url}`);
       }
-    } else {
+    } else if (spec.measurement === 'global') {
+      const globalMillis = await pollForGlobalResult(driver);
+      if (globalMillis !== undefined) {
+        millis = [globalMillis];
+      }
+
+    } else {  // bench.start() and bench.stop() callback
       if (server === undefined) {
         throw new Error('Internal error: no server for spec');
       }
       const result = await server.nextResults();
       millis = [result.millis];
     }
+
     if (millis !== undefined) {
       let bytesSent = 0;
       let userAgent = '';
