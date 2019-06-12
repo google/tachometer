@@ -149,6 +149,7 @@ export interface Config {
   savePath: string;
   githubCheck?: CheckConfig;
   resolveBareModules: boolean;
+  remoteAccessibleHost: string;
 }
 
 export const defaultRoot = '.';
@@ -199,6 +200,7 @@ export async function parseConfigFile(parsedJson: unknown): Promise<Config> {
     // These are only controlled by flags currently.
     mode: 'automatic',
     savePath: '',
+    remoteAccessibleHost: '',
   };
 }
 

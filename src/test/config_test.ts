@@ -73,6 +73,7 @@ suite('config', () => {
         resolveBareModules: false,
         mode: 'automatic',
         savePath: '',
+        remoteAccessibleHost: '',
         benchmarks: [
           {
             name: 'remote',
@@ -128,6 +129,7 @@ suite('config', () => {
         resolveBareModules: true,
         mode: 'automatic',
         savePath: '',
+        remoteAccessibleHost: '',
         benchmarks: [
           {
             name: 'http://example.com?foo=bar',
@@ -188,6 +190,7 @@ suite('config', () => {
         resolveBareModules: true,
         mode: 'automatic',
         savePath: '',
+        remoteAccessibleHost: '',
         benchmarks: [
           {
             name: 'http://example.com',
