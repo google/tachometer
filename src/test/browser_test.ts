@@ -18,7 +18,6 @@ suite('browser', () => {
       assert.deepEqual(parseAndValidateBrowser('chrome'), {
         name: 'chrome',
         headless: false,
-        remoteUrl: '',
       });
     });
 
@@ -26,7 +25,6 @@ suite('browser', () => {
       assert.deepEqual(parseAndValidateBrowser('chrome-headless'), {
         name: 'chrome',
         headless: true,
-        remoteUrl: '',
       });
     });
 
@@ -34,7 +32,6 @@ suite('browser', () => {
       assert.deepEqual(parseAndValidateBrowser('firefox'), {
         name: 'firefox',
         headless: false,
-        remoteUrl: '',
       });
     });
 
@@ -42,7 +39,6 @@ suite('browser', () => {
       assert.deepEqual(parseAndValidateBrowser('firefox-headless'), {
         name: 'firefox',
         headless: true,
-        remoteUrl: '',
       });
     });
 
@@ -50,7 +46,6 @@ suite('browser', () => {
       assert.deepEqual(parseAndValidateBrowser('safari'), {
         name: 'safari',
         headless: false,
-        remoteUrl: '',
       });
     });
 

@@ -42,7 +42,7 @@ export interface BrowserConfig {
   /** Whether to run in headless mode. */
   headless: boolean;
   /** A remote WebDriver server to launch the browser from. */
-  remoteUrl: string;
+  remoteUrl?: string;
 }
 
 /**
@@ -53,7 +53,7 @@ export interface BrowserConfig {
  *   chrome@<remote-selenium-server>
  */
 export function parseAndValidateBrowser(str: string): BrowserConfig {
-  let remoteUrl = '';
+  let remoteUrl;
   const at = str.indexOf('@');
   if (at !== -1) {
     remoteUrl = str.substring(at + 1);
@@ -78,7 +78,11 @@ export function parseAndValidateBrowser(str: string): BrowserConfig {
   if (headless === true && !headlessBrowsers.has(name)) {
     throw new Error(`Browser ${name} does not support headless mode.`);
   }
-  return {name, headless, remoteUrl};
+  const config: BrowserConfig = {name, headless};
+  if (remoteUrl !== undefined) {
+    config.remoteUrl = remoteUrl;
+  }
+  return config;
 }
 
 /**
@@ -91,7 +95,7 @@ export async function makeDriver(config: BrowserConfig):
   builder.forBrowser(webdriverName);
   builder.setChromeOptions(chromeOpts(config));
   builder.setFirefoxOptions(firefoxOpts(config));
-  if (config.remoteUrl !== '') {
+  if (config.remoteUrl !== undefined) {
     builder.usingServer(config.remoteUrl);
   } else if (config.name === 'edge') {
     // There appears to be bug where WebDriver doesn't automatically start or

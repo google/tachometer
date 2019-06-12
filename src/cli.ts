@@ -392,7 +392,7 @@ function specUrl(
   }
   if (config.remoteAccessibleHost !== '') {
     const browser = parseAndValidateBrowser(spec.browser);
-    if (browser.remoteUrl !== '') {
+    if (browser.remoteUrl !== undefined) {
       return 'http://' + config.remoteAccessibleHost + ':' + server.port +
           spec.url.urlPath + spec.url.queryString;
     }
