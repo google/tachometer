@@ -76,6 +76,10 @@ confidence in them.
 - [*Automatically sample*](#auto-sampling) until we have enough precision to
   answer the question you are asking.
 
+
+- [*Remote control*](#remote-control) browsers running on different machines
+  using remote WebDriver.
+
 ## Measurement modes
 
 Tachometer currently supports two kinds of time interval measurements,
@@ -310,6 +314,73 @@ For Edge, follow the [Microsoft WebDriver
 installation](https://developer.microsoft.com/en-us/microsoft-edge/tools/webdriver/)
 documentation.
 
+## Remote control
+
+Tachometer can control and benchmark browsers running on remote machines by
+using the [Standalone Selenium
+Server](https://seleniumhq.github.io/docs/remote.html), which supports macOS,
+Windows, and Linux.
+
+This may be useful if you want to develop on one platform but benchmark on
+another, or if you want to use a dedicated benchmarking computer for better
+performance isolation.
+
+> Note you will need to know the IP address of both your local and remote
+> machine for the setup steps below. You can typically use `ipconfig` on
+> Windows, `ifconfig` on macOS, and `ip` on Linux to find these addresses.
+> You'll need to be able to initiate connections between these machines in both
+> directions, so if you encounter problems, it's possible that there is a
+> firewall or NAT preventing the connection.
+
+#### On the *remote* machine:
+
+1. Install a [Java Development Kit
+   (JDK)](https://www.oracle.com/technetwork/java/javase/downloads/index.html)
+   if you don't already have one.
+
+
+2. Download the latest Standalone Selenium Server `.jar` file from
+   [seleniumhq.org](https://www.seleniumhq.org/download/).
+
+
+3. Download the driver plugins for the browsers you intend to remote control
+   from [seleniumhq.org](https://www.seleniumhq.org/download/). Note that if you
+   download a plugin archive file, the archive contents must be extracted and
+   placed either in the current working directory for the next command, or in a
+   directory that is included in your `$PATH` environment variable.
+
+
+4. Launch the Standalone Selenium Server.
+
+   ```bash
+   java -jar selenium-server-standalone-<version>.jar
+   ```
+
+#### On the *local* machine:
+
+ 1. Use the `--browser` flag or the `browser` config file property with syntax
+    `<browser>@<remote-url>` to tell tachometer the IP address or hostname of
+    the remote Standalone Selenium Server to launch the browser from. Note that
+    `4444` is the default port, and the `/wd/hub` URL suffix is required.
+
+    ```bash
+    --browser=chrome@http://my-remote-machine:4444/wd/hub
+    ```
+
+ 2. Use the `--host` flag to configure the network interface address that
+    tachometer's built-in static server will listen on (unless you are only
+    benchmarking external URLs that do not require the static server). By
+    default, for security, tachometer listens on `127.0.0.1` and will not be
+    accessible from the remote machine unless you change this to an IP address
+    or hostname that will be accessible from the remote machine.
+
+
+ 3. If needed, use the `--remote-accessible-host` flag to configure the URL that
+    the remote browser will use when making requests to your local tachometer
+    static server. By default this will match `--host`, but in some network
+    configurations it may need to be different (e.g. if the machines are
+    separated by a NAT).
+
 ## Config file
 
 Use the `--config` flag to control tachometer with a JSON configuration file.
@@ -413,3 +484,4 @@ Flag                      | Default     | Description
 `--horizon`               | `10%`       | The degrees of difference to try and resolve when auto-sampling ("N%" or "Nms", comma-delimited) ([details](#auto-sampling))
 `--timeout`               | `3`         | The maximum number of minutes to spend auto-sampling ([details](#auto-sampling))
 `--measure`               | `callback`  | Which time interval to measure (`callback`, `fcp`) ([details](#measurement-modes))
+`--remote-accessible-host`| matches `--host` | When using a browser over a remote WebDriver connection, the URL that those browsers should use to access the local tachometer server ([details](#remote-control))
