@@ -293,6 +293,23 @@ imports using Node-style module resolution (e.g.`import {foo} from
 This feature can be disabled with the `--resolve-bare-modules=false` flag, or
 the `resolveBareModules: false` JSON config file property.
 
+## Browsers
+
+Browser | Headless | [FCP](#first-contentful-paint-fcp)
+------- | -------- | ---
+chrome  | yes      | yes
+firefox | yes      | no
+safari  | no       | no
+edge    | no       | no
+
+To launch a headless browser, append `-headless` to the browser name (e.g. `--browser=chrome-headless`).
+
+Tachometer comes with WebDriver plugins for Chrome, Safari, and Firefox.
+
+For Edge, follow the [Microsoft WebDriver
+installation](https://developer.microsoft.com/en-us/microsoft-edge/tools/webdriver/)
+documentation.
+
 ## Config file
 
 Use the `--config` flag to control tachometer with a JSON configuration file.
@@ -391,7 +408,7 @@ Flag                      | Default     | Description
 `--port`                  | `8080, 8081, ..., 0`| Which port to run on (comma-delimited preference list, `0` for random)
 `--config`                | *(none)*    | Path to JSON config file ([details](#config-file))
 `--package-version` / `-p`| *(none)*    | Specify an NPM package version to swap in ([details](#swap-npm-dependency-versions))
-`--browser` / `-b`        | `chrome`    | Which browsers to launch in automatic mode, comma-delimited (chrome, chrome-headless, firefox, firefox-headless, safari)
+`--browser` / `-b`        | `chrome`    | Which browsers to launch in automatic mode, comma-delimited (chrome, firefox, safari, edge) ([details](#browsers))
 `--sample-size` / `-n`    | `50`        | Minimum number of times to run each benchmark ([details](#sample-size)]
 `--horizon`               | `10%`       | The degrees of difference to try and resolve when auto-sampling ("N%" or "Nms", comma-delimited) ([details](#auto-sampling))
 `--timeout`               | `3`         | The maximum number of minutes to spend auto-sampling ([details](#auto-sampling))

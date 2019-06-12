@@ -15,12 +15,19 @@ require('geckodriver');
 import * as webdriver from 'selenium-webdriver';
 import * as chrome from 'selenium-webdriver/chrome';
 import * as firefox from 'selenium-webdriver/firefox';
+import * as edge from 'selenium-webdriver/edge';
 
-export type BrowserName = 'chrome'|'firefox'|'safari';
+/** Tachometer browser names. Often but not always equal to WebDriver's. */
+export type BrowserName = 'chrome'|'firefox'|'safari'|'edge';
 
 /** Browsers we can drive. */
 export const supportedBrowsers =
-    new Set<BrowserName>(['chrome', 'firefox', 'safari']);
+    new Set<BrowserName>(['chrome', 'firefox', 'safari', 'edge']);
+
+/** Cases where Tachometer's browser name scheme does not equal WebDriver's. */
+const webdriverBrowserNames = new Map<BrowserName, string>([
+  ['edge', 'MicrosoftEdge'],
+]);
 
 /** Browsers that support headless mode. */
 const headlessBrowsers = new Set<BrowserName>(['chrome', 'firefox']);
@@ -29,7 +36,7 @@ const headlessBrowsers = new Set<BrowserName>(['chrome', 'firefox']);
 export const fcpBrowsers = new Set<BrowserName>(['chrome']);
 
 export interface BrowserConfig {
-  /** Selenium's name for the browser. */
+  /** Name of the browser. */
   name: BrowserName;
   /** Whether to run in headless mode. */
   headless: boolean;
@@ -64,9 +71,18 @@ export function parseAndValidateBrowser(str: string): BrowserConfig {
 export async function makeDriver(config: BrowserConfig):
     Promise<webdriver.WebDriver> {
   const builder = new webdriver.Builder();
-  builder.forBrowser(config.name);
+  const webdriverName = webdriverBrowserNames.get(config.name) || config.name;
+  builder.forBrowser(webdriverName);
   builder.setChromeOptions(chromeOpts(config));
   builder.setFirefoxOptions(firefoxOpts(config));
+  if (config.name === 'edge') {
+    // There appears to be bug where WebDriver doesn't automatically start or
+    // find an Edge service and throws "Cannot read property 'start' of null"
+    // so we need to start the service ourselves.
+    // See https://stackoverflow.com/questions/48577924.
+    // tslint:disable-next-line:no-any TODO setEdgeService function is missing.
+    (builder as any).setEdgeService(new edge.ServiceBuilder());
+  }
   return await builder.build();
 }
 

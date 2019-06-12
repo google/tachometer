@@ -7,6 +7,8 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+-   Add support for Edge in Windows (`--browser=edge`).
+
 -   Fix bug where no browser other than Chrome could be launched.
 
 -   Fix bug where process did not exit on most exceptions.
