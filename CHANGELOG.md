@@ -9,6 +9,8 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 -   Fix bug where no browser other than Chrome could be launched.
 
+-   Fix bug where process did not exit on most exceptions.
+
 <!-- Add new, unreleased changes here. -->
 
 ## [0.4.5] 2019-06-10

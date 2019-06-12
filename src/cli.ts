@@ -360,7 +360,12 @@ $ tach http://example.com
   if (config.mode === 'manual') {
     await manualMode(config, servers);
   } else {
-    await automaticMode(config, servers);
+    try {
+      await automaticMode(config, servers);
+    } finally {
+      const allServers = new Set<Server>([...servers.values()]);
+      await Promise.all([...allServers].map((server) => server.close()));
+    }
   }
 }
 
@@ -483,7 +488,6 @@ async function automaticMode(config: Config, servers: ServerMap) {
     browsers.set(browser, {name: browser, driver, initialTabHandle});
   }
 
-  const allServers = new Set<Server>([...servers.values()]);
   const specResults = new Map<BenchmarkSpec, BenchmarkResult[]>();
   for (const spec of specs) {
     specResults.set(spec, []);
@@ -620,7 +624,6 @@ async function automaticMode(config: Config, servers: ServerMap) {
 
   // Close the browsers by closing each of their last remaining tabs.
   await Promise.all([...browsers.values()].map(({driver}) => driver.close()));
-  await Promise.all([...allServers].map((server) => server.close()));
 
   const withDifferences = makeResults();
   console.log();
