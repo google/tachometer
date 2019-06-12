@@ -5,7 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](http://semver.org/).
 
-<!-- ## Unreleased -->
+## Unreleased
+
+-   Fix bug where no browser other than Chrome could be launched.
+
+-   Fix bug where process did not exit on most exceptions.
+
 <!-- Add new, unreleased changes here. -->
 
 ## [0.4.5] 2019-06-10

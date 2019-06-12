@@ -16,55 +16,71 @@ import * as webdriver from 'selenium-webdriver';
 import * as chrome from 'selenium-webdriver/chrome';
 import * as firefox from 'selenium-webdriver/firefox';
 
-export type Browser =
-    'chrome'|'chrome-headless'|'firefox'|'firefox-headless'|'safari';
+export type BrowserName = 'chrome'|'firefox'|'safari';
+
+/** Browsers we can drive. */
+export const supportedBrowsers =
+    new Set<BrowserName>(['chrome', 'firefox', 'safari']);
+
+/** Browsers that support headless mode. */
+const headlessBrowsers = new Set<BrowserName>(['chrome', 'firefox']);
+
+/** Browsers for which we can find the first contentful paint (FCP) time. */
+export const fcpBrowsers = new Set<BrowserName>(['chrome']);
+
+export interface BrowserConfig {
+  /** Selenium's name for the browser. */
+  name: BrowserName;
+  /** Whether to run in headless mode. */
+  headless: boolean;
+}
 
 /**
- * Browsers we can drive.
+ * Parse and validate a browser string specification. Examples:
+ *
+ *   chrome
+ *   chrome-headless
  */
-export const validBrowsers = new Set([
-  'chrome',
-  'chrome-headless',
-  'firefox',
-  'firefox-headless',
-  'safari',
-]);
-
-/**
- * Browsers for which we can find the first contentful paint (FCP) time.
- */
-export const fcpBrowsers = new Set([
-  'chrome',
-  'chrome-headless',
-]);
+export function parseAndValidateBrowser(str: string): BrowserConfig {
+  const headless = str.endsWith('-headless');
+  if (headless === true) {
+    str = str.replace(/-headless$/, '');
+  }
+  const name = str as BrowserName;
+  if (!supportedBrowsers.has(name)) {
+    throw new Error(
+        `Browser ${name} is not supported, ` +
+        `only ${[...supportedBrowsers].join(', ')} are currently supported.`);
+  }
+  if (headless === true && !headlessBrowsers.has(name)) {
+    throw new Error(`Browser ${name} does not support headless mode.`);
+  }
+  return {name, headless};
+}
 
 /**
  * Configure a WebDriver suitable for benchmarking the given browser.
  */
-export async function makeDriver(browser: string):
+export async function makeDriver(config: BrowserConfig):
     Promise<webdriver.WebDriver> {
-  const headless = browser.endsWith('-headless');
-  if (headless === true) {
-    browser = browser.replace(/-headless$/, '');
-  }
-  return await new webdriver.Builder()
-      .forBrowser(browser)
-      .setChromeOptions(chromeOpts(headless))
-      .setFirefoxOptions(firefoxOpts(headless))
-      .build();
+  const builder = new webdriver.Builder();
+  builder.forBrowser(config.name);
+  builder.setChromeOptions(chromeOpts(config));
+  builder.setFirefoxOptions(firefoxOpts(config));
+  return await builder.build();
 }
 
-function chromeOpts(headless: boolean): chrome.Options {
+function chromeOpts(config: BrowserConfig): chrome.Options {
   const opts = new chrome.Options();
-  if (headless === true) {
+  if (config.headless === true) {
     opts.addArguments('--headless');
   }
   return opts;
 }
 
-function firefoxOpts(headless: boolean): firefox.Options {
+function firefoxOpts(config: BrowserConfig): firefox.Options {
   const opts = new firefox.Options();
-  if (headless === true) {
+  if (config.headless === true) {
     // tslint:disable-next-line:no-any TODO Incorrect types.
     (opts as any).addArguments('-headless');
   }
@@ -119,8 +135,8 @@ export async function pollForFirstContentfulPaint(driver: webdriver.WebDriver):
  * https://developer.mozilla.org/en-US/docs/Web/API/PerformanceEntry
  *
  * Note a more complete interface for this is defined in the standard
- * lib.dom.d.ts, but we don't want to depend on that since it would make all DOM
- * types ambiently defined.
+ * lib.dom.d.ts, but we don't want to depend on that since it would make all
+ * DOM types ambiently defined.
  */
 interface PerformanceEntry {
   name: string;

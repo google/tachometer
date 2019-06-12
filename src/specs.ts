@@ -10,12 +10,12 @@
  */
 
 import * as path from 'path';
-import {URL} from 'url';
 
-import {validBrowsers} from './browser';
+import {parseAndValidateBrowser} from './browser';
 import {Opts} from './cli';
 import {defaultBrowser, defaultMeasurement, defaultRoot, urlFromLocalPath} from './config';
 import {BenchmarkSpec, LocalUrl, PackageVersion, RemoteUrl} from './types';
+import {isUrl} from './util';
 import {parsePackageVersions} from './versions';
 
 /**
@@ -32,11 +32,7 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
     throw new Error('At least one --browser must be specified');
   }
   for (const b of browsers) {
-    if (validBrowsers.has(b) === false) {
-      throw new Error(
-          `Browser ${b} is not supported, ` +
-          `only ${[...validBrowsers].join(', ')} are currently supported`);
-    }
+    parseAndValidateBrowser(b);
   }
 
   const specs: BenchmarkSpec[] = [];
@@ -153,13 +149,4 @@ function parseBenchmarkArgument(str: string):
     diskPath: str,
     queryString: queryString,
   };
-}
-
-export function isUrl(str: string): boolean {
-  try {
-    new URL(str);
-    return true;
-  } catch (e) {
-    return false;
-  }
 }

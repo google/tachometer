@@ -309,8 +309,7 @@ suite('config', () => {
           }],
         };
         await assert.isRejected(
-            parseConfigFile(config),
-            'config.benchmarks[0].browser is not one of enum values: chrome');
+            parseConfigFile(config), 'Browser potato is not supported');
       });
 
       test('invalid measurement', async () => {

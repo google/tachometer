@@ -13,12 +13,12 @@ import * as fsExtra from 'fs-extra';
 import * as jsonschema from 'jsonschema';
 import * as path from 'path';
 
-import {Browser} from './browser';
+import {parseAndValidateBrowser} from './browser';
 import {parseHorizons} from './cli';
 import {CheckConfig} from './github';
-import {isUrl} from './specs';
 import {Horizons} from './stats';
 import {BenchmarkSpec, LocalUrl, Measurement, PackageDependencyMap, RemoteUrl} from './types';
+import {isUrl} from './util';
 import {fileKind} from './versions';
 
 /**
@@ -97,7 +97,7 @@ interface ConfigFileBenchmark {
    *   - firefox-headless
    *   - safari
    */
-  browser?: Browser;
+  browser?: string;
 
   /**
    * Which time interval to measure.
@@ -152,7 +152,7 @@ export interface Config {
 }
 
 export const defaultRoot = '.';
-export const defaultBrowser: Browser = 'chrome';
+export const defaultBrowser = 'chrome';
 export const defaultSampleSize = 50;
 export const defaultTimeout = 3;
 export const defaultHorizons = ['0%'];
@@ -210,6 +210,7 @@ async function parseBenchmark(benchmark: ConfigFileBenchmark, root: string):
     spec.name = benchmark.name;
   }
   if (benchmark.browser !== undefined) {
+    parseAndValidateBrowser(benchmark.browser);
     spec.browser = benchmark.browser;
   }
   if (benchmark.measurement !== undefined) {
