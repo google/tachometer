@@ -326,11 +326,18 @@ ie      | no       | no
 
 To launch a headless browser, append `-headless` to the browser name (e.g. `--browser=chrome-headless`).
 
-Tachometer comes with WebDriver plugins for Chrome, Safari, Firefox, and IE.
+Tachometer comes with WebDriver plugins for Chrome, Safari, Firefox, and Internet
+Explorer.
 
 For Edge, follow the [Microsoft WebDriver
 installation](https://developer.microsoft.com/en-us/microsoft-edge/tools/webdriver/)
 documentation.
+
+If you encounter errors while driving IE, see the
+[Required Configuration](https://github.com/SeleniumHQ/selenium/wiki/InternetExplorerDriver#required-configuration)
+section of the WebDriver IE plugin documentation. In particular, setting
+"Enable Protected Mode" so that it is consistently either enabled or disabled
+across all security zones appears to resolve `NoSuchSessionError` errors.
 
 ## Remote control
 
