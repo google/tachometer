@@ -9,8 +9,19 @@
  * rights grant found at http://polymer.github.io/PATENTS.txt
  */
 
+// It's not ideal that these WebDriver plugin packages are dependencies of the
+// tachometer package, since on install they download binaries for each plugin.
+// IE in particular is rarely used, so is particularly wasteful. An alternative
+// might be to not depend on any of these packages, and instead prompt the user
+// to install them only the first time they try to drive a browser that we
+// detect there is no plugin for.
+//
+// Also note that the edgedriver package doesn't work on recent versions of
+// Windows 10, so users must manually install following Microsoft's
+// documentation.
 require('chromedriver');
 require('geckodriver');
+require('iedriver');
 
 import * as webdriver from 'selenium-webdriver';
 import * as chrome from 'selenium-webdriver/chrome';
@@ -19,15 +30,16 @@ import * as edge from 'selenium-webdriver/edge';
 import {isUrl} from './util';
 
 /** Tachometer browser names. Often but not always equal to WebDriver's. */
-export type BrowserName = 'chrome'|'firefox'|'safari'|'edge';
+export type BrowserName = 'chrome'|'firefox'|'safari'|'edge'|'ie';
 
 /** Browsers we can drive. */
 export const supportedBrowsers =
-    new Set<BrowserName>(['chrome', 'firefox', 'safari', 'edge']);
+    new Set<BrowserName>(['chrome', 'firefox', 'safari', 'edge', 'ie']);
 
 /** Cases where Tachometer's browser name scheme does not equal WebDriver's. */
 const webdriverBrowserNames = new Map<BrowserName, string>([
   ['edge', 'MicrosoftEdge'],
+  ['ie', 'internet explorer'],
 ]);
 
 /** Browsers that support headless mode. */
