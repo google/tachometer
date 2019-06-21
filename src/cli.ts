@@ -25,7 +25,7 @@ import {makeSession} from './session';
 import {supportedBrowsers, parseAndValidateBrowser, fcpBrowsers, makeDriver, openAndSwitchToNewTab, pollForGlobalResult, pollForFirstContentfulPaint} from './browser';
 import {BenchmarkResult, BenchmarkSpec, measurements, Measurement} from './types';
 import {Server} from './server';
-import {Horizons, ResultStats, horizonsResolved, summaryStats, computeDifferences} from './stats';
+import {Horizons, ResultStats, ResultStatsWithDifferences, horizonsResolved, summaryStats, computeDifferences} from './stats';
 import {specsFromOpts} from './specs';
 import {AutomaticResults, verticalTermResultTable, horizontalTermResultTable, verticalHtmlResultTable, horizontalHtmlResultTable, automaticResultTable, spinner} from './format';
 import {prepareVersionDirectory, makeServerPlans} from './versions';
@@ -229,8 +229,9 @@ function combineResults(results: BenchmarkResult[]): BenchmarkResult {
 const getVersion = (): string =>
     require(path.join(__dirname, '..', 'package.json')).version;
 
-export async function main() {
-  const opts = commandLineArgs(optDefs, {partial: true}) as Opts;
+export async function main(argv: string[]):
+    Promise<Array<ResultStatsWithDifferences>|undefined> {
+  const opts = commandLineArgs(optDefs, {partial: true, argv}) as Opts;
 
   if (opts.help) {
     console.log(commandLineUsage([
@@ -376,7 +377,7 @@ $ tach http://example.com
     await manualMode(config, servers);
   } else {
     try {
-      await automaticMode(config, servers);
+      return await automaticMode(config, servers);
     } finally {
       const allServers = new Set<Server>([...servers.values()]);
       await Promise.all([...allServers].map((server) => server.close()));
@@ -445,7 +446,8 @@ interface Browser {
   initialTabHandle: string;
 }
 
-async function automaticMode(config: Config, servers: ServerMap) {
+async function automaticMode(config: Config, servers: ServerMap):
+    Promise<Array<ResultStatsWithDifferences>|undefined> {
   let reportGitHubCheckResults;
   if (config.githubCheck !== undefined) {
     const {label, appId, installationId, repo, commit} = config.githubCheck;
@@ -676,6 +678,8 @@ async function automaticMode(config: Config, servers: ServerMap) {
   if (reportGitHubCheckResults !== undefined) {
     await reportGitHubCheckResults({fixed, unfixed});
   }
+
+  return withDifferences;
 }
 
 /** Parse horizon flags into signed horizon values. */

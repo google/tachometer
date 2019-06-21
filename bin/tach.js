@@ -11,7 +11,7 @@
  * rights grant found at http://polymer.github.io/PATENTS.txt
  */
 
-require('../lib/cli.js').main().catch((e) => {
+require('../lib/cli.js').main(process.argv).catch((e) => {
   console.error(e);
   process.exitCode = 1;
 })

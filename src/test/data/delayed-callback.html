@@ -1,0 +1,21 @@
+<!doctype html>
+
+<!--
+This test benchmark calls bench.start(), followed by bench.stop() after a
+setTimeout whose duration is determined by the "delay" URL search parameter.
+-->
+
+<html>
+  <head>
+    <title>delayed bench.start/stop test</title>
+  </head>
+  <body>
+    <script type="module">
+      import * as bench from '/bench.js';
+      const params = new URL(document.location).searchParams;
+      const delay = Number(params.get('delay'));
+      bench.start();
+      setTimeout(() => bench.stop(), delay);
+    </script>
+  </body>
+</html>
