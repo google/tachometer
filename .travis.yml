@@ -1,3 +1,4 @@
+dist: xenial
 language: node_js
 node_js:
   - "node"
@@ -6,20 +7,8 @@ script:
 addons:
   chrome: stable
   firefox: latest
-
-matrix:
-  include:
-    - os: linux
-      dist: xenial
-      env:
-        # Note on Linux, non-headless Chrome fails with "Chrome failed to
-        # start", and non-headless Firefox fails with "can't kill an exited
-        # process", so we only test headless for now.
-        TACHOMETER_E2E_TEST_BROWSERS=chrome-headless,firefox-headless
-
-    - os: osx
-      before_install:
-        # Tell Safari to permit automation.
-        sudo safaridriver --enable
-      env:
-        TACHOMETER_E2E_TEST_BROWSERS=safari,chrome,chrome-headless,firefox,firefox-headless
+env:
+  # Note on Linux, non-headless Chrome fails with "Chrome failed to
+  # start", and non-headless Firefox fails with "can't kill an exited
+  # process", so we only test headless for now.
+  TACHOMETER_E2E_TEST_BROWSERS=chrome-headless,firefox-headless
