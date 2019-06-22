@@ -64,7 +64,7 @@ suite('e2e', function() {
              const argv = [
                `--browser=${browser}`,
                '--measure=global',
-               '--sample-size=10',
+               '--sample-size=20',
                '--timeout=0',
                path.join(testData, 'random-global.html') +
                    `?min=${minA}&max=${maxA}`,
