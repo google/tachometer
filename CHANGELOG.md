@@ -5,7 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](http://semver.org/).
 
-<!-- ## Unreleased -->
+## Unreleased
+
+-   Fix bug where `<html>`, `<body>`, and `<head>` tags could be removed from
+    HTML files served by the built-in static server (via version bump to
+    `koa-node-resolve`).
+
 <!-- Add new, unreleased changes here. -->
 
 ## [0.4.7] 2019-06-14
