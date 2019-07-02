@@ -27,7 +27,7 @@ import * as webdriver from 'selenium-webdriver';
 import * as chrome from 'selenium-webdriver/chrome';
 import * as firefox from 'selenium-webdriver/firefox';
 import * as edge from 'selenium-webdriver/edge';
-import {isUrl} from './util';
+import {isHttpUrl} from './util';
 
 /** Tachometer browser names. Often but not always equal to WebDriver's. */
 export type BrowserName = 'chrome'|'firefox'|'safari'|'edge'|'ie';
@@ -55,7 +55,30 @@ export interface BrowserConfig {
   headless: boolean;
   /** A remote WebDriver server to launch the browser from. */
   remoteUrl?: string;
+  /** Launch the browser window with these dimensions. */
+  windowSize: WindowSize;
 }
+
+export interface WindowSize {
+  width: number;
+  height: number;
+}
+
+/**
+ * Create a deterministic unique string key for the given BrowserConfig.
+ */
+export function browserSignature(config: BrowserConfig): string {
+  return JSON.stringify([
+    config.name,
+    config.headless,
+    config.remoteUrl || '',
+    config.windowSize.width,
+    config.windowSize.height,
+  ]);
+}
+
+type BrowserConfigWithoutWindowSize =
+    Pick<BrowserConfig, Exclude<keyof BrowserConfig, 'windowSize'>>;
 
 /**
  * Parse and validate a browser string specification. Examples:
@@ -64,17 +87,12 @@ export interface BrowserConfig {
  *   chrome-headless
  *   chrome@<remote-selenium-server>
  */
-export function parseAndValidateBrowser(str: string): BrowserConfig {
+export function parseBrowserConfigString(str: string):
+    BrowserConfigWithoutWindowSize {
   let remoteUrl;
   const at = str.indexOf('@');
   if (at !== -1) {
     remoteUrl = str.substring(at + 1);
-    if (remoteUrl === '') {
-      throw new Error('Invalid browser: expected URL after "@"');
-    }
-    if (!isUrl(remoteUrl)) {
-      throw new Error(`Invalid remote URL "${remoteUrl}"`);
-    }
     str = str.substring(0, at);
   }
   const headless = str.endsWith('-headless');
@@ -82,6 +100,18 @@ export function parseAndValidateBrowser(str: string): BrowserConfig {
     str = str.replace(/-headless$/, '');
   }
   const name = str as BrowserName;
+  const config: BrowserConfigWithoutWindowSize = {name, headless};
+  if (remoteUrl !== undefined) {
+    config.remoteUrl = remoteUrl;
+  }
+  return config;
+}
+
+/**
+ * Throw if any property of the given BrowserConfig is invalid.
+ */
+export function validateBrowserConfig(
+    {name, headless, remoteUrl, windowSize}: BrowserConfig) {
   if (!supportedBrowsers.has(name)) {
     throw new Error(
         `Browser ${name} is not supported, ` +
@@ -90,11 +120,12 @@ export function parseAndValidateBrowser(str: string): BrowserConfig {
   if (headless === true && !headlessBrowsers.has(name)) {
     throw new Error(`Browser ${name} does not support headless mode.`);
   }
-  const config: BrowserConfig = {name, headless};
-  if (remoteUrl !== undefined) {
-    config.remoteUrl = remoteUrl;
+  if (remoteUrl !== undefined && !isHttpUrl(remoteUrl)) {
+    throw new Error(`Invalid browser remote URL "${remoteUrl}".`);
   }
-  return config;
+  if (windowSize.width < 0 || windowSize.height < 0) {
+    throw new Error(`Invalid window size, width and height must be >= 0.`);
+  }
 }
 
 /**
@@ -117,7 +148,8 @@ export async function makeDriver(config: BrowserConfig):
     // tslint:disable-next-line:no-any TODO setEdgeService function is missing.
     (builder as any).setEdgeService(new edge.ServiceBuilder());
   }
-  return await builder.build();
+  const driver = await builder.build();
+  return driver;
 }
 
 function chromeOpts(config: BrowserConfig): chrome.Options {
@@ -125,6 +157,8 @@ function chromeOpts(config: BrowserConfig): chrome.Options {
   if (config.headless === true) {
     opts.addArguments('--headless');
   }
+  const {width, height} = config.windowSize;
+  opts.addArguments(`--window-size=${width},${height}`);
   return opts;
 }
 
@@ -134,6 +168,11 @@ function firefoxOpts(config: BrowserConfig): firefox.Options {
     // tslint:disable-next-line:no-any TODO Incorrect types.
     (opts as any).addArguments('-headless');
   }
+  const {width, height} = config.windowSize;
+  // tslint:disable-next-line:no-any TODO Incorrect types.
+  (opts as any).addArguments(`-width=${width}`);
+  // tslint:disable-next-line:no-any TODO Incorrect types.
+  (opts as any).addArguments(`-height=${height}`);
   return opts;
 }
 

@@ -9,6 +9,8 @@
  * rights grant found at http://polymer.github.io/PATENTS.txt
  */
 
+import {BrowserConfig} from './browser';
+
 export class Deferred<T> {
   readonly promise: Promise<T>;
   resolve!: (value: T) => void;
@@ -55,7 +57,7 @@ export interface BenchmarkSpec {
   url: LocalUrl|RemoteUrl;
   measurement: Measurement;
   name: string;
-  browser: string;
+  browser: BrowserConfig;
 }
 
 export interface LocalUrl {
@@ -80,7 +82,7 @@ export interface BenchmarkResult {
   queryString: string;
   version: string;
   millis: number[];
-  browser: string;
+  browser: BrowserConfig;
   userAgent: string;
   bytesSent: number;
 }

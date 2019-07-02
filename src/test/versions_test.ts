@@ -12,11 +12,21 @@
 import {assert} from 'chai';
 import * as path from 'path';
 
+import {defaultBrowserName, defaultWindowHeight, defaultWindowWidth} from '../config';
 import {BenchmarkSpec} from '../types';
 import {hashStrings, makeServerPlans, ServerPlan} from '../versions';
 
 const repoRoot = path.resolve(__dirname, '..', '..');
 const testData = path.resolve(repoRoot, 'src', 'test', 'data');
+
+const defaultBrowser = {
+  name: defaultBrowserName,
+  headless: false,
+  windowSize: {
+    width: defaultWindowWidth,
+    height: defaultWindowHeight,
+  },
+};
 
 suite('versions', () => {
   test('makeServerPlans', async () => {
@@ -36,7 +46,7 @@ suite('versions', () => {
           queryString: '',
         },
         measurement: 'fcp',
-        browser: 'chrome',
+        browser: defaultBrowser,
       },
       {
         name: 'mybench',
@@ -52,7 +62,7 @@ suite('versions', () => {
           queryString: '',
         },
         measurement: 'fcp',
-        browser: 'chrome',
+        browser: defaultBrowser,
       },
 
       // mybench and other bench only need the default server.
@@ -64,7 +74,7 @@ suite('versions', () => {
           queryString: '',
         },
         measurement: 'fcp',
-        browser: 'chrome',
+        browser: defaultBrowser,
       },
       {
         name: 'otherbench',
@@ -74,7 +84,7 @@ suite('versions', () => {
           queryString: '',
         },
         measurement: 'fcp',
-        browser: 'chrome',
+        browser: defaultBrowser,
       },
 
       // A remote URL doesn't need a server.
@@ -85,7 +95,7 @@ suite('versions', () => {
           url: 'http://example.com',
         },
         measurement: 'fcp',
-        browser: 'chrome',
+        browser: defaultBrowser,
       },
     ];
 

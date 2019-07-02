@@ -153,6 +153,31 @@ suite('e2e', function() {
                assert.isAbove(ciAverage(diffBA.relative), 0);
              }));
       }
+
+      test('window size', hideOutput(async function() {
+             const argv = [
+               `--browser=${browser}`,
+               '--measure=global',
+               '--sample-size=2',
+               '--timeout=0',
+               '--window-size=500,200',
+               path.join(testData, 'window-size.html'),
+             ];
+             const expected = 500 * 200;
+
+             const actual = await main(argv);
+             assert.isDefined(actual);
+             assert.lengthOf(actual!, 1);
+             const {stats} = actual![0];
+             if (browser.endsWith('-headless')) {
+               // Headless browsers don't render any window borders etc.
+               assert.equal(stats.mean, expected);
+             } else {
+               // When launched graphically we get extra window borders and
+               // other chrome, so we get a larger window than we asked for.
+               assert.closeTo(stats.mean, expected, 0.25 * expected);
+             }
+           }));
     });
   }
 });

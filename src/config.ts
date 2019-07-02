@@ -13,12 +13,12 @@ import * as fsExtra from 'fs-extra';
 import * as jsonschema from 'jsonschema';
 import * as path from 'path';
 
-import {parseAndValidateBrowser} from './browser';
+import {BrowserConfig, BrowserName, parseBrowserConfigString, validateBrowserConfig} from './browser';
 import {parseHorizons} from './cli';
 import {CheckConfig} from './github';
 import {Horizons} from './stats';
 import {BenchmarkSpec, LocalUrl, Measurement, PackageDependencyMap, RemoteUrl} from './types';
-import {isUrl} from './util';
+import {isHttpUrl} from './util';
 import {fileKind} from './versions';
 
 /**
@@ -96,8 +96,10 @@ interface ConfigFileBenchmark {
    *   - firefox
    *   - firefox-headless
    *   - safari
+   *   - edge
+   *   - ie
    */
-  browser?: string;
+  browser?: string|BrowserConfigs;
 
   /**
    * Which time interval to measure.
@@ -121,6 +123,74 @@ interface ConfigFileBenchmark {
    * multiple browers or package versions.
    */
   expand?: ConfigFileBenchmark[];
+}
+
+type BrowserConfigs =
+    ChromeConfig|FirefoxConfig|SafariConfig|EdgeConfig|IEConfig;
+
+interface BrowserConfigBase {
+  /**
+   * Name of the browser:
+   *
+   * Options:
+   *   - chrome
+   *   - firefox
+   *   - safari
+   *   - edge
+   *   - ie
+   */
+  name: BrowserName;
+
+  /**
+   * A remote WebDriver server HTTP address to launch the browser from.
+   */
+  remoteUrl?: string;
+}
+
+interface WindowSize {
+  /**
+   * Width of the browser window in pixels.
+   *
+   * @TJS-type integer
+   * @TJS-minimum 0
+   */
+  width: number;
+
+  /**
+   * Height of the browser window in pixels.
+   *
+   * @TJS-type integer
+   * @TJS-minimum 0
+   */
+  height: number;
+}
+
+export const defaultWindowWidth = 1024;
+export const defaultWindowHeight = 768;
+
+interface ChromeConfig extends BrowserConfigBase {
+  name: 'chrome';
+  headless?: boolean;
+  windowSize?: WindowSize;
+}
+
+interface FirefoxConfig extends BrowserConfigBase {
+  name: 'firefox';
+  headless?: boolean;
+  windowSize?: WindowSize;
+}
+
+interface SafariConfig extends BrowserConfigBase {
+  name: 'safari';
+  headless?: boolean;
+}
+
+interface EdgeConfig extends BrowserConfigBase {
+  name: 'edge';
+}
+
+interface IEConfig extends BrowserConfigBase {
+  name: 'ie';
 }
 
 interface ConfigFilePackageVersion {
@@ -153,7 +223,7 @@ export interface Config {
 }
 
 export const defaultRoot = '.';
-export const defaultBrowser = 'chrome';
+export const defaultBrowserName: BrowserName = 'chrome';
 export const defaultSampleSize = 50;
 export const defaultTimeout = 3;
 export const defaultHorizons = ['0%'];
@@ -211,17 +281,31 @@ async function parseBenchmark(benchmark: ConfigFileBenchmark, root: string):
   if (benchmark.name !== undefined) {
     spec.name = benchmark.name;
   }
+
   if (benchmark.browser !== undefined) {
-    parseAndValidateBrowser(benchmark.browser);
-    spec.browser = benchmark.browser;
+    let browser;
+    if (typeof benchmark.browser === 'string') {
+      browser = {
+        ...parseBrowserConfigString(benchmark.browser),
+        windowSize: {
+          width: defaultWindowWidth,
+          height: defaultWindowHeight,
+        },
+      };
+    } else {
+      browser = parseBrowserObject(benchmark.browser);
+    }
+    validateBrowserConfig(browser);
+    spec.browser = browser;
   }
+
   if (benchmark.measurement !== undefined) {
     spec.measurement = benchmark.measurement;
   }
 
   const url = benchmark.url;
   if (url !== undefined) {
-    if (isUrl(url)) {
+    if (isHttpUrl(url)) {
       spec.url = {
         kind: 'remote',
         url,
@@ -253,6 +337,21 @@ async function parseBenchmark(benchmark: ConfigFileBenchmark, root: string):
   }
 
   return spec;
+}
+
+function parseBrowserObject(config: BrowserConfigs): BrowserConfig {
+  const parsed: BrowserConfig = {
+    name: config.name,
+    headless: ('headless' in config && config.headless) || false,
+    windowSize: ('windowSize' in config && config.windowSize) || {
+      width: defaultWindowWidth,
+      height: defaultWindowHeight,
+    },
+  };
+  if (config.remoteUrl) {
+    parsed.remoteUrl = config.remoteUrl;
+  }
+  return parsed;
 }
 
 function applyExpansions(bench: ConfigFileBenchmark): ConfigFileBenchmark[] {
@@ -290,7 +389,14 @@ function applyDefaults(partialSpec: Partial<BenchmarkSpec>): BenchmarkSpec {
     }
   }
   if (browser === undefined) {
-    browser = defaultBrowser;
+    browser = {
+      name: defaultBrowserName,
+      headless: false,
+      windowSize: {
+        width: defaultWindowWidth,
+        height: defaultWindowHeight,
+      },
+    };
   }
   if (measurement === undefined) {
     measurement = defaultMeasurement(url);

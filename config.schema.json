@@ -2,13 +2,58 @@
     "$schema": "http://json-schema.org/draft-07/schema#",
     "additionalProperties": false,
     "definitions": {
+        "ChromeConfig": {
+            "additionalProperties": false,
+            "properties": {
+                "headless": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "description": "Name of the browser:\n\nOptions:\n   - chrome\n   - firefox\n   - safari\n   - edge\n   - ie",
+                    "enum": [
+                        "chrome"
+                    ],
+                    "type": "string"
+                },
+                "remoteUrl": {
+                    "description": "A remote WebDriver server HTTP address to launch the browser from.",
+                    "type": "string"
+                },
+                "windowSize": {
+                    "$ref": "#/definitions/WindowSize"
+                }
+            },
+            "required": [
+                "name"
+            ],
+            "type": "object"
+        },
         "ConfigFileBenchmark": {
             "additionalProperties": false,
             "description": "Expected format of a benchmark in a JSON config file.",
             "properties": {
                 "browser": {
-                    "description": "Which browser to run the benchmark in.\n\nOptions:\n   - chrome (default)\n   - chrome-headless\n   - firefox\n   - firefox-headless\n   - safari",
-                    "type": "string"
+                    "anyOf": [
+                        {
+                            "$ref": "#/definitions/ChromeConfig"
+                        },
+                        {
+                            "$ref": "#/definitions/FirefoxConfig"
+                        },
+                        {
+                            "$ref": "#/definitions/SafariConfig"
+                        },
+                        {
+                            "$ref": "#/definitions/EdgeConfig"
+                        },
+                        {
+                            "$ref": "#/definitions/IEConfig"
+                        },
+                        {
+                            "type": "string"
+                        }
+                    ],
+                    "description": "Which browser to run the benchmark in.\n\nOptions:\n   - chrome (default)\n   - chrome-headless\n   - firefox\n   - firefox-headless\n   - safari\n   - edge\n   - ie"
                 },
                 "expand": {
                     "description": "Recursively expand this benchmark configuration with any number of\nvariations. Useful for testing the same base configuration with e.g.\nmultiple browers or package versions.",
@@ -59,11 +104,120 @@
             ],
             "type": "object"
         },
+        "EdgeConfig": {
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "description": "Name of the browser:\n\nOptions:\n   - chrome\n   - firefox\n   - safari\n   - edge\n   - ie",
+                    "enum": [
+                        "edge"
+                    ],
+                    "type": "string"
+                },
+                "remoteUrl": {
+                    "description": "A remote WebDriver server HTTP address to launch the browser from.",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "name"
+            ],
+            "type": "object"
+        },
+        "FirefoxConfig": {
+            "additionalProperties": false,
+            "properties": {
+                "headless": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "description": "Name of the browser:\n\nOptions:\n   - chrome\n   - firefox\n   - safari\n   - edge\n   - ie",
+                    "enum": [
+                        "firefox"
+                    ],
+                    "type": "string"
+                },
+                "remoteUrl": {
+                    "description": "A remote WebDriver server HTTP address to launch the browser from.",
+                    "type": "string"
+                },
+                "windowSize": {
+                    "$ref": "#/definitions/WindowSize"
+                }
+            },
+            "required": [
+                "name"
+            ],
+            "type": "object"
+        },
+        "IEConfig": {
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "description": "Name of the browser:\n\nOptions:\n   - chrome\n   - firefox\n   - safari\n   - edge\n   - ie",
+                    "enum": [
+                        "ie"
+                    ],
+                    "type": "string"
+                },
+                "remoteUrl": {
+                    "description": "A remote WebDriver server HTTP address to launch the browser from.",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "name"
+            ],
+            "type": "object"
+        },
         "PackageDependencyMap": {
             "additionalProperties": {
                 "type": "string"
             },
             "description": "A mapping from NPM package name to version specifier, as used in a\npackage.json's \"dependencies\" and \"devDependencies\".",
+            "type": "object"
+        },
+        "SafariConfig": {
+            "additionalProperties": false,
+            "properties": {
+                "headless": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "description": "Name of the browser:\n\nOptions:\n   - chrome\n   - firefox\n   - safari\n   - edge\n   - ie",
+                    "enum": [
+                        "safari"
+                    ],
+                    "type": "string"
+                },
+                "remoteUrl": {
+                    "description": "A remote WebDriver server HTTP address to launch the browser from.",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "name"
+            ],
+            "type": "object"
+        },
+        "WindowSize": {
+            "additionalProperties": false,
+            "properties": {
+                "height": {
+                    "description": "Height of the browser window in pixels.",
+                    "minimum": 0,
+                    "type": "integer"
+                },
+                "width": {
+                    "description": "Width of the browser window in pixels.",
+                    "minimum": 0,
+                    "type": "integer"
+                }
+            },
+            "required": [
+                "height",
+                "width"
+            ],
             "type": "object"
         }
     },
