@@ -149,6 +149,12 @@ export async function makeDriver(config: BrowserConfig):
     (builder as any).setEdgeService(new edge.ServiceBuilder());
   }
   const driver = await builder.build();
+  if (config.name === 'safari' || config.name === 'edge' ||
+      config.name === 'ie') {
+    // Safari, Edge, and IE don't have flags we can use to launch with a given
+    // window size, but webdriver can resize the window after we've started up.
+    await driver.manage().window().setRect(config.windowSize);
+  }
   return driver;
 }
 
@@ -181,8 +187,8 @@ function firefoxOpts(config: BrowserConfig): firefox.Options {
  * hasn't replaced `window.open` (e.g. the initial blank tab that we always
  * switch back to after running a benchmark).
  */
-export async function openAndSwitchToNewTab(driver: webdriver.WebDriver):
-    Promise<void> {
+export async function openAndSwitchToNewTab(
+    driver: webdriver.WebDriver, config: BrowserConfig): Promise<void> {
   // Chrome and Firefox add new tabs to the end of the handle list, but Safari
   // adds them to the beginning. Just look for the new one instead of making
   // any assumptions about this order.
@@ -197,6 +203,11 @@ export async function openAndSwitchToNewTab(driver: webdriver.WebDriver):
     throw new Error(`Expected to create 1 new tab, got ${newTabs.length}`);
   }
   await driver.switchTo().window(newTabs[0]);
+  if (config.name === 'ie') {
+    // For IE we get a new window instead of a new tab, so we need to resize
+    // every time.
+    await driver.manage().window().setRect(config.windowSize);
+  }
 }
 
 /**

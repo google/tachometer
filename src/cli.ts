@@ -542,7 +542,7 @@ async function automaticMode(config: Config, servers: ServerMap):
     const url = specUrl(spec, servers, config);
     const {driver, initialTabHandle} =
         browsers.get(browserSignature(spec.browser))!;
-    await openAndSwitchToNewTab(driver);
+    await openAndSwitchToNewTab(driver, spec.browser);
     await driver.get(url);
 
     let millis;
