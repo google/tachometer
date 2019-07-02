@@ -124,7 +124,7 @@ suite('e2e', function() {
       if (browser.startsWith('chrome')) {
         test('fcp', hideOutput(async function() {
                const delayA = 20;
-               const delayB = 30;
+               const delayB = 60;
 
                const argv = [
                  `--browser=${browser}`,
