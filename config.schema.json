@@ -6,6 +6,7 @@
             "additionalProperties": false,
             "properties": {
                 "headless": {
+                    "description": "Whether to launch the headless (no GUI) version of this browser.",
                     "type": "boolean"
                 },
                 "name": {
@@ -20,7 +21,8 @@
                     "type": "string"
                 },
                 "windowSize": {
-                    "$ref": "#/definitions/WindowSize"
+                    "$ref": "#/definitions/WindowSize",
+                    "description": "The size of new windows created from this browser. Defaults to 1024x768."
                 }
             },
             "required": [
@@ -117,6 +119,10 @@
                 "remoteUrl": {
                     "description": "A remote WebDriver server HTTP address to launch the browser from.",
                     "type": "string"
+                },
+                "windowSize": {
+                    "$ref": "#/definitions/WindowSize",
+                    "description": "The size of new windows created from this browser. Defaults to 1024x768."
                 }
             },
             "required": [
@@ -128,6 +134,7 @@
             "additionalProperties": false,
             "properties": {
                 "headless": {
+                    "description": "Whether to launch the headless (no GUI) version of this browser.",
                     "type": "boolean"
                 },
                 "name": {
@@ -142,7 +149,8 @@
                     "type": "string"
                 },
                 "windowSize": {
-                    "$ref": "#/definitions/WindowSize"
+                    "$ref": "#/definitions/WindowSize",
+                    "description": "The size of new windows created from this browser. Defaults to 1024x768."
                 }
             },
             "required": [
@@ -163,6 +171,10 @@
                 "remoteUrl": {
                     "description": "A remote WebDriver server HTTP address to launch the browser from.",
                     "type": "string"
+                },
+                "windowSize": {
+                    "$ref": "#/definitions/WindowSize",
+                    "description": "The size of new windows created from this browser. Defaults to 1024x768."
                 }
             },
             "required": [
@@ -180,9 +192,6 @@
         "SafariConfig": {
             "additionalProperties": false,
             "properties": {
-                "headless": {
-                    "type": "boolean"
-                },
                 "name": {
                     "description": "Name of the browser:\n\nOptions:\n   - chrome\n   - firefox\n   - safari\n   - edge\n   - ie",
                     "enum": [
@@ -193,6 +202,10 @@
                 "remoteUrl": {
                     "description": "A remote WebDriver server HTTP address to launch the browser from.",
                     "type": "string"
+                },
+                "windowSize": {
+                    "$ref": "#/definitions/WindowSize",
+                    "description": "The size of new windows created from this browser. Defaults to 1024x768."
                 }
             },
             "required": [

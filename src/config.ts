@@ -145,6 +145,11 @@ interface BrowserConfigBase {
    * A remote WebDriver server HTTP address to launch the browser from.
    */
   remoteUrl?: string;
+
+  /**
+   * The size of new windows created from this browser. Defaults to 1024x768.
+   */
+  windowSize?: WindowSize;
 }
 
 interface WindowSize {
@@ -170,19 +175,24 @@ export const defaultWindowHeight = 768;
 
 interface ChromeConfig extends BrowserConfigBase {
   name: 'chrome';
+
+  /**
+   * Whether to launch the headless (no GUI) version of this browser.
+   */
   headless?: boolean;
-  windowSize?: WindowSize;
 }
 
 interface FirefoxConfig extends BrowserConfigBase {
   name: 'firefox';
+
+  /**
+   * Whether to launch the headless (no GUI) version of this browser.
+   */
   headless?: boolean;
-  windowSize?: WindowSize;
 }
 
 interface SafariConfig extends BrowserConfigBase {
   name: 'safari';
-  headless?: boolean;
 }
 
 interface EdgeConfig extends BrowserConfigBase {
