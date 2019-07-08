@@ -22,14 +22,14 @@ import ProgressBar = require('progress');
 import ansi = require('ansi-escape-sequences');
 
 import {makeSession} from './session';
-import {supportedBrowsers, parseAndValidateBrowser, fcpBrowsers, makeDriver, openAndSwitchToNewTab, pollForGlobalResult, pollForFirstContentfulPaint} from './browser';
+import {supportedBrowsers, browserSignature, fcpBrowsers, makeDriver, openAndSwitchToNewTab, pollForGlobalResult, pollForFirstContentfulPaint} from './browser';
 import {BenchmarkResult, BenchmarkSpec, measurements, Measurement} from './types';
 import {Server} from './server';
 import {Horizons, ResultStats, ResultStatsWithDifferences, horizonsResolved, summaryStats, computeDifferences} from './stats';
 import {specsFromOpts} from './specs';
 import {AutomaticResults, verticalTermResultTable, horizontalTermResultTable, verticalHtmlResultTable, horizontalHtmlResultTable, automaticResultTable, spinner} from './format';
 import {prepareVersionDirectory, makeServerPlans} from './versions';
-import {parseConfigFile, Config, defaultRoot, defaultBrowser, defaultSampleSize, defaultTimeout, defaultHorizons, writeBackSchemaIfNeeded} from './config';
+import {parseConfigFile, Config, defaultRoot, defaultBrowserName, defaultSampleSize, defaultTimeout, defaultHorizons, defaultWindowWidth, defaultWindowHeight, writeBackSchemaIfNeeded} from './config';
 import * as github from './github';
 
 const defaultInstallDir = path.join(os.tmpdir(), 'tachometer', 'versions');
@@ -99,7 +99,7 @@ export const optDefs: commandLineUsage.OptionDefinition[] = [
     name: 'browser',
     description: 'Which browsers to launch in automatic mode, ' +
         `comma-delimited (${[...supportedBrowsers].join(', ')}) ` +
-        `(default ${defaultBrowser})`,
+        `(default ${defaultBrowserName})`,
     alias: 'b',
     type: String,
   },
@@ -170,6 +170,13 @@ export const optDefs: commandLineUsage.OptionDefinition[] = [
         'bare module specifiers to paths.',
     type: booleanString,
   },
+  {
+    name: 'window-size',
+    description:
+        `"width,height" in pixels of the window to open for all browsers` +
+        ` (default "${defaultWindowWidth},${defaultWindowHeight}").`,
+    type: String,
+  },
 ];
 
 /**
@@ -204,6 +211,7 @@ export interface Opts {
   'github-check': string;
   'resolve-bare-modules': boolean|undefined;
   'remote-accessible-host': string;
+  'window-size': string;
 
   // Extra arguments not associated with a flag are put here. These are our
   // benchmark names/URLs.
@@ -303,6 +311,9 @@ $ tach http://example.com
       throw new Error(
           '--resolve-bare-modules cannot be specified when using --config');
     }
+    if (opts['window-size'] !== undefined) {
+      throw new Error('--window-size cannot be specified when using --config');
+    }
     const rawConfigObj = await fsExtra.readJson(opts.config);
     const validatedConfigObj = await parseConfigFile(rawConfigObj);
 
@@ -343,10 +354,9 @@ $ tach http://example.com
   }
 
   for (const spec of config.benchmarks) {
-    const browserConfig = parseAndValidateBrowser(spec.browser);
-    if (spec.measurement === 'fcp' && !fcpBrowsers.has(browserConfig.name)) {
+    if (spec.measurement === 'fcp' && !fcpBrowsers.has(spec.browser.name)) {
       throw new Error(
-          `Browser ${spec.browser} does not support the ` +
+          `Browser ${spec.browser.name} does not support the ` +
           `first contentful paint (FCP) measurement`);
     }
   }
@@ -396,12 +406,10 @@ function specUrl(
   if (server === undefined) {
     throw new Error('Internal error: no server for spec');
   }
-  if (config.remoteAccessibleHost !== '') {
-    const browser = parseAndValidateBrowser(spec.browser);
-    if (browser.remoteUrl !== undefined) {
-      return 'http://' + config.remoteAccessibleHost + ':' + server.port +
-          spec.url.urlPath + spec.url.queryString;
-    }
+  if (config.remoteAccessibleHost !== '' &&
+      spec.browser.remoteUrl !== undefined) {
+    return 'http://' + config.remoteAccessibleHost + ':' + server.port +
+        spec.url.urlPath + spec.url.queryString;
   }
   return server.url + spec.url.urlPath + spec.url.queryString;
 }
@@ -498,19 +506,23 @@ async function automaticMode(config: Config, servers: ServerMap):
   });
 
   const browsers = new Map<string, Browser>();
-  for (const browser of new Set(specs.map((spec) => spec.browser))) {
-    bar.tick(0, {status: `launching ${browser}`});
+  for (const {browser} of specs) {
+    const sig = browserSignature(browser);
+    if (browsers.has(sig)) {
+      continue;
+    }
+    bar.tick(0, {status: `launching ${browser.name}`});
     // It's important that we execute each benchmark iteration in a new tab.
     // At least in Chrome, each tab corresponds to process which shares some
     // amount of cached V8 state which can cause significant measurement
     // effects. There might even be additional interaction effects that
     // would require an entirely new browser to remove, but experience in
     // Chrome so far shows that new tabs are neccessary and sufficient.
-    const driver = await makeDriver(parseAndValidateBrowser(browser));
+    const driver = await makeDriver(browser);
     const tabs = await driver.getAllWindowHandles();
     // We'll always launch new tabs from this initial blank tab.
     const initialTabHandle = tabs[0];
-    browsers.set(browser, {name: browser, driver, initialTabHandle});
+    browsers.set(sig, {name: browser.name, driver, initialTabHandle});
   }
 
   const specResults = new Map<BenchmarkSpec, BenchmarkResult[]>();
@@ -528,8 +540,9 @@ async function automaticMode(config: Config, servers: ServerMap):
     }
 
     const url = specUrl(spec, servers, config);
-    const {driver, initialTabHandle} = browsers.get(spec.browser)!;
-    await openAndSwitchToNewTab(driver);
+    const {driver, initialTabHandle} =
+        browsers.get(browserSignature(spec.browser))!;
+    await openAndSwitchToNewTab(driver, spec.browser);
     await driver.get(url);
 
     let millis;
@@ -593,7 +606,7 @@ async function automaticMode(config: Config, servers: ServerMap):
       bar.tick(0, {
         status: [
           `${++run}/${numRuns}`,
-          spec.browser,
+          spec.browser.name,
           spec.name + (spec.url.kind === 'local' ? spec.url.queryString : ''),
           spec.url.kind === 'local' && spec.url.version !== undefined ?
               `[@${spec.url.version.label}]` :

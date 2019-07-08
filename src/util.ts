@@ -11,11 +11,13 @@
 
 import {URL} from 'url';
 
-/** Return whether the given string is a valid URL. */
-export function isUrl(str: string): boolean {
+/** Return whether the given string is a valid HTTP URL. */
+export function isHttpUrl(str: string): boolean {
   try {
-    new URL(str);
-    return true;
+    const url = new URL(str);
+    // Note an absolute Windows file path will parse as a URL (e.g.
+    // 'C:\\foo\\bar' => {protocol: 'c:', pathname: '\\foo\\bar', ...})
+    return url.protocol === 'http:' || url.protocol === 'https:';
   } catch (e) {
     return false;
   }

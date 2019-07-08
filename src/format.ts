@@ -252,14 +252,21 @@ const versionDimension: Dimension = {
 const browserDimension: Dimension = {
   label: 'Browser',
   format: (r: ResultStats) => {
-    if (r.result.userAgent === '') {
-      // This happens with remote URLs, since we don't get a chance to
-      // instrument any requests to find the user agent.
-      // TODO We could make one no-op request just to probe the user agent.
-      return r.result.browser;
+    const browser = r.result.browser;
+    let s = browser.name;
+    if (browser.headless) {
+      s += '-headless';
     }
-    const ua = new UAParser(r.result.userAgent).getBrowser();
-    return `${r.result.browser}\n${ua.version}`;
+    if (browser.remoteUrl) {
+      s += `\n@${browser.remoteUrl}`;
+    }
+    if (r.result.userAgent !== '') {
+      // We'll only have a user agent when using the built-in static server.
+      // TODO Get UA from window.navigator.userAgent so we always have it.
+      const ua = new UAParser(r.result.userAgent).getBrowser();
+      s += `\n${ua.version}`;
+    }
+    return s;
   },
 };
 

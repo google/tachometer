@@ -421,7 +421,14 @@ Defaults are the same as the corresponding command-line flags.
     {
       "name": "foo",
       "url": "foo/bar.html?baz=123",
-      "browser": "chrome",
+      "browser": {
+        "name": "chrome",
+        "headless": true,
+        "windowSize": {
+          "width": 800,
+          "height": 600,
+        },
+      },
       "measure": "fcp",
       "packageVersions": {
         "label": "master",
@@ -505,6 +512,7 @@ Flag                      | Default     | Description
 `--config`                | *(none)*    | Path to JSON config file ([details](#config-file))
 `--package-version` / `-p`| *(none)*    | Specify an NPM package version to swap in ([details](#swap-npm-dependency-versions))
 `--browser` / `-b`        | `chrome`    | Which browsers to launch in automatic mode, comma-delimited (chrome, firefox, safari, edge, ie) ([details](#browsers))
+`--window-size`           | `1024,768`  | "width,height" in pixels of the browser windows that will be created
 `--sample-size` / `-n`    | `50`        | Minimum number of times to run each benchmark ([details](#sample-size)]
 `--horizon`               | `10%`       | The degrees of difference to try and resolve when auto-sampling ("N%" or "Nms", comma-delimited) ([details](#auto-sampling))
 `--timeout`               | `3`         | The maximum number of minutes to spend auto-sampling ([details](#auto-sampling))

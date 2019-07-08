@@ -11,11 +11,11 @@
 
 import * as path from 'path';
 
-import {parseAndValidateBrowser} from './browser';
+import {parseBrowserConfigString, validateBrowserConfig, WindowSize} from './browser';
 import {Opts} from './cli';
-import {defaultBrowser, defaultMeasurement, defaultRoot, urlFromLocalPath} from './config';
+import {defaultBrowserName, defaultMeasurement, defaultRoot, defaultWindowHeight, defaultWindowWidth, urlFromLocalPath} from './config';
 import {BenchmarkSpec, LocalUrl, PackageVersion, RemoteUrl} from './types';
-import {isUrl} from './util';
+import {isHttpUrl} from './util';
 import {parsePackageVersions} from './versions';
 
 /**
@@ -24,16 +24,40 @@ import {parsePackageVersions} from './versions';
  * benchmarks/ directory.
  */
 export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
-  const browsers = new Set((opts.browser || defaultBrowser)
-                               .replace(/\s+/, '')
-                               .split(',')
-                               .filter((b) => b !== ''));
-  if (browsers.size === 0) {
+  let windowSize: WindowSize;
+  if (opts['window-size']) {
+    const match = opts['window-size'].match(/^(\d+),(\d+)$/);
+    if (match === null) {
+      throw new Error(
+          `Invalid --window-size flag, must match "width,height, " ` +
+          `but was "${opts['window-size']}"`);
+    }
+    windowSize = {
+      width: Number(match[1]),
+      height: Number(match[2]),
+    };
+  } else {
+    windowSize = {
+      width: defaultWindowWidth,
+      height: defaultWindowHeight,
+    };
+  }
+
+  const browserStrings = new Set((opts.browser || defaultBrowserName)
+                                     .replace(/\s+/, '')
+                                     .split(',')
+                                     .filter((b) => b !== ''));
+  if (browserStrings.size === 0) {
     throw new Error('At least one --browser must be specified');
   }
-  for (const b of browsers) {
-    parseAndValidateBrowser(b);
-  }
+  const browsers = [...browserStrings].map((str) => {
+    const config = {
+      ...parseBrowserConfigString(str),
+      windowSize,
+    };
+    validateBrowserConfig(config);
+    return config;
+  });
 
   const specs: BenchmarkSpec[] = [];
 
@@ -100,7 +124,7 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
 function parseBenchmarkArgument(str: string):
     {kind: 'remote', url: string, alias?: string}|
     {kind: 'local', diskPath: string, queryString: string, alias?: string} {
-  if (isUrl(str)) {
+  if (isHttpUrl(str)) {
     // http://example.com
     return {
       kind: 'remote',
@@ -111,7 +135,7 @@ function parseBenchmarkArgument(str: string):
   if (str.includes('=')) {
     const eq = str.indexOf('=');
     const maybeUrl = str.substring(eq + 1);
-    if (isUrl(maybeUrl)) {
+    if (isHttpUrl(maybeUrl)) {
       // foo=http://example.com
       return {
         kind: 'remote',

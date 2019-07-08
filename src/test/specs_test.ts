@@ -14,6 +14,7 @@ import * as chaiAsPromised from 'chai-as-promised';
 import * as path from 'path';
 
 import {optDefs, Opts} from '../cli';
+import {defaultBrowserName, defaultWindowHeight, defaultWindowWidth} from '../config';
 import {specsFromOpts} from '../specs';
 import {BenchmarkSpec} from '../types';
 
@@ -27,6 +28,15 @@ const testData = path.resolve(repoRoot, 'src', 'test', 'data');
 
 const parse = (argv: string[]) =>
     commandLineArgs(optDefs, {argv, partial: true}) as Opts;
+
+const defaultBrowser = {
+  name: defaultBrowserName,
+  headless: false,
+  windowSize: {
+    width: defaultWindowWidth,
+    height: defaultWindowHeight,
+  },
+};
 
 suite('specsFromOpts', () => {
   let prevCwd: string;
@@ -54,7 +64,7 @@ suite('specsFromOpts', () => {
           kind: 'remote',
           url: 'http://example.com',
         },
-        browser: 'chrome',
+        browser: defaultBrowser,
         measurement: 'fcp',
       },
     ];
@@ -71,7 +81,7 @@ suite('specsFromOpts', () => {
           kind: 'remote',
           url: 'http://example.com',
         },
-        browser: 'chrome',
+        browser: defaultBrowser,
         measurement: 'fcp',
       },
     ];
@@ -90,7 +100,26 @@ suite('specsFromOpts', () => {
           queryString: '',
           version: undefined,
         },
-        browser: 'chrome',
+        browser: defaultBrowser,
+        measurement: 'callback',
+      },
+    ];
+    assert.deepEqual(actual, expected);
+  });
+
+  test('local absolute file', async () => {
+    const argv = [path.resolve('mybench/index.html')];
+    const actual = await specsFromOpts(parse(argv));
+    const expected: BenchmarkSpec[] = [
+      {
+        name: 'mybench/index.html',
+        url: {
+          kind: 'local',
+          urlPath: '/mybench/index.html',
+          queryString: '',
+          version: undefined,
+        },
+        browser: defaultBrowser,
         measurement: 'callback',
       },
     ];
@@ -109,7 +138,7 @@ suite('specsFromOpts', () => {
           queryString: '',
           version: undefined,
         },
-        browser: 'chrome',
+        browser: defaultBrowser,
         measurement: 'callback',
       },
     ];
@@ -128,7 +157,7 @@ suite('specsFromOpts', () => {
           queryString: '',
           version: undefined,
         },
-        browser: 'chrome',
+        browser: defaultBrowser,
         measurement: 'callback',
       },
     ];
@@ -147,7 +176,7 @@ suite('specsFromOpts', () => {
           queryString: '?foo=bar',
           version: undefined,
         },
-        browser: 'chrome',
+        browser: defaultBrowser,
         measurement: 'callback',
       },
     ];
@@ -166,7 +195,7 @@ suite('specsFromOpts', () => {
           queryString: '?foo=bar',
           version: undefined,
         },
-        browser: 'chrome',
+        browser: defaultBrowser,
         measurement: 'callback',
       },
     ];
@@ -194,7 +223,7 @@ suite('specsFromOpts', () => {
             },
           },
         },
-        browser: 'chrome',
+        browser: defaultBrowser,
         measurement: 'callback',
       },
       {
@@ -210,7 +239,7 @@ suite('specsFromOpts', () => {
             },
           },
         },
-        browser: 'chrome',
+        browser: defaultBrowser,
         measurement: 'callback',
       },
     ];

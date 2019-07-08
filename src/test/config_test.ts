@@ -16,10 +16,19 @@ import * as path from 'path';
 chai.use(chaiAsPromised);
 const {assert} = chai;
 
-import {Config, parseConfigFile} from '../config';
+import {defaultBrowserName, defaultWindowWidth, defaultWindowHeight, Config, parseConfigFile} from '../config';
 
 const repoRoot = path.resolve(__dirname, '..', '..');
 const testData = path.resolve(repoRoot, 'src', 'test', 'data');
+
+const defaultBrowser = {
+  name: defaultBrowserName,
+  headless: false,
+  windowSize: {
+    width: defaultWindowWidth,
+    height: defaultWindowHeight,
+  },
+};
 
 suite('config', () => {
   suite('parseConfigFile', () => {
@@ -43,13 +52,16 @@ suite('config', () => {
         benchmarks: [
           {
             name: 'remote',
-            browser: 'chrome',
+            browser: defaultBrowser,
             measurement: 'fcp',
             url: 'http://example.com?foo=bar',
           },
           {
             name: 'local',
-            browser: 'firefox',
+            browser: {
+              ...defaultBrowser,
+              name: 'firefox',
+            },
             measurement: 'callback',
             url: 'mybench/index.html?foo=bar',
             packageVersions: {
@@ -77,7 +89,7 @@ suite('config', () => {
         benchmarks: [
           {
             name: 'remote',
-            browser: 'chrome',
+            browser: defaultBrowser,
             measurement: 'fcp',
             url: {
               kind: 'remote',
@@ -86,7 +98,10 @@ suite('config', () => {
           },
           {
             name: 'local',
-            browser: 'firefox',
+            browser: {
+              ...defaultBrowser,
+              name: 'firefox',
+            },
             measurement: 'callback',
             url: {
               kind: 'local',
@@ -138,7 +153,7 @@ suite('config', () => {
               url: 'http://example.com?foo=bar',
             },
             measurement: 'fcp',
-            browser: 'chrome',
+            browser: defaultBrowser,
           },
           {
             name: '/mybench/index.html?foo=bar',
@@ -148,7 +163,7 @@ suite('config', () => {
               queryString: '?foo=bar',
             },
             measurement: 'callback',
-            browser: 'chrome',
+            browser: defaultBrowser,
           },
         ],
       };
@@ -196,25 +211,31 @@ suite('config', () => {
             name: 'http://example.com',
             url: {kind: 'remote', url: 'http://example.com'},
             measurement: 'fcp',
-            browser: 'chrome',
+            browser: defaultBrowser,
           },
           {
             name: 'http://example.com',
             url: {kind: 'remote', url: 'http://example.com'},
             measurement: 'fcp',
-            browser: 'firefox',
+            browser: {
+              ...defaultBrowser,
+              name: 'firefox',
+            },
           },
           {
             name: 'http://example.com',
             url: {kind: 'remote', url: 'http://example.com'},
             measurement: 'callback',
-            browser: 'chrome',
+            browser: defaultBrowser,
           },
           {
             name: 'http://example.com',
             url: {kind: 'remote', url: 'http://example.com'},
             measurement: 'callback',
-            browser: 'firefox',
+            browser: {
+              ...defaultBrowser,
+              name: 'firefox',
+            },
           },
         ],
       };
