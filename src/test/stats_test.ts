@@ -16,7 +16,7 @@ import {summaryStats, computeDifference, intervalContains} from '../stats';
 
 suite('statistics', function() {
   test('confidence intervals', function() {
-    this.timeout(30000);  // Lots of arithmetic.
+    this.timeout(60000);  // Lots of arithmetic.
 
     // Increasing the number of trials increases the precision of our long-term
     // estimate of the proportion of correct confidence intervals (see below).
