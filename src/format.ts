@@ -323,18 +323,18 @@ function percent(n: number): string {
  */
 function makeUniqueLabelFn(results: BenchmarkResult[]):
     (result: BenchmarkResult) => string {
-  const names = new Set();
-  const queryStrings = new Set();
-  const versions = new Set();
-  const browsers = new Set();
+  const names = new Set<string>();
+  const queryStrings = new Set<string>();
+  const versions = new Set<string>();
+  const browsers = new Set<string>();
   for (const result of results) {
     names.add(result.name);
     queryStrings.add(result.queryString);
     versions.add(result.version);
-    browsers.add(result.browser);
+    browsers.add(result.browser.name);
   }
   return (result: BenchmarkResult) => {
-    const fields = [];
+    const fields: string[] = [];
     if (names.size > 1) {
       fields.push(result.name);
     }
@@ -345,7 +345,7 @@ function makeUniqueLabelFn(results: BenchmarkResult[]):
       fields.push(result.version);
     }
     if (browsers.size > 1) {
-      fields.push(result.browser);
+      fields.push(result.browser.name);
     }
     return fields.join('\n');
   };
