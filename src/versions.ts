@@ -135,7 +135,11 @@ export async function makeServerPlans(
       }],
       mountPoints: [
         {
-          urlPath: `/${path.relative(benchmarkRoot, packageDir)}/node_modules`,
+          urlPath: path.posix.join(
+              '/',
+              path.relative(benchmarkRoot, packageDir)
+                  .replace(path.win32.sep, '/'),
+              'node_modules'),
           diskPath: path.join(installDir, 'node_modules'),
         },
         {
