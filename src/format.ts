@@ -53,7 +53,6 @@ export function automaticResultTable(results: ResultStats[]): AutomaticResults {
 
   const possiblyFixed = [
     benchmarkDimension,
-    queryParamsDimension,
     versionDimension,
     browserDimension,
     sampleSizeDimension,
@@ -235,15 +234,6 @@ const benchmarkDimension: Dimension = {
   format: (r: ResultStats) => r.result.name,
 };
 
-const queryParamsDimension: Dimension = {
-  label: 'Params',
-  tableConfig: {
-    alignment: 'right',
-  },
-  format: (r: ResultStats) =>
-      r.result.queryString || ansi.format('[gray]{<none>}'),
-};
-
 const versionDimension: Dimension = {
   label: 'Version',
   format: (r: ResultStats) => r.result.version || ansi.format('[gray]{<none>}'),
@@ -324,12 +314,10 @@ function percent(n: number): string {
 function makeUniqueLabelFn(results: BenchmarkResult[]):
     (result: BenchmarkResult) => string {
   const names = new Set<string>();
-  const queryStrings = new Set<string>();
   const versions = new Set<string>();
   const browsers = new Set<string>();
   for (const result of results) {
     names.add(result.name);
-    queryStrings.add(result.queryString);
     versions.add(result.version);
     browsers.add(result.browser.name);
   }
@@ -337,9 +325,6 @@ function makeUniqueLabelFn(results: BenchmarkResult[]):
     const fields: string[] = [];
     if (names.size > 1) {
       fields.push(result.name);
-    }
-    if (queryStrings.size > 1) {
-      fields.push(result.queryString || '<none>');
     }
     if (versions.size > 1) {
       fields.push(result.version);

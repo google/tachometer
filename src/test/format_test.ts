@@ -10,12 +10,16 @@
  */
 
 import {assert} from 'chai';
+import * as path from 'path';
 import stripAnsi from 'strip-ansi';
 
 import {Config, ConfigFile, parseConfigFile} from '../config';
 import {automaticResultTable, verticalTermResultTable} from '../format';
 import {computeDifferences, ResultStats, summaryStats} from '../stats';
 import {BenchmarkSpec} from '../types';
+
+const repoRoot = path.resolve(__dirname, '..', '..');
+const testData = path.resolve(repoRoot, 'src', 'test', 'data');
 
 const userAgents = new Map([
   [
@@ -81,6 +85,16 @@ function fakeResultStats(
 }
 
 suite('format', () => {
+  let prevCwd: string;
+  suiteSetup(() => {
+    prevCwd = process.cwd();
+    process.chdir(path.join(testData, 'mylib'));
+  });
+
+  suiteTeardown(() => {
+    process.chdir(prevCwd);
+  });
+
   test('1 remote', async () => {
     const config: ConfigFile = {
       benchmarks: [
@@ -135,6 +149,78 @@ suite('format', () => {
 │ 60.0          │          │                   │       68% - 132% │         -        │
 │               │          │                   │ 7.97ms - 12.03ms │                  │
 └───────────────┴──────────┴───────────────────┴──────────────────┴──────────────────┘
+    `;
+    assert.equal(actual, expected.trim() + '\n');
+  });
+
+  test('remote and local, with query params, without labels', async () => {
+    const config: ConfigFile = {
+      benchmarks: [
+        {
+          url: 'http://example.com?p=bar',
+          browser: {
+            name: 'chrome',
+          },
+        },
+        {
+          url: 'mybench/index.html?p=bar',
+          browser: {
+            name: 'chrome',
+          },
+        },
+      ],
+    };
+
+    const actual = await fakeResultTable(config);
+    const expected = `
+┌───────────────────────────┬──────────┬───────────────────┬─────────────────────────────┬──────────────────────────────┐
+│ Benchmark                 │ Bytes    │          Avg time │ vs http://example.com?p=bar │ vs /mybench/index.html?p=bar │
+├───────────────────────────┼──────────┼───────────────────┼─────────────────────────────┼──────────────────────────────┤
+│ http://example.com?p=bar  │ 1.00 KiB │  8.56ms - 11.44ms │                             │                       faster │
+│                           │          │                   │                    -        │                    42% - 58% │
+│                           │          │                   │                             │             7.97ms - 12.03ms │
+├───────────────────────────┼──────────┼───────────────────┼─────────────────────────────┼──────────────────────────────┤
+│ /mybench/index.html?p=bar │ 2.00 KiB │ 18.56ms - 21.44ms │                      slower │                              │
+│                           │          │                   │                  68% - 132% │                     -        │
+│                           │          │                   │            7.97ms - 12.03ms │                              │
+└───────────────────────────┴──────────┴───────────────────┴─────────────────────────────┴──────────────────────────────┘
+    `;
+    assert.equal(actual, expected.trim() + '\n');
+  });
+
+  test('remote and local, with query params, with labels', async () => {
+    const config: ConfigFile = {
+      benchmarks: [
+        {
+          name: 'foo',
+          url: 'http://example.com?p=bar',
+          browser: {
+            name: 'chrome',
+          },
+        },
+        {
+          name: 'bar',
+          url: 'mybench/index.html?p=bar',
+          browser: {
+            name: 'chrome',
+          },
+        },
+      ],
+    };
+
+    const actual = await fakeResultTable(config);
+    const expected = `
+┌───────────┬──────────┬───────────────────┬──────────────────┬──────────────────┐
+│ Benchmark │ Bytes    │          Avg time │           vs foo │           vs bar │
+├───────────┼──────────┼───────────────────┼──────────────────┼──────────────────┤
+│ foo       │ 1.00 KiB │  8.56ms - 11.44ms │                  │           faster │
+│           │          │                   │         -        │        42% - 58% │
+│           │          │                   │                  │ 7.97ms - 12.03ms │
+├───────────┼──────────┼───────────────────┼──────────────────┼──────────────────┤
+│ bar       │ 2.00 KiB │ 18.56ms - 21.44ms │           slower │                  │
+│           │          │                   │       68% - 132% │         -        │
+│           │          │                   │ 7.97ms - 12.03ms │                  │
+└───────────┴──────────┴───────────────────┴──────────────────┴──────────────────┘
     `;
     assert.equal(actual, expected.trim() + '\n');
   });
