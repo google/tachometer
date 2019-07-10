@@ -7,6 +7,9 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+-   Don't show URL query parameters in the result table when an alias was
+    specified.
+
 -   Fix bug where browser in result table was displayed as `[object Object]`
     instead of its name.
 
