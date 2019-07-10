@@ -7,6 +7,13 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+-   Fix bug where browser in result table was displayed as `[object Object]`
+    instead of its name.
+
+<!-- Add new, unreleased changes here. -->
+
+## [0.4.8] 2019-07-08
+
 -   Fix bug where `<html>`, `<body>`, and `<head>` tags could be removed from
     HTML files served by the built-in static server (via version bump to
     `koa-node-resolve`).
@@ -19,8 +26,6 @@ project adheres to [Semantic Versioning](http://semver.org/).
 -   Added `--window-size` flag and `browser:{ windowSize: {width, height} }`
     JSON config file property to control browser window size. Browsers will be
     resized to 1024x768 by default.
-
-<!-- Add new, unreleased changes here. -->
 
 ## [0.4.7] 2019-06-14
 
