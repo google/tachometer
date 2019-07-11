@@ -186,6 +186,11 @@ When you use the `--package-version` flag, the following happens:
    request for the benchmark's `node_modules/` directory is served from that
    location.
 
+> **NOTE**: Tachometer will *re-use NPM install directories* as long as the
+> dependencies you specified haven't changed, and the version of tachometer used
+> to install it is the same. To *always* do a fresh `npm install`, set the
+> `--force-clean-npm-install` flag.
+
 ## Confidence intervals
 
 The most important concept needed to interpret results from tachometer is the
@@ -503,18 +508,20 @@ Benchmark First Contentful Paint time of a remote URL:
 tach http://example.com
 ```
 
-Flag                      | Default     | Description
-------------------------- | ----------- | --------------------------------
-`--help`                  | `false`     | Show documentation
-`--root`                  | `./`        | Root directory to search for benchmarks
-`--host`                  | `127.0.0.1` | Which host to run on
-`--port`                  | `8080, 8081, ..., 0`| Which port to run on (comma-delimited preference list, `0` for random)
-`--config`                | *(none)*    | Path to JSON config file ([details](#config-file))
-`--package-version` / `-p`| *(none)*    | Specify an NPM package version to swap in ([details](#swap-npm-dependency-versions))
-`--browser` / `-b`        | `chrome`    | Which browsers to launch in automatic mode, comma-delimited (chrome, firefox, safari, edge, ie) ([details](#browsers))
-`--window-size`           | `1024,768`  | "width,height" in pixels of the browser windows that will be created
-`--sample-size` / `-n`    | `50`        | Minimum number of times to run each benchmark ([details](#sample-size)]
-`--horizon`               | `10%`       | The degrees of difference to try and resolve when auto-sampling ("N%" or "Nms", comma-delimited) ([details](#auto-sampling))
-`--timeout`               | `3`         | The maximum number of minutes to spend auto-sampling ([details](#auto-sampling))
-`--measure`               | `callback`  | Which time interval to measure (`callback`, `global`, `fcp`) ([details](#measurement-modes))
-`--remote-accessible-host`| matches `--host` | When using a browser over a remote WebDriver connection, the URL that those browsers should use to access the local tachometer server ([details](#remote-control))
+Flag                    -  | Default     | Description
+-------------------------- | ----------- | --------------------------------
+`--help`                   | `false`     | Show documentation
+`--root`                   | `./`        | Root directory to search for benchmarks
+`--host`                   | `127.0.0.1` | Which host to run on
+`--port`                   | `8080, 8081, ..., 0`| Which port to run on (comma-delimited preference list, `0` for random)
+`--config`                 | *(none)*    | Path to JSON config file ([details](#config-file))
+`--package-version` / `-p` | *(none)*    | Specify an NPM package version to swap in ([details](#swap-npm-dependencies))
+`--browser` / `-b`         | `chrome`    | Which browsers to launch in automatic mode, comma-delimited (chrome, firefox, safari, edge, ie) ([details](#browsers))
+`--window-size`            | `1024,768`  | "width,height" in pixels of the browser windows that will be created
+`--sample-size` / `-n`     | `50`        | Minimum number of times to run each benchmark ([details](#sample-size)]
+`--horizon`                | `10%`       | The degrees of difference to try and resolve when auto-sampling ("N%" or "Nms", comma-delimited) ([details](#auto-sampling))
+`--timeout`                | `3`         | The maximum number of minutes to spend auto-sampling ([details](#auto-sampling))
+`--measure`                | `callback`  | Which time interval to measure (`callback`, `global`, `fcp`) ([details](#measurement-modes))
+`--remote-accessible-host` | matches `--host` | When using a browser over a remote WebDriver connection, the URL that those browsers should use to access the local tachometer server ([details](#remote-control))
+`--npm-install-dir`        | system temp dir | Where to install custom package versions. ([details](#swap-npm-dependencies))
+`--force-clean-npm-install`| `false`     | Always do a from-scratch NPM install when using custom package versions. ([details](#swap-npm-dependencies))

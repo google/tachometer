@@ -230,6 +230,7 @@ export interface Config {
   githubCheck?: CheckConfig;
   resolveBareModules: boolean;
   remoteAccessibleHost: string;
+  forceCleanNpmInstall: boolean;
 }
 
 export const defaultRoot = '.';
@@ -281,6 +282,7 @@ export async function parseConfigFile(parsedJson: unknown): Promise<Config> {
     mode: 'automatic',
     savePath: '',
     remoteAccessibleHost: '',
+    forceCleanNpmInstall: false,
   };
 }
 

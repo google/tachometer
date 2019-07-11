@@ -86,6 +86,7 @@ suite('config', () => {
         mode: 'automatic',
         savePath: '',
         remoteAccessibleHost: '',
+        forceCleanNpmInstall: false,
         benchmarks: [
           {
             name: 'remote',
@@ -145,6 +146,7 @@ suite('config', () => {
         mode: 'automatic',
         savePath: '',
         remoteAccessibleHost: '',
+        forceCleanNpmInstall: false,
         benchmarks: [
           {
             name: 'http://example.com?foo=bar',
@@ -206,6 +208,7 @@ suite('config', () => {
         mode: 'automatic',
         savePath: '',
         remoteAccessibleHost: '',
+        forceCleanNpmInstall: false,
         benchmarks: [
           {
             name: 'http://example.com',
