@@ -556,60 +556,68 @@ async function automaticMode(config: Config, servers: ServerMap):
     const url = specUrl(spec, servers, config);
     const {driver, initialTabHandle} =
         browsers.get(browserSignature(spec.browser))!;
-    await openAndSwitchToNewTab(driver, spec.browser);
-    await driver.get(url);
 
     let millis;
-    if (spec.measurement === 'fcp') {
-      const fcp = await pollForFirstContentfulPaint(driver);
-      if (fcp !== undefined) {
-        millis = [fcp];
-      } else {
-        // This does very occasionally happen, unclear why. By not setting
-        // millis here, we'll just exclude this sample from the results.
-        console.error(
-            `Timed out waiting for first contentful paint from ${url}`);
-      }
-    } else if (spec.measurement === 'global') {
-      const globalMillis = await pollForGlobalResult(driver);
-      if (globalMillis !== undefined) {
-        millis = [globalMillis];
+    let bytesSent = 0;
+    let userAgent = '';
+    // TODO(aomarks) Make maxAttempts and timeouts configurable.
+    const maxAttempts = 3;
+    for (let attempt = 1;; attempt++) {
+      await openAndSwitchToNewTab(driver, spec.browser);
+      await driver.get(url);
+
+      if (spec.measurement === 'fcp') {
+        millis = await pollForFirstContentfulPaint(driver);
+      } else if (spec.measurement === 'global') {
+        millis = await pollForGlobalResult(driver);
+      } else {  // bench.start() and bench.stop() callback
+        if (server === undefined) {
+          throw new Error('Internal error: no server for spec');
+        }
+        millis = (await server.nextResults()).millis;
       }
 
-    } else {  // bench.start() and bench.stop() callback
-      if (server === undefined) {
-        throw new Error('Internal error: no server for spec');
-      }
-      const result = await server.nextResults();
-      millis = [result.millis];
-    }
+      // Close the active tab (but not the whole browser, since the
+      // initial blank tab is still open).
+      await driver.close();
+      await driver.switchTo().window(initialTabHandle);
 
-    if (millis !== undefined) {
-      let bytesSent = 0;
-      let userAgent = '';
       if (server !== undefined) {
         const session = server.endSession();
         bytesSent = session.bytesSent;
         userAgent = session.userAgent;
       }
-      const result: BenchmarkResult = {
-        name: spec.name,
-        queryString: spec.url.kind === 'local' ? spec.url.queryString : '',
-        version: spec.url.kind === 'local' && spec.url.version !== undefined ?
-            spec.url.version.label :
-            '',
-        millis,
-        bytesSent,
-        browser: spec.browser,
-        userAgent,
-      };
-      specResults.get(spec)!.push(result);
+
+      if (millis !== undefined || attempt >= maxAttempts) {
+        break;
+      }
+
+      console.log(
+          `\n\nFailed ${attempt}/${maxAttempts} times ` +
+          `to get a ${spec.measurement} measurement ` +
+          `in ${spec.browser.name} from ${url}. Retrying.`);
     }
 
-    // Close the active tab (but not the whole browser, since the
-    // initial blank tab is still open).
-    await driver.close();
-    await driver.switchTo().window(initialTabHandle);
+    if (millis === undefined) {
+      console.log();
+      throw new Error(
+          `\n\nFailed ${maxAttempts}/${maxAttempts} times ` +
+          `to get a ${spec.measurement} measurement ` +
+          `in ${spec.browser.name} from ${url}. Aborting.\n`);
+    }
+
+    const result: BenchmarkResult = {
+      name: spec.name,
+      queryString: spec.url.kind === 'local' ? spec.url.queryString : '',
+      version: spec.url.kind === 'local' && spec.url.version !== undefined ?
+          spec.url.version.label :
+          '',
+      millis: [millis],
+      bytesSent,
+      browser: spec.browser,
+      userAgent,
+    };
+    specResults.get(spec)!.push(result);
   };
 
   // Always collect our minimum number of samples.
