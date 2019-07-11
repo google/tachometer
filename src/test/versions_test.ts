@@ -29,143 +29,204 @@ const defaultBrowser = {
 };
 
 suite('versions', () => {
-  test('makeServerPlans', async () => {
-    const specs: BenchmarkSpec[] = [
-      // mybench running with two custom versions.
-      {
-        name: 'mybench',
-        url: {
-          kind: 'local',
-          urlPath: '/mylib/mybench/',
-          version: {
-            label: 'v1',
-            dependencyOverrides: {
-              mylib: '1.0.0',
+  suite('makeServerPlans', async () => {
+    test('various', async () => {
+      const specs: BenchmarkSpec[] = [
+        // mybench running with two custom versions.
+        {
+          name: 'mybench',
+          url: {
+            kind: 'local',
+            urlPath: '/mylib/mybench/',
+            version: {
+              label: 'v1',
+              dependencyOverrides: {
+                mylib: '1.0.0',
+              },
             },
+            queryString: '',
           },
-          queryString: '',
+          measurement: 'fcp',
+          browser: defaultBrowser,
         },
-        measurement: 'fcp',
-        browser: defaultBrowser,
-      },
-      {
-        name: 'mybench',
-        url: {
-          kind: 'local',
-          urlPath: '/mylib/mybench/',
-          version: {
-            label: 'v2',
-            dependencyOverrides: {
-              mylib: '2.0.0',
+        {
+          name: 'mybench',
+          url: {
+            kind: 'local',
+            urlPath: '/mylib/mybench/',
+            version: {
+              label: 'v2',
+              dependencyOverrides: {
+                mylib: '2.0.0',
+              },
             },
+            queryString: '',
           },
-          queryString: '',
+          measurement: 'fcp',
+          browser: defaultBrowser,
         },
-        measurement: 'fcp',
-        browser: defaultBrowser,
-      },
 
-      // mybench and other bench only need the default server.
-      {
-        name: 'mybench',
-        url: {
-          kind: 'local',
-          urlPath: '/mylib/mybench/',
-          queryString: '',
-        },
-        measurement: 'fcp',
-        browser: defaultBrowser,
-      },
-      {
-        name: 'otherbench',
-        url: {
-          kind: 'local',
-          urlPath: '/otherlib/otherbench/',
-          queryString: '',
-        },
-        measurement: 'fcp',
-        browser: defaultBrowser,
-      },
-
-      // A remote URL doesn't need a server.
-      {
-        name: 'http://example.com',
-        url: {
-          kind: 'remote',
-          url: 'http://example.com',
-        },
-        measurement: 'fcp',
-        browser: defaultBrowser,
-      },
-    ];
-
-    const tempDir = '/tmp';
-    const actual = await makeServerPlans(testData, tempDir, specs);
-
-    const v1Hash = hashStrings(path.join(testData, 'mylib'), 'v1');
-    const v2Hash = hashStrings(path.join(testData, 'mylib'), 'v2');
-
-    const expected: ServerPlan[] = [
-      {
-        specs: [specs[2], specs[3]],
-        npmInstalls: [],
-        mountPoints: [
-          {
-            diskPath: testData,
-            urlPath: '/',
+        // mybench and other bench only need the default server.
+        {
+          name: 'mybench',
+          url: {
+            kind: 'local',
+            urlPath: '/mylib/mybench/',
+            queryString: '',
           },
-        ],
-      },
+          measurement: 'fcp',
+          browser: defaultBrowser,
+        },
+        {
+          name: 'otherbench',
+          url: {
+            kind: 'local',
+            urlPath: '/otherlib/otherbench/',
+            queryString: '',
+          },
+          measurement: 'fcp',
+          browser: defaultBrowser,
+        },
 
-      {
-        specs: [specs[0]],
-        npmInstalls: [{
-          installDir: path.join(tempDir, v1Hash),
-          packageJson: {
-            private: true,
-            dependencies: {
-              mylib: '1.0.0',
-              otherlib: '0.0.0',
+        // A remote URL doesn't need a server.
+        {
+          name: 'http://example.com',
+          url: {
+            kind: 'remote',
+            url: 'http://example.com',
+          },
+          measurement: 'fcp',
+          browser: defaultBrowser,
+        },
+      ];
+
+      const tempDir = '/tmp';
+      const actual = await makeServerPlans(testData, tempDir, specs);
+
+      const v1Hash = hashStrings(path.join(testData, 'mylib'), 'v1');
+      const v2Hash = hashStrings(path.join(testData, 'mylib'), 'v2');
+
+      const expected: ServerPlan[] = [
+        {
+          specs: [specs[2], specs[3]],
+          npmInstalls: [],
+          mountPoints: [
+            {
+              diskPath: testData,
+              urlPath: '/',
             },
-          },
-        }],
-        mountPoints: [
-          {
-            diskPath: path.join(tempDir, v1Hash, 'node_modules'),
-            urlPath: '/mylib/node_modules',
-          },
-          {
-            diskPath: testData,
-            urlPath: '/',
-          },
-        ],
-      },
+          ],
+        },
 
-      {
-        specs: [specs[1]],
-        npmInstalls: [{
-          installDir: path.join(tempDir, v2Hash),
-          packageJson: {
-            private: true,
-            dependencies: {
-              mylib: '2.0.0',
-              otherlib: '0.0.0',
+        {
+          specs: [specs[0]],
+          npmInstalls: [{
+            installDir: path.join(tempDir, v1Hash),
+            packageJson: {
+              private: true,
+              dependencies: {
+                mylib: '1.0.0',
+                otherlib: '0.0.0',
+              },
             },
-          },
-        }],
-        mountPoints: [
-          {
-            diskPath: path.join(tempDir, v2Hash, 'node_modules'),
-            urlPath: '/mylib/node_modules',
-          },
-          {
-            diskPath: testData,
-            urlPath: '/',
-          },
-        ],
-      },
-    ];
+          }],
+          mountPoints: [
+            {
+              diskPath: path.join(tempDir, v1Hash, 'node_modules'),
+              urlPath: '/mylib/node_modules',
+            },
+            {
+              diskPath: testData,
+              urlPath: '/',
+            },
+          ],
+        },
 
-    assert.deepEqual(actual, expected);
+        {
+          specs: [specs[1]],
+          npmInstalls: [{
+            installDir: path.join(tempDir, v2Hash),
+            packageJson: {
+              private: true,
+              dependencies: {
+                mylib: '2.0.0',
+                otherlib: '0.0.0',
+              },
+            },
+          }],
+          mountPoints: [
+            {
+              diskPath: path.join(tempDir, v2Hash, 'node_modules'),
+              urlPath: '/mylib/node_modules',
+            },
+            {
+              diskPath: testData,
+              urlPath: '/',
+            },
+          ],
+        },
+      ];
+
+      assert.deepEqual(actual, expected);
+    });
+
+    /**
+     * Regression test for https://github.com/Polymer/tachometer/issues/82
+     * where the node_modules/ directory was being mounted at the
+     * "//node_modules" URL.
+     */
+    test('node_modules as direct child of root dir', async () => {
+      const specs: BenchmarkSpec[] = [
+        {
+          name: 'mybench',
+          url: {
+            kind: 'local',
+            urlPath: '/mybench/',
+            version: {
+              label: 'v1',
+              dependencyOverrides: {
+                mylib: '1.0.0',
+              },
+            },
+            queryString: '',
+          },
+          measurement: 'fcp',
+          browser: defaultBrowser,
+        },
+      ];
+
+      const tempDir = '/tmp';
+      const actual =
+          await makeServerPlans(path.join(testData, 'mylib'), tempDir, specs);
+
+      const v1Hash = hashStrings(path.join(testData, 'mylib'), 'v1');
+      const expected: ServerPlan[] = [
+        {
+          specs: [specs[0]],
+          npmInstalls: [{
+            installDir: path.join(tempDir, v1Hash),
+            packageJson: {
+              private: true,
+              dependencies: {
+                mylib: '1.0.0',
+                otherlib: '0.0.0',
+              },
+            },
+          }],
+          mountPoints: [
+            {
+              diskPath: path.join(tempDir, v1Hash, 'node_modules'),
+              urlPath: '/node_modules',
+            },
+            {
+              diskPath: path.join(testData, 'mylib'),
+              urlPath: '/',
+            },
+          ],
+        },
+      ];
+
+      assert.deepEqual(actual, expected);
+    });
   });
 });

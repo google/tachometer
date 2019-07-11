@@ -7,6 +7,9 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+-   Fix bug where the `node_modules` directory could sometimes be mounted at the
+    URL `//node_modules`, causing benchmarks to fail to load dependencies.
+
 -   Don't show URL query parameters in the result table when an alias was
     specified.
 
