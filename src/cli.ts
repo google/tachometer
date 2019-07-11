@@ -96,6 +96,14 @@ export const optDefs: commandLineUsage.OptionDefinition[] = [
     defaultValue: defaultInstallDir,
   },
   {
+    name: 'force-clean-npm-install',
+    description: `Always do a from-scratch NPM install when using custom ` +
+        `package versions. If false (the default), NPM install directories ` +
+        `will be re-used as long as the dependency versions haven't changed.`,
+    type: Boolean,
+    defaultValue: false,
+  },
+  {
     name: 'browser',
     description: 'Which browsers to launch in automatic mode, ' +
         `comma-delimited (${[...supportedBrowsers].join(', ')}) ` +
@@ -212,6 +220,7 @@ export interface Opts {
   'resolve-bare-modules': boolean|undefined;
   'remote-accessible-host': string;
   'window-size': string;
+  'force-clean-npm-install': boolean;
 
   // Extra arguments not associated with a flag are put here. These are our
   // benchmark names/URLs.
@@ -338,6 +347,7 @@ $ tach http://example.com
       resolveBareModules: opts['resolve-bare-modules'] !== undefined ?
           opts['resolve-bare-modules'] :
           true,
+      forceCleanNpmInstall: opts['force-clean-npm-install'],
     };
   }
 
@@ -367,7 +377,11 @@ $ tach http://example.com
   const servers = new Map<BenchmarkSpec, Server>();
   const promises = [];
   for (const {npmInstalls, mountPoints, specs} of plans) {
-    promises.push(...npmInstalls.map(prepareVersionDirectory));
+    promises.push(...npmInstalls.map(
+        (install) => prepareVersionDirectory(
+            install,
+            config.forceCleanNpmInstall,
+            )));
     promises.push((async () => {
       const server = await Server.start({
         host: opts.host,

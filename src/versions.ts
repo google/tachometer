@@ -206,22 +206,52 @@ async function npmInstall(cwd: string): Promise<void> {
           }));
 }
 
+const tachometerVersion =
+    require(path.join(__dirname, '..', 'package.json')).version;
+
 /**
  * Write the given package.json to the given directory and run "npm install"
- * in it. Do nothing if the directory already exists.
+ * in it. If the directory already exists and its package.json is identical,
+ * don't install, just log instead.
  */
 export async function prepareVersionDirectory(
-    {installDir, packageJson}: NpmInstall): Promise<void> {
+    {installDir, packageJson}: NpmInstall,
+    forceCleanInstall: boolean): Promise<void> {
+  const serializedPackageJson = JSON.stringify(
+      {
+        // Include our version here so that we automatically re-install any
+        // existing package version install directories when tachometer updates.
+        __tachometer_version: tachometerVersion,
+        ...packageJson,
+      },
+      null,
+      2);
+  const packageJsonPath = path.join(installDir, 'package.json');
+
   if (await fsExtra.pathExists(installDir)) {
-    // TODO(aomarks) If the user specified new dependencies for the same
-    // version label, it probably makes sense to delete the version directory
-    // and install it again. We could read the package.json and check if the
-    // versions differ.
-    return;
+    if (forceCleanInstall === false) {
+      const previousPackageJson =
+          await fsExtra.readFile(packageJsonPath, 'utf8');
+      // Note we're comparing the serialized JSON. Node JSON serialization is
+      // deterministic where property order is based on property creation order.
+      // That's good enough for our purposes, since we know this exact code also
+      // wrote the previous version of this file.
+      if (previousPackageJson.trimRight() ===
+          serializedPackageJson.trimRight()) {
+        console.log(
+            `\nRe-using NPM install dir because ` +
+            `its package.json did not change:\n  ${installDir}\n`);
+        return;
+      }
+      console.log(
+          `\nDeleting previous NPM install dir ` +
+          `because its package.json changed:\n  ${installDir}`);
+    }
+    await fsExtra.emptyDir(installDir);
   }
-  console.log(`\nInstalling ${installDir} ...`);
+
+  console.log(`\nRunning npm install:\n  ${installDir}\n`);
   await fsExtra.ensureDir(installDir);
-  await fsExtra.writeJson(
-      path.join(installDir, 'package.json'), packageJson, {spaces: 2});
+  await fsExtra.writeFile(packageJsonPath, serializedPackageJson);
   await npmInstall(installDir);
 }

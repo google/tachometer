@@ -7,6 +7,13 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+-   When using custom package versions, the temporary NPM install directories
+    will now be re-used less aggressively across runs of tachometer. If any of
+    the specified dependency versions have changed, or if the version of
+    tachometer being used has changed, then a fresh NPM install will be
+    performed. Additionally, the new `--force-clean-npm-install` flag can be
+    used to force a clean NPM install every time.
+
 -   Fix bug where the `node_modules` directory could sometimes be mounted at the
     URL `//node_modules`, causing benchmarks to fail to load dependencies.
 
