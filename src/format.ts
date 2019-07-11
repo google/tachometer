@@ -16,7 +16,7 @@ import {UAParser} from 'ua-parser-js';
 import ansi = require('ansi-escape-sequences');
 
 import {Difference, ConfidenceInterval, ResultStats, ResultStatsWithDifferences} from './stats';
-import {BenchmarkResult} from './types';
+import {BenchmarkSpec, BenchmarkResult} from './types';
 
 export const spinner = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'].map(
     (frame) => ansi.format(`[blue]{${frame}}`));
@@ -334,4 +334,17 @@ function makeUniqueLabelFn(results: BenchmarkResult[]):
     }
     return fields.join('\n');
   };
+}
+
+/**
+ * A one-line summary of a benchmark, e.g. for a progress bar:
+ *
+ *   chrome my-benchmark [@my-version]
+ */
+export function benchmarkOneLiner(spec: BenchmarkSpec) {
+  let maybeVersion = '';
+  if (spec.url.kind === 'local' && spec.url.version !== undefined) {
+    maybeVersion = ` [@${spec.url.version.label}]`;
+  }
+  return `${spec.browser.name} ${spec.name}${maybeVersion}`;
 }

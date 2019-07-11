@@ -27,7 +27,7 @@ import {BenchmarkResult, BenchmarkSpec, measurements, Measurement} from './types
 import {Server} from './server';
 import {Horizons, ResultStats, ResultStatsWithDifferences, horizonsResolved, summaryStats, computeDifferences} from './stats';
 import {specsFromOpts} from './specs';
-import {AutomaticResults, verticalTermResultTable, horizontalTermResultTable, verticalHtmlResultTable, horizontalHtmlResultTable, automaticResultTable, spinner} from './format';
+import {AutomaticResults, verticalTermResultTable, horizontalTermResultTable, verticalHtmlResultTable, horizontalHtmlResultTable, automaticResultTable, spinner, benchmarkOneLiner} from './format';
 import {prepareVersionDirectory, makeServerPlans} from './versions';
 import {parseConfigFile, Config, defaultRoot, defaultBrowserName, defaultSampleSize, defaultTimeout, defaultHorizons, defaultWindowWidth, defaultWindowHeight, writeBackSchemaIfNeeded} from './config';
 import * as github from './github';
@@ -515,7 +515,7 @@ async function automaticMode(config: Config, servers: ServerMap):
 
   const specs = config.benchmarks;
   const bar = new ProgressBar('[:bar] :status', {
-    total: specs.length * config.sampleSize,
+    total: specs.length * (config.sampleSize + /** warmup */ 1),
     width: 58,
   });
 
@@ -539,12 +539,7 @@ async function automaticMode(config: Config, servers: ServerMap):
     browsers.set(sig, {name: browser.name, driver, initialTabHandle});
   }
 
-  const specResults = new Map<BenchmarkSpec, BenchmarkResult[]>();
-  for (const spec of specs) {
-    specResults.set(spec, []);
-  }
-
-  const runSpec = async (spec: BenchmarkSpec) => {
+  const runSpec = async(spec: BenchmarkSpec): Promise<BenchmarkResult> => {
     let server;
     if (spec.url.kind === 'local') {
       server = servers.get(spec);
@@ -606,7 +601,7 @@ async function automaticMode(config: Config, servers: ServerMap):
           `in ${spec.browser.name} from ${url}. Aborting.\n`);
     }
 
-    const result: BenchmarkResult = {
+    return {
       name: spec.name,
       queryString: spec.url.kind === 'local' ? spec.url.queryString : '',
       version: spec.url.kind === 'local' && spec.url.version !== undefined ?
@@ -617,8 +612,23 @@ async function automaticMode(config: Config, servers: ServerMap):
       browser: spec.browser,
       userAgent,
     };
-    specResults.get(spec)!.push(result);
   };
+
+  // Do one throw-away run per benchmark to warm up our server (especially
+  // when expensive bare module resolution is enabled), and the browser.
+  for (let i = 0; i < specs.length; i++) {
+    const spec = specs[i];
+    bar.tick(0, {
+      status: `warmup ${i + 1}/${specs.length} ${benchmarkOneLiner(spec)}`,
+    });
+    await runSpec(spec);
+    bar.tick(1);
+  }
+
+  const specResults = new Map<BenchmarkSpec, BenchmarkResult[]>();
+  for (const spec of specs) {
+    specResults.set(spec, []);
+  }
 
   // Always collect our minimum number of samples.
   const numRuns = specs.length * config.sampleSize;
@@ -626,17 +636,9 @@ async function automaticMode(config: Config, servers: ServerMap):
   for (let sample = 0; sample < config.sampleSize; sample++) {
     for (const spec of specs) {
       bar.tick(0, {
-        status: [
-          `${++run}/${numRuns}`,
-          spec.browser.name,
-          spec.name + (spec.url.kind === 'local' ? spec.url.queryString : ''),
-          spec.url.kind === 'local' && spec.url.version !== undefined ?
-              `[@${spec.url.version.label}]` :
-              '',
-        ].filter((part) => part !== '')
-                    .join(' '),
+        status: `${++run}/${numRuns} ${benchmarkOneLiner(spec)}`,
       });
-      await runSpec(spec);
+      specResults.get(spec)!.push(await runSpec(spec));
       if (bar.curr === bar.total - 1) {
         // Note if we tick with 0 after we've completed, the status is
         // rendered on the next line for some reason.
@@ -683,7 +685,7 @@ async function automaticMode(config: Config, servers: ServerMap):
           run++;
           process.stdout.write(
               `\r${spinner[run % spinner.length]} Auto-sample ${sample}`);
-          await runSpec(spec);
+          specResults.get(spec)!.push(await runSpec(spec));
         }
       }
     }

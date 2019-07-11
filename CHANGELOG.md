@@ -7,6 +7,14 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+-   Responses from the local server are now cached in-memory. This greatly
+    improves performance when bare module resolution is enabled, because HTML
+    and JS is now only parsed once per benchmark, instead of once per sample.
+
+-   Do one throw-away warm-up run for each benchmark before starting
+    measurement. This should help reduce measurement variation due to any
+    cold-start effects that would have previously applied to the first sample.
+
 -   Fix bug where timeouts in measuring the `window.tachometerResult` global
     (e.g. when the server is down) could cause a crash with `Reduce of empty
     array with no initial value`
