@@ -7,6 +7,11 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+-   Fix bug where timeouts in measuring the `window.tachometerResult` global
+    (e.g. when the server is down) could cause a crash with `Reduce of empty
+    array with no initial value`
+    ([#86](https://github.com/Polymer/tachometer/issues/86)).
+
 -   When using custom package versions, the temporary NPM install directories
     will now be re-used less aggressively across runs of tachometer. If any of
     the specified dependency versions have changed, or if the version of
