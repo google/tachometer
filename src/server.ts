@@ -12,10 +12,12 @@
 import * as http from 'http';
 import * as net from 'net';
 import * as path from 'path';
+import {Stream} from 'stream';
 
 import Koa = require('koa');
 import mount = require('koa-mount');
 import send = require('koa-send');
+import getStream = require('get-stream');
 import serve = require('koa-static');
 import bodyParser = require('koa-bodyparser');
 import {nodeResolve} from 'koa-node-resolve';
@@ -48,6 +50,11 @@ export class Server {
   private readonly server: net.Server;
   private session: Session = {bytesSent: 0, userAgent: ''};
   private deferredResults = new Deferred<BenchmarkResponse>();
+  private readonly urlCache = new Map<string, {
+    status: number,
+    headers: {[key: string]: string},
+    body: string,
+  }>();
 
   static start(opts: ServerOpts): Promise<Server> {
     const server = http.createServer();
@@ -83,6 +90,7 @@ export class Server {
     app.use(bodyParser());
     app.use(mount('/submitResults', this.submitResults.bind(this)));
     app.use(this.instrumentRequests.bind(this));
+    app.use(this.cache.bind(this));
     app.use(this.serveBenchLib.bind(this));
 
     if (opts.resolveBareModules === true) {
@@ -156,6 +164,42 @@ export class Server {
     }
   }
 
+  /**
+   * Cache all downstream middleware responses by URL in memory. This is
+   * especially helpful when bare module resolution is enabled, because that
+   * requires expensive parsing of all HTML and JavaScript that we really don't
+   * want to do for every benchmark sample.
+   */
+  private async cache(ctx: Koa.Context, next: () => Promise<void>) {
+    const entry = this.urlCache.get(ctx.url);
+    if (entry !== undefined) {
+      ctx.response.status = entry.status;
+      ctx.response.set(entry.headers);
+      ctx.response.body = entry.body;
+      return;
+    }
+
+    await next();
+    const body = ctx.response.body;
+    let bodyString;
+    if (typeof body === 'string') {
+      bodyString = body;
+    } else if (Buffer.isBuffer(body)) {
+      bodyString = body.toString();
+    } else if (isStream(body)) {
+      bodyString = await getStream(body);
+      // We consumed the stream.
+      ctx.response.body = bodyString;
+    } else {
+      throw new Error(`Unknown response type ${typeof body} for ${ctx.url}`);
+    }
+    this.urlCache.set(ctx.url, {
+      body: bodyString,
+      status: ctx.response.status,
+      headers: ctx.response.headers,
+    });
+  }
+
   private async serveBenchLib(ctx: Koa.Context, next: () => Promise<void>) {
     if (ctx.path === '/bench.js') {
       await send(ctx, 'bench.js', {root: clientLib});
@@ -168,4 +212,9 @@ export class Server {
     this.deferredResults.resolve(ctx.request.body as BenchmarkResponse);
     ctx.body = 'ok';
   }
+}
+
+function isStream(value: unknown): value is Stream {
+  return value !== null && typeof value === 'object' &&
+      typeof (value as {pipe: Function | undefined}).pipe === 'function';
 }
