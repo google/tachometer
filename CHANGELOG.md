@@ -5,7 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](http://semver.org/).
 
-## Unreleased
+<!-- ## Unreleased -->
+<!-- Add new, unreleased changes here. -->
+
+## [0.4.9] 2019-07-11
 
 -   Responses from the local server are now cached in-memory. This greatly
     improves performance when bare module resolution is enabled, because HTML
@@ -35,8 +38,6 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 -   Fix bug where browser in result table was displayed as `[object Object]`
     instead of its name.
-
-<!-- Add new, unreleased changes here. -->
 
 ## [0.4.8] 2019-07-08
 
