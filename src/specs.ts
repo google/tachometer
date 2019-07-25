@@ -12,8 +12,8 @@
 import * as path from 'path';
 
 import {parseBrowserConfigString, validateBrowserConfig, WindowSize} from './browser';
-import {Opts} from './cli';
 import {defaultBrowserName, defaultMeasurement, defaultRoot, defaultWindowHeight, defaultWindowWidth, urlFromLocalPath} from './config';
+import {Opts} from './flags';
 import {BenchmarkSpec, LocalUrl, PackageVersion, RemoteUrl} from './types';
 import {isHttpUrl} from './util';
 import {parsePackageVersions} from './versions';

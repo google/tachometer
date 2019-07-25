@@ -13,8 +13,8 @@ import * as chai from 'chai';
 import * as chaiAsPromised from 'chai-as-promised';
 import * as path from 'path';
 
-import {optDefs, Opts} from '../cli';
 import {defaultBrowserName, defaultWindowHeight, defaultWindowWidth} from '../config';
+import {optDefs, Opts} from '../flags';
 import {specsFromOpts} from '../specs';
 import {BenchmarkSpec} from '../types';
 
