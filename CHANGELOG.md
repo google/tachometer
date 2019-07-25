@@ -5,8 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](http://semver.org/).
 
-<!-- ## Unreleased -->
-<!-- Add new, unreleased changes here. -->
+## Unreleased
+
+<!-- ### Changed -->
+<!-- ### Added -->
+
+### Fixed
+
+-   `--resolve-bare-modules` (with no value) no longer disables bare module
+    resolution ([#99](https://github.com/Polymer/tachometer/issues/99)).
 
 ## [0.4.9] 2019-07-11
 

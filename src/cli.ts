@@ -15,12 +15,11 @@ import * as fsExtra from 'fs-extra';
 import * as path from 'path';
 import * as webdriver from 'selenium-webdriver';
 
-import commandLineArgs = require('command-line-args');
 import commandLineUsage = require('command-line-usage');
 import ProgressBar = require('progress');
 import ansi = require('ansi-escape-sequences');
 
-import {Opts, optDefs} from './flags';
+import {optDefs, parseFlags} from './flags';
 import {makeSession} from './session';
 import {browserSignature, fcpBrowsers, makeDriver, openAndSwitchToNewTab, pollForGlobalResult, pollForFirstContentfulPaint} from './browser';
 import {BenchmarkResult, BenchmarkSpec} from './types';
@@ -48,7 +47,7 @@ const getVersion = (): string =>
 
 export async function main(argv: string[]):
     Promise<Array<ResultStatsWithDifferences>|undefined> {
-  const opts = commandLineArgs(optDefs, {partial: true, argv}) as Opts;
+  const opts = parseFlags(argv);
   console.log(opts['resolve-bare-modules']);
 
   if (opts.help) {

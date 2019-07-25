@@ -16,6 +16,7 @@ import {supportedBrowsers} from './browser';
 import {defaultBrowserName, defaultHorizons, defaultRoot, defaultSampleSize, defaultTimeout, defaultWindowHeight, defaultWindowWidth} from './config';
 import {Measurement, measurements} from './types';
 
+import commandLineArgs = require('command-line-args');
 import commandLineUsage = require('command-line-usage');
 
 export const defaultInstallDir =
@@ -163,7 +164,9 @@ export const optDefs: commandLineUsage.OptionDefinition[] = [
     name: 'resolve-bare-modules',
     description: 'Whether to automatically convert ES module imports with ' +
         'bare module specifiers to paths.',
-    type: booleanString,
+    type: booleanString('resolve-bare-modules'),
+    typeLabel: 'true|false',
+    defaultValue: true,
   },
   {
     name: 'window-size',
@@ -219,5 +222,21 @@ function booleanString(flagName: string): (str: string) => boolean {
     }
     throw new Error(
         `Invalid --${flagName}. Expected true or false but was ${str}.`);
+  };
+}
+
+/**
+ * Parse the given CLI argument list.
+ */
+export function parseFlags(argv: string[]): Opts {
+  const opts = commandLineArgs(optDefs, {partial: true, argv}) as Opts;
+  // Note that when a flag is used but not set to a value (i.e. "tachometer
+  // --resolve-bare-modules ..."), then the type function is not invoked, and
+  // the value will be null. Since in default-false cases (which aren't
+  // supported by command-line-args) that form should be true, we need to fix
+  // those cases up after parsing.
+  if (opts['resolve-bare-modules'] === null) {
+    opts['resolve-bare-modules'] = true;
   }
+  return opts;
 }
