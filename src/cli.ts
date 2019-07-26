@@ -14,223 +14,22 @@ require('source-map-support').install();
 import * as fsExtra from 'fs-extra';
 import * as path from 'path';
 import * as webdriver from 'selenium-webdriver';
-import * as os from 'os';
 
-import commandLineArgs = require('command-line-args');
 import commandLineUsage = require('command-line-usage');
 import ProgressBar = require('progress');
 import ansi = require('ansi-escape-sequences');
 
+import {optDefs, parseFlags} from './flags';
 import {makeSession} from './session';
-import {supportedBrowsers, browserSignature, fcpBrowsers, makeDriver, openAndSwitchToNewTab, pollForGlobalResult, pollForFirstContentfulPaint} from './browser';
-import {BenchmarkResult, BenchmarkSpec, measurements, Measurement} from './types';
+import {browserSignature, fcpBrowsers, makeDriver, openAndSwitchToNewTab, pollForGlobalResult, pollForFirstContentfulPaint} from './browser';
+import {BenchmarkResult, BenchmarkSpec} from './types';
 import {Server} from './server';
 import {Horizons, ResultStats, ResultStatsWithDifferences, horizonsResolved, summaryStats, computeDifferences} from './stats';
 import {specsFromOpts} from './specs';
 import {AutomaticResults, verticalTermResultTable, horizontalTermResultTable, verticalHtmlResultTable, horizontalHtmlResultTable, automaticResultTable, spinner, benchmarkOneLiner} from './format';
 import {prepareVersionDirectory, makeServerPlans} from './versions';
-import {parseConfigFile, Config, defaultRoot, defaultBrowserName, defaultSampleSize, defaultTimeout, defaultHorizons, defaultWindowWidth, defaultWindowHeight, writeBackSchemaIfNeeded} from './config';
+import {parseConfigFile, Config, defaultRoot, defaultSampleSize, defaultTimeout, defaultHorizons, writeBackSchemaIfNeeded} from './config';
 import * as github from './github';
-
-const defaultInstallDir = path.join(os.tmpdir(), 'tachometer', 'versions');
-
-export const optDefs: commandLineUsage.OptionDefinition[] = [
-  {
-    name: 'help',
-    description: 'Show documentation',
-    type: Boolean,
-    defaultValue: false,
-  },
-  {
-    name: 'version',
-    description: 'Show the installed version of tachometer',
-    type: Boolean,
-    defaultValue: false,
-  },
-  {
-    name: 'root',
-    description:
-        `Root directory to search for benchmarks (default ${defaultRoot})`,
-    type: String,
-  },
-  {
-    name: 'host',
-    description: 'Which host to run on',
-    type: String,
-    defaultValue: '127.0.0.1',
-  },
-  {
-    name: 'remote-accessible-host',
-    description: 'When using a browser over a remote WebDriver connection, ' +
-        'the URL that those browsers should use to access the local ' +
-        'tachometer server (default to value of --host).',
-    type: String,
-    defaultValue: '',
-  },
-  {
-    name: 'port',
-    description: 'Which ports to run on (comma-delimited preference list, ' +
-        '0 for random, default [8080, 8081, ..., 0])',
-    type: (flag: string) => flag.split(',').map(Number),
-    defaultValue: [8080, 8081, 8082, 8083, 0],
-  },
-  {
-    name: 'config',
-    description: 'Path to JSON config file (see README for format)',
-    type: String,
-    defaultValue: '',
-  },
-  {
-    name: 'package-version',
-    description: 'Specify an NPM package version to swap in (see README)',
-    alias: 'p',
-    type: String,
-    defaultValue: [],
-    lazyMultiple: true,
-  },
-  {
-    name: 'npm-install-dir',
-    description: `Where to install custom package versions ` +
-        `(default ${defaultInstallDir})`,
-    type: String,
-    defaultValue: defaultInstallDir,
-  },
-  {
-    name: 'force-clean-npm-install',
-    description: `Always do a from-scratch NPM install when using custom ` +
-        `package versions. If false (the default), NPM install directories ` +
-        `will be re-used as long as the dependency versions haven't changed.`,
-    type: Boolean,
-    defaultValue: false,
-  },
-  {
-    name: 'browser',
-    description: 'Which browsers to launch in automatic mode, ' +
-        `comma-delimited (${[...supportedBrowsers].join(', ')}) ` +
-        `(default ${defaultBrowserName})`,
-    alias: 'b',
-    type: String,
-  },
-  {
-    name: 'sample-size',
-    description: 'Minimum number of times to run each benchmark' +
-        ` (default ${defaultSampleSize})`,
-    alias: 'n',
-    type: Number,
-  },
-  {
-    name: 'manual',
-    description: 'Don\'t run automatically, just show URLs and collect results',
-    alias: 'm',
-    type: Boolean,
-    defaultValue: false,
-  },
-  {
-    name: 'save',
-    description: 'Save benchmark JSON data to this file',
-    alias: 's',
-    type: String,
-    defaultValue: '',
-  },
-  {
-    name: 'measure',
-    description: 'Which time interval to measure. Options:\n' +
-        '* callback: call bench.start() and bench.stop() (default)\n' +
-        '*   global: set window.tachometerResult = <milliseconds>\n' +
-        '*      fcp: first contentful paint',
-    type: (str: string): string => {
-      if (!measurements.has(str as Measurement)) {
-        throw new Error(
-            `Expected --measure flag to be one of: ` +
-            `${[...measurements.values()].join(', ')} ` +
-            `but was '${str}'`);
-      }
-      return str;
-    },
-  },
-  {
-    name: 'horizon',
-    description:
-        'The degrees of difference to try and resolve when auto-sampling ' +
-        '(milliseconds, comma-delimited, optionally signed, ' +
-        // TODO Not sure why, but tslint throws a compilation error without the
-        // "|| []" short-circuit "TypeError: Cannot read property 'join' of
-        // undefined".
-        `default ${(defaultHorizons || []).join(',')})`,
-    type: String,
-  },
-  {
-    name: 'timeout',
-    description: 'The maximum number of minutes to spend auto-sampling ' +
-        `(default ${defaultTimeout}).`,
-    type: Number,
-  },
-  {
-    name: 'github-check',
-    description: 'Post benchmark results as a GitHub Check. A JSON object ' +
-        'with properties appId, installationId, repo, and commit.',
-    type: String,
-    defaultValue: '',
-  },
-  {
-    name: 'resolve-bare-modules',
-    description: 'Whether to automatically convert ES module imports with ' +
-        'bare module specifiers to paths.',
-    type: booleanString,
-  },
-  {
-    name: 'window-size',
-    description:
-        `"width,height" in pixels of the window to open for all browsers` +
-        ` (default "${defaultWindowWidth},${defaultWindowHeight}").`,
-    type: String,
-  },
-];
-
-/**
- * Boolean flags that default to true are not supported
- * (https://github.com/75lb/command-line-args/issues/71).
- */
-function booleanString(str: string): boolean {
-  if (str === 'true' || str === '') {
-    return true;
-  } else if (str === 'false') {
-    return false;
-  }
-  throw new Error(`Invalid boolean flag value: ${str}`);
-}
-
-export interface Opts {
-  help: boolean;
-  version: boolean;
-  root: string|undefined;
-  host: string;
-  port: number[];
-  config: string;
-  'package-version': string[];
-  'npm-install-dir': string;
-  browser: string|undefined;
-  'sample-size': number|undefined;
-  manual: boolean;
-  save: string;
-  measure: Measurement|undefined;
-  horizon: string|undefined;
-  timeout: number|undefined;
-  'github-check': string;
-  'resolve-bare-modules': boolean|undefined;
-  'remote-accessible-host': string;
-  'window-size': string;
-  'force-clean-npm-install': boolean;
-
-  // Extra arguments not associated with a flag are put here. These are our
-  // benchmark names/URLs.
-  //
-  // Note we could also define a flag and set `defaultOption: true`, but then
-  // there would be two ways of specifying benchmark names/URLs. Also note the
-  // _unknown property is defined in commandLineArgs.CommandLineOptions, but we
-  // don't want to extend that because it includes `[propName: string]: any`.
-  _unknown?: string[];
-}
 
 function combineResults(results: BenchmarkResult[]): BenchmarkResult {
   const combined: BenchmarkResult = {
@@ -248,7 +47,7 @@ const getVersion = (): string =>
 
 export async function main(argv: string[]):
     Promise<Array<ResultStatsWithDifferences>|undefined> {
-  const opts = commandLineArgs(optDefs, {partial: true, argv}) as Opts;
+  const opts = parseFlags(argv);
 
   if (opts.help) {
     console.log(commandLineUsage([
