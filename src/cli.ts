@@ -48,7 +48,6 @@ const getVersion = (): string =>
 export async function main(argv: string[]):
     Promise<Array<ResultStatsWithDifferences>|undefined> {
   const opts = parseFlags(argv);
-  console.log(opts['resolve-bare-modules']);
 
   if (opts.help) {
     console.log(commandLineUsage([
