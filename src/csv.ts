@@ -44,7 +44,7 @@ export function formatCsv(results: ResultStatsWithDifferences[]): string {
             (diff.relative.high * 100).toFixed(precision) + '%',
             diff.absolute.low.toFixed(precision),
             diff.absolute.high.toFixed(precision),
-        )
+        );
       }
     }
     rows.push(row);
