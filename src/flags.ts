@@ -121,6 +121,12 @@ export const optDefs: commandLineUsage.OptionDefinition[] = [
     defaultValue: '',
   },
   {
+    name: 'csv-file',
+    description: 'Save results to this CSV file',
+    type: String,
+    defaultValue: '',
+  },
+  {
     name: 'measure',
     description: 'Which time interval to measure. Options:\n' +
         '* callback: call bench.start() and bench.stop() (default)\n' +
@@ -198,6 +204,7 @@ export interface Opts {
   'remote-accessible-host': string;
   'window-size': string;
   'force-clean-npm-install': boolean;
+  'csv-file': string;
 
   // Extra arguments not associated with a flag are put here. These are our
   // benchmark names/URLs.

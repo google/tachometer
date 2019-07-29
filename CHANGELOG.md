@@ -8,7 +8,11 @@ project adheres to [Semantic Versioning](http://semver.org/).
 ## Unreleased
 
 <!-- ### Changed -->
-<!-- ### Added -->
+
+### Added
+
+-   Added `--csv-file` flag which writes raw NxN results result table to a CSV
+    file. ([#88](https://github.com/Polymer/tachometer/issues/88)).
 
 ### Fixed
 

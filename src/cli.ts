@@ -24,6 +24,7 @@ import {makeSession} from './session';
 import {browserSignature, fcpBrowsers, makeDriver, openAndSwitchToNewTab, pollForGlobalResult, pollForFirstContentfulPaint} from './browser';
 import {BenchmarkResult, BenchmarkSpec} from './types';
 import {Server} from './server';
+import {formatCsv} from './csv';
 import {Horizons, ResultStats, ResultStatsWithDifferences, horizonsResolved, summaryStats, computeDifferences} from './stats';
 import {specsFromOpts} from './specs';
 import {AutomaticResults, verticalTermResultTable, horizontalTermResultTable, verticalHtmlResultTable, horizontalHtmlResultTable, automaticResultTable, spinner, benchmarkOneLiner} from './format';
@@ -147,6 +148,7 @@ $ tach http://example.com
           opts['resolve-bare-modules'] :
           true,
       forceCleanNpmInstall: opts['force-clean-npm-install'],
+      csvFile: opts['csv-file'],
     };
   }
 
@@ -509,6 +511,10 @@ async function automaticMode(config: Config, servers: ServerMap):
   if (config.savePath) {
     const session = await makeSession(withDifferences.map((s) => s.result));
     await fsExtra.writeJSON(config.savePath, session);
+  }
+
+  if (config.csvFile) {
+    await fsExtra.writeFile(config.csvFile, formatCsv(withDifferences));
   }
 
   if (reportGitHubCheckResults !== undefined) {

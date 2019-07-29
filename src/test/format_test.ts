@@ -13,75 +13,22 @@ import {assert} from 'chai';
 import * as path from 'path';
 import stripAnsi from 'strip-ansi';
 
-import {Config, ConfigFile, parseConfigFile} from '../config';
+import {ConfigFile} from '../config';
 import {automaticResultTable, verticalTermResultTable} from '../format';
-import {computeDifferences, ResultStats, summaryStats} from '../stats';
-import {BenchmarkSpec} from '../types';
+import {fakeResults} from './test_helpers';
 
 const repoRoot = path.resolve(__dirname, '..', '..');
 const testData = path.resolve(repoRoot, 'src', 'test', 'data');
-
-const userAgents = new Map([
-  [
-    'chrome',
-    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36',
-  ],
-  [
-    'firefox',
-    'Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0',
-  ],
-]);
 
 /**
  * Given a config file object, generates fake measurement results, and returns
  * the terminal formatted result table that would be printed (minus color etc.
  * formatting).
- *
- * The fake measurement and byte size for each benchmark is based on its index
- * in the list of benchmarks (+10ms and +1KiB for each index).
  */
 async function fakeResultTable(configFile: ConfigFile): Promise<string> {
-  const config = await parseConfigFile(configFile);
-  const results = [];
-  for (let i = 0; i < config.benchmarks.length; i++) {
-    const spec = config.benchmarks[i];
-    const averageMillis = (i + 1) * 10;
-    const bytes = (i + 1) * 1024;
-    results.push(fakeResultStats(
-        config, spec, averageMillis, bytes, userAgents.get(spec.browser.name)!
-        ));
-  }
-  const resultsWithDifferences = computeDifferences(results);
-  const resultTable = automaticResultTable(resultsWithDifferences).unfixed;
+  const results = await fakeResults(configFile);
+  const resultTable = automaticResultTable(results).unfixed;
   return stripAnsi(verticalTermResultTable(resultTable));
-}
-
-function fakeResultStats(
-    config: Config,
-    {name, url, browser}: BenchmarkSpec,
-    averageMillis: number,
-    bytesSent: number,
-    userAgent: string): ResultStats {
-  const millis = [
-    // Split the sample size in half to add +/- 5ms variance, just to make
-    // things a little more interesting.
-    ...new Array(Math.floor(config.sampleSize / 2)).fill(averageMillis - 5),
-    ...new Array(Math.ceil(config.sampleSize / 2)).fill(averageMillis + 5),
-  ];
-  return {
-    result: {
-      name,
-      queryString: url.kind === 'local' ? url.queryString : '',
-      version: url.kind === 'local' && url.version !== undefined ?
-          url.version.label :
-          '',
-      millis,
-      bytesSent,
-      browser,
-      userAgent,
-    },
-    stats: summaryStats(millis),
-  };
 }
 
 suite('format', () => {
