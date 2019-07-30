@@ -231,6 +231,7 @@ export interface Config {
   resolveBareModules: boolean;
   remoteAccessibleHost: string;
   forceCleanNpmInstall: boolean;
+  csvFile: string;
 }
 
 export const defaultRoot = '.';
@@ -283,6 +284,7 @@ export async function parseConfigFile(parsedJson: unknown): Promise<Config> {
     savePath: '',
     remoteAccessibleHost: '',
     forceCleanNpmInstall: false,
+    csvFile: '',
   };
 }
 

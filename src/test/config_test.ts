@@ -87,6 +87,7 @@ suite('config', () => {
         savePath: '',
         remoteAccessibleHost: '',
         forceCleanNpmInstall: false,
+        csvFile: '',
         benchmarks: [
           {
             name: 'remote',
@@ -147,6 +148,7 @@ suite('config', () => {
         savePath: '',
         remoteAccessibleHost: '',
         forceCleanNpmInstall: false,
+        csvFile: '',
         benchmarks: [
           {
             name: 'http://example.com?foo=bar',
@@ -209,6 +211,7 @@ suite('config', () => {
         savePath: '',
         remoteAccessibleHost: '',
         forceCleanNpmInstall: false,
+        csvFile: '',
         benchmarks: [
           {
             name: 'http://example.com',
