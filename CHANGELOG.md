@@ -7,17 +7,22 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
-<!-- ### Changed -->
-
 ### Added
 
 -   Added `--csv-file` flag which writes raw NxN results result table to a CSV
     file. ([#88](https://github.com/Polymer/tachometer/issues/88)).
 
+-   During auto-sampling, the time remaining before the timeout will be hit is
+    now displayed ([#107](https://github.com/Polymer/tachometer/issues/107)).
+
 ### Fixed
 
 -   `--resolve-bare-modules` (with no value) no longer disables bare module
     resolution ([#99](https://github.com/Polymer/tachometer/issues/99)).
+
+-  Fix bug where 404s results in e.g. `Unknown response type undefined for
+   /favicon.ico` errors logged to the console.
+   [#105](https://github.com/Polymer/tachometer/issues/105)).
 
 ## [0.4.9] 2019-07-11
 
