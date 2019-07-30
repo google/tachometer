@@ -22,7 +22,7 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 -  Fix bug where 404s results in e.g. `Unknown response type undefined for
    /favicon.ico` errors logged to the console.
-   [#105](https://github.com/Polymer/tachometer/issues/105)).
+   ([#105](https://github.com/Polymer/tachometer/issues/105)).
 
 ## [0.4.9] 2019-07-11
 
