@@ -53,7 +53,7 @@ export class Server {
   private readonly urlCache = new Map<string, {
     status: number,
     headers: {[key: string]: string},
-    body: string,
+    body: string|null|undefined,
   }>();
 
   static start(opts: ServerOpts): Promise<Server> {
@@ -173,14 +173,18 @@ export class Server {
   private async cache(ctx: Koa.Context, next: () => Promise<void>) {
     const entry = this.urlCache.get(ctx.url);
     if (entry !== undefined) {
-      ctx.response.status = entry.status;
       ctx.response.set(entry.headers);
       ctx.response.body = entry.body;
+      // Note we must set status after we set body, because when we set body to
+      // undefined (which happens on e.g. 404s), Koa overrides the status to
+      // 204.
+      ctx.response.status = entry.status;
       return;
     }
 
     await next();
-    const body = ctx.response.body;
+    const body =
+        ctx.response.body as string | Buffer | Stream | null | undefined;
     let bodyString;
     if (typeof body === 'string') {
       bodyString = body;
@@ -190,6 +194,11 @@ export class Server {
       bodyString = await getStream(body);
       // We consumed the stream.
       ctx.response.body = bodyString;
+    } else if (body === null || body === undefined) {
+      // The static middleware sets no body for errors. Koa automatically
+      // creates a body for errors later. Just cache as-is so that the same
+      // thing happens on cache hits.
+      bodyString = body;
     } else {
       throw new Error(`Unknown response type ${typeof body} for ${ctx.url}`);
     }
