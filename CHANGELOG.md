@@ -15,6 +15,10 @@ project adheres to [Semantic Versioning](http://semver.org/).
 -   `--resolve-bare-modules` (with no value) no longer disables bare module
     resolution ([#99](https://github.com/Polymer/tachometer/issues/99)).
 
+-  Fix bug where 404s results in e.g. `Unknown response type undefined for
+   /favicon.ico` errors logged to the console.
+   [#105](https://github.com/Polymer/tachometer/issues/105)).
+
 ## [0.4.9] 2019-07-11
 
 -   Responses from the local server are now cached in-memory. This greatly
