@@ -8,7 +8,10 @@ project adheres to [Semantic Versioning](http://semver.org/).
 ## Unreleased
 
 <!-- ### Changed -->
-<!-- ### Added -->
+### Added
+
+-   During auto-sampling, the time remaining before the timeout will be hit is
+    now displayed ([#107](https://github.com/Polymer/tachometer/issues/107)).
 
 ### Fixed
 
