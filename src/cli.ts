@@ -467,12 +467,13 @@ async function automaticMode(config: Config, servers: ServerMap):
     const startMs = Date.now();
     let run = 0;
     let sample = 0;
+    let elapsed = 0;
     while (true) {
       if (horizonsResolved(makeResults(), config.horizons)) {
         console.log();
         break;
       }
-      if ((Date.now() - startMs) >= timeoutMs) {
+      if (elapsed >= timeoutMs) {
         hitTimeout = true;
         break;
       }
@@ -482,8 +483,14 @@ async function automaticMode(config: Config, servers: ServerMap):
         sample++;
         for (const spec of specs) {
           run++;
+          elapsed = Date.now() - startMs;
+          const remainingSecs =
+              Math.max(0, Math.round((timeoutMs - elapsed) / 1000));
+          const mins = Math.floor(remainingSecs / 60);
+          const secs = remainingSecs % 60;
           process.stdout.write(
-              `\r${spinner[run % spinner.length]} Auto-sample ${sample}`);
+              `\r${spinner[run % spinner.length]} Auto-sample ${sample} ` +
+              `(timeout in ${mins}m${secs}s)` + ansi.erase.inLine(0));
           specResults.get(spec)!.push(await runSpec(spec));
         }
       }
