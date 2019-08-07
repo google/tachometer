@@ -5,7 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](http://semver.org/).
 
-<!-- ## Unreleased -->
+## Unreleased
+
+### Fixed
+
+-  Fix bug where a JavaScript syntax error could result in an empty page
+   being served ([#106](https://github.com/Polymer/tachometer/issues/106)).
 
 ## [0.4.10] 2019-07-31
 
