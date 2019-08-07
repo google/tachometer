@@ -9,8 +9,15 @@
  * rights grant found at http://polymer.github.io/PATENTS.txt
  */
 
+import * as path from 'path';
 import {ConfigFile, parseConfigFile} from '../config';
 import {computeDifferences, ResultStatsWithDifferences, summaryStats} from '../stats';
+
+/**
+ * Absolute location on disk of our test data directory.
+ */
+export const testData =
+    path.resolve(__dirname, '..', '..', 'src', 'test', 'data');
 
 const userAgents = new Map([
   [
@@ -24,12 +31,9 @@ const userAgents = new Map([
 ]);
 
 /**
- * Given a config file object, generates fake measurement results, and returns
- * the terminal formatted result table that would be printed (minus color etc.
- * formatting).
- *
- * The fake measurement and byte size for each benchmark is based on its index
- * in the list of benchmarks (+10ms and +1KiB for each index).
+ * Given a config file object, generates fake measurement results, where the
+ * measurement and byte size for each benchmark is based on its index in the
+ * list of benchmarks (+10ms and +1KiB for each index).
  */
 export async function fakeResults(configFile: ConfigFile):
     Promise<ResultStatsWithDifferences[]> {

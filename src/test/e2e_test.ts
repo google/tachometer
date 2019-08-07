@@ -13,6 +13,7 @@ import {assert} from 'chai';
 import * as path from 'path';
 import {main} from '../cli';
 import {ConfidenceInterval} from '../stats';
+import {testData} from './test_helpers';
 
 // Set this environment variable to change the browsers under test.
 const browsers = (process.env.TACHOMETER_E2E_TEST_BROWSERS ||
@@ -20,9 +21,6 @@ const browsers = (process.env.TACHOMETER_E2E_TEST_BROWSERS ||
                      .split(',')
                      .map((b) => b.trim())
                      .filter((b) => b.length > 0);
-
-const repoRoot = path.resolve(__dirname, '..', '..');
-const testData = path.resolve(repoRoot, 'src', 'test', 'data');
 
 /**
  * Test function wrapper to suppress tachometer's stdout/stderr output. Note we

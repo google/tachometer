@@ -17,14 +17,12 @@ import {defaultBrowserName, defaultWindowHeight, defaultWindowWidth} from '../co
 import {optDefs, Opts} from '../flags';
 import {specsFromOpts} from '../specs';
 import {BenchmarkSpec} from '../types';
+import {testData} from './test_helpers';
 
 import commandLineArgs = require('command-line-args');
 
 chai.use(chaiAsPromised);
 const {assert} = chai;
-
-const repoRoot = path.resolve(__dirname, '..', '..');
-const testData = path.resolve(repoRoot, 'src', 'test', 'data');
 
 const parse = (argv: string[]) =>
     commandLineArgs(optDefs, {argv, partial: true}) as Opts;
@@ -253,7 +251,7 @@ suite('specsFromOpts', () => {
     });
 
     test('not accessible from server root', async () => {
-      const argv = [repoRoot];
+      const argv = [path.resolve(__dirname, '..', '..')];
       await assert.isRejected(
           specsFromOpts(parse(argv)), /not accessible from server root/i);
     });

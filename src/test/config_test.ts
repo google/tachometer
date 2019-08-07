@@ -17,9 +17,7 @@ chai.use(chaiAsPromised);
 const {assert} = chai;
 
 import {defaultBrowserName, defaultWindowWidth, defaultWindowHeight, Config, parseConfigFile} from '../config';
-
-const repoRoot = path.resolve(__dirname, '..', '..');
-const testData = path.resolve(repoRoot, 'src', 'test', 'data');
+import {testData} from './test_helpers';
 
 const defaultBrowser = {
   name: defaultBrowserName,

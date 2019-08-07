@@ -15,10 +15,7 @@ import stripAnsi from 'strip-ansi';
 
 import {ConfigFile} from '../config';
 import {automaticResultTable, verticalTermResultTable} from '../format';
-import {fakeResults} from './test_helpers';
-
-const repoRoot = path.resolve(__dirname, '..', '..');
-const testData = path.resolve(repoRoot, 'src', 'test', 'data');
+import {fakeResults, testData} from './test_helpers';
 
 /**
  * Given a config file object, generates fake measurement results, and returns

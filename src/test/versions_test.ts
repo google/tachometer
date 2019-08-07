@@ -15,9 +15,7 @@ import * as path from 'path';
 import {defaultBrowserName, defaultWindowHeight, defaultWindowWidth} from '../config';
 import {BenchmarkSpec} from '../types';
 import {hashStrings, makeServerPlans, ServerPlan} from '../versions';
-
-const repoRoot = path.resolve(__dirname, '..', '..');
-const testData = path.resolve(repoRoot, 'src', 'test', 'data');
+import {testData} from './test_helpers';
 
 const defaultBrowser = {
   name: defaultBrowserName,
