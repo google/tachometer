@@ -9,8 +9,11 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 
--  Fix bug where a JavaScript syntax error could result in an empty page
-   being served ([#106](https://github.com/Polymer/tachometer/issues/106)).
+-   Fix bug where using `--config` always fails with an error about
+    `--resolve-bare-modules`.
+
+-   Fix bug where a JavaScript syntax error could result in an empty page being
+    served ([#106](https://github.com/Polymer/tachometer/issues/106)).
 
 ## [0.4.10] 2019-07-31
 
