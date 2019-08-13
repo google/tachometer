@@ -16,9 +16,9 @@ import {parseFlags} from '../flags';
 suite('flags', () => {
   suite('parseFlags', () => {
     suite('--resolve-bare-modules', () => {
-      test('unset is true', () => {
+      test('unset is undefined', () => {
         const actual = parseFlags([]);
-        assert.isTrue(actual['resolve-bare-modules']);
+        assert.isUndefined(actual['resolve-bare-modules']);
       });
 
       test('set but empty is true', () => {

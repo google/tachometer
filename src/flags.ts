@@ -169,10 +169,9 @@ export const optDefs: commandLineUsage.OptionDefinition[] = [
   {
     name: 'resolve-bare-modules',
     description: 'Whether to automatically convert ES module imports with ' +
-        'bare module specifiers to paths.',
+        'bare module specifiers to paths (default true).',
     type: booleanString('resolve-bare-modules'),
     typeLabel: 'true|false',
-    defaultValue: true,
   },
   {
     name: 'window-size',
