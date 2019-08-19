@@ -12,9 +12,10 @@
 import * as path from 'path';
 
 import {parseBrowserConfigString, validateBrowserConfig, WindowSize} from './browser';
-import {urlFromLocalPath} from './config';
+import {Config, urlFromLocalPath} from './config';
 import * as defaults from './defaults';
 import {Opts} from './flags';
+import {Server} from './server';
 import {BenchmarkSpec, LocalUrl, PackageVersion, RemoteUrl} from './types';
 import {isHttpUrl} from './util';
 import {parsePackageVersions} from './versions';
@@ -174,4 +175,22 @@ function parseBenchmarkArgument(str: string):
     diskPath: str,
     queryString: queryString,
   };
+}
+
+export function specUrl(
+    spec: BenchmarkSpec, servers: Map<BenchmarkSpec, Server>, config: Config):
+    string {
+  if (spec.url.kind === 'remote') {
+    return spec.url.url;
+  }
+  const server = servers.get(spec);
+  if (server === undefined) {
+    throw new Error('Internal error: no server for spec');
+  }
+  if (config.remoteAccessibleHost !== '' &&
+      spec.browser.remoteUrl !== undefined) {
+    return 'http://' + config.remoteAccessibleHost + ':' + server.port +
+        spec.url.urlPath + spec.url.queryString;
+  }
+  return server.url + spec.url.urlPath + spec.url.queryString;
 }
