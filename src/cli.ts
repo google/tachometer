@@ -29,7 +29,9 @@ import {Horizons, ResultStats, ResultStatsWithDifferences, horizonsResolved, sum
 import {specsFromOpts} from './specs';
 import {AutomaticResults, verticalTermResultTable, horizontalTermResultTable, verticalHtmlResultTable, horizontalHtmlResultTable, automaticResultTable, spinner, benchmarkOneLiner} from './format';
 import {prepareVersionDirectory, makeServerPlans} from './versions';
-import {parseConfigFile, Config, defaultRoot, defaultSampleSize, defaultTimeout, defaultHorizons, writeBackSchemaIfNeeded} from './config';
+import {Config} from './config';
+import * as defaults from './defaults';
+import {parseConfigFile, writeBackSchemaIfNeeded} from './configfile';
 import * as github from './github';
 
 function combineResults(results: BenchmarkResult[]): BenchmarkResult {
@@ -136,13 +138,13 @@ $ tach http://example.com
   } else {
     config = {
       ...baseConfig,
-      root: opts.root !== undefined ? opts.root : defaultRoot,
+      root: opts.root !== undefined ? opts.root : defaults.root,
       sampleSize: opts['sample-size'] !== undefined ? opts['sample-size'] :
-                                                      defaultSampleSize,
-      timeout: opts.timeout !== undefined ? opts.timeout : defaultTimeout,
+                                                      defaults.sampleSize,
+      timeout: opts.timeout !== undefined ? opts.timeout : defaults.timeout,
       horizons: parseHorizons(
           opts.horizon !== undefined ? opts.horizon.split(',') :
-                                       defaultHorizons),
+                                       defaults.horizons),
       benchmarks: await specsFromOpts(opts),
       resolveBareModules: opts['resolve-bare-modules'] !== undefined ?
           opts['resolve-bare-modules'] :

@@ -10,7 +10,7 @@
  */
 
 import * as path from 'path';
-import {ConfigFile, parseConfigFile} from '../config';
+import {ConfigFile, parseConfigFile} from '../configfile';
 import {computeDifferences, ResultStatsWithDifferences, summaryStats} from '../stats';
 
 /**

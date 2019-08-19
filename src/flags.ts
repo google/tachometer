@@ -13,7 +13,7 @@ import * as os from 'os';
 import * as path from 'path';
 
 import {supportedBrowsers} from './browser';
-import {defaultBrowserName, defaultHorizons, defaultRoot, defaultSampleSize, defaultTimeout, defaultWindowHeight, defaultWindowWidth} from './config';
+import * as defaults from './defaults';
 import {Measurement, measurements} from './types';
 
 import commandLineArgs = require('command-line-args');
@@ -38,7 +38,7 @@ export const optDefs: commandLineUsage.OptionDefinition[] = [
   {
     name: 'root',
     description:
-        `Root directory to search for benchmarks (default ${defaultRoot})`,
+        `Root directory to search for benchmarks (default ${defaults.root})`,
     type: String,
   },
   {
@@ -95,14 +95,14 @@ export const optDefs: commandLineUsage.OptionDefinition[] = [
     name: 'browser',
     description: 'Which browsers to launch in automatic mode, ' +
         `comma-delimited (${[...supportedBrowsers].join(', ')}) ` +
-        `(default ${defaultBrowserName})`,
+        `(default ${defaults.browserName})`,
     alias: 'b',
     type: String,
   },
   {
     name: 'sample-size',
     description: 'Minimum number of times to run each benchmark' +
-        ` (default ${defaultSampleSize})`,
+        ` (default ${defaults.sampleSize})`,
     alias: 'n',
     type: Number,
   },
@@ -150,13 +150,13 @@ export const optDefs: commandLineUsage.OptionDefinition[] = [
         // TODO Not sure why, but tslint throws a compilation error without the
         // "|| []" short-circuit "TypeError: Cannot read property 'join' of
         // undefined".
-        `default ${(defaultHorizons || []).join(',')})`,
+        `default ${(defaults.horizons || []).join(',')})`,
     type: String,
   },
   {
     name: 'timeout',
     description: 'The maximum number of minutes to spend auto-sampling ' +
-        `(default ${defaultTimeout}).`,
+        `(default ${defaults.timeout}).`,
     type: Number,
   },
   {
@@ -177,7 +177,7 @@ export const optDefs: commandLineUsage.OptionDefinition[] = [
     name: 'window-size',
     description:
         `"width,height" in pixels of the window to open for all browsers` +
-        ` (default "${defaultWindowWidth},${defaultWindowHeight}").`,
+        ` (default "${defaults.windowWidth},${defaults.windowHeight}").`,
     type: String,
   },
 ];

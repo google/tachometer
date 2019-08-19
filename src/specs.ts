@@ -12,7 +12,8 @@
 import * as path from 'path';
 
 import {parseBrowserConfigString, validateBrowserConfig, WindowSize} from './browser';
-import {defaultBrowserName, defaultMeasurement, defaultRoot, defaultWindowHeight, defaultWindowWidth, urlFromLocalPath} from './config';
+import {urlFromLocalPath} from './config';
+import * as defaults from './defaults';
 import {Opts} from './flags';
 import {BenchmarkSpec, LocalUrl, PackageVersion, RemoteUrl} from './types';
 import {isHttpUrl} from './util';
@@ -38,12 +39,12 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
     };
   } else {
     windowSize = {
-      width: defaultWindowWidth,
-      height: defaultWindowHeight,
+      width: defaults.windowWidth,
+      height: defaults.windowHeight,
     };
   }
 
-  const browserStrings = new Set((opts.browser || defaultBrowserName)
+  const browserStrings = new Set((opts.browser || defaults.browserName)
                                      .replace(/\s+/, '')
                                      .split(',')
                                      .filter((b) => b !== ''));
@@ -78,7 +79,7 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
         url: arg.url,
       };
       const measurement =
-          opts.measure !== undefined ? opts.measure : defaultMeasurement(url);
+          opts.measure !== undefined ? opts.measure : defaults.measurement(url);
       for (const browser of browsers) {
         specs.push({
           name: arg.alias || arg.url,
@@ -89,7 +90,7 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
       }
 
     } else {
-      const root = opts.root || defaultRoot;
+      const root = opts.root || defaults.root;
       const urlPath = await urlFromLocalPath(root, arg.diskPath);
       let name = arg.alias;
       if (name === undefined) {
@@ -106,7 +107,7 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
           };
           const measurement = opts.measure !== undefined ?
               opts.measure :
-              defaultMeasurement(url);
+              defaults.measurement(url);
           specs.push({
             name,
             browser,

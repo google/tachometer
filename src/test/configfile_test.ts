@@ -16,15 +16,17 @@ import * as path from 'path';
 chai.use(chaiAsPromised);
 const {assert} = chai;
 
-import {defaultBrowserName, defaultWindowWidth, defaultWindowHeight, Config, parseConfigFile} from '../config';
+import {Config} from '../config';
+import {parseConfigFile} from '../configfile';
+import * as defaults from '../defaults';
 import {testData} from './test_helpers';
 
 const defaultBrowser = {
-  name: defaultBrowserName,
+  name: defaults.browserName,
   headless: false,
   windowSize: {
-    width: defaultWindowWidth,
-    height: defaultWindowHeight,
+    width: defaults.windowWidth,
+    height: defaults.windowHeight,
   },
 };
 

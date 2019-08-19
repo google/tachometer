@@ -12,7 +12,7 @@
 import {assert} from 'chai';
 
 import {BrowserName, parseBrowserConfigString, validateBrowserConfig} from '../browser';
-import {defaultBrowserName, defaultWindowHeight, defaultWindowWidth} from '../config';
+import * as defaults from '../defaults';
 
 suite('browser', () => {
   suite('parseBrowserConfigString', () => {
@@ -71,11 +71,11 @@ suite('browser', () => {
 
   suite('validateBrowserConfig', () => {
     const defaultBrowser = {
-      name: defaultBrowserName,
+      name: defaults.browserName,
       headless: false,
       windowSize: {
-        width: defaultWindowWidth,
-        height: defaultWindowHeight,
+        width: defaults.windowWidth,
+        height: defaults.windowHeight,
       },
     };
 
