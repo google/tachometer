@@ -39,7 +39,7 @@ export interface CheckConfig {
 /**
  * Parse the --github-check flag.
  */
-export function parseCheckFlag(flag: string): CheckConfig {
+export function parseGithubCheckFlag(flag: string): CheckConfig {
   const parsed = JSON.parse(flag) as Partial<CheckConfig>;
   if (!parsed.appId || !parsed.installationId || !parsed.repo ||
       !parsed.commit) {
