@@ -13,8 +13,7 @@ import * as fsExtra from 'fs-extra';
 import * as jsonschema from 'jsonschema';
 
 import {BrowserConfig, BrowserName, parseBrowserConfigString, validateBrowserConfig} from './browser';
-import {parseHorizons} from './cli';
-import {Config, urlFromLocalPath} from './config';
+import {Config, parseHorizons, urlFromLocalPath} from './config';
 import * as defaults from './defaults';
 import {BenchmarkSpec, Measurement, PackageDependencyMap} from './types';
 import {isHttpUrl} from './util';

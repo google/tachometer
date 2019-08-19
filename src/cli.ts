@@ -20,10 +20,10 @@ import {optDefs, parseFlags} from './flags';
 import {fcpBrowsers} from './browser';
 import {BenchmarkSpec} from './types';
 import {Server} from './server';
-import {Horizons, ResultStatsWithDifferences} from './stats';
+import {ResultStatsWithDifferences} from './stats';
 import {specsFromOpts} from './specs';
 import {prepareVersionDirectory, makeServerPlans} from './versions';
-import {Config} from './config';
+import {Config, parseHorizons} from './config';
 import * as defaults from './defaults';
 import {parseConfigFile, writeBackSchemaIfNeeded} from './configfile';
 import * as github from './github';
@@ -195,42 +195,4 @@ $ tach http://example.com
       await Promise.all([...allServers].map((server) => server.close()));
     }
   }
-}
-
-/** Parse horizon flags into signed horizon values. */
-export function parseHorizons(strs: string[]): Horizons {
-  const absolute = new Set<number>();
-  const relative = new Set<number>();
-  for (const str of strs) {
-    if (!str.match(/^[-+]?(\d*\.)?\d+(ms|%)$/)) {
-      throw new Error(`Invalid horizon ${str}`);
-    }
-
-    let num;
-    let absOrRel;
-    const isPercent = str.endsWith('%');
-    if (isPercent === true) {
-      num = Number(str.slice(0, -1)) / 100;
-      absOrRel = relative;
-    } else {
-      // Otherwise ends with "ms".
-      num = Number(str.slice(0, -2));  // Note that Number("+1") === 1
-      absOrRel = absolute;
-    }
-
-    if (str.startsWith('+') || str.startsWith('-') || num === 0) {
-      // If the sign was explicit (e.g. "+0.1", "-0.1") then we're only
-      // interested in that signed horizon.
-      absOrRel.add(num);
-    } else {
-      // Otherwise (e.g. "0.1") we're interested in the horizon as a
-      // difference in either direction.
-      absOrRel.add(-num);
-      absOrRel.add(num);
-    }
-  }
-  return {
-    absolute: [...absolute].sort((a, b) => a - b),
-    relative: [...relative].sort((a, b) => a - b),
-  };
 }

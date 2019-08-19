@@ -11,7 +11,7 @@
 
 import {assert} from 'chai';
 
-import {parseHorizons} from '../cli';
+import {parseHorizons} from '../config';
 
 suite('parseHorizons', function() {
   test('0ms', () => {
