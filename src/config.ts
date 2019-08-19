@@ -21,7 +21,7 @@ import {CheckConfig, parseGithubCheckFlag} from './github';
 import {specsFromOpts} from './specs';
 import {Horizons} from './stats';
 import {BenchmarkSpec} from './types';
-import {fileKind} from './versions';
+import {fileKind} from './util';
 
 /**
  * Validated and fully specified configuration.

@@ -16,6 +16,7 @@ import * as path from 'path';
 
 import {MountPoint} from './server';
 import {BenchmarkSpec, NpmPackageJson, PackageDependencyMap, PackageVersion} from './types';
+import {fileKind} from './util';
 
 /**
  * Parse an array of strings of the form <package>@<version>.
@@ -151,22 +152,6 @@ export async function makeServerPlans(
   }
 
   return plans;
-}
-
-export async function fileKind(path: string): Promise<'file'|'dir'|undefined> {
-  try {
-    const stat = await fsExtra.stat(path);
-    if (stat.isDirectory()) {
-      return 'dir';
-    }
-    if (stat.isFile()) {
-      return 'file';
-    }
-  } catch (e) {
-    if (e.code !== 'ENOENT') {
-      throw e;
-    }
-  }
 }
 
 async function findPackageJsonPath(startDir: string):

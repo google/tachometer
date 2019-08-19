@@ -9,6 +9,7 @@
  * rights grant found at http://polymer.github.io/PATENTS.txt
  */
 
+import * as fsExtra from 'fs-extra';
 import {URL} from 'url';
 
 /** Return whether the given string is a valid HTTP URL. */
@@ -20,5 +21,21 @@ export function isHttpUrl(str: string): boolean {
     return url.protocol === 'http:' || url.protocol === 'https:';
   } catch (e) {
     return false;
+  }
+}
+
+export async function fileKind(path: string): Promise<'file'|'dir'|undefined> {
+  try {
+    const stat = await fsExtra.stat(path);
+    if (stat.isDirectory()) {
+      return 'dir';
+    }
+    if (stat.isFile()) {
+      return 'file';
+    }
+  } catch (e) {
+    if (e.code !== 'ENOENT') {
+      throw e;
+    }
   }
 }
