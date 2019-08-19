@@ -57,6 +57,46 @@ export function parseCheckFlag(flag: string): CheckConfig {
 }
 
 /**
+ * Create a pending GitHub check object and return a function that will mark
+ * the check completed with the given markdown.
+ */
+export async function createCheck(config: CheckConfig):
+    Promise<(markdown: string) => void> {
+  const {label, appId, installationId, repo, commit} = config;
+
+  // We can directly store our GitHub App private key as a secret Travis
+  // environment variable (as opposed to committing it as a file and
+  // configuring to Travis decrypt it), but we have to be careful with the
+  // spaces and newlines that PEM files have, since Travis does a raw Bash
+  // substitution when it sets the variable.
+  //
+  // Given a PEM file from GitHub, the following command will escape spaces
+  // and newlines so that it can be safely pasted into the Travis UI. The
+  // spaces will get unescaped by Bash, and we'll unescape newlines ourselves.
+  //
+  //     cat <GITHUB_PEM_FILE>.pem \
+  //         | awk '{printf "%s\\\\n", $0}' | sed 's/ /\\ /g'
+  const appPrivateKey =
+      (process.env.GITHUB_APP_PRIVATE_KEY || '').trim().replace(/\\n/g, '\n');
+  if (appPrivateKey === '') {
+    throw new Error(
+        'Missing or empty GITHUB_APP_PRIVATE_KEY environment variable, ' +
+        'which is required when using --github-check.');
+  }
+  const appToken = getAppToken(appId, appPrivateKey);
+  const installationToken =
+      await getInstallationToken({installationId, appToken});
+
+  // Create the initial Check Run run now, so that it will show up in the
+  // GitHub UI as pending.
+  const checkId =
+      await createCheckRun({label, repo, commit, installationToken});
+
+  return (markdown: string) => completeCheckRun(
+             {label, repo, installationToken, checkId, markdown});
+}
+
+/**
  * Create a JSON Web Token (https://tools.ietf.org/html/rfc7519), which allows
  * us to perform actions as a GitHub App.
  *
@@ -65,7 +105,7 @@ export function parseCheckFlag(flag: string): CheckConfig {
  *     App settings page. More info at
  *     https://developer.github.com/apps/building-github-apps/authenticating-with-github-apps/
  */
-export function getAppToken(appId: number, privateKey: string): string {
+function getAppToken(appId: number, privateKey: string): string {
   const expireMinutes = 10;
   const issuedTimestamp = Math.floor(Date.now() / 1000);
   const expireTimestamp = issuedTimestamp + expireMinutes * 60;
@@ -81,7 +121,7 @@ export function getAppToken(appId: number, privateKey: string): string {
  * Create an access token which allows us to perform actions as a GitHub App
  * Installation.
  */
-export async function getInstallationToken(
+async function getInstallationToken(
     {installationId, appToken}: {installationId: number, appToken: string}):
     Promise<string> {
   const resp = await got.post(
@@ -99,7 +139,7 @@ export async function getInstallationToken(
  * Create a new GitHub Check Run (a single invocation of a Check on some commit)
  * and return its identifier.
  */
-export async function createCheckRun({label, repo, commit, installationToken}: {
+async function createCheckRun({label, repo, commit, installationToken}: {
   label: string,
   repo: string,
   commit: string,
@@ -125,7 +165,7 @@ export async function createCheckRun({label, repo, commit, installationToken}: {
  * Update a GitHub Check run with the given markdown text and mark it as
  * complete.
  */
-export async function completeCheckRun(
+async function completeCheckRun(
     {label, repo, installationToken, checkId, markdown}: {
       label: string,
       repo: string,

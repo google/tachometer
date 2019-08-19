@@ -20,7 +20,7 @@ import {browserSignature, makeDriver, openAndSwitchToNewTab, pollForGlobalResult
 import {BenchmarkResult, BenchmarkSpec} from './types';
 import {formatCsv} from './csv';
 import {ResultStats, ResultStatsWithDifferences, horizonsResolved, summaryStats, computeDifferences} from './stats';
-import {AutomaticResults, verticalTermResultTable, horizontalTermResultTable, verticalHtmlResultTable, horizontalHtmlResultTable, automaticResultTable, spinner, benchmarkOneLiner} from './format';
+import {verticalTermResultTable, horizontalTermResultTable, verticalHtmlResultTable, horizontalHtmlResultTable, automaticResultTable, spinner, benchmarkOneLiner} from './format';
 import {Config} from './config';
 import * as github from './github';
 import {Server} from './server';
@@ -46,45 +46,9 @@ interface Browser {
 export async function automaticMode(
     config: Config, servers: Map<BenchmarkSpec, Server>):
     Promise<Array<ResultStatsWithDifferences>|undefined> {
-  let reportGitHubCheckResults;
+  let completeGithubCheck;
   if (config.githubCheck !== undefined) {
-    const {label, appId, installationId, repo, commit} = config.githubCheck;
-
-    // We can directly store our GitHub App private key as a secret Travis
-    // environment variable (as opposed to committing it as a file and
-    // configuring to Travis decrypt it), but we have to be careful with the
-    // spaces and newlines that PEM files have, since Travis does a raw Bash
-    // substitution when it sets the variable.
-    //
-    // Given a PEM file from GitHub, the following command will escape spaces
-    // and newlines so that it can be safely pasted into the Travis UI. The
-    // spaces will get unescaped by Bash, and we'll unescape newlines ourselves.
-    //
-    //     cat <GITHUB_PEM_FILE>.pem \
-    //         | awk '{printf "%s\\\\n", $0}' | sed 's/ /\\ /g'
-    const appPrivateKey =
-        (process.env.GITHUB_APP_PRIVATE_KEY || '').trim().replace(/\\n/g, '\n');
-    if (appPrivateKey === '') {
-      throw new Error(
-          'Missing or empty GITHUB_APP_PRIVATE_KEY environment variable, ' +
-          'which is required when using --github-check.');
-    }
-    const appToken = github.getAppToken(appId, appPrivateKey);
-    const installationToken =
-        await github.getInstallationToken({installationId, appToken});
-
-    // Create the initial Check Run run now, so that it will show up in the
-    // GitHub UI as pending.
-    const checkId =
-        await github.createCheckRun({label, repo, commit, installationToken});
-
-    // We'll call this after we're done to complete the Check Run.
-    reportGitHubCheckResults = async ({fixed, unfixed}: AutomaticResults) => {
-      const markdown = horizontalHtmlResultTable(fixed) + '\n' +
-          verticalHtmlResultTable(unfixed);
-      await github.completeCheckRun(
-          {label, repo, installationToken, checkId, markdown});
-    };
+    completeGithubCheck = await github.createCheck(config.githubCheck);
   }
 
   console.log('Running benchmarks\n');
@@ -299,8 +263,10 @@ export async function automaticMode(
     await fsExtra.writeFile(config.csvFile, formatCsv(withDifferences));
   }
 
-  if (reportGitHubCheckResults !== undefined) {
-    await reportGitHubCheckResults({fixed, unfixed});
+  if (completeGithubCheck !== undefined) {
+    const markdown = horizontalHtmlResultTable(fixed) + '\n' +
+        verticalHtmlResultTable(unfixed);
+    await completeGithubCheck(markdown);
   }
 
   return withDifferences;
