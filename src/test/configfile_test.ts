@@ -74,7 +74,7 @@ suite('config', () => {
           },
         ],
       };
-      const expected: Config = {
+      const expected: Partial<Config> = {
         root: '.',
         sampleSize: 52,
         timeout: 7,
@@ -83,11 +83,6 @@ suite('config', () => {
           relative: [-0.02, 0.02, 0.03],
         },
         resolveBareModules: false,
-        mode: 'automatic',
-        savePath: '',
-        remoteAccessibleHost: '',
-        forceCleanNpmInstall: false,
-        csvFile: '',
         benchmarks: [
           {
             name: 'remote',
@@ -135,20 +130,12 @@ suite('config', () => {
           },
         ],
       };
-      const expected: Config = {
+      const expected: Partial<Config> = {
         root: '.',
-        sampleSize: 50,
-        timeout: 3,
-        horizons: {
-          absolute: [],
-          relative: [0],
-        },
-        resolveBareModules: true,
-        mode: 'automatic',
-        savePath: '',
-        remoteAccessibleHost: '',
-        forceCleanNpmInstall: false,
-        csvFile: '',
+        sampleSize: undefined,
+        timeout: undefined,
+        horizons: undefined,
+        resolveBareModules: undefined,
         benchmarks: [
           {
             name: 'http://example.com?foo=bar',
@@ -198,20 +185,12 @@ suite('config', () => {
           ],
         }],
       };
-      const expected: Config = {
+      const expected: Partial<Config> = {
         root: '.',
-        sampleSize: 50,
-        timeout: 3,
-        horizons: {
-          absolute: [],
-          relative: [0],
-        },
-        resolveBareModules: true,
-        mode: 'automatic',
-        savePath: '',
-        remoteAccessibleHost: '',
-        forceCleanNpmInstall: false,
-        csvFile: '',
+        sampleSize: undefined,
+        timeout: undefined,
+        horizons: undefined,
+        resolveBareModules: undefined,
         benchmarks: [
           {
             name: 'http://example.com',
