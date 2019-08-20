@@ -217,7 +217,8 @@ interface ConfigFilePackageVersion {
  * Validate the given JSON object parsed from a config file, and expand it into
  * a fully specified configuration.
  */
-export async function parseConfigFile(parsedJson: unknown): Promise<Config> {
+export async function parseConfigFile(parsedJson: unknown):
+    Promise<Partial<Config>> {
   const schema = require('../config.schema.json');
   const result =
       jsonschema.validate(parsedJson, schema, {propertyName: 'config'});
@@ -235,22 +236,13 @@ export async function parseConfigFile(parsedJson: unknown): Promise<Config> {
 
   return {
     root,
-    sampleSize: validated.sampleSize !== undefined ? validated.sampleSize :
-                                                     defaults.sampleSize,
-    timeout: validated.timeout !== undefined ? validated.timeout :
-                                               defaults.timeout,
-    horizons: parseHorizons(validated.horizons || [...defaults.horizons]),
+    sampleSize: validated.sampleSize,
+    timeout: validated.timeout,
+    horizons: validated.horizons !== undefined ?
+        parseHorizons(validated.horizons) :
+        undefined,
     benchmarks,
-    resolveBareModules: validated.resolveBareModules === undefined ?
-        true :
-        validated.resolveBareModules,
-
-    // These are only controlled by flags currently.
-    mode: 'automatic',
-    savePath: '',
-    remoteAccessibleHost: '',
-    forceCleanNpmInstall: false,
-    csvFile: '',
+    resolveBareModules: validated.resolveBareModules,
   };
 }
 

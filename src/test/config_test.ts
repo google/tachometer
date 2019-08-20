@@ -109,6 +109,90 @@ suite('makeConfig', function() {
     };
     await checkConfig(argv, expected);
   });
+
+  test('config file with --manual', async () => {
+    const argv = ['--config=random-global.json', '--manual'];
+    const expected: Config = {
+      mode: 'manual',
+
+      sampleSize: 50,
+      timeout: 3,
+      root: '.',
+      resolveBareModules: true,
+      forceCleanNpmInstall: false,
+      horizons: {absolute: [], relative: [0]},
+      remoteAccessibleHost: '',
+      savePath: '',
+      csvFile: '',
+      githubCheck: undefined,
+      benchmarks: [
+        {
+          browser: {
+            headless: false,
+            name: 'chrome',
+            windowSize: {
+              height: 768,
+              width: 1024,
+            },
+          },
+          measurement: 'callback',
+          // TODO(aomarks) Why does this have a forward-slash?
+          name: '/random-global.html',
+          url: {
+            kind: 'local',
+            queryString: '',
+            urlPath: '/random-global.html',
+          },
+        },
+      ],
+    };
+    await checkConfig(argv, expected);
+  });
+
+  test('config file with output files and force clean install', async () => {
+    const argv = [
+      '--config=random-global.json',
+      '--csv-file=out.csv',
+      '--save=out.json',
+      '--force-clean-npm-install',
+    ];
+    const expected: Config = {
+      mode: 'automatic',
+      csvFile: 'out.csv',
+      savePath: 'out.json',
+      forceCleanNpmInstall: true,
+
+      sampleSize: 50,
+      timeout: 3,
+      root: '.',
+      resolveBareModules: true,
+      horizons: {absolute: [], relative: [0]},
+      remoteAccessibleHost: '',
+      // TODO(aomarks) Be consistent about undefined vs unset.
+      githubCheck: undefined,
+      benchmarks: [
+        {
+          browser: {
+            headless: false,
+            name: 'chrome',
+            windowSize: {
+              height: 768,
+              width: 1024,
+            },
+          },
+          measurement: 'callback',
+          // TODO(aomarks) Why does this have a forward-slash?
+          name: '/random-global.html',
+          url: {
+            kind: 'local',
+            queryString: '',
+            urlPath: '/random-global.html',
+          },
+        },
+      ],
+    };
+    await checkConfig(argv, expected);
+  });
 });
 
 suite('parseHorizons', function() {

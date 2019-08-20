@@ -38,6 +38,7 @@ export interface Config {
   resolveBareModules: boolean;
   remoteAccessibleHost: string;
   forceCleanNpmInstall: boolean;
+  // TODO(aomarks) Rename to jsonFile
   csvFile: string;
 }
 
@@ -47,6 +48,8 @@ export async function makeConfig(opts: Opts): Promise<Config> {
     mode: (opts.manual === true ? 'manual' : 'automatic') as
         ('manual' | 'automatic'),
     savePath: opts.save,
+    csvFile: opts['csv-file'],
+    forceCleanNpmInstall: opts['force-clean-npm-install'],
     githubCheck: opts['github-check'] ?
         parseGithubCheckFlag(opts['github-check']) :
         undefined,
@@ -85,28 +88,23 @@ export async function makeConfig(opts: Opts): Promise<Config> {
 
     await writeBackSchemaIfNeeded(rawConfigObj, opts.config);
 
-    config = {
+    config = applyDefaults({
       ...baseConfig,
       ...validatedConfigObj,
-    };
+    });
 
   } else {
-    config = {
+    config = applyDefaults({
       ...baseConfig,
-      root: opts.root !== undefined ? opts.root : defaults.root,
-      sampleSize: opts['sample-size'] !== undefined ? opts['sample-size'] :
-                                                      defaults.sampleSize,
-      timeout: opts.timeout !== undefined ? opts.timeout : defaults.timeout,
-      horizons: parseHorizons(
-          opts.horizon !== undefined ? opts.horizon.split(',') :
-                                       [...defaults.horizons]),
+      root: opts.root,
+      sampleSize: opts['sample-size'],
+      timeout: opts.timeout,
+      horizons: opts.horizon !== undefined ?
+          parseHorizons(opts.horizon.split(',')) :
+          undefined,
       benchmarks: await specsFromOpts(opts),
-      resolveBareModules: opts['resolve-bare-modules'] !== undefined ?
-          opts['resolve-bare-modules'] :
-          true,
-      forceCleanNpmInstall: opts['force-clean-npm-install'],
-      csvFile: opts['csv-file'],
-    };
+      resolveBareModules: opts['resolve-bare-modules'],
+    });
   }
 
   if (config.sampleSize <= 1) {
@@ -130,6 +128,32 @@ export async function makeConfig(opts: Opts): Promise<Config> {
   }
 
   return config;
+}
+
+export function applyDefaults(partial: Partial<Config>): Config {
+  return {
+    benchmarks: partial.benchmarks !== undefined ? partial.benchmarks : [],
+    csvFile: partial.csvFile !== undefined ? partial.csvFile : '',
+    forceCleanNpmInstall: partial.forceCleanNpmInstall !== undefined ?
+        partial.forceCleanNpmInstall :
+        defaults.forceCleanNpmInstall,
+    githubCheck: partial.githubCheck,
+    horizons: partial.horizons !== undefined ?
+        partial.horizons :
+        parseHorizons([...defaults.horizons]),
+    savePath: partial.savePath !== undefined ? partial.savePath : '',
+    sampleSize: partial.sampleSize !== undefined ? partial.sampleSize :
+                                                   defaults.sampleSize,
+    mode: partial.mode !== undefined ? partial.mode : defaults.mode,
+    remoteAccessibleHost: partial.remoteAccessibleHost !== undefined ?
+        partial.remoteAccessibleHost :
+        '',
+    resolveBareModules: partial.resolveBareModules !== undefined ?
+        partial.resolveBareModules :
+        defaults.resolveBareModules,
+    root: partial.root !== undefined ? partial.root : defaults.root,
+    timeout: partial.timeout !== undefined ? partial.timeout : defaults.timeout,
+  };
 }
 
 /**

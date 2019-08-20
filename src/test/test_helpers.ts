@@ -10,6 +10,8 @@
  */
 
 import * as path from 'path';
+
+import {applyDefaults} from '../config';
 import {ConfigFile, parseConfigFile} from '../configfile';
 import {computeDifferences, ResultStatsWithDifferences, summaryStats} from '../stats';
 
@@ -37,7 +39,7 @@ const userAgents = new Map([
  */
 export async function fakeResults(configFile: ConfigFile):
     Promise<ResultStatsWithDifferences[]> {
-  const config = await parseConfigFile(configFile);
+  const config = applyDefaults(await parseConfigFile(configFile));
   const results = [];
   for (let i = 0; i < config.benchmarks.length; i++) {
     const {name, url, browser} = config.benchmarks[i];
