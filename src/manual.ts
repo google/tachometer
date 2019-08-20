@@ -39,7 +39,6 @@ export async function manualMode(
     console.log(ansi.format(`[yellow]{${specUrl(spec, servers, config)}}`));
   }
 
-  console.log(`\nResults will appear below:\n`);
   for (const server of [...allServers]) {
     (async function() {
       while (true) {

@@ -7,6 +7,11 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+### Added
+
+-   A notification will now be printed if the current version of tachometer is
+    outdated.
+
 ### Fixed
 
 -   Fix bug where the `--manual`, `--csv-file`, and other flags were ignored
