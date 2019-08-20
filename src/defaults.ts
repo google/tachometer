@@ -19,6 +19,9 @@ export const browserName: BrowserName = 'chrome';
 export const sampleSize = 50;
 export const timeout = 3;
 export const horizons = ['0%'] as const ;
+export const mode = 'automatic';
+export const resolveBareModules = true;
+export const forceCleanNpmInstall = false;
 
 export function measurement(url: LocalUrl|RemoteUrl): Measurement {
   if (url.kind === 'remote') {
