@@ -10,7 +10,9 @@ This test benchmark reports the window width times height as the result.
   </head>
   <body>
     <script>
-      window.tachometerResult = window.outerWidth * window.outerHeight;
+      // Note window.outerWidth and height returns 0 in headless Chrome on macOS
+      // (but not on Linux), so use innerWidth and height instead.
+      window.tachometerResult = window.innerWidth * window.innerHeight;
     </script>
   </body>
 </html>

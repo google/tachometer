@@ -153,28 +153,28 @@ suite('e2e', function() {
       }
 
       test('window size', hideOutput(async function() {
+             const width = 1024;
+             const height = 768;
              const argv = [
                `--browser=${browser}`,
                '--measure=global',
                '--sample-size=2',
                '--timeout=0',
-               '--window-size=500,200',
+               `--window-size=${width},${height}`,
                path.join(testData, 'window-size.html'),
              ];
-             const expected = 500 * 200;
+             // We're measuring window.innerWidth and height, so depending on
+             // how much extra chrome the browser is rendering, we'll get
+             // something smaller. 200 pixels seems to cover all the variation.
+             const lowerBound = width * (height - 200);
+             const upperBound = width * height;
 
              const actual = await main(argv);
              assert.isDefined(actual);
              assert.lengthOf(actual!, 1);
              const {stats} = actual![0];
-             if (browser.endsWith('-headless')) {
-               // Headless browsers don't render any window borders etc.
-               assert.equal(stats.mean, expected);
-             } else {
-               // When launched graphically we get extra window borders and
-               // other chrome, so we get a larger window than we asked for.
-               assert.closeTo(stats.mean, expected, 0.25 * expected);
-             }
+             assert.isAtMost(stats.mean, upperBound);
+             assert.isAtLeast(stats.mean, lowerBound);
            }));
     });
   }
