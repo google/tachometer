@@ -16,17 +16,17 @@ import {summaryStats, computeDifference, intervalContains} from '../stats';
 
 suite('statistics', function() {
   test('confidence intervals', function() {
-    this.timeout(60000);  // Lots of arithmetic.
+    this.timeout(3 * 60 * 1000);  // Lots of arithmetic.
 
     // Increasing the number of trials increases the precision of our long-term
     // estimate of the proportion of correct confidence intervals (see below).
-    // Empirically, 10000 lets us reliably assert the proportion +/- 0.01.
-    const numTrials = 10000;
+    // Empirically, this lets us reliably assert the proportion +/- 0.01.
+    const numTrials = 20000;
 
     // How many randomized configurations of hypothetical benchmarks to test.
     // More is better, but since we need a lot of trials, each scenario can take
-    // as long as a second.
-    const numScenarios = 20;
+    // many seconds.
+    const numScenarios = 10;
 
     for (let s = 0; s < numScenarios; s++) {
       // Pick random parameters for our true distributions (imagine as the

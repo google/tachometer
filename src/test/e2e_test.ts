@@ -90,7 +90,7 @@ suite('e2e', function() {
       test(
           'bench.start/stop', hideOutput(async function() {
             const delayA = 20;
-            const delayB = 30;
+            const delayB = 60;
 
             const argv = [
               `--browser=${browser}`,
@@ -108,14 +108,15 @@ suite('e2e', function() {
             const diffAB = a.differences[1]!;
             const diffBA = b.differences[0]!;
 
-            assert.closeTo(a.stats.mean, delayA, 2);
-            assert.closeTo(b.stats.mean, delayB, 2);
-            assert.closeTo(ciAverage(diffAB.absolute), delayA - delayB, 2);
-            assert.closeTo(ciAverage(diffBA.absolute), delayB - delayA, 2);
-            assert.closeTo(
-                ciAverage(diffAB.relative), (delayA - delayB) / delayB, 2);
-            assert.closeTo(
-                ciAverage(diffBA.relative), (delayB - delayA) / delayA, 2);
+            // We can't be very precise with expectations here, since setTimeout
+            // can be quite variable on a resource starved machine (e.g. some of
+            // our CI builds).
+            assert.isAbove(a.stats.mean, delayA);
+            assert.isAbove(b.stats.mean, delayB);
+            assert.isBelow(ciAverage(diffAB.absolute), 0);
+            assert.isAbove(ciAverage(diffBA.absolute), 0);
+            assert.isBelow(ciAverage(diffAB.relative), 0);
+            assert.isAbove(ciAverage(diffBA.relative), 0);
           }));
 
       // Only Chrome supports FCP.
