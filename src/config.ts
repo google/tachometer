@@ -99,7 +99,7 @@ export async function makeConfig(opts: Opts): Promise<Config> {
       timeout: opts.timeout !== undefined ? opts.timeout : defaults.timeout,
       horizons: parseHorizons(
           opts.horizon !== undefined ? opts.horizon.split(',') :
-                                       defaults.horizons),
+                                       [...defaults.horizons]),
       benchmarks: await specsFromOpts(opts),
       resolveBareModules: opts['resolve-bare-modules'] !== undefined ?
           opts['resolve-bare-modules'] :

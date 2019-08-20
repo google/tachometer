@@ -239,7 +239,7 @@ export async function parseConfigFile(parsedJson: unknown): Promise<Config> {
                                                      defaults.sampleSize,
     timeout: validated.timeout !== undefined ? validated.timeout :
                                                defaults.timeout,
-    horizons: parseHorizons(validated.horizons || defaults.horizons),
+    horizons: parseHorizons(validated.horizons || [...defaults.horizons]),
     benchmarks,
     resolveBareModules: validated.resolveBareModules === undefined ?
         true :
