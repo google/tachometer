@@ -13,7 +13,7 @@ import {assert} from 'chai';
 import * as path from 'path';
 import stripAnsi from 'strip-ansi';
 
-import {ConfigFile} from '../config';
+import {ConfigFile} from '../configfile';
 import {automaticResultTable, verticalTermResultTable} from '../format';
 import {fakeResults, testData} from './test_helpers';
 

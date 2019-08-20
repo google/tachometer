@@ -10,211 +10,18 @@
  */
 
 import * as fsExtra from 'fs-extra';
-import * as jsonschema from 'jsonschema';
 import * as path from 'path';
 
-import {BrowserConfig, BrowserName, parseBrowserConfigString, validateBrowserConfig} from './browser';
-import {parseHorizons} from './cli';
-import {CheckConfig} from './github';
+import {fcpBrowsers} from './browser';
+import {Config} from './config';
+import {parseConfigFile, writeBackSchemaIfNeeded} from './configfile';
+import * as defaults from './defaults';
+import {Opts} from './flags';
+import {CheckConfig, parseGithubCheckFlag} from './github';
+import {specsFromOpts} from './specs';
 import {Horizons} from './stats';
-import {BenchmarkSpec, LocalUrl, Measurement, PackageDependencyMap, RemoteUrl} from './types';
-import {isHttpUrl} from './util';
-import {fileKind} from './versions';
-
-/**
- * Expected format of the top-level JSON config file. Note this interface is
- * used to generate the JSON schema for validation.
- */
-export interface ConfigFile {
-  /**
-   * Root directory to serve benchmarks from (default current directory).
-   */
-  root?: string;
-
-  /**
-   * Minimum number of times to run each benchmark (default 50).
-   * @TJS-type integer
-   * @TJS-minimum 2
-   */
-  sampleSize?: number;
-
-  /**
-   * The maximum number of minutes to spend auto-sampling (default 3).
-   * @TJS-minimum 0
-   */
-  timeout?: number;
-
-  /**
-   * The degrees of difference to try and resolve when auto-sampling
-   * (e.g. 0ms, +1ms, -1ms, 0%, +1%, -1%, default 0%).
-   */
-  horizons?: string[];
-
-  /**
-   * Benchmarks to run.
-   * @TJS-minItems 1
-   */
-  benchmarks: ConfigFileBenchmark[];
-
-  /**
-   * Whether to automatically convert ES module imports with bare module
-   * specifiers to paths.
-   */
-  resolveBareModules?: boolean;
-
-  /**
-   * An optional reference to the JSON Schema for this file.
-   *
-   * If none is given, and the file is a valid tachometer config file,
-   * tachometer will write back to the config file to give this a value.
-   */
-  $schema?: string;
-}
-
-/**
- * Expected format of a benchmark in a JSON config file.
- */
-interface ConfigFileBenchmark {
-  /**
-   * A fully qualified URL, or a local path to an HTML file or directory. If a
-   * directory, must contain an index.html. Query parameters are permitted on
-   * local paths (e.g. "my/benchmark.html?foo=bar").
-   */
-  url?: string;
-
-  /**
-   * An optional label for this benchmark. Defaults to the URL.
-   */
-  name?: string;
-
-  /**
-   * Which browser to run the benchmark in.
-   *
-   * Options:
-   *   - chrome (default)
-   *   - chrome-headless
-   *   - firefox
-   *   - firefox-headless
-   *   - safari
-   *   - edge
-   *   - ie
-   */
-  browser?: string|BrowserConfigs;
-
-  /**
-   * Which time interval to measure.
-   *
-   * Options:
-   *   - callback: bench.start() to bench.stop() (default for fully qualified
-   *     URLs.
-   *   - fcp: first contentful paint (default for local paths)
-   */
-  measurement?: Measurement;
-
-  /**
-   * Optional NPM dependency overrides to apply and install. Only supported with
-   * local paths.
-   */
-  packageVersions?: ConfigFilePackageVersion;
-
-  /**
-   * Recursively expand this benchmark configuration with any number of
-   * variations. Useful for testing the same base configuration with e.g.
-   * multiple browers or package versions.
-   */
-  expand?: ConfigFileBenchmark[];
-}
-
-type BrowserConfigs =
-    ChromeConfig|FirefoxConfig|SafariConfig|EdgeConfig|IEConfig;
-
-interface BrowserConfigBase {
-  /**
-   * Name of the browser:
-   *
-   * Options:
-   *   - chrome
-   *   - firefox
-   *   - safari
-   *   - edge
-   *   - ie
-   */
-  name: BrowserName;
-
-  /**
-   * A remote WebDriver server HTTP address to launch the browser from.
-   */
-  remoteUrl?: string;
-
-  /**
-   * The size of new windows created from this browser. Defaults to 1024x768.
-   */
-  windowSize?: WindowSize;
-}
-
-interface WindowSize {
-  /**
-   * Width of the browser window in pixels.
-   *
-   * @TJS-type integer
-   * @TJS-minimum 0
-   */
-  width: number;
-
-  /**
-   * Height of the browser window in pixels.
-   *
-   * @TJS-type integer
-   * @TJS-minimum 0
-   */
-  height: number;
-}
-
-export const defaultWindowWidth = 1024;
-export const defaultWindowHeight = 768;
-
-interface ChromeConfig extends BrowserConfigBase {
-  name: 'chrome';
-
-  /**
-   * Whether to launch the headless (no GUI) version of this browser.
-   */
-  headless?: boolean;
-}
-
-interface FirefoxConfig extends BrowserConfigBase {
-  name: 'firefox';
-
-  /**
-   * Whether to launch the headless (no GUI) version of this browser.
-   */
-  headless?: boolean;
-}
-
-interface SafariConfig extends BrowserConfigBase {
-  name: 'safari';
-}
-
-interface EdgeConfig extends BrowserConfigBase {
-  name: 'edge';
-}
-
-interface IEConfig extends BrowserConfigBase {
-  name: 'ie';
-}
-
-interface ConfigFilePackageVersion {
-  /**
-   * Required label to identify this version map.
-   */
-  label: string;
-
-  /**
-   * Map from NPM package to version. Any version syntax supported by NPM is
-   * supported here.
-   */
-  dependencies: PackageDependencyMap;
-}
+import {BenchmarkSpec} from './types';
+import {fileKind} from './util';
 
 /**
  * Validated and fully specified configuration.
@@ -234,188 +41,95 @@ export interface Config {
   csvFile: string;
 }
 
-export const defaultRoot = '.';
-export const defaultBrowserName: BrowserName = 'chrome';
-export const defaultSampleSize = 50;
-export const defaultTimeout = 3;
-export const defaultHorizons = ['0%'];
-
-export function defaultMeasurement(url: LocalUrl|RemoteUrl): Measurement {
-  if (url.kind === 'remote') {
-    return 'fcp';
-  }
-  return 'callback';
-}
-
-/**
- * Validate the given JSON object parsed from a config file, and expand it into
- * a fully specified configuration.
- */
-export async function parseConfigFile(parsedJson: unknown): Promise<Config> {
-  const schema = require('../config.schema.json');
-  const result =
-      jsonschema.validate(parsedJson, schema, {propertyName: 'config'});
-  if (result.errors.length > 0) {
-    throw new Error(result.errors[0].toString());
-  }
-  const validated = parsedJson as ConfigFile;
-  const root = validated.root || '.';
-  const benchmarks: BenchmarkSpec[] = [];
-  for (const benchmark of validated.benchmarks) {
-    for (const expanded of applyExpansions(benchmark)) {
-      benchmarks.push(applyDefaults(await parseBenchmark(expanded, root)));
-    }
-  }
-
-  return {
-    root,
-    sampleSize: validated.sampleSize !== undefined ? validated.sampleSize :
-                                                     defaultSampleSize,
-    timeout: validated.timeout !== undefined ? validated.timeout :
-                                               defaultTimeout,
-    horizons: parseHorizons(validated.horizons || defaultHorizons),
-    benchmarks,
-    resolveBareModules: validated.resolveBareModules === undefined ?
-        true :
-        validated.resolveBareModules,
-
-    // These are only controlled by flags currently.
-    mode: 'automatic',
-    savePath: '',
-    remoteAccessibleHost: '',
-    forceCleanNpmInstall: false,
-    csvFile: '',
+export async function makeConfig(opts: Opts): Promise<Config> {
+  // These options are only controlled by flags.
+  const baseConfig = {
+    mode: (opts.manual === true ? 'manual' : 'automatic') as
+        ('manual' | 'automatic'),
+    savePath: opts.save,
+    githubCheck: opts['github-check'] ?
+        parseGithubCheckFlag(opts['github-check']) :
+        undefined,
+    remoteAccessibleHost: opts['remote-accessible-host'],
   };
-}
 
-async function parseBenchmark(benchmark: ConfigFileBenchmark, root: string):
-    Promise<Partial<BenchmarkSpec>> {
-  const spec: Partial<BenchmarkSpec> = {};
-
-  if (benchmark.name !== undefined) {
-    spec.name = benchmark.name;
-  }
-
-  if (benchmark.browser !== undefined) {
-    let browser;
-    if (typeof benchmark.browser === 'string') {
-      browser = {
-        ...parseBrowserConfigString(benchmark.browser),
-        windowSize: {
-          width: defaultWindowWidth,
-          height: defaultWindowHeight,
-        },
-      };
-    } else {
-      browser = parseBrowserObject(benchmark.browser);
+  let config: Config;
+  if (opts.config) {
+    if (opts.root !== undefined) {
+      throw new Error('--root cannot be specified when using --config');
     }
-    validateBrowserConfig(browser);
-    spec.browser = browser;
-  }
-
-  if (benchmark.measurement !== undefined) {
-    spec.measurement = benchmark.measurement;
-  }
-
-  const url = benchmark.url;
-  if (url !== undefined) {
-    if (isHttpUrl(url)) {
-      spec.url = {
-        kind: 'remote',
-        url,
-      };
-    } else {
-      let urlPath, queryString;
-      const q = url.indexOf('?');
-      if (q !== -1) {
-        urlPath = url.substring(0, q);
-        queryString = url.substring(q);
-      } else {
-        urlPath = url;
-        queryString = '';
-      }
-
-      spec.url = {
-        kind: 'local',
-        urlPath: await urlFromLocalPath(root, urlPath),
-        queryString,
-      };
-
-      if (benchmark.packageVersions !== undefined) {
-        spec.url.version = {
-          label: benchmark.packageVersions.label,
-          dependencyOverrides: benchmark.packageVersions.dependencies,
-        };
-      }
+    if (opts.browser !== undefined) {
+      throw new Error('--browser cannot be specified when using --config');
     }
-  }
-
-  return spec;
-}
-
-function parseBrowserObject(config: BrowserConfigs): BrowserConfig {
-  const parsed: BrowserConfig = {
-    name: config.name,
-    headless: ('headless' in config && config.headless) || false,
-    windowSize: ('windowSize' in config && config.windowSize) || {
-      width: defaultWindowWidth,
-      height: defaultWindowHeight,
-    },
-  };
-  if (config.remoteUrl) {
-    parsed.remoteUrl = config.remoteUrl;
-  }
-  return parsed;
-}
-
-function applyExpansions(bench: ConfigFileBenchmark): ConfigFileBenchmark[] {
-  if (bench.expand === undefined || bench.expand.length === 0) {
-    return [bench];
-  }
-  const expanded = [];
-  for (const expansion of bench.expand) {
-    for (const expandedBench of applyExpansions(expansion)) {
-      expanded.push({
-        ...bench,
-        ...expandedBench,
-      });
+    if (opts['sample-size'] !== undefined) {
+      throw new Error('--sample-size cannot be specified when using --config');
     }
-  }
-  return expanded;
-}
-
-function applyDefaults(partialSpec: Partial<BenchmarkSpec>): BenchmarkSpec {
-  const url = partialSpec.url;
-  let {name, measurement, browser} = partialSpec;
-  if (url === undefined) {
-    // Note we can't validate this with jsonschema, because we only need to
-    // ensure we have a URL after recursive expansion; so at any given level
-    // the URL could be optional.
-    throw new Error('No URL specified');
-  }
-  if (url.kind === 'remote') {
-    if (name === undefined) {
-      name = url.url;
+    if (opts.timeout !== undefined) {
+      throw new Error('--timeout cannot be specified when using --config');
     }
+    if (opts.horizon !== undefined) {
+      throw new Error('--horizon cannot be specified when using --config');
+    }
+    if (opts.measure !== undefined) {
+      throw new Error('--measure cannot be specified when using --config');
+    }
+    if (opts['resolve-bare-modules'] !== undefined) {
+      throw new Error(
+          '--resolve-bare-modules cannot be specified when using --config');
+    }
+    if (opts['window-size'] !== undefined) {
+      throw new Error('--window-size cannot be specified when using --config');
+    }
+    const rawConfigObj = await fsExtra.readJson(opts.config);
+    const validatedConfigObj = await parseConfigFile(rawConfigObj);
+
+    await writeBackSchemaIfNeeded(rawConfigObj, opts.config);
+
+    config = {
+      ...baseConfig,
+      ...validatedConfigObj,
+    };
+
   } else {
-    if (name === undefined) {
-      name = url.urlPath + url.queryString;
-    }
-  }
-  if (browser === undefined) {
-    browser = {
-      name: defaultBrowserName,
-      headless: false,
-      windowSize: {
-        width: defaultWindowWidth,
-        height: defaultWindowHeight,
-      },
+    config = {
+      ...baseConfig,
+      root: opts.root !== undefined ? opts.root : defaults.root,
+      sampleSize: opts['sample-size'] !== undefined ? opts['sample-size'] :
+                                                      defaults.sampleSize,
+      timeout: opts.timeout !== undefined ? opts.timeout : defaults.timeout,
+      horizons: parseHorizons(
+          opts.horizon !== undefined ? opts.horizon.split(',') :
+                                       [...defaults.horizons]),
+      benchmarks: await specsFromOpts(opts),
+      resolveBareModules: opts['resolve-bare-modules'] !== undefined ?
+          opts['resolve-bare-modules'] :
+          true,
+      forceCleanNpmInstall: opts['force-clean-npm-install'],
+      csvFile: opts['csv-file'],
     };
   }
-  if (measurement === undefined) {
-    measurement = defaultMeasurement(url);
+
+  if (config.sampleSize <= 1) {
+    throw new Error('--sample-size must be > 1');
   }
-  return {name, url, browser, measurement};
+
+  if (config.timeout < 0) {
+    throw new Error('--timeout must be >= 0');
+  }
+
+  if (config.benchmarks.length === 0) {
+    throw new Error('No benchmarks matched with the given flags');
+  }
+
+  for (const spec of config.benchmarks) {
+    if (spec.measurement === 'fcp' && !fcpBrowsers.has(spec.browser.name)) {
+      throw new Error(
+          `Browser ${spec.browser.name} does not support the ` +
+          `first contentful paint (FCP) measurement`);
+    }
+  }
+
+  return config;
 }
 
 /**
@@ -453,20 +167,40 @@ export async function urlFromLocalPath(
   return urlPath;
 }
 
-export async function writeBackSchemaIfNeeded(
-    rawConfigObj: Partial<ConfigFile>, configFile: string) {
-  // Add the $schema field to the original config file if it's absent.
-  // We only want to do this if the file validated though, so we don't mutate
-  // a file that's not actually a tachometer config file.
-  if (!('$schema' in rawConfigObj)) {
-    const $schema =
-        'https://raw.githubusercontent.com/Polymer/tachometer/master/config.schema.json';
-    // Extra IDE features can be activated if the config file has a schema.
-    const withSchema = {
-      $schema,
-      ...rawConfigObj,
-    };
-    const contents = JSON.stringify(withSchema, null, 2);
-    await fsExtra.writeFile(configFile, contents, {encoding: 'utf-8'});
+/** Parse horizon flags into signed horizon values. */
+export function parseHorizons(strs: string[]): Horizons {
+  const absolute = new Set<number>();
+  const relative = new Set<number>();
+  for (const str of strs) {
+    if (!str.match(/^[-+]?(\d*\.)?\d+(ms|%)$/)) {
+      throw new Error(`Invalid horizon ${str}`);
+    }
+
+    let num;
+    let absOrRel;
+    const isPercent = str.endsWith('%');
+    if (isPercent === true) {
+      num = Number(str.slice(0, -1)) / 100;
+      absOrRel = relative;
+    } else {
+      // Otherwise ends with "ms".
+      num = Number(str.slice(0, -2));  // Note that Number("+1") === 1
+      absOrRel = absolute;
+    }
+
+    if (str.startsWith('+') || str.startsWith('-') || num === 0) {
+      // If the sign was explicit (e.g. "+0.1", "-0.1") then we're only
+      // interested in that signed horizon.
+      absOrRel.add(num);
+    } else {
+      // Otherwise (e.g. "0.1") we're interested in the horizon as a
+      // difference in either direction.
+      absOrRel.add(-num);
+      absOrRel.add(num);
+    }
   }
+  return {
+    absolute: [...absolute].sort((a, b) => a - b),
+    relative: [...relative].sort((a, b) => a - b),
+  };
 }

@@ -12,17 +12,17 @@
 import {assert} from 'chai';
 import * as path from 'path';
 
-import {defaultBrowserName, defaultWindowHeight, defaultWindowWidth} from '../config';
+import * as defaults from '../defaults';
 import {BenchmarkSpec} from '../types';
 import {hashStrings, makeServerPlans, ServerPlan} from '../versions';
 import {testData} from './test_helpers';
 
 const defaultBrowser = {
-  name: defaultBrowserName,
+  name: defaults.browserName,
   headless: false,
   windowSize: {
-    width: defaultWindowWidth,
-    height: defaultWindowHeight,
+    width: defaults.windowWidth,
+    height: defaults.windowHeight,
   },
 };
 

@@ -9,390 +9,192 @@
  * rights grant found at http://polymer.github.io/PATENTS.txt
  */
 
-import * as chai from 'chai';
-import * as chaiAsPromised from 'chai-as-promised';
-import * as path from 'path';
+import {assert} from 'chai';
 
-chai.use(chaiAsPromised);
-const {assert} = chai;
+import {Config, makeConfig, parseHorizons} from '../config';
+import {parseFlags} from '../flags';
 
-import {defaultBrowserName, defaultWindowWidth, defaultWindowHeight, Config, parseConfigFile} from '../config';
 import {testData} from './test_helpers';
 
-const defaultBrowser = {
-  name: defaultBrowserName,
-  headless: false,
-  windowSize: {
-    width: defaultWindowWidth,
-    height: defaultWindowHeight,
-  },
-};
+suite('makeConfig', function() {
+  let prevCwd: string;
 
-suite('config', () => {
-  suite('parseConfigFile', () => {
-    let prevCwd: string;
-    suiteSetup(() => {
-      prevCwd = process.cwd();
-      process.chdir(path.join(testData, 'mylib'));
-    });
+  suiteSetup(() => {
+    prevCwd = process.cwd();
+    process.chdir(testData);
+  });
 
-    suiteTeardown(() => {
-      process.chdir(prevCwd);
-    });
+  suiteTeardown(() => {
+    process.chdir(prevCwd);
+  });
 
-    test('fully specified', async () => {
-      const config = {
-        root: '.',
-        sampleSize: 52,
-        timeout: 7,
-        horizons: ['0ms', '1ms', '2%', '+3%'],
-        resolveBareModules: false,
-        benchmarks: [
-          {
-            name: 'remote',
-            browser: defaultBrowser,
-            measurement: 'fcp',
-            url: 'http://example.com?foo=bar',
-          },
-          {
-            name: 'local',
-            browser: {
-              ...defaultBrowser,
-              name: 'firefox',
-            },
-            measurement: 'callback',
-            url: 'mybench/index.html?foo=bar',
-            packageVersions: {
-              label: 'master',
-              dependencies: {
-                'foo': 'github:Polymer/foo#master',
-                'bar': '=1.2.3',
-              },
+  async function checkConfig(argv: string[], expected: Config) {
+    const actual = await makeConfig(parseFlags(argv));
+    assert.deepEqual(actual, expected);
+  }
+
+  test('local file with all defaults', async () => {
+    const argv = ['random-global.html'];
+    const expected: Config = {
+      mode: 'automatic',
+      sampleSize: 50,
+      timeout: 3,
+      root: '.',
+      resolveBareModules: true,
+      forceCleanNpmInstall: false,
+      horizons: {absolute: [], relative: [0]},
+      remoteAccessibleHost: '',
+      savePath: '',
+      csvFile: '',
+      githubCheck: undefined,
+      benchmarks: [
+        {
+          browser: {
+            headless: false,
+            name: 'chrome',
+            windowSize: {
+              height: 768,
+              width: 1024,
             },
           },
-        ],
-      };
-      const expected: Config = {
-        root: '.',
-        sampleSize: 52,
-        timeout: 7,
-        horizons: {
-          absolute: [-1, 0, 1],
-          relative: [-0.02, 0.02, 0.03],
+          measurement: 'callback',
+          name: 'random-global.html',
+          url: {
+            kind: 'local',
+            queryString: '',
+            urlPath: '/random-global.html',
+            version: undefined,
+          },
         },
-        resolveBareModules: false,
-        mode: 'automatic',
-        savePath: '',
-        remoteAccessibleHost: '',
-        forceCleanNpmInstall: false,
-        csvFile: '',
-        benchmarks: [
-          {
-            name: 'remote',
-            browser: defaultBrowser,
-            measurement: 'fcp',
-            url: {
-              kind: 'remote',
-              url: 'http://example.com?foo=bar',
-            },
-          },
-          {
-            name: 'local',
-            browser: {
-              ...defaultBrowser,
-              name: 'firefox',
-            },
-            measurement: 'callback',
-            url: {
-              kind: 'local',
-              urlPath: '/mybench/index.html',
-              queryString: '?foo=bar',
-              version: {
-                label: 'master',
-                dependencyOverrides: {
-                  'foo': 'github:Polymer/foo#master',
-                  'bar': '=1.2.3',
-                },
-              },
-            },
-          },
-        ],
-      };
-      const actual = await parseConfigFile(config);
-      assert.deepEqual(actual, expected);
-    });
+      ],
+    };
+    await checkConfig(argv, expected);
+  });
 
-    test('defaults applied', async () => {
-      const config = {
-        benchmarks: [
-          {
-            url: 'http://example.com?foo=bar',
+  test('config file', async () => {
+    const argv = ['--config=random-global.json'];
+    const expected: Config = {
+      mode: 'automatic',
+      sampleSize: 50,
+      timeout: 3,
+      root: '.',
+      resolveBareModules: true,
+      forceCleanNpmInstall: false,
+      horizons: {absolute: [], relative: [0]},
+      remoteAccessibleHost: '',
+      savePath: '',
+      csvFile: '',
+      // TODO(aomarks) Be consistent about undefined vs unset.
+      githubCheck: undefined,
+      benchmarks: [
+        {
+          browser: {
+            headless: false,
+            name: 'chrome',
+            windowSize: {
+              height: 768,
+              width: 1024,
+            },
           },
-          {
-            url: 'mybench/index.html?foo=bar',
+          measurement: 'callback',
+          // TODO(aomarks) Why does this have a forward-slash?
+          name: '/random-global.html',
+          url: {
+            kind: 'local',
+            queryString: '',
+            urlPath: '/random-global.html',
           },
-        ],
-      };
-      const expected: Config = {
-        root: '.',
-        sampleSize: 50,
-        timeout: 3,
-        horizons: {
-          absolute: [],
-          relative: [0],
         },
-        resolveBareModules: true,
-        mode: 'automatic',
-        savePath: '',
-        remoteAccessibleHost: '',
-        forceCleanNpmInstall: false,
-        csvFile: '',
-        benchmarks: [
-          {
-            name: 'http://example.com?foo=bar',
-            url: {
-              kind: 'remote',
-              url: 'http://example.com?foo=bar',
-            },
-            measurement: 'fcp',
-            browser: defaultBrowser,
-          },
-          {
-            name: '/mybench/index.html?foo=bar',
-            url: {
-              kind: 'local',
-              urlPath: '/mybench/index.html',
-              queryString: '?foo=bar',
-            },
-            measurement: 'callback',
-            browser: defaultBrowser,
-          },
-        ],
-      };
-      const actual = await parseConfigFile(config);
-      assert.deepEqual(actual, expected);
+      ],
+    };
+    await checkConfig(argv, expected);
+  });
+});
+
+suite('parseHorizons', function() {
+  test('0ms', () => {
+    assert.deepEqual(parseHorizons(['0ms']), {
+      absolute: [0],
+      relative: [],
     });
+  });
 
-    test('expanded twice deep', async () => {
-      const config = {
-        root: '.',
-        benchmarks: [{
-          url: 'http://example.com',
-          expand: [
-            {
-              measurement: 'fcp',
-              expand: [
-                {browser: 'chrome'},
-                {browser: 'firefox'},
-              ],
-            },
-            {
-              measurement: 'callback',
-              expand: [
-                {browser: 'chrome'},
-                {browser: 'firefox'},
-              ],
-            }
-          ],
-        }],
-      };
-      const expected: Config = {
-        root: '.',
-        sampleSize: 50,
-        timeout: 3,
-        horizons: {
-          absolute: [],
-          relative: [0],
-        },
-        resolveBareModules: true,
-        mode: 'automatic',
-        savePath: '',
-        remoteAccessibleHost: '',
-        forceCleanNpmInstall: false,
-        csvFile: '',
-        benchmarks: [
-          {
-            name: 'http://example.com',
-            url: {kind: 'remote', url: 'http://example.com'},
-            measurement: 'fcp',
-            browser: defaultBrowser,
-          },
-          {
-            name: 'http://example.com',
-            url: {kind: 'remote', url: 'http://example.com'},
-            measurement: 'fcp',
-            browser: {
-              ...defaultBrowser,
-              name: 'firefox',
-            },
-          },
-          {
-            name: 'http://example.com',
-            url: {kind: 'remote', url: 'http://example.com'},
-            measurement: 'callback',
-            browser: defaultBrowser,
-          },
-          {
-            name: 'http://example.com',
-            url: {kind: 'remote', url: 'http://example.com'},
-            measurement: 'callback',
-            browser: {
-              ...defaultBrowser,
-              name: 'firefox',
-            },
-          },
-        ],
-      };
-      const actual = await parseConfigFile(config);
-      assert.deepEqual(actual, expected);
+  test('0.1ms', () => {
+    assert.deepEqual(parseHorizons(['0.1ms']), {
+      absolute: [-0.1, 0.1],
+      relative: [],
     });
+  });
 
-    suite('errors', () => {
-      test('invalid top-level type', async () => {
-        const config = 42;
-        await assert.isRejected(
-            parseConfigFile(config), 'config is not of a type(s) object');
-      });
-
-      test('invalid benchmarks array type', async () => {
-        const config = {
-          benchmarks: 42,
-        };
-        await assert.isRejected(
-            parseConfigFile(config),
-            'config.benchmarks is not of a type(s) array');
-      });
-
-      test('invalid benchmark type', async () => {
-        const config = {
-          benchmarks: [42],
-        };
-        await assert.isRejected(
-            parseConfigFile(config),
-            'config.benchmarks[0] is not of a type(s) object');
-      });
-
-      test('empty benchmarks array', async () => {
-        const config = {
-          benchmarks: [],
-        };
-        await assert.isRejected(
-            parseConfigFile(config),
-            'config.benchmarks does not meet minimum length of 1');
-      });
-
-      test('invalid expand type', async () => {
-        const config = {
-          benchmarks: [
-            {expand: 42},
-          ],
-        };
-        await assert.isRejected(
-            parseConfigFile(config),
-            'config.benchmarks[0].expand is not of a type(s) array');
-      });
-
-      test('unknown top-level property', async () => {
-        const config = {
-          nonsense: 'potato',
-          benchmarks: [
-            {
-              url: 'http://example.com',
-            },
-          ],
-        };
-        await assert.isRejected(
-            parseConfigFile(config), 'config additionalProperty "nonsense"');
-      });
-
-      test('unknown benchmark property', async () => {
-        const config = {
-          benchmarks: [
-            {
-              nonsense: 'potato',
-              url: 'http://example.com',
-            },
-          ],
-        };
-        await assert.isRejected(
-            parseConfigFile(config),
-            'config.benchmarks[0] additionalProperty "nonsense"');
-      });
-
-      test('missing url', async () => {
-        const config = {
-          benchmarks: [{
-            browser: 'chrome',
-            measurement: 'fcp',
-          }],
-        };
-        await assert.isRejected(parseConfigFile(config), /no url specified/i);
-      });
-
-      test('unsupported browser', async () => {
-        const config = {
-          benchmarks: [{
-            url: 'http://example.com',
-            browser: 'potato',
-          }],
-        };
-        await assert.isRejected(
-            parseConfigFile(config), 'Browser potato is not supported');
-      });
-
-      test('invalid measurement', async () => {
-        const config = {
-          benchmarks: [{
-            url: 'http://example.com',
-            measurement: 'potato',
-          }],
-        };
-        await assert.isRejected(
-            parseConfigFile(config),
-            'config.benchmarks[0].measurement is not one of enum values: callback');
-      });
-
-      test('sampleSize too small', async () => {
-        const config = {
-          sampleSize: 1,
-          benchmarks: [{
-            url: 'http://example.com',
-          }],
-        };
-        await assert.isRejected(
-            parseConfigFile(config),
-            'config.sampleSize must have a minimum value of 2');
-      });
-
-      test('non-integer sampleSize', async () => {
-        const config = {
-          sampleSize: 2.1,
-          benchmarks: [{
-            url: 'http://example.com',
-          }],
-        };
-        await assert.isRejected(
-            parseConfigFile(config),
-            'config.sampleSize is not of a type(s) integer');
-      });
-
-      test('missing package version label', async () => {
-        const config = {
-          benchmarks: [
-            {
-              url: '/my/local.index',
-              packageVersions: {
-                dependencies: {
-                  'foo': '=1.2.3',
-                },
-              },
-            },
-          ],
-        };
-        await assert.isRejected(
-            parseConfigFile(config),
-            'config.benchmarks[0].packageVersions requires property "label"');
-      });
+  test('+0.1ms', () => {
+    assert.deepEqual(parseHorizons(['+0.1ms']), {
+      absolute: [0.1],
+      relative: [],
     });
+  });
+
+  test('-0.1ms', () => {
+    assert.deepEqual(parseHorizons(['-0.1ms']), {
+      absolute: [-0.1],
+      relative: [],
+    });
+  });
+
+  test('0ms,0.1,1ms', () => {
+    assert.deepEqual(parseHorizons(['0ms', '0.1ms', '1ms']), {
+      absolute: [-1, -0.1, 0, 0.1, 1],
+      relative: [],
+    });
+  });
+
+  test('0%', () => {
+    assert.deepEqual(parseHorizons(['0%']), {
+      absolute: [],
+      relative: [0],
+    });
+  });
+
+  test('1%', () => {
+    assert.deepEqual(parseHorizons(['1%']), {
+      absolute: [],
+      relative: [-0.01, 0.01],
+    });
+  });
+
+  test('+1%', () => {
+    assert.deepEqual(parseHorizons(['+1%']), {
+      absolute: [],
+      relative: [0.01],
+    });
+  });
+
+  test('-1%', () => {
+    assert.deepEqual(parseHorizons(['-1%']), {
+      absolute: [],
+      relative: [-0.01],
+    });
+  });
+
+  test('0%,1%,10%', () => {
+    assert.deepEqual(parseHorizons(['0%', '1%', '10%']), {
+      absolute: [],
+      relative: [-0.1, -0.01, 0, 0.01, 0.10],
+    });
+  });
+
+  test('0ms,0.1ms,1ms,0%,1%,10%', () => {
+    assert.deepEqual(
+        parseHorizons(['0ms', '0.1ms', '1ms', '0%', '1%', '10%']), {
+          absolute: [-1, -0.1, 0, 0.1, 1],
+          relative: [-0.1, -0.01, 0, 0.01, 0.10],
+        });
+  });
+
+  test('throws on nonsense', () => {
+    assert.throws(() => parseHorizons(['sailboat']));
+  });
+
+  test('throws on ambiguous unit', () => {
+    assert.throws(() => parseHorizons(['4']));
   });
 });

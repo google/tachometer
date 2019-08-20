@@ -82,7 +82,7 @@
                     "description": "Optional NPM dependency overrides to apply and install. Only supported with\nlocal paths."
                 },
                 "url": {
-                    "description": "A fully qualified URL, or a local path to an HTML file or directory. If a\ndirectory, must contain an index.html. Query parameters are permitted on\nlocal paths (e.g. \"my/benchmark.html?foo=bar\").",
+                    "description": "A fully qualified URL, or a local path to an HTML file or directory. If a\ndirectory, must contain an index.html. Query parameters are permitted on\nlocal paths (e.g. 'my/benchmark.html?foo=bar').",
                     "type": "string"
                 }
             },

@@ -13,7 +13,7 @@ import * as chai from 'chai';
 import * as chaiAsPromised from 'chai-as-promised';
 import * as path from 'path';
 
-import {defaultBrowserName, defaultWindowHeight, defaultWindowWidth} from '../config';
+import * as defaults from '../defaults';
 import {optDefs, Opts} from '../flags';
 import {specsFromOpts} from '../specs';
 import {BenchmarkSpec} from '../types';
@@ -28,11 +28,11 @@ const parse = (argv: string[]) =>
     commandLineArgs(optDefs, {argv, partial: true}) as Opts;
 
 const defaultBrowser = {
-  name: defaultBrowserName,
+  name: defaults.browserName,
   headless: false,
   windowSize: {
-    width: defaultWindowWidth,
-    height: defaultWindowHeight,
+    width: defaults.windowWidth,
+    height: defaults.windowHeight,
   },
 };
 

@@ -12,8 +12,10 @@
 import * as path from 'path';
 
 import {parseBrowserConfigString, validateBrowserConfig, WindowSize} from './browser';
-import {defaultBrowserName, defaultMeasurement, defaultRoot, defaultWindowHeight, defaultWindowWidth, urlFromLocalPath} from './config';
+import {Config, urlFromLocalPath} from './config';
+import * as defaults from './defaults';
 import {Opts} from './flags';
+import {Server} from './server';
 import {BenchmarkSpec, LocalUrl, PackageVersion, RemoteUrl} from './types';
 import {isHttpUrl} from './util';
 import {parsePackageVersions} from './versions';
@@ -38,12 +40,12 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
     };
   } else {
     windowSize = {
-      width: defaultWindowWidth,
-      height: defaultWindowHeight,
+      width: defaults.windowWidth,
+      height: defaults.windowHeight,
     };
   }
 
-  const browserStrings = new Set((opts.browser || defaultBrowserName)
+  const browserStrings = new Set((opts.browser || defaults.browserName)
                                      .replace(/\s+/, '')
                                      .split(',')
                                      .filter((b) => b !== ''));
@@ -78,7 +80,7 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
         url: arg.url,
       };
       const measurement =
-          opts.measure !== undefined ? opts.measure : defaultMeasurement(url);
+          opts.measure !== undefined ? opts.measure : defaults.measurement(url);
       for (const browser of browsers) {
         specs.push({
           name: arg.alias || arg.url,
@@ -89,7 +91,7 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
       }
 
     } else {
-      const root = opts.root || defaultRoot;
+      const root = opts.root || defaults.root;
       const urlPath = await urlFromLocalPath(root, arg.diskPath);
       let name = arg.alias;
       if (name === undefined) {
@@ -106,7 +108,7 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
           };
           const measurement = opts.measure !== undefined ?
               opts.measure :
-              defaultMeasurement(url);
+              defaults.measurement(url);
           specs.push({
             name,
             browser,
@@ -173,4 +175,22 @@ function parseBenchmarkArgument(str: string):
     diskPath: str,
     queryString: queryString,
   };
+}
+
+export function specUrl(
+    spec: BenchmarkSpec, servers: Map<BenchmarkSpec, Server>, config: Config):
+    string {
+  if (spec.url.kind === 'remote') {
+    return spec.url.url;
+  }
+  const server = servers.get(spec);
+  if (server === undefined) {
+    throw new Error('Internal error: no server for spec');
+  }
+  if (config.remoteAccessibleHost !== '' &&
+      spec.browser.remoteUrl !== undefined) {
+    return 'http://' + config.remoteAccessibleHost + ':' + server.port +
+        spec.url.urlPath + spec.url.queryString;
+  }
+  return server.url + spec.url.urlPath + spec.url.queryString;
 }

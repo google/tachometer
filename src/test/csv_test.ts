@@ -11,7 +11,7 @@
 
 import {assert} from 'chai';
 
-import {ConfigFile} from '../config';
+import {ConfigFile} from '../configfile';
 import {formatCsv} from '../csv';
 import {fakeResults} from './test_helpers';
 
