@@ -11,7 +11,105 @@
 
 import {assert} from 'chai';
 
-import {parseHorizons} from '../config';
+import {Config, makeConfig, parseHorizons} from '../config';
+import {parseFlags} from '../flags';
+
+import {testData} from './test_helpers';
+
+suite('makeConfig', function() {
+  let prevCwd: string;
+
+  suiteSetup(() => {
+    prevCwd = process.cwd();
+    process.chdir(testData);
+  });
+
+  suiteTeardown(() => {
+    process.chdir(prevCwd);
+  });
+
+  async function checkConfig(argv: string[], expected: Config) {
+    const actual = await makeConfig(parseFlags(argv));
+    assert.deepEqual(actual, expected);
+  }
+
+  test('local file with all defaults', async () => {
+    const argv = ['random-global.html'];
+    const expected: Config = {
+      mode: 'automatic',
+      sampleSize: 50,
+      timeout: 3,
+      root: '.',
+      resolveBareModules: true,
+      forceCleanNpmInstall: false,
+      horizons: {absolute: [], relative: [0]},
+      remoteAccessibleHost: '',
+      savePath: '',
+      csvFile: '',
+      githubCheck: undefined,
+      benchmarks: [
+        {
+          browser: {
+            headless: false,
+            name: 'chrome',
+            windowSize: {
+              height: 768,
+              width: 1024,
+            },
+          },
+          measurement: 'callback',
+          name: 'random-global.html',
+          url: {
+            kind: 'local',
+            queryString: '',
+            urlPath: '/random-global.html',
+            version: undefined,
+          },
+        },
+      ],
+    };
+    await checkConfig(argv, expected);
+  });
+
+  test('config file', async () => {
+    const argv = ['--config=random-global.json'];
+    const expected: Config = {
+      mode: 'automatic',
+      sampleSize: 50,
+      timeout: 3,
+      root: '.',
+      resolveBareModules: true,
+      forceCleanNpmInstall: false,
+      horizons: {absolute: [], relative: [0]},
+      remoteAccessibleHost: '',
+      savePath: '',
+      csvFile: '',
+      // TODO(aomarks) Be consistent about undefined vs unset.
+      githubCheck: undefined,
+      benchmarks: [
+        {
+          browser: {
+            headless: false,
+            name: 'chrome',
+            windowSize: {
+              height: 768,
+              width: 1024,
+            },
+          },
+          measurement: 'callback',
+          // TODO(aomarks) Why does this have a forward-slash?
+          name: '/random-global.html',
+          url: {
+            kind: 'local',
+            queryString: '',
+            urlPath: '/random-global.html',
+          },
+        },
+      ],
+    };
+    await checkConfig(argv, expected);
+  });
+});
 
 suite('parseHorizons', function() {
   test('0ms', () => {
