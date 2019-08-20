@@ -90,7 +90,7 @@ suite('e2e', function() {
       test(
           'bench.start/stop', hideOutput(async function() {
             const delayA = 20;
-            const delayB = 30;
+            const delayB = 60;
 
             const argv = [
               `--browser=${browser}`,
@@ -108,14 +108,15 @@ suite('e2e', function() {
             const diffAB = a.differences[1]!;
             const diffBA = b.differences[0]!;
 
-            assert.closeTo(a.stats.mean, delayA, 2);
-            assert.closeTo(b.stats.mean, delayB, 2);
-            assert.closeTo(ciAverage(diffAB.absolute), delayA - delayB, 2);
-            assert.closeTo(ciAverage(diffBA.absolute), delayB - delayA, 2);
-            assert.closeTo(
-                ciAverage(diffAB.relative), (delayA - delayB) / delayB, 2);
-            assert.closeTo(
-                ciAverage(diffBA.relative), (delayB - delayA) / delayA, 2);
+            // We can't be very precise with expectations here, since setTimeout
+            // can be quite variable on a resource starved machine (e.g. some of
+            // our CI builds).
+            assert.isAbove(a.stats.mean, delayA);
+            assert.isAbove(b.stats.mean, delayB);
+            assert.isBelow(ciAverage(diffAB.absolute), 0);
+            assert.isAbove(ciAverage(diffBA.absolute), 0);
+            assert.isBelow(ciAverage(diffAB.relative), 0);
+            assert.isAbove(ciAverage(diffBA.relative), 0);
           }));
 
       // Only Chrome supports FCP.
@@ -153,28 +154,28 @@ suite('e2e', function() {
       }
 
       test('window size', hideOutput(async function() {
+             const width = 1024;
+             const height = 768;
              const argv = [
                `--browser=${browser}`,
                '--measure=global',
                '--sample-size=2',
                '--timeout=0',
-               '--window-size=500,200',
+               `--window-size=${width},${height}`,
                path.join(testData, 'window-size.html'),
              ];
-             const expected = 500 * 200;
+             // We're measuring window.innerWidth and height, so depending on
+             // how much extra chrome the browser is rendering, we'll get
+             // something smaller. 200 pixels seems to cover all the variation.
+             const lowerBound = width * (height - 200);
+             const upperBound = width * height;
 
              const actual = await main(argv);
              assert.isDefined(actual);
              assert.lengthOf(actual!, 1);
              const {stats} = actual![0];
-             if (browser.endsWith('-headless')) {
-               // Headless browsers don't render any window borders etc.
-               assert.equal(stats.mean, expected);
-             } else {
-               // When launched graphically we get extra window borders and
-               // other chrome, so we get a larger window than we asked for.
-               assert.closeTo(stats.mean, expected, 0.25 * expected);
-             }
+             assert.isAtMost(stats.mean, upperBound);
+             assert.isAtLeast(stats.mean, lowerBound);
            }));
     });
   }
