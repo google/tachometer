@@ -72,4 +72,20 @@ suite('server', () => {
       assert.include(body, 'this is not valid javascript');
     });
   });
+
+  test('records bytes served in session', async () => {
+    let session;
+
+    await fetch(`${server.url}/1_byte.txt`);
+    session = server.endSession();
+    assert.equal(session.bytesSent, 1);
+
+    await fetch(`${server.url}/1_byte.txt`);
+    await fetch(`${server.url}/3_bytes.txt`);
+    session = server.endSession();
+    assert.equal(session.bytesSent, 4);
+
+    session = server.endSession();
+    assert.equal(session.bytesSent, 0);
+  });
 });
