@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](http://semver.org/).
 
-## Unreleased
+<!-- ## Unreleased -->
+
+## [0.4.12] 2019-08-21
 
 ### Added
 
@@ -18,8 +20,8 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 
--   Fix bug where the `--manual`, `--csv-file`, and other flags were ignored
-    if a config file was in use.
+-   Fix bug where the `--manual`, `--csv-file`, and other flags were ignored if
+    a config file was in use.
 
 ## [0.4.11] 2019-08-13
 
