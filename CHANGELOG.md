@@ -12,6 +12,10 @@ project adheres to [Semantic Versioning](http://semver.org/).
 -   A notification will now be printed if the current version of tachometer is
     outdated.
 
+-   Added `--json-file` flag which outputs raw statistical results to a JSON
+    file (similar to the `--csv-file` flag). This supersedes the `--save` flag,
+    which will be removed in the next major version.
+
 ### Fixed
 
 -   Fix bug where the `--manual`, `--csv-file`, and other flags were ignored

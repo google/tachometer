@@ -33,12 +33,13 @@ export interface Config {
   benchmarks: BenchmarkSpec[];
   horizons: Horizons;
   mode: 'automatic'|'manual';
-  savePath: string;
+  jsonFile: string;
+  // TODO(aomarks) Remove this in next major version.
+  legacyJsonFile: string;
   githubCheck?: CheckConfig;
   resolveBareModules: boolean;
   remoteAccessibleHost: string;
   forceCleanNpmInstall: boolean;
-  // TODO(aomarks) Rename to jsonFile
   csvFile: string;
 }
 
@@ -47,7 +48,8 @@ export async function makeConfig(opts: Opts): Promise<Config> {
   const baseConfig = {
     mode: (opts.manual === true ? 'manual' : 'automatic') as
         ('manual' | 'automatic'),
-    savePath: opts.save,
+    jsonFile: opts['json-file'],
+    legacyJsonFile: opts['save'],
     csvFile: opts['csv-file'],
     forceCleanNpmInstall: opts['force-clean-npm-install'],
     githubCheck: opts['github-check'] ?
@@ -141,7 +143,9 @@ export function applyDefaults(partial: Partial<Config>): Config {
     horizons: partial.horizons !== undefined ?
         partial.horizons :
         parseHorizons([...defaults.horizons]),
-    savePath: partial.savePath !== undefined ? partial.savePath : '',
+    jsonFile: partial.jsonFile !== undefined ? partial.jsonFile : '',
+    legacyJsonFile:
+        partial.legacyJsonFile !== undefined ? partial.legacyJsonFile : '',
     sampleSize: partial.sampleSize !== undefined ? partial.sampleSize :
                                                    defaults.sampleSize,
     mode: partial.mode !== undefined ? partial.mode : defaults.mode,

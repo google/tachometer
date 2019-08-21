@@ -111,8 +111,8 @@ suite('e2e', function() {
             // We can't be very precise with expectations here, since setTimeout
             // can be quite variable on a resource starved machine (e.g. some of
             // our CI builds).
-            assert.isAbove(a.stats.mean, delayA);
-            assert.isAbove(b.stats.mean, delayB);
+            assert.isAtLeast(a.stats.mean, delayA);
+            assert.isAtLeast(b.stats.mean, delayB);
             assert.isBelow(ciAverage(diffAB.absolute), 0);
             assert.isAbove(ciAverage(diffBA.absolute), 0);
             assert.isBelow(ciAverage(diffAB.relative), 0);
@@ -144,8 +144,8 @@ suite('e2e', function() {
                // We can't be very precise with expectations here, since FCP is
                // so variable, but we can check that FCP takes at least as long
                // as our setTimeout delays, and that A paints before than B.
-               assert.isAbove(a.stats.mean, delayA);
-               assert.isAbove(b.stats.mean, delayB);
+               assert.isAtLeast(a.stats.mean, delayA);
+               assert.isAtLeast(b.stats.mean, delayB);
                assert.isBelow(ciAverage(diffAB.absolute), 0);
                assert.isAbove(ciAverage(diffBA.absolute), 0);
                assert.isBelow(ciAverage(diffAB.relative), 0);

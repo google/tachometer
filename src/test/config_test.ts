@@ -44,7 +44,8 @@ suite('makeConfig', function() {
       forceCleanNpmInstall: false,
       horizons: {absolute: [], relative: [0]},
       remoteAccessibleHost: '',
-      savePath: '',
+      jsonFile: '',
+      legacyJsonFile: '',
       csvFile: '',
       githubCheck: undefined,
       benchmarks: [
@@ -82,7 +83,8 @@ suite('makeConfig', function() {
       forceCleanNpmInstall: false,
       horizons: {absolute: [], relative: [0]},
       remoteAccessibleHost: '',
-      savePath: '',
+      jsonFile: '',
+      legacyJsonFile: '',
       csvFile: '',
       // TODO(aomarks) Be consistent about undefined vs unset.
       githubCheck: undefined,
@@ -122,7 +124,8 @@ suite('makeConfig', function() {
       forceCleanNpmInstall: false,
       horizons: {absolute: [], relative: [0]},
       remoteAccessibleHost: '',
-      savePath: '',
+      jsonFile: '',
+      legacyJsonFile: '',
       csvFile: '',
       githubCheck: undefined,
       benchmarks: [
@@ -153,13 +156,14 @@ suite('makeConfig', function() {
     const argv = [
       '--config=random-global.json',
       '--csv-file=out.csv',
-      '--save=out.json',
+      '--json-file=out.json',
       '--force-clean-npm-install',
     ];
     const expected: Config = {
       mode: 'automatic',
       csvFile: 'out.csv',
-      savePath: 'out.json',
+      jsonFile: 'out.json',
+      legacyJsonFile: '',
       forceCleanNpmInstall: true,
 
       sampleSize: 50,
