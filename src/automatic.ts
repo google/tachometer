@@ -15,7 +15,7 @@ import * as webdriver from 'selenium-webdriver';
 import ProgressBar = require('progress');
 import ansi = require('ansi-escape-sequences');
 
-import {makeSession} from './session';
+import {jsonOutput, legacyJsonOutput} from './json-output';
 import {browserSignature, makeDriver, openAndSwitchToNewTab, pollForGlobalResult, pollForFirstContentfulPaint} from './browser';
 import {BenchmarkResult, BenchmarkSpec} from './types';
 import {formatCsv} from './csv';
@@ -254,9 +254,15 @@ export async function automaticMode(
     console.log('Consider a longer --timeout or different --horizon');
   }
 
-  if (config.savePath) {
-    const session = await makeSession(withDifferences.map((s) => s.result));
-    await fsExtra.writeJSON(config.savePath, session);
+  if (config.jsonFile) {
+    const json = await jsonOutput(withDifferences);
+    await fsExtra.writeJSON(config.jsonFile, json, {spaces: 2});
+  }
+
+  // TOOD(aomarks) Remove this in next major version.
+  if (config.legacyJsonFile) {
+    const json = await legacyJsonOutput(withDifferences.map((s) => s.result));
+    await fsExtra.writeJSON(config.legacyJsonFile, json);
   }
 
   if (config.csvFile) {

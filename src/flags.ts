@@ -114,15 +114,22 @@ export const optDefs: commandLineUsage.OptionDefinition[] = [
     defaultValue: false,
   },
   {
+    name: 'json-file',
+    description: 'Save benchmark results to this JSON file.',
+    type: String,
+    defaultValue: '',
+  },
+  {
     name: 'save',
-    description: 'Save benchmark JSON data to this file',
+    description: 'Deprecated. Use --json-file instead. ' +
+        'Save benchmark JSON data to this file',
     alias: 's',
     type: String,
     defaultValue: '',
   },
   {
     name: 'csv-file',
-    description: 'Save results to this CSV file',
+    description: 'Save benchmark results to this CSV file.',
     type: String,
     defaultValue: '',
   },
@@ -204,6 +211,7 @@ export interface Opts {
   'window-size': string;
   'force-clean-npm-install': boolean;
   'csv-file': string;
+  'json-file': string;
 
   // Extra arguments not associated with a flag are put here. These are our
   // benchmark names/URLs.

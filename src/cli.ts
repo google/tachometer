@@ -114,6 +114,12 @@ $ tach http://example.com
 
   const config = await makeConfig(opts);
 
+  if (config.legacyJsonFile) {
+    console.log(
+        `Please use --json-file instead of --save. ` +
+        `--save will be removed in the next major version.`);
+  }
+
   const plans = await makeServerPlans(
       config.root, opts['npm-install-dir'], config.benchmarks);
 

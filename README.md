@@ -525,4 +525,5 @@ Flag                    -  | Default     | Description
 `--remote-accessible-host` | matches `--host` | When using a browser over a remote WebDriver connection, the URL that those browsers should use to access the local tachometer server ([details](#remote-control))
 `--npm-install-dir`        | system temp dir | Where to install custom package versions. ([details](#swap-npm-dependencies))
 `--force-clean-npm-install`| `false`     | Always do a from-scratch NPM install when using custom package versions. ([details](#swap-npm-dependencies))
-`--csv-file`               | *none*      | Save results to this CSV file ([details](#csv-file))
+`--csv-file`               | *none*      | Save results to this CSV file.
+`--json-file`              | *none*      | Save results to this JSON file.

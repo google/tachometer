@@ -86,32 +86,3 @@ export interface BenchmarkResult {
   userAgent: string;
   bytesSent: number;
 }
-
-export interface BenchmarkSession {
-  benchmarks: BenchmarkResult[];
-  datetime: string;  // YYYY-MM-DDTHH:mm:ss.sssZ
-  system: {
-    cpu: {
-      manufacturer: string,
-      model: string,
-      family: string,
-      speed: string,
-      cores: number,
-    };
-    load: {
-      average: number,
-      current: number,
-    };
-    battery: {
-      hasBattery: boolean,
-      connected: boolean,
-    };
-    memory: {
-      total: number,
-      free: number,
-      used: number,
-      active: number,
-      available: number,
-    };
-  };
-}
