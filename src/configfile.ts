@@ -177,6 +177,23 @@ interface ChromeConfig extends BrowserConfigBase {
    * Whether to launch the headless (no GUI) version of this browser.
    */
   headless?: boolean;
+
+  /**
+   * Path to the binary to use when launching this browser, instead of the
+   * default one.
+   */
+  binary?: string;
+
+  /**
+   * Additional command-line arguments to pass when launching the browser.
+   */
+  addArguments?: string[];
+
+  /**
+   * Command-line arguments that WebDriver normally adds by default when
+   * launching the browser, which you would like to omit.
+   */
+  removeArguments?: string[];
 }
 
 interface FirefoxConfig extends BrowserConfigBase {
@@ -186,6 +203,17 @@ interface FirefoxConfig extends BrowserConfigBase {
    * Whether to launch the headless (no GUI) version of this browser.
    */
   headless?: boolean;
+
+  /**
+   * Path to the binary to use when launching this browser, instead of the
+   * default one.
+   */
+  binary?: string;
+
+  /**
+   * Additional command-line arguments to pass when launching the browser.
+   */
+  addArguments?: string[];
 }
 
 interface SafariConfig extends BrowserConfigBase {
@@ -322,6 +350,15 @@ function parseBrowserObject(config: BrowserConfigs): BrowserConfig {
   };
   if (config.remoteUrl) {
     parsed.remoteUrl = config.remoteUrl;
+  }
+  if ('binary' in config && config.binary) {
+    parsed.binary = config.binary;
+  }
+  if ('addArguments' in config && config.addArguments) {
+    parsed.addArguments = config.addArguments;
+  }
+  if ('removeArguments' in config && config.removeArguments) {
+    parsed.removeArguments = config.removeArguments;
   }
   return parsed;
 }

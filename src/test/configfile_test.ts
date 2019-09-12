@@ -228,6 +228,60 @@ suite('config', () => {
       assert.deepEqual(actual, expected);
     });
 
+    test('binary path and arguments', async () => {
+      const config = {
+        benchmarks: [
+          {
+            url: 'http://example.com?foo=bar',
+            browser: {
+              name: 'chrome',
+              binary: '/my/special/chrome',
+              addArguments: [
+                'be-good',
+              ],
+              removeArguments: [
+                'be-bad',
+              ],
+            }
+          },
+        ],
+      };
+      const expected: Partial<Config> = {
+        root: '.',
+        sampleSize: undefined,
+        timeout: undefined,
+        horizons: undefined,
+        resolveBareModules: undefined,
+        benchmarks: [
+          {
+            name: 'http://example.com?foo=bar',
+            url: {
+              kind: 'remote',
+              url: 'http://example.com?foo=bar',
+            },
+            measurement: 'fcp',
+            browser: {
+              name: 'chrome',
+              headless: false,
+              windowSize: {
+                width: defaults.windowWidth,
+                height: defaults.windowHeight,
+              },
+              binary: '/my/special/chrome',
+              addArguments: [
+                'be-good',
+              ],
+              removeArguments: [
+                'be-bad',
+              ],
+            }
+          },
+        ],
+      };
+      const actual = await parseConfigFile(config);
+      assert.deepEqual(actual, expected);
+    });
+
     suite('errors', () => {
       test('invalid top-level type', async () => {
         const config = 42;
