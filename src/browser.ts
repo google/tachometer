@@ -144,7 +144,6 @@ export async function makeDriver(config: BrowserConfig):
   builder.forBrowser(webdriverName);
   builder.setChromeOptions(chromeOpts(config));
   builder.setFirefoxOptions(firefoxOpts(config));
-  // builder.setSafari(safariOpts(config));
   if (config.remoteUrl !== undefined) {
     builder.usingServer(config.remoteUrl);
   } else if (config.name === 'edge') {
