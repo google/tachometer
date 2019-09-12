@@ -5,7 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](http://semver.org/).
 
-<!-- ## Unreleased -->
+## Unreleased
+
+### Added
+
+-  It is now possible to control the binary location and arguments to the
+   browser by using the following settings in a `browser` section of the JSON
+   config file:
+   - `binary` (Chrome and Firefox) specifies a custom path to the browser
+     binary.
+   - `addArguments` (Chrome and Firefox)  specifies additional arguments to pass
+     to the binary.
+   - `removeArguments` (Chrome) specifies arguments to *omit* that WebDriver
+     would usually include by default.
 
 ## [0.4.12] 2019-08-21
 

@@ -5,6 +5,17 @@
         "ChromeConfig": {
             "additionalProperties": false,
             "properties": {
+                "addArguments": {
+                    "description": "Additional command-line arguments to pass when launching the browser.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "binary": {
+                    "description": "Path to the binary to use when launching this browser, instead of the\ndefault one.",
+                    "type": "string"
+                },
                 "headless": {
                     "description": "Whether to launch the headless (no GUI) version of this browser.",
                     "type": "boolean"
@@ -19,6 +30,13 @@
                 "remoteUrl": {
                     "description": "A remote WebDriver server HTTP address to launch the browser from.",
                     "type": "string"
+                },
+                "removeArguments": {
+                    "description": "Command-line arguments that WebDriver normally adds by default when\nlaunching the browser, which you would like to omit.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
                 },
                 "windowSize": {
                     "$ref": "#/definitions/WindowSize",
@@ -133,6 +151,17 @@
         "FirefoxConfig": {
             "additionalProperties": false,
             "properties": {
+                "addArguments": {
+                    "description": "Additional command-line arguments to pass when launching the browser.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "binary": {
+                    "description": "Path to the binary to use when launching this browser, instead of the\ndefault one.",
+                    "type": "string"
+                },
                 "headless": {
                     "description": "Whether to launch the headless (no GUI) version of this browser.",
                     "type": "boolean"

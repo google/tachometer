@@ -329,20 +329,84 @@ safari  | no       | no
 edge    | no       | no
 ie      | no       | no
 
-To launch a headless browser, append `-headless` to the browser name (e.g. `--browser=chrome-headless`).
+### Webdriver Plugins
 
-Tachometer comes with WebDriver plugins for Chrome, Safari, Firefox, and Internet
-Explorer.
+Tachometer comes with WebDriver plugins for Chrome, Safari, Firefox, and
+Internet Explorer.
 
 For Edge, follow the [Microsoft WebDriver
 installation](https://developer.microsoft.com/en-us/microsoft-edge/tools/webdriver/)
 documentation.
 
-If you encounter errors while driving IE, see the
-[Required Configuration](https://github.com/SeleniumHQ/selenium/wiki/InternetExplorerDriver#required-configuration)
-section of the WebDriver IE plugin documentation. In particular, setting
-"Enable Protected Mode" so that it is consistently either enabled or disabled
-across all security zones appears to resolve `NoSuchSessionError` errors.
+If you encounter errors while driving IE, see the [Required
+Configuration](https://github.com/SeleniumHQ/selenium/wiki/InternetExplorerDriver#required-configuration)
+section of the WebDriver IE plugin documentation. In particular, setting "Enable
+Protected Mode" so that it is consistently either enabled or disabled across all
+security zones appears to resolve `NoSuchSessionError` errors.
+
+### Headless
+
+If supported by the browser, you can launch in headless mode by adding
+`"headless": true` to the browser JSON config, or by appending `-headless` to
+the browser name when using the CLI flag (e.g. `--browser=chrome-headless`).
+
+### Binary path and arguments
+
+WebDriver automatically finds the location of the browser binary, and launches
+it with a default set of arguments.
+
+To customize the binary path (Chrome and Firefox only), use the `binary`
+property in the browser JSON config. For example, to launch Chrome Canary from
+its standard location on macOS:
+
+```json
+{
+  "name": "chrome",
+  "binary": "/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary"
+}
+```
+
+To pass additional arguments to the binary (Chrome and Firefox only), use the
+`addArguments` property in the browser JSON config. To remove one of the
+arguments that WebDriver sets by default (Chrome only), use `removeArguments`
+(see example in next section).
+
+### Profiles
+
+It is normally reccommended to use the default behavior whereby a new, empty
+browser profile is created when the browser is launched, so that state from your
+personal profile (cookies, extensions, cache etc.) do not influence benchmark
+results.
+
+However, in some cases it may be useful to use an existing browser profile, for
+example if the webpage you are benchmarking requires being signed into an
+account.
+
+In Chrome, you can use the `user-data-dir` flag to launch the browser using an
+existing profile directory. You may also need to remove the `use-mock-keychain`
+default argument if you encounter authentication problems. You can find out the
+current binary path, profile location, and arguments of a running Chrome session
+by visiting the `chrome://version` URL.
+
+NOTE: If there is an existing Chrome process using the profile, you must
+first terminate it. You also need to close all open tabs, or disable the
+"Continue where you left off" startup setting, because tachometer does not
+expect to find any existing tabs.
+
+For example, using the standard location of the default user profile on macOS
+(note that the final `/Default` path component is *not* included):
+
+```json
+{
+  "name": "chrome",
+  "addArguments": [
+    "user-data-dir=/Users/<username>/Library/Application Support/Google/Chrome"
+  ],
+  "removeArguments": [
+    "use-mock-keychain"
+  ]
+}
+```
 
 ## Remote control
 

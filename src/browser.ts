@@ -57,6 +57,12 @@ export interface BrowserConfig {
   remoteUrl?: string;
   /** Launch the browser window with these dimensions. */
   windowSize: WindowSize;
+  /** Path to custom browser binary. */
+  binary?: string;
+  /** Additional binary arguments. */
+  addArguments?: string[];
+  /** WebDriver default binary arguments to omit. */
+  removeArguments?: string[];
 }
 
 export interface WindowSize {
@@ -138,6 +144,7 @@ export async function makeDriver(config: BrowserConfig):
   builder.forBrowser(webdriverName);
   builder.setChromeOptions(chromeOpts(config));
   builder.setFirefoxOptions(firefoxOpts(config));
+  // builder.setSafari(safariOpts(config));
   if (config.remoteUrl !== undefined) {
     builder.usingServer(config.remoteUrl);
   } else if (config.name === 'edge') {
@@ -160,8 +167,17 @@ export async function makeDriver(config: BrowserConfig):
 
 function chromeOpts(config: BrowserConfig): chrome.Options {
   const opts = new chrome.Options();
+  if (config.binary) {
+    opts.setChromeBinaryPath(config.binary);
+  }
   if (config.headless === true) {
     opts.addArguments('--headless');
+  }
+  if (config.addArguments) {
+    opts.addArguments(...config.addArguments);
+  }
+  if (config.removeArguments) {
+    opts.excludeSwitches(...config.removeArguments);
   }
   const {width, height} = config.windowSize;
   opts.addArguments(`--window-size=${width},${height}`);
@@ -170,6 +186,9 @@ function chromeOpts(config: BrowserConfig): chrome.Options {
 
 function firefoxOpts(config: BrowserConfig): firefox.Options {
   const opts = new firefox.Options();
+  if (config.binary) {
+    opts.setBinary(config.binary);
+  }
   if (config.headless === true) {
     // tslint:disable-next-line:no-any TODO Incorrect types.
     (opts as any).addArguments('-headless');
