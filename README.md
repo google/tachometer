@@ -393,8 +393,7 @@ first terminate it. You also need to close all open tabs, or disable the
 "Continue where you left off" startup setting, because tachometer does not
 expect to find any existing tabs.
 
-For example, using the standard location of the default user profile on macOS
-(note that the final `/Default` path component is *not* included):
+For example, using the standard location of the default user profile on macOS:
 
 ```json
 {
