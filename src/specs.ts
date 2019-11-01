@@ -81,11 +81,15 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
       };
       const measurement =
           opts.measure !== undefined ? opts.measure : defaults.measurement(url);
+      const globalMeasurementExpression =
+        opts.globalMeasurementExpression !== undefined ?
+        opts.globalMeasurementExpression : defaults.globalMeasurementExpression;
       for (const browser of browsers) {
         specs.push({
           name: arg.alias || arg.url,
           browser,
           measurement,
+          globalMeasurementExpression,
           url,
         });
       }
@@ -109,10 +113,14 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
           const measurement = opts.measure !== undefined ?
               opts.measure :
               defaults.measurement(url);
+          const globalMeasurementExpression =
+            opts.globalMeasurementExpression !== undefined ?
+            opts.globalMeasurementExpression : defaults.globalMeasurementExpression;
           specs.push({
             name,
             browser,
             measurement,
+            globalMeasurementExpression,
             url,
           });
         }

@@ -203,6 +203,7 @@ export interface Opts {
   manual: boolean;
   save: string;
   measure: Measurement|undefined;
+  globalMeasurementExpression: string|undefined;
   horizon: string|undefined;
   timeout: number|undefined;
   'github-check': string;

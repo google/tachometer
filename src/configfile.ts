@@ -105,8 +105,16 @@ interface ConfigFileBenchmark {
    *   - callback: bench.start() to bench.stop() (default for fully qualified
    *     URLs.
    *   - fcp: first contentful paint (default for local paths)
+   *   - global: result returned from window.tachometerResult (or custom
+   *       expression set via globalMeasurementExpression)
    */
   measurement?: Measurement;
+
+  /**
+   * Expression to use to retrieve global result.  Defaults to
+   * `window.tachometerResult`.
+   */
+  globalMeasurementExpression?: string;
 
   /**
    * Optional NPM dependency overrides to apply and install. Only supported with
@@ -302,6 +310,9 @@ async function parseBenchmark(benchmark: ConfigFileBenchmark, root: string):
   if (benchmark.measurement !== undefined) {
     spec.measurement = benchmark.measurement;
   }
+  if (benchmark.globalMeasurementExpression !== undefined) {
+    spec.globalMeasurementExpression = benchmark.globalMeasurementExpression;
+  }
 
   const url = benchmark.url;
   if (url !== undefined) {
@@ -381,7 +392,7 @@ function applyExpansions(bench: ConfigFileBenchmark): ConfigFileBenchmark[] {
 
 function applyDefaults(partialSpec: Partial<BenchmarkSpec>): BenchmarkSpec {
   const url = partialSpec.url;
-  let {name, measurement, browser} = partialSpec;
+  let {name, measurement, globalMeasurementExpression, browser} = partialSpec;
   if (url === undefined) {
     // Note we can't validate this with jsonschema, because we only need to
     // ensure we have a URL after recursive expansion; so at any given level
@@ -410,7 +421,10 @@ function applyDefaults(partialSpec: Partial<BenchmarkSpec>): BenchmarkSpec {
   if (measurement === undefined) {
     measurement = defaults.measurement(url);
   }
-  return {name, url, browser, measurement};
+  if (globalMeasurementExpression === undefined) {
+    globalMeasurementExpression = defaults.globalMeasurementExpression;
+  }
+  return {name, url, browser, measurement, globalMeasurementExpression};
 }
 
 export async function writeBackSchemaIfNeeded(

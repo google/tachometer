@@ -255,7 +255,9 @@ export async function pollForFirstContentfulPaint(driver: webdriver.WebDriver):
  * after 10 seconds. Throws if a value was found, but it was not a number, or it
  * was a negative number.
  */
-export async function pollForGlobalResult(driver: webdriver.WebDriver):
+export async function pollForGlobalResult(
+  driver: webdriver.WebDriver,
+  expression: string):
     Promise<number|undefined> {
   // Both here and for FCP above, we could automatically tune the poll time
   // after we get our first result, so that when the script is fast we spend
@@ -263,16 +265,15 @@ export async function pollForGlobalResult(driver: webdriver.WebDriver):
   // less frequently.
   for (let waited = 0; waited <= 10000; waited += 50) {
     await wait(50);
-    const result = await driver.executeScript(
-                       'return window.tachometerResult;') as unknown;
+    const result = await driver.executeScript(`return (${expression});`) as unknown;
     if (result !== undefined && result !== null) {
       if (typeof result !== 'number') {
         throw new Error(
-            `window.tachometerResult was type ` +
+            `'${expression}' was type ` +
             `${typeof result}, expected number.`);
       }
       if (result < 0) {
-        throw new Error(`window.tachometerResult was negative: ${result}`);
+        throw new Error(`'${expression}' was negative: ${result}`);
       }
       return result;
     }
