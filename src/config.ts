@@ -176,9 +176,7 @@ export async function urlFromLocalPath(
 
   const kind = await fileKind(diskPath);
   if (kind === undefined) {
-    const error = new Error(`No such file or directory: ${diskPath}`);
-    console.log(error.stack);
-    throw error;
+    throw new Error(`No such file or directory: ${diskPath}`);
   }
 
   // TODO Test on Windows.
