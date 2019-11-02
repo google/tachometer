@@ -256,16 +256,16 @@ export async function pollForFirstContentfulPaint(driver: webdriver.WebDriver):
  * was a negative number.
  */
 export async function pollForGlobalResult(
-  driver: webdriver.WebDriver,
-  expression: string):
-    Promise<number|undefined> {
+    driver: webdriver.WebDriver,
+    expression: string): Promise<number|undefined> {
   // Both here and for FCP above, we could automatically tune the poll time
   // after we get our first result, so that when the script is fast we spend
   // less time waiting, and so that when the script is slow we interfere it
   // less frequently.
   for (let waited = 0; waited <= 10000; waited += 50) {
     await wait(50);
-    const result = await driver.executeScript(`return (${expression});`) as unknown;
+    const result =
+        await driver.executeScript(`return (${expression});`) as unknown;
     if (result !== undefined && result !== null) {
       if (typeof result !== 'number') {
         throw new Error(

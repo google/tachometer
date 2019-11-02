@@ -310,7 +310,8 @@ async function parseBenchmark(benchmark: ConfigFileBenchmark, root: string):
   if (benchmark.measurement !== undefined) {
     spec.measurement = benchmark.measurement;
   }
-  if (benchmark.globalMeasurementExpression !== undefined) {
+  if (spec.measurement === 'global' &&
+      benchmark.globalMeasurementExpression !== undefined) {
     spec.globalMeasurementExpression = benchmark.globalMeasurementExpression;
   }
 
@@ -392,7 +393,7 @@ function applyExpansions(bench: ConfigFileBenchmark): ConfigFileBenchmark[] {
 
 function applyDefaults(partialSpec: Partial<BenchmarkSpec>): BenchmarkSpec {
   const url = partialSpec.url;
-  let {name, measurement, globalMeasurementExpression, browser} = partialSpec;
+  let {name, measurement, browser} = partialSpec;
   if (url === undefined) {
     // Note we can't validate this with jsonschema, because we only need to
     // ensure we have a URL after recursive expansion; so at any given level
@@ -421,10 +422,12 @@ function applyDefaults(partialSpec: Partial<BenchmarkSpec>): BenchmarkSpec {
   if (measurement === undefined) {
     measurement = defaults.measurement(url);
   }
-  if (globalMeasurementExpression === undefined) {
-    globalMeasurementExpression = defaults.globalMeasurementExpression;
+  const spec: BenchmarkSpec = {name, url, browser, measurement};
+  if (measurement === 'global' &&
+      partialSpec.globalMeasurementExpression === undefined) {
+    spec.globalMeasurementExpression = defaults.globalMeasurementExpression;
   }
-  return {name, url, browser, measurement, globalMeasurementExpression};
+  return spec;
 }
 
 export async function writeBackSchemaIfNeeded(

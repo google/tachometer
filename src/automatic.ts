@@ -104,7 +104,8 @@ export async function automaticMode(
       if (spec.measurement === 'fcp') {
         millis = await pollForFirstContentfulPaint(driver);
       } else if (spec.measurement === 'global') {
-        millis = await pollForGlobalResult(driver, spec.globalMeasurementExpression || '');
+        millis = await pollForGlobalResult(
+            driver, spec.globalMeasurementExpression || '');
       } else {  // bench.start() and bench.stop() callback
         if (server === undefined) {
           throw new Error('Internal error: no server for spec');
@@ -131,7 +132,8 @@ export async function automaticMode(
           `\n\nFailed ${attempt}/${maxAttempts} times ` +
           `to get a ${spec.measurement} measurement ` +
           (spec.measurement === 'global' ?
-            `(from '${spec.globalMeasurementExpression}') ` : '') +
+               `(from '${spec.globalMeasurementExpression}') ` :
+               '') +
           `in ${spec.browser.name} from ${url}. Retrying.`);
     }
 
@@ -141,7 +143,8 @@ export async function automaticMode(
           `\n\nFailed ${maxAttempts}/${maxAttempts} times ` +
           `to get a ${spec.measurement} measurement ` +
           (spec.measurement === 'global' ?
-            `(from '${spec.globalMeasurementExpression}') ` : '') +
+               `(from '${spec.globalMeasurementExpression}') ` :
+               '') +
           `in ${spec.browser.name} from ${url}. Retrying.`);
     }
 

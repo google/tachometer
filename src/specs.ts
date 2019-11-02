@@ -81,17 +81,22 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
       };
       const measurement =
           opts.measure !== undefined ? opts.measure : defaults.measurement(url);
-      const globalMeasurementExpression =
-        opts.globalMeasurementExpression !== undefined ?
-        opts.globalMeasurementExpression : defaults.globalMeasurementExpression;
+      const globalMeasurementExpression = measurement === 'global' ?
+          (opts['global-measurement-expression'] !== undefined ?
+               opts['global-measurement-expression'] :
+               defaults.globalMeasurementExpression) :
+          undefined;
       for (const browser of browsers) {
-        specs.push({
+        const spec: BenchmarkSpec = {
           name: arg.alias || arg.url,
           browser,
           measurement,
-          globalMeasurementExpression,
           url,
-        });
+        };
+        if (globalMeasurementExpression) {
+          spec.globalMeasurementExpression = globalMeasurementExpression;
+        }
+        specs.push(spec);
       }
 
     } else {
@@ -113,16 +118,21 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
           const measurement = opts.measure !== undefined ?
               opts.measure :
               defaults.measurement(url);
-          const globalMeasurementExpression =
-            opts.globalMeasurementExpression !== undefined ?
-            opts.globalMeasurementExpression : defaults.globalMeasurementExpression;
-          specs.push({
+          const globalMeasurementExpression = measurement === 'global' ?
+              (opts['global-measurement-expression'] !== undefined ?
+                   opts['global-measurement-expression'] :
+                   defaults.globalMeasurementExpression) :
+              undefined;
+          const spec: BenchmarkSpec = {
             name,
             browser,
             measurement,
-            globalMeasurementExpression,
             url,
-          });
+          };
+          if (globalMeasurementExpression) {
+            spec.globalMeasurementExpression = globalMeasurementExpression;
+          }
+          specs.push(spec);
         }
       }
     }
