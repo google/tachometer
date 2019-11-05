@@ -73,9 +73,7 @@ suite('e2e', function() {
                   ]
                       .concat(
                           customResult ?
-                              [
-                                `--global-measurement-expression=window.customResult`
-                              ] :
+                              [`--measurement-expression=window.customResult`] :
                               [])
                       .concat([
                         path.join(testData, 'random-global.html') +

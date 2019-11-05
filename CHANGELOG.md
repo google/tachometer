@@ -9,7 +9,7 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 
--   Added a `globalMeasurementExpression` option for overriding the default
+-   Added a `measurementExpression` option for overriding the default
     global measurement of `window.tachometerResult` to an arbitrary expression.
 
 ## [0.4.13] 2019-09-12

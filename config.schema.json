@@ -82,17 +82,17 @@
                     },
                     "type": "array"
                 },
-                "globalMeasurementExpression": {
-                    "description": "Expression to use to retrieve global result.  Defaults to\n`window.tachometerResult`.",
-                    "type": "string"
-                },
                 "measurement": {
-                    "description": "Which time interval to measure.\n\nOptions:\n   - callback: bench.start() to bench.stop() (default for fully qualified\n     URLs.\n   - fcp: first contentful paint (default for local paths)\n   - global: result returned from window.tachometerResult (or custom\n       expression set via globalMeasurementExpression)",
+                    "description": "Which time interval to measure.\n\nOptions:\n   - callback: bench.start() to bench.stop() (default for fully qualified\n     URLs.\n   - fcp: first contentful paint (default for local paths)\n   - global: result returned from window.tachometerResult (or custom\n       expression set via measurementExpression)",
                     "enum": [
                         "callback",
                         "fcp",
                         "global"
                     ],
+                    "type": "string"
+                },
+                "measurementExpression": {
+                    "description": "Expression to use to retrieve global result.  Defaults to\n`window.tachometerResult`.",
                     "type": "string"
                 },
                 "name": {

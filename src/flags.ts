@@ -150,12 +150,12 @@ export const optDefs: commandLineUsage.OptionDefinition[] = [
     },
   },
   {
-    name: 'global-measurement-expression',
+    name: 'measurement-expression',
     description:
         'Javascript expression to poll from page to retrieve global\n' +
         'result. Only valid when --measure=global.',
     type: String,
-    defaultValue: defaults.globalMeasurementExpression
+    defaultValue: defaults.measurementExpression
   },
   {
     name: 'horizon',
@@ -211,7 +211,7 @@ export interface Opts {
   manual: boolean;
   save: string;
   measure: Measurement|undefined;
-  'global-measurement-expression': string|undefined;
+  'measurement-expression': string|undefined;
   horizon: string|undefined;
   timeout: number|undefined;
   'github-check': string;

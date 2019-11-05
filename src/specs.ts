@@ -81,10 +81,10 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
       };
       const measurement =
           opts.measure !== undefined ? opts.measure : defaults.measurement(url);
-      const globalMeasurementExpression = measurement === 'global' ?
-          (opts['global-measurement-expression'] !== undefined ?
-               opts['global-measurement-expression'] :
-               defaults.globalMeasurementExpression) :
+      const measurementExpression = measurement === 'global' ?
+          (opts['measurement-expression'] !== undefined ?
+               opts['measurement-expression'] :
+               defaults.measurementExpression) :
           undefined;
       for (const browser of browsers) {
         const spec: BenchmarkSpec = {
@@ -93,8 +93,8 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
           measurement,
           url,
         };
-        if (globalMeasurementExpression) {
-          spec.globalMeasurementExpression = globalMeasurementExpression;
+        if (measurementExpression) {
+          spec.measurementExpression = measurementExpression;
         }
         specs.push(spec);
       }
@@ -118,10 +118,10 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
           const measurement = opts.measure !== undefined ?
               opts.measure :
               defaults.measurement(url);
-          const globalMeasurementExpression = measurement === 'global' ?
-              (opts['global-measurement-expression'] !== undefined ?
-                   opts['global-measurement-expression'] :
-                   defaults.globalMeasurementExpression) :
+          const measurementExpression = measurement === 'global' ?
+              (opts['measurement-expression'] !== undefined ?
+                   opts['measurement-expression'] :
+                   defaults.measurementExpression) :
               undefined;
           const spec: BenchmarkSpec = {
             name,
@@ -129,8 +129,8 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
             measurement,
             url,
           };
-          if (globalMeasurementExpression) {
-            spec.globalMeasurementExpression = globalMeasurementExpression;
+          if (measurementExpression) {
+            spec.measurementExpression = measurementExpression;
           }
           specs.push(spec);
         }
