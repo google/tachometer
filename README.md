@@ -59,8 +59,8 @@ confidence in them.
 ## Features
 
 - Measure your own [specific timings](#callback) with the `/bench.js` module, by
-  setting the [window.tachometerResult](#global-result) global, or measure
-  [First Contentful Paint](#first-contentful-paint-fcp) on any local or remote
+  setting the [window.tachometerResult](#global-result) global (or by polling an
+  arbitrary JS expression), or measure [First Contentful Paint](#first-contentful-paint-fcp) on any local or remote
   URL.
 
 
@@ -83,7 +83,7 @@ confidence in them.
 
 ## Measurement modes
 
-Tachometer currently supports two kinds of time interval measurements,
+Tachometer currently supports three kinds of time interval measurements,
 controlled with the `--measure` flag.
 
 #### Callback
@@ -109,6 +109,12 @@ window.tachometerResult = performance.now() - start;
 This mode is appropriate when you need full control of the measured time, or
 when you can't use callback mode because you are not using tachometer's built-in
 server.
+
+Alternatively, to poll an arbitrary JS expression in `global` measurement mode
+(rather than `window.tachometerResult`), set `--measurement-expression` to the
+JS expression to poll.  This option is useful for scenarios where you cannot
+easily modify the code under test to assign to `window.tachometerResult` but
+are otherwise able to extract a measurement from the page using JavaScript.
 
 #### First Contentful Paint (FCP)
 
@@ -585,6 +591,7 @@ Flag                    -  | Default     | Description
 `--horizon`                | `10%`       | The degrees of difference to try and resolve when auto-sampling ("N%" or "Nms", comma-delimited) ([details](#auto-sampling))
 `--timeout`                | `3`         | The maximum number of minutes to spend auto-sampling ([details](#auto-sampling))
 `--measure`                | `callback`  | Which time interval to measure (`callback`, `global`, `fcp`) ([details](#measurement-modes))
+`--measurement-expression` | `window.tachometerResult`  | JS expression to poll for on page to retrieve measurement result when `measure` setting is set to `global`
 `--remote-accessible-host` | matches `--host` | When using a browser over a remote WebDriver connection, the URL that those browsers should use to access the local tachometer server ([details](#remote-control))
 `--npm-install-dir`        | system temp dir | Where to install custom package versions. ([details](#swap-npm-dependencies))
 `--force-clean-npm-install`| `false`     | Always do a from-scratch NPM install when using custom package versions. ([details](#swap-npm-dependencies))

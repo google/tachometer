@@ -14,7 +14,13 @@ the range determined by the "min" and "max" URL search parameters.
       const params = new URL(document.location).searchParams;
       const min = Number(params.get('min'));
       const max = Number(params.get('max'));
-      window.tachometerResult = Math.random() * (max - min) + min;
+      const customResult = params.has('customResult');
+      const result = Math.random() * (max - min) + min;
+      if (customResult) {
+        window.customResult = result;
+      } else {
+        window.tachometerResult = result;
+      }
     </script>
   </body>
 </html>

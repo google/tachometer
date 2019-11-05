@@ -51,7 +51,7 @@
     "@types/ua-parser-js": "^0.7.32",
     "ansi-escape-sequences": "^4.0.1",
     "chai-as-promised": "^7.1.1",
-    "chromedriver": ">75.0.0",
+    "chromedriver": "^78.0.1",
     "command-line-args": "^5.0.2",
     "command-line-usage": "^6.0.1",
     "csv-stringify": "^5.3.0",

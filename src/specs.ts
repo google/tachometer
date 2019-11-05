@@ -81,13 +81,22 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
       };
       const measurement =
           opts.measure !== undefined ? opts.measure : defaults.measurement(url);
+      const measurementExpression = measurement === 'global' ?
+          (opts['measurement-expression'] !== undefined ?
+               opts['measurement-expression'] :
+               defaults.measurementExpression) :
+          undefined;
       for (const browser of browsers) {
-        specs.push({
+        const spec: BenchmarkSpec = {
           name: arg.alias || arg.url,
           browser,
           measurement,
           url,
-        });
+        };
+        if (measurementExpression) {
+          spec.measurementExpression = measurementExpression;
+        }
+        specs.push(spec);
       }
 
     } else {
@@ -109,12 +118,21 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
           const measurement = opts.measure !== undefined ?
               opts.measure :
               defaults.measurement(url);
-          specs.push({
+          const measurementExpression = measurement === 'global' ?
+              (opts['measurement-expression'] !== undefined ?
+                   opts['measurement-expression'] :
+                   defaults.measurementExpression) :
+              undefined;
+          const spec: BenchmarkSpec = {
             name,
             browser,
             measurement,
             url,
-          });
+          };
+          if (measurementExpression) {
+            spec.measurementExpression = measurementExpression;
+          }
+          specs.push(spec);
         }
       }
     }

@@ -105,8 +105,16 @@ interface ConfigFileBenchmark {
    *   - callback: bench.start() to bench.stop() (default for fully qualified
    *     URLs.
    *   - fcp: first contentful paint (default for local paths)
+   *   - global: result returned from window.tachometerResult (or custom
+   *       expression set via measurementExpression)
    */
   measurement?: Measurement;
+
+  /**
+   * Expression to use to retrieve global result.  Defaults to
+   * `window.tachometerResult`.
+   */
+  measurementExpression?: string;
 
   /**
    * Optional NPM dependency overrides to apply and install. Only supported with
@@ -302,6 +310,10 @@ async function parseBenchmark(benchmark: ConfigFileBenchmark, root: string):
   if (benchmark.measurement !== undefined) {
     spec.measurement = benchmark.measurement;
   }
+  if (spec.measurement === 'global' &&
+      benchmark.measurementExpression !== undefined) {
+    spec.measurementExpression = benchmark.measurementExpression;
+  }
 
   const url = benchmark.url;
   if (url !== undefined) {
@@ -410,7 +422,12 @@ function applyDefaults(partialSpec: Partial<BenchmarkSpec>): BenchmarkSpec {
   if (measurement === undefined) {
     measurement = defaults.measurement(url);
   }
-  return {name, url, browser, measurement};
+  const spec: BenchmarkSpec = {name, url, browser, measurement};
+  if (measurement === 'global' &&
+      partialSpec.measurementExpression === undefined) {
+    spec.measurementExpression = defaults.measurementExpression;
+  }
+  return spec;
 }
 
 export async function writeBackSchemaIfNeeded(

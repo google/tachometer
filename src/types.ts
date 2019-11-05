@@ -56,6 +56,7 @@ export const measurements = new Set<Measurement>(['callback', 'fcp', 'global']);
 export interface BenchmarkSpec {
   url: LocalUrl|RemoteUrl;
   measurement: Measurement;
+  measurementExpression?: string;
   name: string;
   browser: BrowserConfig;
 }
