@@ -423,9 +423,12 @@ function applyDefaults(partialSpec: Partial<BenchmarkSpec>): BenchmarkSpec {
     measurement = defaults.measurement(url);
   }
   const spec: BenchmarkSpec = {name, url, browser, measurement};
-  if (measurement === 'global' &&
-      partialSpec.measurementExpression === undefined) {
-    spec.measurementExpression = defaults.measurementExpression;
+  if (measurement === 'global') {
+    if (partialSpec.measurementExpression === undefined) {
+      spec.measurementExpression = defaults.measurementExpression;
+    } else {
+      spec.measurementExpression = partialSpec.measurementExpression;
+    }
   }
   return spec;
 }
