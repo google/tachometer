@@ -202,6 +202,12 @@ interface ChromeConfig extends BrowserConfigBase {
    * launching the browser, which you would like to omit.
    */
   removeArguments?: string[];
+
+  /**
+   * Optional CPU Throttling rate. (1 is no throttle, 2 is 2x slowdown,
+   * etc). This is currently only supported in headless mode.
+   */
+  experimentalCPUThrottlingRate?: number;
 }
 
 interface FirefoxConfig extends BrowserConfigBase {
@@ -360,6 +366,10 @@ function parseBrowserObject(config: BrowserConfigs): BrowserConfig {
       height: defaultWindowHeight,
     },
   };
+
+  if ('experimentalCPUThrottlingRate' in config) {
+    parsed.experimentalCPUThrottlingRate = config.experimentalCPUThrottlingRate;
+  }
   if (config.remoteUrl) {
     parsed.remoteUrl = config.remoteUrl;
   }
