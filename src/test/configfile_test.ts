@@ -77,7 +77,7 @@ suite('config', () => {
             browser: {
               ...defaultBrowser,
               name: 'chrome',
-              experimentalCPUThrottlingRate: 6,
+              cpuThrottlingRate: 6,
             },
             measurement: 'fcp',
             url: 'http://example.com?foo=bar',
@@ -128,7 +128,7 @@ suite('config', () => {
             browser: {
               ...defaultBrowser,
               name: 'chrome',
-              experimentalCPUThrottlingRate: 6,
+              cpuThrottlingRate: 6,
             },
             measurement: 'fcp',
             url: {

@@ -207,7 +207,7 @@ interface ChromeConfig extends BrowserConfigBase {
    * Optional CPU Throttling rate. (1 is no throttle, 2 is 2x slowdown,
    * etc). This is currently only supported in headless mode.
    */
-  experimentalCPUThrottlingRate?: number;
+  cpuThrottlingRate?: number;
 }
 
 interface FirefoxConfig extends BrowserConfigBase {
@@ -367,8 +367,8 @@ function parseBrowserObject(config: BrowserConfigs): BrowserConfig {
     },
   };
 
-  if ('experimentalCPUThrottlingRate' in config) {
-    parsed.experimentalCPUThrottlingRate = config.experimentalCPUThrottlingRate;
+  if ('cpuThrottlingRate' in config) {
+    parsed.cpuThrottlingRate = config.cpuThrottlingRate;
   }
   if (config.remoteUrl) {
     parsed.remoteUrl = config.remoteUrl;

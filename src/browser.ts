@@ -63,11 +63,8 @@ export interface BrowserConfig {
   addArguments?: string[];
   /** WebDriver default binary arguments to omit. */
   removeArguments?: string[];
-  /**
-   * Experimental CPU Throttling rate. (1 is no throttle, 2 is 2x slowdown,
-   * etc).
-   */
-  experimentalCPUThrottlingRate?: number;
+  /** CPU Throttling rate. (1 is no throttle, 2 is 2x slowdown, etc). */
+  cpuThrottlingRate?: number;
 }
 
 export interface WindowSize {
@@ -238,11 +235,10 @@ export async function openAndSwitchToNewTab(
   const driverWithSendDevToolsCommand =
       (driver as {} as WithSendDevToolsCommand);
   if (driverWithSendDevToolsCommand.sendDevToolsCommand &&
-      config.experimentalCPUThrottlingRate !== undefined) {
+      config.cpuThrottlingRate !== undefined) {
     // Enables CPU throttling to emulate slow CPUs.
     await driverWithSendDevToolsCommand.sendDevToolsCommand(
-        'Emulation.setCPUThrottlingRate',
-        {rate: config.experimentalCPUThrottlingRate});
+        'Emulation.setCPUThrottlingRate', {rate: config.cpuThrottlingRate});
   }
 }
 

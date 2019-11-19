@@ -16,7 +16,7 @@
                     "description": "Path to the binary to use when launching this browser, instead of the\ndefault one.",
                     "type": "string"
                 },
-                "experimentalCPUThrottlingRate": {
+                "cpuThrottlingRate": {
                     "description": "Optional CPU Throttling rate. (1 is no throttle, 2 is 2x slowdown,\netc). This is currently only supported in headless mode.",
                     "type": "number"
                 },
