@@ -72,6 +72,16 @@ suite('config', () => {
               },
             },
           },
+          {
+            name: 'local-or-remote',
+            browser: {
+              ...defaultBrowser,
+              name: 'chrome',
+              cpuThrottlingRate: 6,
+            },
+            measurement: 'fcp',
+            url: 'http://example.com?foo=bar',
+          },
         ],
       };
       const expected: Partial<Config> = {
@@ -111,6 +121,19 @@ suite('config', () => {
                   'bar': '=1.2.3',
                 },
               },
+            },
+          },
+          {
+            name: 'local-or-remote',
+            browser: {
+              ...defaultBrowser,
+              name: 'chrome',
+              cpuThrottlingRate: 6,
+            },
+            measurement: 'fcp',
+            url: {
+              kind: 'remote',
+              url: 'http://example.com?foo=bar',
             },
           },
         ],

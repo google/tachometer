@@ -63,6 +63,8 @@ export interface BrowserConfig {
   addArguments?: string[];
   /** WebDriver default binary arguments to omit. */
   removeArguments?: string[];
+  /** CPU Throttling rate. (1 is no throttle, 2 is 2x slowdown, etc). */
+  cpuThrottlingRate?: number;
 }
 
 export interface WindowSize {
@@ -225,6 +227,18 @@ export async function openAndSwitchToNewTab(
     // For IE we get a new window instead of a new tab, so we need to resize
     // every time.
     await driver.manage().window().setRect(config.windowSize);
+  }
+  type WithSendDevToolsCommand = {
+    sendDevToolsCommand?: (command: string, config: {}) => Promise<void>,
+  };
+
+  const driverWithSendDevToolsCommand =
+      (driver as {} as WithSendDevToolsCommand);
+  if (driverWithSendDevToolsCommand.sendDevToolsCommand &&
+      config.cpuThrottlingRate !== undefined) {
+    // Enables CPU throttling to emulate slow CPUs.
+    await driverWithSendDevToolsCommand.sendDevToolsCommand(
+        'Emulation.setCPUThrottlingRate', {rate: config.cpuThrottlingRate});
   }
 }
 
