@@ -7,12 +7,21 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+### Added
+
+-   Added `cpuThrottlingRate` option to `browser` JSON config (Chrome only),
+    which emulates slow CPUs by the given factor (1 for no throttle, 2 for
+    2x slowdown, etc).
+
 ### Fixed
 
 -   Improved reliability of measurements by opening new tabs with
     `noopener=yes`. This change appears to reduce or eliminate shared code
     caching across benchmarks, removing effects such as the order of
     benchmarks reliably producing different results.
+
+-   Fixed bug where the `measurementExpression` setting was not being
+    respected when passed via the config file (vs the command line flag).
 
 ## [0.4.14] 2019-11-05
 
