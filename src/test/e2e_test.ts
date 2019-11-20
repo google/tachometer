@@ -30,8 +30,10 @@ const browsers = (process.env.TACHOMETER_E2E_TEST_BROWSERS ||
 const hideOutput = (test: () => Promise<void>) => async () => {
   const realStdoutWrite = process.stdout.write;
   const realStderrWrite = process.stderr.write;
-  process.stdout.write = () => true;
-  process.stderr.write = () => true;
+  if (!process.env.TACHOMETER_E2E_TEST_SHOW_OUTPUT) {
+    process.stdout.write = () => true;
+    process.stderr.write = () => true;
+  }
   try {
     await test();
   } finally {
@@ -132,7 +134,7 @@ suite('e2e', function() {
             assert.isAbove(ciAverage(diffBA.relative), 0);
           }));
 
-      // Only Chrome supports FCP.
+      // Only Chrome supports FCP and CPU throttling.
       if (browser.startsWith('chrome')) {
         test('fcp', hideOutput(async function() {
                const delayA = 20;
@@ -163,6 +165,21 @@ suite('e2e', function() {
                assert.isAbove(ciAverage(diffBA.absolute), 0);
                assert.isBelow(ciAverage(diffAB.relative), 0);
                assert.isAbove(ciAverage(diffBA.relative), 0);
+             }));
+
+        test('cpu throttling rate', hideOutput(async function() {
+               const argv = [
+                 `--config=${path.join(testData, 'cpu-throttling-rate.json')}`,
+               ];
+               const actual = await main(argv);
+               assert.isDefined(actual);
+               assert.lengthOf(actual!, 3);
+               const [x1, x2, x4] = actual!;
+               // The CPU throttling factors don't precisely result in the same
+               // measured slowdown (though roughly close), so let's just check
+               // that the rankings we expect hold.
+               assert.isAbove(x2.stats.mean, x1.stats.mean);
+               assert.isAbove(x4.stats.mean, x2.stats.mean);
              }));
       }
 
