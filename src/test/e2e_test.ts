@@ -89,7 +89,7 @@ suite('e2e', function() {
                  ciAverage(diffBA.relative), (avgB - avgA) / avgA, 0.1);
            }));
 
-      test('measurement-expression', hideOutput(async function() {
+      test('measurement expression', hideOutput(async function() {
              const avgA = 1;
              const minA = avgA - 0.1;
              const maxA = avgA + 0.1;
@@ -126,6 +126,20 @@ suite('e2e', function() {
              assert.closeTo(
                  ciAverage(diffBA.relative), (avgB - avgA) / avgA, 0.1);
            }));
+
+      test(
+          'measurement expression via config file',
+          hideOutput(async function() {
+            const argv = [
+              `--config=${path.join(testData, 'measurement-expression.json')}`,
+            ];
+            const actual = await main(argv);
+            assert.isDefined(actual);
+            assert.lengthOf(actual!, 2);
+            const [a, b] = actual!;
+            assert.equal(a.stats.mean, 2);
+            assert.equal(b.stats.mean, 4);
+          }));
 
       test(
           'bench.start/stop', hideOutput(async function() {
