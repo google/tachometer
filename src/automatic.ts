@@ -105,7 +105,7 @@ export async function automaticMode(
         millis = await pollForFirstContentfulPaint(driver);
       } else if (spec.measurement === 'global') {
         millis =
-            await pollForGlobalResult(driver, spec.measurementExpression || '');
+            await pollForGlobalResult(driver, spec.measurementExpression || 'undefined');
       } else {  // bench.start() and bench.stop() callback
         if (server === undefined) {
           throw new Error('Internal error: no server for spec');
