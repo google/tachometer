@@ -5,7 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](http://semver.org/).
 
-<!-- ## Unreleased -->
+## Unreleased
+
+### Fixed
+
+-   Improved reliability of measurements by opening new tabs with
+    `noopener=yes`. This change appears to reduce or eliminate shared code
+    caching across benchmarks, removing effects such as the order of
+    benchmarks reliably producing different results.
 
 ## [0.4.14] 2019-11-05
 

@@ -216,7 +216,13 @@ export async function openAndSwitchToNewTab(
   if (tabsBefore.length !== 1) {
     throw new Error(`Expected only 1 open tab, got ${tabsBefore.length}`);
   }
-  await driver.executeScript('window.open();');
+  // "noopener=yes" prevents the new window from being able to access the
+  // first window. We set that here because in Chrome (and perhaps other
+  // browsers) we see a very significant improvement in the reliability of
+  // measurements, in particular it appears to eliminate interference between
+  // code across runs. It is likely this flag increases process isolation in a
+  // way that prevents code caching across tabs.
+  await driver.executeScript('window.open("", "", "noopener=yes");');
   const tabsAfter = await driver.getAllWindowHandles();
   const newTabs = tabsAfter.filter((tab) => tab !== tabsBefore[0]);
   if (newTabs.length !== 1) {
