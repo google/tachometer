@@ -5,7 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](http://semver.org/).
 
-## Unreleased
+<!-- ## Unreleased -->
+
+## [0.4.15] 2019-11-20
+
+### Added
+
+-   Added `cpuThrottlingRate` option to `browser` JSON config (Chrome only),
+    which emulates slow CPUs by the given factor (1 for no throttle, 2 for
+    2x slowdown, etc).
 
 ### Fixed
 
@@ -13,6 +21,9 @@ project adheres to [Semantic Versioning](http://semver.org/).
     `noopener=yes`. This change appears to reduce or eliminate shared code
     caching across benchmarks, removing effects such as the order of
     benchmarks reliably producing different results.
+
+-   Fixed bug where the `measurementExpression` setting was not being
+    respected when passed via the config file (vs the command line flag).
 
 ## [0.4.14] 2019-11-05
 

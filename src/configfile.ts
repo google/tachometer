@@ -206,6 +206,7 @@ interface ChromeConfig extends BrowserConfigBase {
   /**
    * Optional CPU Throttling rate. (1 is no throttle, 2 is 2x slowdown,
    * etc). This is currently only supported in headless mode.
+   * @TJS-minimum 1
    */
   cpuThrottlingRate?: number;
 }

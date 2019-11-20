@@ -18,6 +18,7 @@
                 },
                 "cpuThrottlingRate": {
                     "description": "Optional CPU Throttling rate. (1 is no throttle, 2 is 2x slowdown,\netc). This is currently only supported in headless mode.",
+                    "minimum": 1,
                     "type": "number"
                 },
                 "headless": {

@@ -1,0 +1,24 @@
+<!doctype html>
+
+<!--
+This test benchmark measures the runtime of a for loop with ?n= iterations.
+-->
+
+<html>
+  <head>
+    <title>for loop test</title>
+  </head>
+  <body>
+    <script type="module">
+      import * as bench from '/bench.js';
+
+      const params = new URL(document.location).searchParams;
+      const n = Number(params.get('n') || 1000);
+
+      bench.start();
+      for (let i = 0; i < n; i++) {
+      }
+      bench.stop();
+    </script>
+  </body>
+</html>
