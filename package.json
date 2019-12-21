@@ -51,14 +51,14 @@
     "@types/ua-parser-js": "^0.7.32",
     "ansi-escape-sequences": "^5.0.0",
     "chai-as-promised": "^7.1.1",
-    "chromedriver": "^78.0.1",
+    "chromedriver": ">78.0.1",
     "command-line-args": "^5.0.2",
     "command-line-usage": "^6.1.0",
     "csv-stringify": "^5.3.0",
     "fs-extra": "^8.0.1",
     "geckodriver": "^1.19.1",
     "get-stream": "^5.1.0",
-    "got": "^9.6.0",
+    "got": "^10.1.0",
     "iedriver": "^3.14.1",
     "jsonschema": "^1.2.4",
     "jsonwebtoken": "^8.5.1",
@@ -72,9 +72,9 @@
     "koa-static": "^5.0.0",
     "progress": "^2.0.3",
     "selenium-webdriver": "^4.0.0-alpha.1",
-    "semver": "^6.3.0",
+    "semver": "^7.1.1",
     "source-map-support": "^0.5.16",
-    "strip-ansi": "^5.2.0",
+    "strip-ansi": "^6.0.0",
     "systeminformation": "^4.14.17",
     "table": "^5.2.1",
     "ua-parser-js": "^0.7.19"
@@ -90,6 +90,6 @@
     "node-fetch": "^2.6.0",
     "tslint": "^5.12.1",
     "typescript": "^3.6.4",
-    "typescript-json-schema": "^0.40.0"
+    "typescript-json-schema": "^0.41.0"
   }
 }

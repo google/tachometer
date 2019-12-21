@@ -13,7 +13,6 @@ import * as fsExtra from 'fs-extra';
 import * as path from 'path';
 
 import {fcpBrowsers} from './browser';
-import {Config} from './config';
 import {parseConfigFile, writeBackSchemaIfNeeded} from './configfile';
 import * as defaults from './defaults';
 import {Opts} from './flags';

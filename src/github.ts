@@ -9,7 +9,7 @@
  * rights grant found at http://polymer.github.io/PATENTS.txt
  */
 
-import * as got from 'got';
+import got from 'got';
 import * as jsonwebtoken from 'jsonwebtoken';
 
 /**

@@ -11,7 +11,7 @@
 
 import {assert} from 'chai';
 import * as path from 'path';
-import stripAnsi from 'strip-ansi';
+import stripAnsi = require('strip-ansi');
 
 import {ConfigFile} from '../configfile';
 import {automaticResultTable, verticalTermResultTable} from '../format';

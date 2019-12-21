@@ -5,7 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](http://semver.org/).
 
-<!-- ## Unreleased -->
+## Unreleased
+
+### Changed
+
+-   Chromedriver dependency is no longer pinned to a particular major version,
+    so fresh installs should be compatible with the latest version of Chrome.
 
 ## [0.4.15] 2019-11-20
 

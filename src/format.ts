@@ -9,7 +9,7 @@
  * rights grant found at http://polymer.github.io/PATENTS.txt
  */
 
-import stripAnsi from 'strip-ansi';
+import stripAnsi = require('strip-ansi');
 import * as table from 'table';
 import {UAParser} from 'ua-parser-js';
 
