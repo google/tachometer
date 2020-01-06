@@ -5,7 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](http://semver.org/).
 
-<!-- ## Unreleased -->
+## Unreleased
+
+### Changed
+
+-   Files are no longer cached by the server when using `--manual` mode.
 
 ## [0.4.16] 2019-12-20
 
