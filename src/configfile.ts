@@ -229,6 +229,13 @@ interface FirefoxConfig extends BrowserConfigBase {
    * Additional command-line arguments to pass when launching the browser.
    */
   addArguments?: string[];
+
+  /**
+   * Advanced preferences that are usually set from the about:config page
+   * in Firefox (see
+   * https://support.mozilla.org/en-US/kb/about-config-editor-firefox).
+   */
+  preferences?: {[name: string]: string|number|boolean};
 }
 
 interface SafariConfig extends BrowserConfigBase {
@@ -382,6 +389,9 @@ function parseBrowserObject(config: BrowserConfigs): BrowserConfig {
   }
   if ('removeArguments' in config && config.removeArguments) {
     parsed.removeArguments = config.removeArguments;
+  }
+  if ('preferences' in config && config.preferences) {
+    parsed.preferences = config.preferences;
   }
   return parsed;
 }

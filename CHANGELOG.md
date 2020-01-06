@@ -7,7 +7,12 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
-### Changed
+### Added
+
+-   Added `preferences` property to Firefox browser config, which can be used
+    to set any option that is usually set from the about:config page.
+
+### Fixed
 
 -   Files are no longer cached by the server when using `--manual` mode.
 
