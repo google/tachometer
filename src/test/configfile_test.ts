@@ -61,6 +61,9 @@ suite('config', () => {
             browser: {
               ...defaultBrowser,
               name: 'firefox',
+              preferences: {
+                'layout.css.shadow-parts.enabled': true,
+              },
             },
             measurement: 'callback',
             url: 'mybench/index.html?foo=bar',
@@ -108,6 +111,9 @@ suite('config', () => {
             browser: {
               ...defaultBrowser,
               name: 'firefox',
+              preferences: {
+                'layout.css.shadow-parts.enabled': true,
+              },
             },
             measurement: 'callback',
             url: {

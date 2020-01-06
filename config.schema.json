@@ -182,6 +182,17 @@
                     ],
                     "type": "string"
                 },
+                "preferences": {
+                    "additionalProperties": {
+                        "type": [
+                            "string",
+                            "number",
+                            "boolean"
+                        ]
+                    },
+                    "description": "Advanced preferences that are usually set from the about:config page\nin Firefox (see\nhttps://support.mozilla.org/en-US/kb/about-config-editor-firefox).",
+                    "type": "object"
+                },
                 "remoteUrl": {
                     "description": "A remote WebDriver server HTTP address to launch the browser from.",
                     "type": "string"

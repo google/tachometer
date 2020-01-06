@@ -65,6 +65,8 @@ export interface BrowserConfig {
   removeArguments?: string[];
   /** CPU Throttling rate. (1 is no throttle, 2 is 2x slowdown, etc). */
   cpuThrottlingRate?: number;
+  /** Advanced preferences usually set from the about:config page. */
+  preferences?: {[name: string]: string|number|boolean};
 }
 
 export interface WindowSize {
@@ -187,6 +189,11 @@ function chromeOpts(config: BrowserConfig): chrome.Options {
 
 function firefoxOpts(config: BrowserConfig): firefox.Options {
   const opts = new firefox.Options();
+  if (config.preferences) {
+    for (const [name, value] of Object.entries(config.preferences)) {
+      opts.setPreference(name, value);
+    }
+  }
   if (config.binary) {
     opts.setBinary(config.binary);
   }

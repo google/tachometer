@@ -377,6 +377,9 @@ To pass additional arguments to the binary (Chrome and Firefox only), use the
 arguments that WebDriver sets by default (Chrome only), use `removeArguments`
 (see example in next section).
 
+To configure Firefox preferences that are usually set from the `about:config`
+page, use the `preferences` property in the browser JSON config.
+
 ### Profiles
 
 It is normally reccommended to use the default behavior whereby a new, empty
