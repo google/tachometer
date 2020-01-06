@@ -138,6 +138,7 @@ $ tach http://example.com
         root: config.root,
         mountPoints,
         resolveBareModules: config.resolveBareModules,
+        cache: config.mode !== 'manual',
       });
       for (const spec of specs) {
         servers.set(spec, server);

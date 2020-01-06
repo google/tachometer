@@ -28,6 +28,7 @@ suite('server', () => {
         diskPath: testData,
         urlPath: '/',
       }],
+      cache: true,
     });
   });
 
