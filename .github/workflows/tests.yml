@@ -8,19 +8,20 @@ on:
   pull_request:
 
 jobs:
-  build:
+  test:
     strategy:
+      fail-fast: false
       matrix:
         job: [linux-node-latest, linux-node-lts, mac]
         include:
           - job: linux-node-latest
             os: ubuntu-latest
-            node: 12.x
+            node: 13.x
             browsers: chrome-headless,firefox-headless,chrome,firefox
 
           - job: linux-node-lts
             os: ubuntu-latest
-            node: 13.x
+            node: 12.x
             browsers: chrome-headless
 
           - job: mac
@@ -46,7 +47,7 @@ jobs:
     - name: build
       run: npm run build
 
-    - name: test
+    - name: test ${{ matrix.browsers }}
       env:
         TACHOMETER_E2E_TEST_BROWSERS: ${{ matrix.browsers }}
       run: npm test
