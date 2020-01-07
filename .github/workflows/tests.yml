@@ -52,6 +52,10 @@ jobs:
     - name: Build
       run: npm run build
 
+    - name: Enable Safari automation
+      if: contains(matrix.browsers, 'safari')
+      run: safaridriver --enable
+
     - name: Test (${{ matrix.browsers }})
       env:
         TACHOMETER_E2E_TEST_BROWSERS: ${{ matrix.browsers }}
