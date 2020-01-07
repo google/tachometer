@@ -44,8 +44,10 @@ jobs:
     - name: NPM install
       run: npm install
 
-    - name: Uninstall local ChromeDriver
-      run: npm uninstall chromedriver
+    - name: Fix ChromeDriver version
+      run: |
+        npm uninstall chromedriver
+        npm install chromedriver@^78
 
     - name: Build
       run: npm run build
