@@ -1,0 +1,48 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - master
+        action
+  pull_request:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            node: 12.x
+            browsers: chrome-headless,firefox-headless,chrome,firefox
+
+          - os: ubuntu-latest
+            node: 13.x
+            browsers: chrome-headless
+
+          - os: macos-latest
+            node: 13.x
+            browsers: safari
+
+    runs_on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v1
+      with:
+        fetch-depth: 1
+
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+
+    - name: npm install
+      run: npm install
+
+    - name: build
+      run: npm run build
+
+    - name: test
+      env:
+        TACHOMETER_E2E_TEST_BROWSERS: ${{ matrix.browsers }}
+      run: npm test
