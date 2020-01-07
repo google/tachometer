@@ -36,7 +36,7 @@ jobs:
       with:
         fetch-depth: 1
 
-    - name: Setup Node.js (${{ matrix.node }})
+    - name: Set up Node.js (${{ matrix.node }})
       uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
@@ -54,7 +54,7 @@ jobs:
 
     - name: Enable Safari automation
       if: contains(matrix.browsers, 'safari')
-      run: safaridriver --enable
+      run: sudo safaridriver --enable
 
     - name: Test (${{ matrix.browsers }})
       env:
