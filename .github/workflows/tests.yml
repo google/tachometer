@@ -36,7 +36,7 @@ jobs:
       with:
         fetch-depth: 1
 
-    - name: Use Node.js ${{ matrix.node }}
+    - name: Setup Node.js (${{ matrix.node }})
       uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
@@ -44,10 +44,13 @@ jobs:
     - name: NPM install
       run: npm install
 
+    - name: Uninstall local ChromeDriver
+      run: npm uninstall chromedriver
+
     - name: Build
       run: npm run build
 
-    - name: Test ${{ matrix.browsers }}
+    - name: Test (${{ matrix.browsers }})
       env:
         TACHOMETER_E2E_TEST_BROWSERS: ${{ matrix.browsers }}
         TACHOMETER_E2E_TEST_SHOW_OUTPUT: true
