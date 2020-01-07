@@ -11,16 +11,20 @@ jobs:
   build:
     strategy:
       matrix:
+        job: [linux-latest, latest-lts, mac]
         include:
-          - os: ubuntu-latest
+          - job: linux-node-latest
+            os: ubuntu-latest
             node: 12.x
             browsers: chrome-headless,firefox-headless,chrome,firefox
 
-          - os: ubuntu-latest
+          - job: linux-node-lts
+            os: ubuntu-latest
             node: 13.x
             browsers: chrome-headless
 
-          - os: macos-latest
+          - job: mac
+            os: macos-latest
             node: 13.x
             browsers: safari
 
