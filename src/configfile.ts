@@ -105,8 +105,16 @@ interface ConfigFileBenchmark {
    *   - callback: bench.start() to bench.stop() (default for fully qualified
    *     URLs.
    *   - fcp: first contentful paint (default for local paths)
+   *   - global: result returned from window.tachometerResult (or custom
+   *       expression set via measurementExpression)
    */
   measurement?: Measurement;
+
+  /**
+   * Expression to use to retrieve global result.  Defaults to
+   * `window.tachometerResult`.
+   */
+  measurementExpression?: string;
 
   /**
    * Optional NPM dependency overrides to apply and install. Only supported with
@@ -194,6 +202,13 @@ interface ChromeConfig extends BrowserConfigBase {
    * launching the browser, which you would like to omit.
    */
   removeArguments?: string[];
+
+  /**
+   * Optional CPU Throttling rate. (1 is no throttle, 2 is 2x slowdown,
+   * etc). This is currently only supported in headless mode.
+   * @TJS-minimum 1
+   */
+  cpuThrottlingRate?: number;
 }
 
 interface FirefoxConfig extends BrowserConfigBase {
@@ -214,6 +229,13 @@ interface FirefoxConfig extends BrowserConfigBase {
    * Additional command-line arguments to pass when launching the browser.
    */
   addArguments?: string[];
+
+  /**
+   * Advanced preferences that are usually set from the about:config page
+   * in Firefox (see
+   * https://support.mozilla.org/en-US/kb/about-config-editor-firefox).
+   */
+  preferences?: {[name: string]: string|number|boolean};
 }
 
 interface SafariConfig extends BrowserConfigBase {
@@ -302,6 +324,10 @@ async function parseBenchmark(benchmark: ConfigFileBenchmark, root: string):
   if (benchmark.measurement !== undefined) {
     spec.measurement = benchmark.measurement;
   }
+  if (spec.measurement === 'global' &&
+      benchmark.measurementExpression !== undefined) {
+    spec.measurementExpression = benchmark.measurementExpression;
+  }
 
   const url = benchmark.url;
   if (url !== undefined) {
@@ -348,6 +374,10 @@ function parseBrowserObject(config: BrowserConfigs): BrowserConfig {
       height: defaultWindowHeight,
     },
   };
+
+  if ('cpuThrottlingRate' in config) {
+    parsed.cpuThrottlingRate = config.cpuThrottlingRate;
+  }
   if (config.remoteUrl) {
     parsed.remoteUrl = config.remoteUrl;
   }
@@ -359,6 +389,9 @@ function parseBrowserObject(config: BrowserConfigs): BrowserConfig {
   }
   if ('removeArguments' in config && config.removeArguments) {
     parsed.removeArguments = config.removeArguments;
+  }
+  if ('preferences' in config && config.preferences) {
+    parsed.preferences = config.preferences;
   }
   return parsed;
 }
@@ -410,7 +443,15 @@ function applyDefaults(partialSpec: Partial<BenchmarkSpec>): BenchmarkSpec {
   if (measurement === undefined) {
     measurement = defaults.measurement(url);
   }
-  return {name, url, browser, measurement};
+  const spec: BenchmarkSpec = {name, url, browser, measurement};
+  if (measurement === 'global') {
+    if (partialSpec.measurementExpression === undefined) {
+      spec.measurementExpression = defaults.measurementExpression;
+    } else {
+      spec.measurementExpression = partialSpec.measurementExpression;
+    }
+  }
+  return spec;
 }
 
 export async function writeBackSchemaIfNeeded(

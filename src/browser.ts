@@ -63,6 +63,10 @@ export interface BrowserConfig {
   addArguments?: string[];
   /** WebDriver default binary arguments to omit. */
   removeArguments?: string[];
+  /** CPU Throttling rate. (1 is no throttle, 2 is 2x slowdown, etc). */
+  cpuThrottlingRate?: number;
+  /** Advanced preferences usually set from the about:config page. */
+  preferences?: {[name: string]: string|number|boolean};
 }
 
 export interface WindowSize {
@@ -185,6 +189,11 @@ function chromeOpts(config: BrowserConfig): chrome.Options {
 
 function firefoxOpts(config: BrowserConfig): firefox.Options {
   const opts = new firefox.Options();
+  if (config.preferences) {
+    for (const [name, value] of Object.entries(config.preferences)) {
+      opts.setPreference(name, value);
+    }
+  }
   if (config.binary) {
     opts.setBinary(config.binary);
   }
@@ -214,7 +223,13 @@ export async function openAndSwitchToNewTab(
   if (tabsBefore.length !== 1) {
     throw new Error(`Expected only 1 open tab, got ${tabsBefore.length}`);
   }
-  await driver.executeScript('window.open();');
+  // "noopener=yes" prevents the new window from being able to access the
+  // first window. We set that here because in Chrome (and perhaps other
+  // browsers) we see a very significant improvement in the reliability of
+  // measurements, in particular it appears to eliminate interference between
+  // code across runs. It is likely this flag increases process isolation in a
+  // way that prevents code caching across tabs.
+  await driver.executeScript('window.open("", "", "noopener=yes");');
   const tabsAfter = await driver.getAllWindowHandles();
   const newTabs = tabsAfter.filter((tab) => tab !== tabsBefore[0]);
   if (newTabs.length !== 1) {
@@ -225,6 +240,18 @@ export async function openAndSwitchToNewTab(
     // For IE we get a new window instead of a new tab, so we need to resize
     // every time.
     await driver.manage().window().setRect(config.windowSize);
+  }
+  type WithSendDevToolsCommand = {
+    sendDevToolsCommand?: (command: string, config: {}) => Promise<void>,
+  };
+
+  const driverWithSendDevToolsCommand =
+      (driver as {} as WithSendDevToolsCommand);
+  if (driverWithSendDevToolsCommand.sendDevToolsCommand &&
+      config.cpuThrottlingRate !== undefined) {
+    // Enables CPU throttling to emulate slow CPUs.
+    await driverWithSendDevToolsCommand.sendDevToolsCommand(
+        'Emulation.setCPUThrottlingRate', {rate: config.cpuThrottlingRate});
   }
 }
 
@@ -255,24 +282,25 @@ export async function pollForFirstContentfulPaint(driver: webdriver.WebDriver):
  * after 10 seconds. Throws if a value was found, but it was not a number, or it
  * was a negative number.
  */
-export async function pollForGlobalResult(driver: webdriver.WebDriver):
-    Promise<number|undefined> {
+export async function pollForGlobalResult(
+    driver: webdriver.WebDriver,
+    expression: string): Promise<number|undefined> {
   // Both here and for FCP above, we could automatically tune the poll time
   // after we get our first result, so that when the script is fast we spend
   // less time waiting, and so that when the script is slow we interfere it
   // less frequently.
   for (let waited = 0; waited <= 10000; waited += 50) {
     await wait(50);
-    const result = await driver.executeScript(
-                       'return window.tachometerResult;') as unknown;
+    const result =
+        await driver.executeScript(`return (${expression});`) as unknown;
     if (result !== undefined && result !== null) {
       if (typeof result !== 'number') {
         throw new Error(
-            `window.tachometerResult was type ` +
+            `'${expression}' was type ` +
             `${typeof result}, expected number.`);
       }
       if (result < 0) {
-        throw new Error(`window.tachometerResult was negative: ${result}`);
+        throw new Error(`'${expression}' was negative: ${result}`);
       }
       return result;
     }

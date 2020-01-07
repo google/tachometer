@@ -30,6 +30,7 @@ export interface ServerOpts {
   root: string;
   mountPoints: MountPoint[];
   resolveBareModules: boolean;
+  cache: boolean;
 }
 
 export interface MountPoint {
@@ -90,7 +91,9 @@ export class Server {
     app.use(bodyParser());
     app.use(mount('/submitResults', this.submitResults.bind(this)));
     app.use(this.instrumentRequests.bind(this));
-    app.use(this.cache.bind(this));
+    if (opts.cache) {
+      app.use(this.cache.bind(this));
+    }
     app.use(this.serveBenchLib.bind(this));
 
     if (opts.resolveBareModules === true) {

@@ -5,7 +5,48 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](http://semver.org/).
 
-<!-- ## Unreleased -->
+## Unreleased
+
+### Added
+
+-   Added `preferences` property to Firefox browser config, which can be used
+    to set any option that is usually set from the about:config page.
+
+### Fixed
+
+-   Files are no longer cached by the server when using `--manual` mode.
+
+## [0.4.16] 2019-12-20
+
+### Changed
+
+-   Chromedriver dependency is no longer pinned to a particular major version,
+    so fresh installs should be compatible with the latest version of Chrome.
+
+## [0.4.15] 2019-11-20
+
+### Added
+
+-   Added `cpuThrottlingRate` option to `browser` JSON config (Chrome only),
+    which emulates slow CPUs by the given factor (1 for no throttle, 2 for
+    2x slowdown, etc).
+
+### Fixed
+
+-   Improved reliability of measurements by opening new tabs with
+    `noopener=yes`. This change appears to reduce or eliminate shared code
+    caching across benchmarks, removing effects such as the order of
+    benchmarks reliably producing different results.
+
+-   Fixed bug where the `measurementExpression` setting was not being
+    respected when passed via the config file (vs the command line flag).
+
+## [0.4.14] 2019-11-05
+
+### Added
+
+-   Added a `measurementExpression` option for overriding the default
+    global measurement of `window.tachometerResult` to an arbitrary expression.
 
 ## [0.4.13] 2019-09-12
 

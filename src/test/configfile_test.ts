@@ -61,6 +61,9 @@ suite('config', () => {
             browser: {
               ...defaultBrowser,
               name: 'firefox',
+              preferences: {
+                'layout.css.shadow-parts.enabled': true,
+              },
             },
             measurement: 'callback',
             url: 'mybench/index.html?foo=bar',
@@ -71,6 +74,16 @@ suite('config', () => {
                 'bar': '=1.2.3',
               },
             },
+          },
+          {
+            name: 'local-or-remote',
+            browser: {
+              ...defaultBrowser,
+              name: 'chrome',
+              cpuThrottlingRate: 6,
+            },
+            measurement: 'fcp',
+            url: 'http://example.com?foo=bar',
           },
         ],
       };
@@ -98,6 +111,9 @@ suite('config', () => {
             browser: {
               ...defaultBrowser,
               name: 'firefox',
+              preferences: {
+                'layout.css.shadow-parts.enabled': true,
+              },
             },
             measurement: 'callback',
             url: {
@@ -111,6 +127,19 @@ suite('config', () => {
                   'bar': '=1.2.3',
                 },
               },
+            },
+          },
+          {
+            name: 'local-or-remote',
+            browser: {
+              ...defaultBrowser,
+              name: 'chrome',
+              cpuThrottlingRate: 6,
+            },
+            measurement: 'fcp',
+            url: {
+              kind: 'remote',
+              url: 'http://example.com?foo=bar',
             },
           },
         ],

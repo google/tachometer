@@ -30,8 +30,10 @@ const browsers = (process.env.TACHOMETER_E2E_TEST_BROWSERS ||
 const hideOutput = (test: () => Promise<void>) => async () => {
   const realStdoutWrite = process.stdout.write;
   const realStderrWrite = process.stderr.write;
-  process.stdout.write = () => true;
-  process.stderr.write = () => true;
+  if (!process.env.TACHOMETER_E2E_TEST_SHOW_OUTPUT) {
+    process.stdout.write = () => true;
+    process.stderr.write = () => true;
+  }
   try {
     await test();
   } finally {
@@ -87,6 +89,58 @@ suite('e2e', function() {
                  ciAverage(diffBA.relative), (avgB - avgA) / avgA, 0.1);
            }));
 
+      test('measurement expression', hideOutput(async function() {
+             const avgA = 1;
+             const minA = avgA - 0.1;
+             const maxA = avgA + 0.1;
+
+             const avgB = 2;
+             const minB = avgB - 0.1;
+             const maxB = avgB + 0.1;
+
+             const argv = [
+               `--browser=${browser}`,
+               '--measure=global',
+               '--sample-size=20',
+               '--timeout=0',
+               `--measurement-expression=window.customResult`,
+               path.join(testData, 'random-global.html') +
+                   `?min=${minA}&max=${maxA}&customResult=true`,
+               path.join(testData, 'random-global.html') +
+                   `?min=${minB}&max=${maxB}&customResult=true`,
+             ];
+
+             const actual = await main(argv);
+             assert.isDefined(actual);
+             assert.lengthOf(actual!, 2);
+             const [a, b] = actual!;
+             const diffAB = a.differences[1]!;
+             const diffBA = b.differences[0]!;
+
+             assert.closeTo(a.stats.mean, avgA, 0.1);
+             assert.closeTo(b.stats.mean, avgB, 0.1);
+             assert.closeTo(ciAverage(diffAB.absolute), avgA - avgB, 0.1);
+             assert.closeTo(ciAverage(diffBA.absolute), avgB - avgA, 0.1);
+             assert.closeTo(
+                 ciAverage(diffAB.relative), (avgA - avgB) / avgB, 0.1);
+             assert.closeTo(
+                 ciAverage(diffBA.relative), (avgB - avgA) / avgA, 0.1);
+           }));
+
+      test(
+          'measurement expression via config file',
+          hideOutput(async function() {
+            const argv = [
+              `--config=${path.join(testData, 'measurement-expression.json')}`,
+            ];
+            const actual = await main(argv);
+            assert.isDefined(actual);
+            assert.lengthOf(actual!, 2);
+            const [a, b] = actual!;
+            assert.equal(a.stats.mean, 2);
+            assert.equal(b.stats.mean, 4);
+          }));
+
       test(
           'bench.start/stop', hideOutput(async function() {
             const delayA = 20;
@@ -119,7 +173,7 @@ suite('e2e', function() {
             assert.isAbove(ciAverage(diffBA.relative), 0);
           }));
 
-      // Only Chrome supports FCP.
+      // Only Chrome supports FCP and CPU throttling.
       if (browser.startsWith('chrome')) {
         test('fcp', hideOutput(async function() {
                const delayA = 20;
@@ -150,6 +204,21 @@ suite('e2e', function() {
                assert.isAbove(ciAverage(diffBA.absolute), 0);
                assert.isBelow(ciAverage(diffAB.relative), 0);
                assert.isAbove(ciAverage(diffBA.relative), 0);
+             }));
+
+        test('cpu throttling rate', hideOutput(async function() {
+               const argv = [
+                 `--config=${path.join(testData, 'cpu-throttling-rate.json')}`,
+               ];
+               const actual = await main(argv);
+               assert.isDefined(actual);
+               assert.lengthOf(actual!, 3);
+               const [x1, x2, x4] = actual!;
+               // The CPU throttling factors don't precisely result in the same
+               // measured slowdown (though roughly close), so let's just check
+               // that the rankings we expect hold.
+               assert.isAbove(x2.stats.mean, x1.stats.mean);
+               assert.isAbove(x4.stats.mean, x2.stats.mean);
              }));
       }
 
