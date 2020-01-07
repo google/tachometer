@@ -11,7 +11,7 @@ jobs:
   build:
     strategy:
       matrix:
-        job: [linux-latest, latest-lts, mac]
+        job: [linux-node-latest, linux-node-lts, mac]
         include:
           - job: linux-node-latest
             os: ubuntu-latest
