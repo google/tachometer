@@ -167,7 +167,6 @@ export function applyDefaults(partial: Partial<Config>): Config {
 export async function urlFromLocalPath(
     rootDir: string, diskPath: string): Promise<string> {
   const serverRelativePath = path.relative(rootDir, diskPath);
-  // TODO Test on Windows.
   if (serverRelativePath.startsWith('..')) {
     throw new Error(
         'File or directory is not accessible from server root: ' + diskPath);
@@ -178,7 +177,6 @@ export async function urlFromLocalPath(
     throw new Error(`No such file or directory: ${diskPath}`);
   }
 
-  // TODO Test on Windows.
   let urlPath = `/${serverRelativePath.replace(path.win32.sep, '/')}`;
   if (kind === 'dir') {
     if (await fileKind(path.join(diskPath, 'index.html')) !== 'file') {

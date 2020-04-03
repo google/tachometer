@@ -15,6 +15,8 @@ project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 
 -   Files are no longer cached by the server when using `--manual` mode.
+-   Running `npm` commands is fixed on Windows
+-   Improved Windows support in build scripts
 
 ## [0.4.16] 2019-12-20
 
