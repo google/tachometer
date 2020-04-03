@@ -9,14 +9,13 @@
  * rights grant found at http://polymer.github.io/PATENTS.txt
  */
 
-import * as child_process from 'child_process';
 import * as crypto from 'crypto';
 import * as fsExtra from 'fs-extra';
 import * as path from 'path';
 
 import {MountPoint} from './server';
 import {BenchmarkSpec, NpmPackageJson, PackageDependencyMap, PackageVersion} from './types';
-import {fileKind} from './util';
+import {fileKind, runNpm} from './util';
 
 /**
  * Parse an array of strings of the form <package>@<version>.
@@ -176,21 +175,6 @@ export function hashStrings(...strings: string[]) {
       .digest('hex');
 }
 
-/**
- * Run "npm install" in the given directory.
- */
-async function npmInstall(cwd: string): Promise<void> {
-  return new Promise(
-      (resolve, reject) =>
-          child_process.execFile('npm', ['install'], {cwd}, (error) => {
-            if (error) {
-              reject(error);
-            } else {
-              resolve();
-            }
-          }));
-}
-
 const tachometerVersion =
     require(path.join(__dirname, '..', 'package.json')).version;
 
@@ -238,5 +222,5 @@ export async function prepareVersionDirectory(
   console.log(`\nRunning npm install:\n  ${installDir}\n`);
   await fsExtra.ensureDir(installDir);
   await fsExtra.writeFile(packageJsonPath, serializedPackageJson);
-  await npmInstall(installDir);
+  await runNpm(['install'], {cwd: installDir});
 }

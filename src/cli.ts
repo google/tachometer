@@ -11,8 +11,6 @@
 
 require('source-map-support').install();
 
-import {execFile} from 'child_process';
-import {promisify} from 'util';
 import * as path from 'path';
 import ansi = require('ansi-escape-sequences');
 import * as semver from 'semver';
@@ -27,6 +25,7 @@ import {ResultStatsWithDifferences} from './stats';
 import {prepareVersionDirectory, makeServerPlans} from './versions';
 import {manualMode} from './manual';
 import {automaticMode} from './automatic';
+import {runNpm} from './util';
 
 const installedVersion = (): string =>
     require(path.join('..', 'package.json')).version;
@@ -56,9 +55,8 @@ export async function main(argv: string[]):
 }
 
 async function latestVersionFromNpm(): Promise<string> {
-  const {stdout} = await promisify(execFile)(
-      'npm', ['info', 'tachometer@latest', 'version']);
-  return stdout.trim();
+  const stdout = await runNpm(['info', 'tachometer@latest', 'version']);
+  return stdout.toString('utf8').trim();
 }
 
 function notifyIfOutdated(latestVersion: string) {
