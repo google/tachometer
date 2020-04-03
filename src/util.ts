@@ -9,8 +9,10 @@
  * rights grant found at http://polymer.github.io/PATENTS.txt
  */
 
+import {execFile, ExecFileOptions} from 'child_process';
 import * as fsExtra from 'fs-extra';
 import {URL} from 'url';
+import {promisify} from 'util';
 
 /** Return whether the given string is a valid HTTP URL. */
 export function isHttpUrl(str: string): boolean {
@@ -39,4 +41,10 @@ export async function fileKind(path: string): Promise<'file'|'dir'|undefined> {
     }
     throw e;
   }
+}
+
+const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+export async function runNpm(
+    args: string[], options?: ExecFileOptions): Promise<string|Buffer> {
+  return promisify(execFile)(npmCmd, args, options).then(({stdout}) => stdout);
 }
