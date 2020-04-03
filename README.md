@@ -600,3 +600,4 @@ Flag                    -  | Default     | Description
 `--force-clean-npm-install`| `false`     | Always do a from-scratch NPM install when using custom package versions. ([details](#swap-npm-dependencies))
 `--csv-file`               | *none*      | Save results to this CSV file.
 `--json-file`              | *none*      | Save results to this JSON file.
+`--manual`                 | `false`     | Don't run automatically, just show URLs and collect results
