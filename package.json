@@ -15,7 +15,7 @@
     "build": "rimraf lib/ client/lib/ && mkdir lib && npm run generate-json-schema && tsc && tsc -p client/ && npm run lint",
     "generate-json-schema": "typescript-json-schema tsconfig.json ConfigFile --include src/configfile.ts --required --noExtraProps > config.schema.json",
     "lint": "tslint --project . --format stylish",
-    "format": "clang-format --style=file -i \"--glob=./{client,}/src/*.ts\"",
+    "format": "clang-format --style=file -i \"--glob=./{client,}/src/**/*.ts\"",
     "test": "npm run build && mocha"
   },
   "repository": {
