@@ -23,11 +23,13 @@ import bodyParser = require('koa-bodyparser');
 import {nodeResolve} from 'koa-node-resolve';
 
 import {BenchmarkResponse, Deferred} from './types';
+import {NpmInstall} from './versions';
 
 export interface ServerOpts {
   host: string;
   ports: number[];
   root: string;
+  npmInstalls: NpmInstall[];
   mountPoints: MountPoint[];
   resolveBareModules: boolean;
   cache: boolean;
@@ -97,8 +99,12 @@ export class Server {
     app.use(this.serveBenchLib.bind(this));
 
     if (opts.resolveBareModules === true) {
+      const npmRoot = opts.npmInstalls.length > 0 ?
+          opts.npmInstalls[0].installDir :
+          opts.root;
+
       app.use(nodeResolve({
-        root: opts.root,
+        root: npmRoot,
         // TODO Use default logging options after issues resolved:
         // https://github.com/Polymer/koa-node-resolve/issues/16
         // https://github.com/Polymer/koa-node-resolve/issues/17

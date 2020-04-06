@@ -24,6 +24,7 @@ suite('server', () => {
       ports: [0],  // random
       root: testData,
       resolveBareModules: true,
+      npmInstalls: [],
       mountPoints: [{
         diskPath: testData,
         urlPath: '/',
