@@ -10,9 +10,12 @@
  */
 
 import {assert} from 'chai';
+import {readJSONSync} from 'fs-extra';
 import fetch from 'node-fetch';
+import * as path from 'path';
 
 import {Server} from '../server';
+
 import {testData} from './test_helpers';
 
 suite('server', () => {
@@ -72,6 +75,48 @@ suite('server', () => {
       assert.equal(res.status, 200);
       const body = await res.text();
       assert.include(body, 'this is not valid javascript');
+    });
+  });
+
+  suite('bare modules with custom npm installs', async () => {
+    setup(async () => {
+      const installDir = path.join(testData, 'alt_npm_install_dir');
+      const packageJson = readJSONSync(path.join(installDir, 'package.json'));
+
+      // Close the base server and replace it with a custom server that is
+      // configured with a custom npm install directory
+      await server.close();
+
+      server = await Server.start({
+        host: 'localhost',
+        ports: [0],  // random
+        root: testData,
+        resolveBareModules: true,
+        npmInstalls: [{installDir, packageJson}],
+        mountPoints: [{
+          diskPath: testData,
+          urlPath: '/',
+        }],
+        cache: true,
+      });
+    });
+
+    test('resolves specifier in JS file to alt file', async () => {
+      const res = await fetch(`${server.url}/import-bare-module.js`);
+      assert.equal(res.status, 200);
+      const body = await res.text();
+      assert.include(body, 'node_modules/dep1/dep1-main.js');
+      assert.notInclude(body, `/dep1.js'`);
+      assert.notInclude(body, `'dep1'`);
+    });
+
+    test('resolves specifier in HTML file to alt file', async () => {
+      const res = await fetch(`${server.url}/import-bare-module.html`);
+      assert.equal(res.status, 200);
+      const body = await res.text();
+      assert.include(body, 'node_modules/dep1/dep1-main.js');
+      assert.notInclude(body, `/dep1.js'`);
+      assert.notInclude(body, `'dep1'`);
     });
   });
 
