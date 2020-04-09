@@ -134,6 +134,7 @@ $ tach http://example.com
         host: opts.host,
         ports: opts.port,
         root: config.root,
+        npmInstalls,
         mountPoints,
         resolveBareModules: config.resolveBareModules,
         cache: config.mode !== 'manual',
