@@ -59,7 +59,7 @@
     "geckodriver": "^1.19.1",
     "get-stream": "^5.1.0",
     "got": "^10.1.0",
-    "iedriver": "^3.14.1",
+    "iedriver": "^3.14.2",
     "jsonschema": "^1.2.4",
     "jsonwebtoken": "^8.5.1",
     "jstat": "^1.9.2",
