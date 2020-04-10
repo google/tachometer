@@ -5,7 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](http://semver.org/).
 
-<!-- ## Unreleased -->
+## Unreleased
+
+### Fixed
+
+- When using custom package versions, Tachometer will resolve bare modules in the temporary npm install folders, instead of the root folder. This change fixes a bug where different package versions should have resolved to different files but Tachometer always resolved to the version in the root folder, not the temporary npm install folder.
 
 ## [0.4.17] 2020-04-03
 
