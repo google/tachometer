@@ -11,7 +11,7 @@ matrix:
   include:
     # https://docs.travis-ci.com/user/reference/linux/
     - os: linux
-      dist: xenial
+      dist: bionic
       env:
         # Note on Linux, non-headless Chrome fails with "Chrome failed to
         # start", and non-headless Firefox fails with "can't kill an exited
@@ -20,7 +20,7 @@ matrix:
 
     # https://docs.travis-ci.com/user/reference/osx/
     - os: osx
-      osx_image: xcode11 # macOS 10.14
+      osx_image: xcode12 # macOS 10.15
       env:
         TACHOMETER_E2E_TEST_BROWSERS=safari,chrome,chrome-headless,firefox,firefox-headless
       before_script:
