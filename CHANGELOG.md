@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](http://semver.org/).
 
-<!-- ## Unreleased -->
+## Unreleased
+
+- Remove unnecessary dependencies.
 
 ## [0.4.18] 2020-04-10
 
