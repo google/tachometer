@@ -22,7 +22,7 @@ matrix:
     - os: osx
       osx_image: xcode12 # macOS 10.15
       env:
-        TACHOMETER_E2E_TEST_BROWSERS=safari,chrome,chrome-headless,firefox,firefox-headless
+        TACHOMETER_E2E_TEST_BROWSERS=safari
       before_script:
         # Required to enable Safari remote automation.
         - sudo safaridriver --enable
