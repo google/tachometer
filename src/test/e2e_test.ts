@@ -10,17 +10,24 @@
  */
 
 import {assert} from 'chai';
+import {suite, test} from 'mocha';
 import * as path from 'path';
 import {main} from '../cli';
 import {ConfidenceInterval} from '../stats';
 import {testData} from './test_helpers';
 
 // Set this environment variable to change the browsers under test.
-const browsers = (process.env.TACHOMETER_E2E_TEST_BROWSERS ||
-                  'chrome-headless,firefox-headless')
-                     .split(',')
-                     .map((b) => b.trim())
-                     .filter((b) => b.length > 0);
+let browsers = (process.env.TACHOMETER_E2E_TEST_BROWSERS || '')
+                   .split(',')
+                   .map((b) => b.trim())
+                   .filter((b) => b.length > 0);
+
+if (browsers.length === 0) {
+  browsers = ['chrome-headless', 'firefox-headless'];
+  if (process.platform === 'darwin') {
+    browsers.push('safari');
+  }
+}
 
 /**
  * Test function wrapper to suppress tachometer's stdout/stderr output. Note we

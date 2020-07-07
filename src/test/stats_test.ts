@@ -12,6 +12,7 @@
 const jstat = require('jstat');
 
 import {assert} from 'chai';
+import {suite, test} from 'mocha';
 import {summaryStats, computeDifference, intervalContains} from '../stats';
 
 suite('statistics', function() {

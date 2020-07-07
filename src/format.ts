@@ -27,7 +27,7 @@ export const spinner = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', 
 interface Dimension {
   label: string;
   format: (r: ResultStats) => string;
-  tableConfig?: table.ColumnConfig;
+  tableConfig?: table.TableColumns;
 }
 
 export interface ResultTable {
@@ -139,9 +139,9 @@ export function verticalTermResultTable({dimensions, results}: ResultTable):
  */
 export function horizontalTermResultTable({dimensions, results}: ResultTable):
     string {
-  const columns: table.ColumnConfig[] = [
+  const columns: table.TableColumns[] = [
     {alignment: 'right'},
-    ...results.map((): table.ColumnConfig => ({alignment: 'left'})),
+    ...results.map((): table.TableColumns => ({alignment: 'left'})),
   ];
   const rows = dimensions.map((d) => {
     return [

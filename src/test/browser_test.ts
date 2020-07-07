@@ -10,6 +10,7 @@
  */
 
 import {assert} from 'chai';
+import {suite, test} from 'mocha';
 
 import {BrowserName, parseBrowserConfigString, validateBrowserConfig} from '../browser';
 import * as defaults from '../defaults';
