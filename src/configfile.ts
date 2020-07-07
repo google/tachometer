@@ -159,7 +159,7 @@ interface BrowserConfigBase {
 
 interface WindowSize {
   /**
-   * Width of the browser window in pixels.
+   * Width of the browser window in pixels. Defaults to 1024.
    *
    * @TJS-type integer
    * @TJS-minimum 0
@@ -167,7 +167,7 @@ interface WindowSize {
   width: number;
 
   /**
-   * Height of the browser window in pixels.
+   * Height of the browser window in pixels. Defaults to 768.
    *
    * @TJS-type integer
    * @TJS-minimum 0

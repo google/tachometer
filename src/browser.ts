@@ -163,7 +163,11 @@ export async function makeDriver(config: BrowserConfig):
       config.name === 'ie') {
     // Safari, Edge, and IE don't have flags we can use to launch with a given
     // window size, but webdriver can resize the window after we've started up.
-    await driver.manage().window().setRect(config.windowSize);
+    // Some versions of Safari have a bug where it is required to also provide
+    // an x/y position (see https://github.com/SeleniumHQ/selenium/issues/3796).
+    const rect = config.name === 'safari' ? {...config.windowSize, x: 0, y: 0} :
+                                            config.windowSize;
+    await driver.manage().window().setRect(rect);
   }
   return driver;
 }
@@ -223,6 +227,7 @@ export async function openAndSwitchToNewTab(
   if (tabsBefore.length !== 1) {
     throw new Error(`Expected only 1 open tab, got ${tabsBefore.length}`);
   }
+
   // "noopener=yes" prevents the new window from being able to access the
   // first window. We set that here because in Chrome (and perhaps other
   // browsers) we see a very significant improvement in the reliability of
@@ -230,16 +235,33 @@ export async function openAndSwitchToNewTab(
   // code across runs. It is likely this flag increases process isolation in a
   // way that prevents code caching across tabs.
   await driver.executeScript('window.open("", "", "noopener=yes");');
-  const tabsAfter = await driver.getAllWindowHandles();
-  const newTabs = tabsAfter.filter((tab) => tab !== tabsBefore[0]);
-  if (newTabs.length !== 1) {
-    throw new Error(`Expected to create 1 new tab, got ${newTabs.length}`);
+  // Firefox (and maybe other browsers) won't always report the new tab ID
+  // immediately, so we'll need to poll for it.
+  const maxRetries = 20;
+  const retrySleepMs = 250;
+  let retries = 0;
+  let newTabId;
+  while (true) {
+    const tabsAfter = await driver.getAllWindowHandles();
+    const newTabs = tabsAfter.filter((tab) => tab !== tabsBefore[0]);
+    if (newTabs.length === 1) {
+      newTabId = newTabs[0];
+      break;
+    }
+    retries++;
+    if (newTabs.length > 1 || retries > maxRetries) {
+      throw new Error(`Expected to create 1 new tab, got ${newTabs.length}`);
+    }
+    await new Promise((resolve) => setTimeout(resolve, retrySleepMs));
   }
-  await driver.switchTo().window(newTabs[0]);
-  if (config.name === 'ie') {
-    // For IE we get a new window instead of a new tab, so we need to resize
-    // every time.
-    await driver.manage().window().setRect(config.windowSize);
+  await driver.switchTo().window(newTabId);
+
+  if (config.name === 'ie' || config.name === 'safari') {
+    // For IE and Safari (with rel=noopener) we get a new window instead of a
+    // new tab, so we need to resize every time.
+    const rect = config.name === 'safari' ? {...config.windowSize, x: 0, y: 0} :
+                                            config.windowSize;
+    await driver.manage().window().setRect(rect);
   }
   type WithSendDevToolsCommand = {
     sendDevToolsCommand?: (command: string, config: {}) => Promise<void>,

@@ -266,12 +266,12 @@
             "additionalProperties": false,
             "properties": {
                 "height": {
-                    "description": "Height of the browser window in pixels.",
+                    "description": "Height of the browser window in pixels. Defaults to 768.",
                     "minimum": 0,
                     "type": "integer"
                 },
                 "width": {
-                    "description": "Width of the browser window in pixels.",
+                    "description": "Width of the browser window in pixels. Defaults to 1024.",
                     "minimum": 0,
                     "type": "integer"
                 }

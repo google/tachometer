@@ -7,6 +7,7 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+- Fix failures to launch recent versions of Firefox and Safari.
 - Remove unnecessary dependencies.
 
 ## [0.4.18] 2020-04-10
