@@ -11,6 +11,7 @@
 
 import {assert} from 'chai';
 import {readJSONSync} from 'fs-extra';
+import {setup, suite, teardown, test} from 'mocha';
 import fetch from 'node-fetch';
 import * as path from 'path';
 

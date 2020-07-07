@@ -11,6 +11,7 @@
 
 import * as chai from 'chai';
 import * as chaiAsPromised from 'chai-as-promised';
+import {suite, suiteSetup, suiteTeardown, test} from 'mocha';
 import * as path from 'path';
 
 chai.use(chaiAsPromised);

@@ -10,6 +10,7 @@
  */
 
 import {assert} from 'chai';
+import {suite, test} from 'mocha';
 
 import {ConfigFile} from '../configfile';
 import {jsonOutput, JsonOutputFile} from '../json-output';

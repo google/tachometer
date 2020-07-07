@@ -10,6 +10,7 @@
  */
 
 import {assert} from 'chai';
+import {suite, suiteSetup, suiteTeardown, test} from 'mocha';
 
 import {Config, makeConfig, parseHorizons} from '../config';
 import {parseFlags} from '../flags';

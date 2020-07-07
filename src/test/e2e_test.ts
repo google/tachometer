@@ -10,6 +10,7 @@
  */
 
 import {assert} from 'chai';
+import {suite, test} from 'mocha';
 import * as path from 'path';
 import {main} from '../cli';
 import {ConfidenceInterval} from '../stats';

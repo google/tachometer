@@ -16,7 +16,7 @@
     "generate-json-schema": "typescript-json-schema tsconfig.json ConfigFile --include src/configfile.ts --required --noExtraProps > config.schema.json",
     "lint": "tslint --project . --format stylish",
     "format": "clang-format --style=file -i \"--glob=./{client,}/src/**/*.ts\"",
-    "test": "npm run build && mocha"
+    "test": "npm run build && mocha 'lib/test/**/*.js'"
   },
   "repository": {
     "type": "git",

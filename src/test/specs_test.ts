@@ -11,12 +11,14 @@
 
 import * as chai from 'chai';
 import * as chaiAsPromised from 'chai-as-promised';
+import {suite, suiteSetup, suiteTeardown, test} from 'mocha';
 import * as path from 'path';
 
 import * as defaults from '../defaults';
 import {optDefs, Opts} from '../flags';
 import {specsFromOpts} from '../specs';
 import {BenchmarkSpec} from '../types';
+
 import {testData} from './test_helpers';
 
 import commandLineArgs = require('command-line-args');
