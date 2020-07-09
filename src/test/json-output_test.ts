@@ -62,6 +62,10 @@ suite('jsonOutput', () => {
       benchmarks: [
         {
           name: 'foo',
+          samples: [
+            ...new Array(25).fill(5),
+            ...new Array(25).fill(15),
+          ],
           mean: {
             low: 8.56459,
             high: 11.43541,
@@ -82,6 +86,10 @@ suite('jsonOutput', () => {
         },
         {
           name: 'bar',
+          samples: [
+            ...new Array(25).fill(15),
+            ...new Array(25).fill(25),
+          ],
           mean: {
             low: 18.56459,
             high: 21.43541,

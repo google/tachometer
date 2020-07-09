@@ -16,9 +16,9 @@ import {ResultStatsWithDifferences} from './stats';
 const precision = 5;
 
 /**
- * Format results as a CSV file string.
+ * Format statistical results as a CSV file string.
  */
-export function formatCsv(results: ResultStatsWithDifferences[]): string {
+export function formatCsvStats(results: ResultStatsWithDifferences[]): string {
   // Note the examples in ./test/csv_test.ts should make this easier to
   // understand.
   const h1 = ['', '', ''];
@@ -50,4 +50,33 @@ export function formatCsv(results: ResultStatsWithDifferences[]): string {
     rows.push(row);
   }
   return csvStringify([h1, h2, h3, ...rows]);
+}
+
+/**
+ * Format raw sample results as a CSV file string.
+ *
+ * Columns correspond to benchmarks. Rows correspond to sample iterations. The
+ * first row is headers containing the benchmark names.
+ *
+ * For example:
+ *
+ * foo, bar, baz
+ * 1.2, 5.5, 9.4
+ * 1.8, 5.6, 9.1
+ * 1.3, 5.2, 9.8
+ */
+export function formatCsvRaw(results: ResultStatsWithDifferences[]): string {
+  const headers = [];
+  const rows: Array<number[]> = [];
+  for (let r = 0; r < results.length; r++) {
+    const {result} = results[r];
+    headers.push(result.name);
+    for (let m = 0; m < result.millis.length; m++) {
+      if (rows[m] === undefined) {
+        rows[m] = [];
+      }
+      rows[m][r] = result.millis[m];
+    }
+  }
+  return csvStringify([headers, ...rows]);
 }

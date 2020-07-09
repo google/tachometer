@@ -5,7 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](http://semver.org/).
 
-<!-- ## Unreleased -->
+## Unreleased
+
+- Added `--csv-file-raw` flag, which outputs a CSV file containing all raw
+  measurement results for each benchmark. Columns correspond to benchmarks, rows
+  correspond to sample measurements in milliseconds. The first row is a header
+  row containing the name of each benchmark.
+
+- Added `samples` property to the JSON file emitted by `--json-file` which
+  contains all raw sample measurements in milliseconds.
 
 ## [0.4.19] 2020-07-07
 

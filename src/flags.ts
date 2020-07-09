@@ -134,6 +134,12 @@ export const optDefs: commandLineUsage.OptionDefinition[] = [
     defaultValue: '',
   },
   {
+    name: 'csv-file-raw',
+    description: 'Save raw benchmark measurement samples to this CSV file.',
+    type: String,
+    defaultValue: '',
+  },
+  {
     name: 'measure',
     description: 'Which time interval to measure. Options:\n' +
         '* callback: call bench.start() and bench.stop() (default)\n' +
@@ -220,6 +226,7 @@ export interface Opts {
   'window-size': string;
   'force-clean-npm-install': boolean;
   'csv-file': string;
+  'csv-file-raw': string;
   'json-file': string;
 
   // Extra arguments not associated with a flag are put here. These are our
