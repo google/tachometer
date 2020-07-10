@@ -62,6 +62,15 @@ suite('jsonOutput', () => {
       benchmarks: [
         {
           name: 'foo',
+          bytesSent: 1024,
+          version: undefined,
+          browser: {
+            name: 'chrome',
+            headless: false,
+            windowSize: {width: 1024, height: 768},
+            userAgent:
+                'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36',
+          },
           samples: [
             ...new Array(25).fill(5),
             ...new Array(25).fill(15),
@@ -86,6 +95,15 @@ suite('jsonOutput', () => {
         },
         {
           name: 'bar',
+          bytesSent: 2048,
+          version: undefined,
+          browser: {
+            name: 'chrome',
+            headless: false,
+            windowSize: {width: 1024, height: 768},
+            userAgent:
+                'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36',
+          },
           samples: [
             ...new Array(25).fill(15),
             ...new Array(25).fill(25),
