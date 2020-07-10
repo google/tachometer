@@ -105,7 +105,7 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
       let name = arg.alias;
       if (name === undefined) {
         const serverRelativePath = path.relative(root, arg.diskPath);
-        name = serverRelativePath.replace(path.win32.sep, '/');
+        name = serverRelativePath.replace(/\\/g, '/');
       }
       for (const browser of browsers) {
         for (const version of versions) {
