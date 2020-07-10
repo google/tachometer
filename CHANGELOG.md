@@ -9,6 +9,13 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 - Fix `main` entry in package.json to point to `lib/cli.js`.
 
+- Added more fields to JSON output file to more closely match table printed to the console
+
+- Fix default benchmark name on Windows to replace all `\\` with `/`. For
+  example, previously a benchmark name might have been
+  `"src/test\\data\\for-loop.html"`. With this fix, the benchmark name will now be
+  `"src/test/data/for-loop.html"`.
+
 ## [0.4.20] 2020-07-09
 
 - Added `--csv-file-raw` flag, which outputs a CSV file containing all raw

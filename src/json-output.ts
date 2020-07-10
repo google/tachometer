@@ -11,6 +11,7 @@
 
 import * as systeminformation from 'systeminformation';
 
+import {BrowserConfig} from './browser';
 import {ResultStatsWithDifferences} from './stats';
 import {BenchmarkResult} from './types';
 
@@ -18,8 +19,15 @@ export interface JsonOutputFile {
   benchmarks: Benchmark[];
 }
 
+interface BrowserConfigResult extends BrowserConfig {
+  userAgent?: string;
+}
+
 interface Benchmark {
   name: string;
+  bytesSent: number;
+  version?: string;
+  browser?: BrowserConfigResult;
   mean: ConfidenceInterval;
   differences: Array<Difference|null>;
   samples: number[];
@@ -58,12 +66,18 @@ export function jsonOutput(results: ResultStatsWithDifferences[]):
     }
     benchmarks.push({
       name: result.result.name,
-      samples: result.result.millis,
+      bytesSent: result.result.bytesSent,
+      version: result.result.version ? result.result.version : undefined,
+      browser: {
+        ...result.result.browser,
+        userAgent: result.result.userAgent,
+      },
       mean: {
         low: result.stats.meanCI.low,
         high: result.stats.meanCI.high,
       },
       differences,
+      samples: result.result.millis,
     });
   }
   return {benchmarks};
