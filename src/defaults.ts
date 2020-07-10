@@ -16,6 +16,7 @@ export const windowWidth = 1024;
 export const windowHeight = 768;
 export const root = '.';
 export const browserName: BrowserName = 'chrome';
+export const headless = false;
 export const sampleSize = 50;
 export const timeout = 3;
 export const horizons = ['0%'] as const;
