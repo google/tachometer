@@ -5,7 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](http://semver.org/).
 
-<!-- ## Unreleased -->
+## Unreleased
+
+- Fix default benchmark name on Windows to replace all `\\` with `/`. For
+  example, previously a benchmark name might have been
+  `"src/test\\data\\for-loop.html"`. With this fix, the benchmark name will now be
+  `"src/test/data/for-loop.html"`.
 
 ## [0.4.20] 2020-07-09
 
