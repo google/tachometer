@@ -39,17 +39,19 @@ export interface Config {
   resolveBareModules: boolean;
   remoteAccessibleHost: string;
   forceCleanNpmInstall: boolean;
-  csvFile: string;
+  csvFileStats: string;
+  csvFileRaw: string;
 }
 
 export async function makeConfig(opts: Opts): Promise<Config> {
   // These options are only controlled by flags.
-  const baseConfig = {
+  const baseConfig: Partial<Config> = {
     mode: (opts.manual === true ? 'manual' : 'automatic') as
         ('manual' | 'automatic'),
     jsonFile: opts['json-file'],
     legacyJsonFile: opts['save'],
-    csvFile: opts['csv-file'],
+    csvFileStats: opts['csv-file'],
+    csvFileRaw: opts['csv-file-raw'],
     forceCleanNpmInstall: opts['force-clean-npm-install'],
     githubCheck: opts['github-check'] ?
         parseGithubCheckFlag(opts['github-check']) :
@@ -134,7 +136,9 @@ export async function makeConfig(opts: Opts): Promise<Config> {
 export function applyDefaults(partial: Partial<Config>): Config {
   return {
     benchmarks: partial.benchmarks !== undefined ? partial.benchmarks : [],
-    csvFile: partial.csvFile !== undefined ? partial.csvFile : '',
+    csvFileStats: partial.csvFileStats !== undefined ? partial.csvFileStats :
+                                                       '',
+    csvFileRaw: partial.csvFileRaw !== undefined ? partial.csvFileRaw : '',
     forceCleanNpmInstall: partial.forceCleanNpmInstall !== undefined ?
         partial.forceCleanNpmInstall :
         defaults.forceCleanNpmInstall,

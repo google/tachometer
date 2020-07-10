@@ -22,6 +22,7 @@ interface Benchmark {
   name: string;
   mean: ConfidenceInterval;
   differences: Array<Difference|null>;
+  samples: number[];
 }
 
 interface Difference {
@@ -57,6 +58,7 @@ export function jsonOutput(results: ResultStatsWithDifferences[]):
     }
     benchmarks.push({
       name: result.result.name,
+      samples: result.result.millis,
       mean: {
         low: result.stats.meanCI.low,
         high: result.stats.meanCI.high,

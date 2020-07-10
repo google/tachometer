@@ -22,7 +22,8 @@ import {BenchmarkSpec} from './types';
  */
 export async function manualMode(
     config: Config, servers: Map<BenchmarkSpec, Server>) {
-  if (config.csvFile || config.jsonFile || config.legacyJsonFile) {
+  if (config.csvFileStats || config.csvFileRaw || config.jsonFile ||
+      config.legacyJsonFile) {
     throw new Error(`Can't save results in manual mode`);
   }
 

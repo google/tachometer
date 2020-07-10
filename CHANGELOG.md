@@ -7,6 +7,16 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 <!-- ## Unreleased -->
 
+## [0.4.20] 2020-07-09
+
+- Added `--csv-file-raw` flag, which outputs a CSV file containing all raw
+  measurement results for each benchmark. Columns correspond to benchmarks, rows
+  correspond to sample measurements in milliseconds. The first row is a header
+  row containing the name of each benchmark.
+
+- Added `samples` property to the JSON file emitted by `--json-file` which
+  contains all raw sample measurements in milliseconds.
+
 ## [0.4.19] 2020-07-07
 
 - Fix failures to launch recent versions of Firefox and Safari.

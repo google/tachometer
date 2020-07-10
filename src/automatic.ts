@@ -18,7 +18,7 @@ import ansi = require('ansi-escape-sequences');
 import {jsonOutput, legacyJsonOutput} from './json-output';
 import {browserSignature, makeDriver, openAndSwitchToNewTab, pollForGlobalResult, pollForFirstContentfulPaint} from './browser';
 import {BenchmarkResult, BenchmarkSpec} from './types';
-import {formatCsv} from './csv';
+import {formatCsvStats, formatCsvRaw} from './csv';
 import {ResultStats, ResultStatsWithDifferences, horizonsResolved, summaryStats, computeDifferences} from './stats';
 import {verticalTermResultTable, horizontalTermResultTable, verticalHtmlResultTable, horizontalHtmlResultTable, automaticResultTable, spinner, benchmarkOneLiner} from './format';
 import {Config} from './config';
@@ -272,8 +272,12 @@ export async function automaticMode(
     await fsExtra.writeJSON(config.legacyJsonFile, json);
   }
 
-  if (config.csvFile) {
-    await fsExtra.writeFile(config.csvFile, formatCsv(withDifferences));
+  if (config.csvFileStats) {
+    await fsExtra.writeFile(
+        config.csvFileStats, formatCsvStats(withDifferences));
+  }
+  if (config.csvFileRaw) {
+    await fsExtra.writeFile(config.csvFileRaw, formatCsvRaw(withDifferences));
   }
 
   if (completeGithubCheck !== undefined) {
