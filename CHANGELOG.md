@@ -7,6 +7,9 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+
+- Added more fields to JSON output file to more closely match table printed to the console
+
 - Fix default benchmark name on Windows to replace all `\\` with `/`. For
   example, previously a benchmark name might have been
   `"src/test\\data\\for-loop.html"`. With this fix, the benchmark name will now be

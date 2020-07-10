@@ -175,9 +175,6 @@ interface WindowSize {
   height: number;
 }
 
-export const defaultWindowWidth = 1024;
-export const defaultWindowHeight = 768;
-
 interface ChromeConfig extends BrowserConfigBase {
   name: 'chrome';
 
@@ -310,8 +307,8 @@ async function parseBenchmark(benchmark: ConfigFileBenchmark, root: string):
       browser = {
         ...parseBrowserConfigString(benchmark.browser),
         windowSize: {
-          width: defaultWindowWidth,
-          height: defaultWindowHeight,
+          width: defaults.windowWidth,
+          height: defaults.windowHeight,
         },
       };
     } else {
@@ -368,10 +365,10 @@ async function parseBenchmark(benchmark: ConfigFileBenchmark, root: string):
 function parseBrowserObject(config: BrowserConfigs): BrowserConfig {
   const parsed: BrowserConfig = {
     name: config.name,
-    headless: ('headless' in config && config.headless) || false,
+    headless: ('headless' in config && config.headless) || defaults.headless,
     windowSize: ('windowSize' in config && config.windowSize) || {
-      width: defaultWindowWidth,
-      height: defaultWindowHeight,
+      width: defaults.windowWidth,
+      height: defaults.windowHeight,
     },
   };
 
@@ -433,10 +430,10 @@ function applyDefaults(partialSpec: Partial<BenchmarkSpec>): BenchmarkSpec {
   if (browser === undefined) {
     browser = {
       name: defaults.browserName,
-      headless: false,
+      headless: defaults.headless,
       windowSize: {
-        width: defaultWindowWidth,
-        height: defaultWindowHeight,
+        width: defaults.windowWidth,
+        height: defaults.windowHeight,
       },
     };
   }
