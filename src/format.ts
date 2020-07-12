@@ -276,7 +276,7 @@ const runtimeConfidenceIntervalDimension: Dimension = {
     alignment: 'right',
   },
   format: (r: ResultStats) =>
-      formatConfidenceInterval(r.stats.meanCI, (n) => n.toFixed(2) + 'ms'),
+      formatConfidenceInterval(r.stats.meanCI, (n) => milli(n) + 'ms'),
 };
 
 function formatDifference({absolute, relative}: Difference): string {
@@ -284,27 +284,29 @@ function formatDifference({absolute, relative}: Difference): string {
   if (absolute.low > 0 && relative.low > 0) {
     word = `[bold red]{slower}`;
     rel = `${percent(relative.low)}% [gray]{-} ${percent(relative.high)}%`;
-    abs =
-        `${absolute.low.toFixed(2)}ms [gray]{-} ${absolute.high.toFixed(2)}ms`;
+    abs = `${milli(absolute.low)}ms [gray]{-} ${milli(absolute.high)}ms`;
 
   } else if (absolute.high < 0 && relative.high < 0) {
     word = `[bold green]{faster}`;
     rel = `${percent(-relative.high)}% [gray]{-} ${percent(-relative.low)}%`;
-    abs = `${- absolute.high.toFixed(2)}ms [gray]{-} ${
-        - absolute.low.toFixed(2)}ms`;
+    abs = `${milli(-absolute.high)}ms [gray]{-} ${milli(-absolute.low)}ms`;
 
   } else {
     word = `[bold blue]{unsure}`;
-    rel = `${colorizeSign(relative.low, (n) => percent(n))}% [gray]{-} ${
-        colorizeSign(relative.high, (n) => percent(n))}%`;
-    abs = `${colorizeSign(absolute.low, (n) => n.toFixed(2))}ms [gray]{-} ${
-        colorizeSign(absolute.high, (n) => n.toFixed(2))}ms`;
+    rel = `${colorizeSign(relative.low, percent)}% [gray]{-} ${
+        colorizeSign(relative.high, percent)}%`;
+    abs = `${colorizeSign(absolute.low, milli)}ms [gray]{-} ${
+        colorizeSign(absolute.high, milli)}ms`;
   }
   return ansi.format(`${word}\n${rel}\n${abs}`);
 }
 
 function percent(n: number): string {
   return (n * 100).toFixed(0);
+}
+
+function milli(n: number): string {
+  return n.toFixed(2);
 }
 
 /**
