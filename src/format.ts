@@ -282,20 +282,18 @@ function formatDifference({absolute, relative}: Difference): string {
   let word, rel, abs;
   if (absolute.low > 0 && relative.low > 0) {
     word = `[bold red]{slower}`;
-    rel = `${percent(relative.low)} [gray]{-} ${percent(relative.high)}`;
-    abs = `${milli(absolute.low)} [gray]{-} ${milli(absolute.high)}`;
+    rel = formatConfidenceInterval(relative, percent);
+    abs = formatConfidenceInterval(absolute, milli);
 
   } else if (absolute.high < 0 && relative.high < 0) {
     word = `[bold green]{faster}`;
-    rel = `${percent(-relative.high)} [gray]{-} ${percent(-relative.low)}`;
-    abs = `${milli(-absolute.high)} [gray]{-} ${milli(-absolute.low)}`;
+    rel = formatConfidenceInterval(negate(relative), percent);
+    abs = formatConfidenceInterval(negate(absolute), milli);
 
   } else {
     word = `[bold blue]{unsure}`;
-    rel = `${colorizeSign(relative.low, percent)} [gray]{-} ${
-        colorizeSign(relative.high, percent)}`;
-    abs = `${colorizeSign(absolute.low, milli)} [gray]{-} ${
-        colorizeSign(absolute.high, milli)}`;
+    rel = formatConfidenceInterval(relative, (n) => colorizeSign(n, percent));
+    abs = formatConfidenceInterval(absolute, (n) => colorizeSign(n, milli));
   }
 
   return ansi.format(`${word}\n${rel}\n${abs}`);
@@ -307,6 +305,13 @@ function percent(n: number): string {
 
 function milli(n: number): string {
   return n.toFixed(2) + 'ms';
+}
+
+function negate(ci: ConfidenceInterval): ConfidenceInterval {
+  return {
+    low: -ci.high,
+    high: -ci.low,
+  };
 }
 
 /**
