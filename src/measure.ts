@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright (c) 2019 The Polymer Project Authors. All rights reserved.
+ * Copyright (c) 2020 The Polymer Project Authors. All rights reserved.
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt The complete set of authors may be found
  * at http://polymer.github.io/AUTHORS.txt The complete set of contributors may
@@ -11,56 +11,39 @@
 
 import * as webdriver from 'selenium-webdriver';
 
-/**
- * Return the First Contentful Paint (FCP) time (millisecond interval since
- * navigation) for the given driver. Polls every 100 milliseconds, and returns
- * undefined if no FCP was found after 10 seconds.
- *
- * https://w3c.github.io/paint-timing/#first-contentful-paint
- * https://developers.google.com/web/tools/lighthouse/audits/first-contentful-paint
- */
-export async function pollForFirstContentfulPaint(driver: webdriver.WebDriver):
-    Promise<number|undefined> {
-  for (let waited = 0; waited <= 10000; waited += 100) {
-    await wait(100);
-    const entries = await driver.executeScript(
-                        'return window.performance.getEntriesByName(' +
-                        '"first-contentful-paint");') as PerformanceEntry[];
-    if (entries.length > 0) {
-      return entries[0].startTime;
-    }
-  }
-}
+import {Server} from './server';
+import {BenchmarkSpec, PerformanceEntryCriteria} from './types';
+import {escapeStringLiteral, throwUnreachable} from './util';
 
 /**
- * Poll for the `window.tachometerResult` global and return it once it is set.
- * Polls every 50 milliseconds, and returns undefined if no result was found
- * after 10 seconds. Throws if a value was found, but it was not a number, or it
- * was a negative number.
+ * Try to take a measurement in milliseconds from the given browser. Returns
+ * undefined if the measurement is not available (which may just mean we need to
+ * wait some more time).
  */
-export async function pollForGlobalResult(
+export async function measure(
     driver: webdriver.WebDriver,
-    expression: string): Promise<number|undefined> {
-  // Both here and for FCP above, we could automatically tune the poll time
-  // after we get our first result, so that when the script is fast we spend
-  // less time waiting, and so that when the script is slow we interfere it
-  // less frequently.
-  for (let waited = 0; waited <= 10000; waited += 50) {
-    await wait(50);
-    const result =
-        await driver.executeScript(`return (${expression});`) as unknown;
-    if (result !== undefined && result !== null) {
-      if (typeof result !== 'number') {
-        throw new Error(
-            `'${expression}' was type ` +
-            `${typeof result}, expected number.`);
-      }
-      if (result < 0) {
-        throw new Error(`'${expression}' was negative: ${result}`);
-      }
-      return result;
-    }
+    {measurement, measurementExpression}: BenchmarkSpec,
+    server: Server|undefined): Promise<number|undefined> {
+  if (measurement === 'fcp') {
+    return queryForPerformanceEntry(driver, {name: 'first-contentful-paint'});
   }
+  if (measurement === 'callback') {
+    if (server === undefined) {
+      throw new Error('No server');
+    }
+    return (await server.nextResults()).millis;
+  }
+  if (measurement === 'global') {
+    if (!measurementExpression) {
+      throw new Error('No measurement expression');
+    }
+    return queryForExpression(driver, measurementExpression);
+  }
+  if (measurement && 'performanceEntry' in measurement) {
+    return queryForPerformanceEntry(driver, measurement.performanceEntry);
+  }
+  throwUnreachable(
+      measurement, `Unknown measurement type: ${JSON.stringify(measurement)}`);
 }
 
 /**
@@ -71,8 +54,63 @@ export async function pollForGlobalResult(
  * DOM types ambiently defined.
  */
 interface PerformanceEntry {
+  entryType: 'frame'|'navigation'|'resource'|'mark'|'measure'|'paint'|
+      'longtask';
   name: string;
   startTime: number;
+  duration: number;
 }
 
-const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+/**
+ * Query the browser for the Performance Entry matching the given criteria.
+ * Returns undefined if no matching entry is found. Throws if the performance
+ * entry has an unsupported type. If there are multiple entries matching the
+ * same criteria, returns only the first one.
+ */
+export async function queryForPerformanceEntry(
+    driver: webdriver.WebDriver,
+    criteria: PerformanceEntryCriteria): Promise<number|undefined> {
+  const escaped = escapeStringLiteral(criteria.name);
+  const script = `return window.performance.getEntriesByName(\`${escaped}\`);`;
+  const entries = await driver.executeScript(script) as PerformanceEntry[];
+  if (entries.length === 0) {
+    return undefined;
+  }
+  const entry = entries[0];
+  switch (entry.entryType) {
+    case 'measure':
+      return entry.duration;
+    case 'mark':
+    case 'paint':
+      return entry.startTime;
+    default:
+      // We may want to support other entry types, but we'll need to investigate
+      // how to interpret them, and we may need additional criteria to decide
+      // which exact numbers to report from them.
+      throw new Error(
+          `Performance entry type not supported: ${entry.entryType}`);
+  }
+}
+
+/**
+ * Execute the given expression in the browser and return the result, if it is a
+ * positive number. If null or undefined, returns undefined. If some other type,
+ * throws.
+ */
+export async function queryForExpression(
+    driver: webdriver.WebDriver,
+    expression: string): Promise<number|undefined> {
+  const result =
+      await driver.executeScript(`return (${expression});`) as unknown;
+  if (result !== undefined && result !== null) {
+    if (typeof result !== 'number') {
+      throw new Error(
+          `'${expression}' was type ` +
+          `${typeof result}, expected number.`);
+    }
+    if (result < 0) {
+      throw new Error(`'${expression}' was negative: ${result}`);
+    }
+    return result;
+  }
+}

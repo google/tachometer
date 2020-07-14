@@ -48,3 +48,27 @@ export async function runNpm(
     args: string[], options?: ExecFileOptions): Promise<string|Buffer> {
   return promisify(execFile)(npmCmd, args, options).then(({stdout}) => stdout);
 }
+
+/**
+ * Escape a string such that it can be safely embedded in a JavaScript template
+ * literal (backtick string).
+ */
+export function escapeStringLiteral(unescaped: string): string {
+  return unescaped.replace(/\\/g, '\\\\')
+      .replace(/`/g, '\\`')
+      .replace(/\$/g, '\\$');
+}
+
+/**
+ * Promisified version of setTimeout.
+ */
+export const wait = (ms: number) =>
+    new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * A function that should never be called. But if it somehow is anyway, throw an
+ * exception with the given message.
+ */
+export function throwUnreachable(_unreachable: never, message: string): void {
+  throw new Error(message);
+}

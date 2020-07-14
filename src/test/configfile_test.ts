@@ -413,8 +413,7 @@ suite('config', () => {
           }],
         };
         await assert.isRejected(
-            parseConfigFile(config),
-            'config.benchmarks[0].measurement is not one of enum values: callback');
+            parseConfigFile(config), 'config.benchmarks[0].measurement');
       });
 
       test('sampleSize too small', async () => {

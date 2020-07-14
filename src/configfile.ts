@@ -102,11 +102,17 @@ interface ConfigFileBenchmark {
    * Which time interval to measure.
    *
    * Options:
-   *   - callback: bench.start() to bench.stop() (default for fully qualified
-   *     URLs.
-   *   - fcp: first contentful paint (default for local paths)
+   *   - callback: bench.start() to bench.stop() (default for local paths)
+   *   - fcp: first contentful paint (default for fully qualified URLs)
    *   - global: result returned from window.tachometerResult (or custom
    *       expression set via measurementExpression)
+   *   - {
+   *       performanceEntry: {
+   *         //
+   * https://developer.mozilla.org/en-US/docs/Web/API/PerformanceEntry/name
+   *         name: string;
+   *       }
+   *     }
    */
   measurement?: Measurement;
 
