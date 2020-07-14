@@ -16,7 +16,8 @@ import ProgressBar = require('progress');
 import ansi = require('ansi-escape-sequences');
 
 import {jsonOutput, legacyJsonOutput} from './json-output';
-import {browserSignature, makeDriver, openAndSwitchToNewTab, pollForGlobalResult, pollForFirstContentfulPaint} from './browser';
+import {browserSignature, makeDriver, openAndSwitchToNewTab} from './browser';
+import {pollForGlobalResult, pollForFirstContentfulPaint} from './measure';
 import {BenchmarkResult, BenchmarkSpec} from './types';
 import {formatCsvStats, formatCsvRaw} from './csv';
 import {ResultStats, ResultStatsWithDifferences, horizonsResolved, summaryStats, computeDifferences} from './stats';
