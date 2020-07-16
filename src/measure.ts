@@ -29,13 +29,13 @@ export async function measure(
   }
   if (measurement === 'callback') {
     if (server === undefined) {
-      throw new Error('No server');
+      throw new Error('Internal error: no server for spec');
     }
     return (await server.nextResults()).millis;
   }
   if (measurement === 'global') {
     if (!measurementExpression) {
-      throw new Error('No measurement expression');
+      throw new Error('Internal error: no measurement expression');
     }
     return queryForExpression(driver, measurementExpression);
   }
@@ -43,7 +43,9 @@ export async function measure(
     return queryForPerformanceEntry(driver, measurement.performanceEntry);
   }
   throwUnreachable(
-      measurement, `Unknown measurement type: ${JSON.stringify(measurement)}`);
+      measurement,
+      `Internal error: unknown measurement type ` +
+          JSON.stringify(measurement));
 }
 
 /**
@@ -67,7 +69,7 @@ interface PerformanceEntry {
  * entry has an unsupported type. If there are multiple entries matching the
  * same criteria, returns only the first one.
  */
-export async function queryForPerformanceEntry(
+async function queryForPerformanceEntry(
     driver: webdriver.WebDriver,
     criteria: PerformanceEntryCriteria): Promise<number|undefined> {
   const escaped = escapeStringLiteral(criteria.name);
@@ -97,7 +99,7 @@ export async function queryForPerformanceEntry(
  * positive number. If null or undefined, returns undefined. If some other type,
  * throws.
  */
-export async function queryForExpression(
+async function queryForExpression(
     driver: webdriver.WebDriver,
     expression: string): Promise<number|undefined> {
   const result =

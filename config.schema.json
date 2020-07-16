@@ -110,7 +110,7 @@
                             "type": "string"
                         }
                     ],
-                    "description": "Which time interval to measure.\n\nOptions:\n   - callback: bench.start() to bench.stop() (default for local paths)\n   - fcp: first contentful paint (default for fully qualified URLs)\n   - global: result returned from window.tachometerResult (or custom\n       expression set via measurementExpression)\n   - {\n       performanceEntry: {\n         // https://developer.mozilla.org/en-US/docs/Web/API/PerformanceEntry/name\n         name: string;\n       }\n     }"
+                    "description": "Which time interval to measure.\n\nOptions:\n   - callback: bench.start() to bench.stop() (default for local paths)\n   - fcp: first contentful paint (default for fully qualified URLs)\n   - global: result returned from window.tachometerResult (or custom\n       expression set via measurementExpression)\n   - {\n       performanceEntry: {\n         //\nhttps://developer.mozilla.org/en-US/docs/Web/API/PerformanceEntry/name\n         name: string;\n       }\n     }"
                 },
                 "measurementExpression": {
                     "description": "Expression to use to retrieve global result.  Defaults to\n`window.tachometerResult`.",

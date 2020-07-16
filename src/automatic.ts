@@ -102,18 +102,10 @@ export async function automaticMode(
     for (let attempt = 1;; attempt++) {
       await openAndSwitchToNewTab(driver, spec.browser);
       await driver.get(url);
-
-      if (spec.measurement === 'callback') {
-        if (server === undefined) {
-          throw new Error('Internal error: no server for spec');
-        }
-        millis = (await server.nextResults()).millis;
-      } else {
-        for (let waited = 0; millis === undefined && waited <= 10000;
-             waited += 50) {
-          await wait(50);
-          millis = await measure(driver, spec, server);
-        }
+      for (let waited = 0; millis === undefined && waited <= 10000;
+           waited += 50) {
+        await wait(50);
+        millis = await measure(driver, spec, server);
       }
 
       // Close the active tab (but not the whole browser, since the
