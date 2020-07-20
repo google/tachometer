@@ -27,7 +27,10 @@ export const measurementExpression = 'window.tachometerResult';
 
 export function measurement(url: LocalUrl|RemoteUrl): Measurement {
   if (url.kind === 'remote') {
-    return 'fcp';
+    return {
+      kind: 'performance',
+      entryName: 'first-contentful-paint',
+    };
   }
-  return 'callback';
+  return {kind: 'callback'};
 }

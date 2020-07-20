@@ -14,9 +14,26 @@ project adheres to [Semantic Versioning](http://semver.org/).
   "benchmarks": [
     {
       "measurement": {
-        "performanceEntry": {
-          "name": "foo"
-        }
+        "kind": "performance",
+        "entryName": "foo"
+      }
+    }
+  ]
+  ```
+
+- Add new syntax for specifying benchmarks:
+
+  ```
+  "benchmarks": [
+    {
+      "measurement": {
+        "kind": "callback"
+      }
+    },
+    {
+      "measurement": {
+        "kind": "expression",
+        "expression": "window.tachometerResult"
       }
     }
   ]

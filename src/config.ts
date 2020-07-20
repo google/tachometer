@@ -123,7 +123,9 @@ export async function makeConfig(opts: Opts): Promise<Config> {
   }
 
   for (const spec of config.benchmarks) {
-    if (spec.measurement === 'fcp' && !fcpBrowsers.has(spec.browser.name)) {
+    if (spec.measurement.kind === 'performance' &&
+        spec.measurement.entryName === 'first-contentful-paint' &&
+        !fcpBrowsers.has(spec.browser.name)) {
       throw new Error(
           `Browser ${spec.browser.name} does not support the ` +
           `first contentful paint (FCP) measurement`);

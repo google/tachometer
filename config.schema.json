@@ -2,6 +2,21 @@
     "$schema": "http://json-schema.org/draft-07/schema#",
     "additionalProperties": false,
     "definitions": {
+        "CallbackMeasurement": {
+            "additionalProperties": false,
+            "properties": {
+                "kind": {
+                    "enum": [
+                        "callback"
+                    ],
+                    "type": "string"
+                }
+            },
+            "required": [
+                "kind"
+            ],
+            "type": "object"
+        },
         "ChromeConfig": {
             "additionalProperties": false,
             "properties": {
@@ -90,16 +105,13 @@
                 "measurement": {
                     "anyOf": [
                         {
-                            "additionalProperties": false,
-                            "properties": {
-                                "performanceEntry": {
-                                    "$ref": "#/definitions/PerformanceEntryCriteria"
-                                }
-                            },
-                            "required": [
-                                "performanceEntry"
-                            ],
-                            "type": "object"
+                            "$ref": "#/definitions/CallbackMeasurement"
+                        },
+                        {
+                            "$ref": "#/definitions/PerformanceEntryMeasurement"
+                        },
+                        {
+                            "$ref": "#/definitions/ExpressionMeasurement"
                         },
                         {
                             "enum": [
@@ -170,6 +182,25 @@
             },
             "required": [
                 "name"
+            ],
+            "type": "object"
+        },
+        "ExpressionMeasurement": {
+            "additionalProperties": false,
+            "properties": {
+                "expression": {
+                    "type": "string"
+                },
+                "kind": {
+                    "enum": [
+                        "expression"
+                    ],
+                    "type": "string"
+                }
+            },
+            "required": [
+                "expression",
+                "kind"
             ],
             "type": "object"
         },
@@ -254,16 +285,22 @@
             "description": "A mapping from NPM package name to version specifier, as used in a\npackage.json's \"dependencies\" and \"devDependencies\".",
             "type": "object"
         },
-        "PerformanceEntryCriteria": {
+        "PerformanceEntryMeasurement": {
             "additionalProperties": false,
-            "description": "Criteria for matching a Performance Entry.",
             "properties": {
-                "name": {
+                "entryName": {
+                    "type": "string"
+                },
+                "kind": {
+                    "enum": [
+                        "performance"
+                    ],
                     "type": "string"
                 }
             },
             "required": [
-                "name"
+                "entryName",
+                "kind"
             ],
             "type": "object"
         },

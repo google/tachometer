@@ -49,20 +49,30 @@ export interface NpmPackageJson {
 
 /** The kinds of intervals we can measure. */
 export type Measurement =
-    'callback'|'fcp'|'global'|{performanceEntry: PerformanceEntryCriteria};
+    CallbackMeasurement|PerformanceEntryMeasurement|ExpressionMeasurement;
+
+export interface CallbackMeasurement {
+  kind: 'callback';
+}
+
+export interface PerformanceEntryMeasurement {
+  kind: 'performance';
+  entryName: string;
+}
+
+export interface ExpressionMeasurement {
+  kind: 'expression';
+  expression: string;
+}
+
+export type CommandLineMeasurements = 'callback'|'fcp'|'global';
 
 export const measurements = new Set<string>(['callback', 'fcp', 'global']);
-
-/** Criteria for matching a Performance Entry. */
-export interface PerformanceEntryCriteria {
-  name: string;
-}
 
 /** A specification of a benchmark to run. */
 export interface BenchmarkSpec {
   url: LocalUrl|RemoteUrl;
   measurement: Measurement;
-  measurementExpression?: string;
   name: string;
   browser: BrowserConfig;
 }

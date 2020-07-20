@@ -16,8 +16,8 @@ import {Config, urlFromLocalPath} from './config';
 import * as defaults from './defaults';
 import {Opts} from './flags';
 import {Server} from './server';
-import {BenchmarkSpec, LocalUrl, PackageVersion, RemoteUrl} from './types';
-import {isHttpUrl} from './util';
+import {BenchmarkSpec, LocalUrl, Measurement, PackageVersion, RemoteUrl} from './types';
+import {isHttpUrl, throwUnreachable} from './util';
 import {parsePackageVersions} from './versions';
 
 /**
@@ -69,6 +69,28 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
     versions.push(undefined);
   }
 
+  let measurement: Measurement|undefined;
+  if (opts.measure === 'callback') {
+    measurement = {
+      kind: 'callback',
+    };
+  } else if (opts.measure === 'fcp') {
+    measurement = {
+      kind: 'performance',
+      entryName: 'first-contentful-paint',
+    };
+  } else if (opts.measure === 'global') {
+    measurement = {
+      kind: 'expression',
+      expression:
+          opts['measurement-expression'] || defaults.measurementExpression,
+    };
+  } else if (opts.measure !== undefined) {
+    throwUnreachable(
+        opts.measure,
+        `Internal error: unknown measure ${JSON.stringify(opts.measure)}`);
+  }
+
   // Benchmark paths/URLs are the bare arguments not associated with a flag, so
   // they are found in _unknown.
   for (const argStr of opts._unknown || []) {
@@ -79,23 +101,15 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
         kind: 'remote',
         url: arg.url,
       };
-      const measurement =
-          opts.measure !== undefined ? opts.measure : defaults.measurement(url);
-      const measurementExpression = measurement === 'global' ?
-          (opts['measurement-expression'] !== undefined ?
-               opts['measurement-expression'] :
-               defaults.measurementExpression) :
-          undefined;
+
       for (const browser of browsers) {
         const spec: BenchmarkSpec = {
           name: arg.alias || arg.url,
           browser,
-          measurement,
+          measurement: measurement === undefined ? defaults.measurement(url) :
+                                                   measurement,
           url,
         };
-        if (measurementExpression) {
-          spec.measurementExpression = measurementExpression;
-        }
         specs.push(spec);
       }
 
@@ -115,23 +129,13 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
             queryString: arg.queryString,
             version,
           };
-          const measurement = opts.measure !== undefined ?
-              opts.measure :
-              defaults.measurement(url);
-          const measurementExpression = measurement === 'global' ?
-              (opts['measurement-expression'] !== undefined ?
-                   opts['measurement-expression'] :
-                   defaults.measurementExpression) :
-              undefined;
           const spec: BenchmarkSpec = {
             name,
             browser,
-            measurement,
+            measurement: measurement === undefined ? defaults.measurement(url) :
+                                                     measurement,
             url,
           };
-          if (measurementExpression) {
-            spec.measurementExpression = measurementExpression;
-          }
           specs.push(spec);
         }
       }
