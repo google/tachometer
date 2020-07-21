@@ -1,0 +1,28 @@
+<!doctype html>
+<!--
+This test benchmark sets two performance API measurements after delays.
+-->
+<html>
+
+<head>
+    <title>multiple performance measure test</title>
+</head>
+
+<body>
+    <script>
+        const params = new URL(document.location).searchParams;
+        const fooMs = Number(params.get('foo'));
+        const barMs = Number(params.get('bar'));
+        const start = performance.mark('begin');
+        setTimeout(() => {
+            performance.mark('fooEnd');
+            performance.measure('foo', 'begin', 'fooEnd');
+        }, fooMs);
+        setTimeout(() => {
+            performance.mark('barEnd');
+            performance.measure('bar', 'begin', 'barEnd');
+        }, barMs);
+    </script>
+</body>
+
+</html>

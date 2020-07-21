@@ -86,6 +86,10 @@ confidence in them.
 Tachometer supports four kinds of time interval measurements, controlled with
 the `measurement` config file property, or the `--measure` flag.
 
+If `measurement` is an array, then all of the given measurements will be
+retrieved from each page load. Each measurement from a page is treated as its
+own benchmark.
+
 #### Performance API
 
 Retrieve a measure, mark, or paint timing from the

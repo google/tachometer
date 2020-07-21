@@ -1,0 +1,25 @@
+{
+    "$schema": "https://raw.githubusercontent.com/Polymer/tachometer/master/config.schema.json",
+    "sampleSize": 10,
+    "timeout": 0,
+    "benchmarks": [
+        {
+            "name": "multi",
+            "url": "src/test/data/multiple-measurements.html?foo=20&bar=60",
+            "measurement": [
+                {
+                    "kind": "performance",
+                    "entryName": "foo"
+                },
+                {
+                    "kind": "performance",
+                    "entryName": "bar"
+                }
+            ],
+            "browser": {
+                "name": "chrome",
+                "headless": true
+            }
+        }
+    ]
+}

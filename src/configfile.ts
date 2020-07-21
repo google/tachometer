@@ -136,7 +136,8 @@ interface ConfigFileBenchmark {
   expand?: ConfigFileBenchmark[];
 }
 
-type ConfigFileMeasurement = 'callback'|'fcp'|'global'|Measurement;
+type ConfigFileMeasurement =
+    'callback'|'fcp'|'global'|Measurement|Array<Measurement>;
 
 type BrowserConfigs =
     ChromeConfig|FirefoxConfig|SafariConfig|EdgeConfig|IEConfig;
@@ -327,22 +328,24 @@ async function parseBenchmark(benchmark: ConfigFileBenchmark, root: string):
   }
 
   if (benchmark.measurement === 'callback') {
-    spec.measurement = {
+    spec.measurement = [{
       kind: 'callback',
-    };
+    }];
   } else if (benchmark.measurement === 'fcp') {
-    spec.measurement = {
+    spec.measurement = [{
       kind: 'performance',
       entryName: 'first-contentful-paint',
-    };
+    }];
   } else if (benchmark.measurement === 'global') {
-    spec.measurement = {
+    spec.measurement = [{
       kind: 'expression',
       expression:
           benchmark.measurementExpression || defaults.measurementExpression,
-    };
-  } else {
+    }];
+  } else if (Array.isArray(benchmark.measurement)) {
     spec.measurement = benchmark.measurement;
+  } else if (benchmark.measurement !== undefined) {
+    spec.measurement = [benchmark.measurement];
   }
 
   const url = benchmark.url;
@@ -457,7 +460,7 @@ function applyDefaults(partialSpec: Partial<BenchmarkSpec>): BenchmarkSpec {
     };
   }
   if (measurement === undefined) {
-    measurement = defaults.measurement(url);
+    measurement = [defaults.measurement(url)];
   }
   return {name, url, browser, measurement};
 }

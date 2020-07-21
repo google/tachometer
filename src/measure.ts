@@ -109,3 +109,24 @@ async function queryForExpression(
     return result;
   }
 }
+
+/**
+ * Return a good-enough label for the given measurement, to disambiguate cases
+ * where there are multiple measurements on the same page.
+ */
+export function measurementName(measurement: Measurement): string {
+  switch (measurement.kind) {
+    case 'callback':
+      return 'callback';
+    case 'expression':
+      return measurement.expression;
+    case 'performance':
+      return measurement.entryName === 'first-contentful-paint' ?
+          'fcp' :
+          measurement.entryName;
+  }
+  throwUnreachable(
+      measurement,
+      `Internal error: unknown measurement type ` +
+          JSON.stringify(measurement));
+}

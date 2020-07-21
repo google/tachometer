@@ -42,7 +42,7 @@ export async function fakeResults(configFile: ConfigFile):
   const config = applyDefaults(await parseConfigFile(configFile));
   const results = [];
   for (let i = 0; i < config.benchmarks.length; i++) {
-    const {name, url, browser} = config.benchmarks[i];
+    const {name, url, browser, measurement} = config.benchmarks[i];
     const averageMillis = (i + 1) * 10;
     const bytesSent = (i + 1) * 1024;
     const millis = [
@@ -51,20 +51,24 @@ export async function fakeResults(configFile: ConfigFile):
       ...new Array(Math.floor(config.sampleSize / 2)).fill(averageMillis - 5),
       ...new Array(Math.ceil(config.sampleSize / 2)).fill(averageMillis + 5),
     ];
-    results.push({
-      stats: summaryStats(millis),
-      result: {
-        name,
-        queryString: url.kind === 'local' ? url.queryString : '',
-        version: url.kind === 'local' && url.version !== undefined ?
-            url.version.label :
-            '',
-        millis,
-        bytesSent,
-        browser,
-        userAgent: userAgents.get(browser.name) || '',
-      },
-    });
+    for (let measurementIdx = 0; measurementIdx < measurement.length;
+         measurementIdx++) {
+      results.push({
+        stats: summaryStats(millis),
+        result: {
+          name,
+          measurementIdx,
+          queryString: url.kind === 'local' ? url.queryString : '',
+          version: url.kind === 'local' && url.version !== undefined ?
+              url.version.label :
+              '',
+          millis,
+          bytesSent,
+          browser,
+          userAgent: userAgents.get(browser.name) || '',
+        },
+      });
+    }
   }
   return computeDifferences(results);
 }

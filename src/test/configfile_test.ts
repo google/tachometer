@@ -107,10 +107,10 @@ suite('config', () => {
           {
             name: 'remote',
             browser: defaultBrowser,
-            measurement: {
+            measurement: [{
               kind: 'performance',
               entryName: 'first-contentful-paint',
-            },
+            }],
             url: {
               kind: 'remote',
               url: 'http://example.com?foo=bar',
@@ -125,7 +125,9 @@ suite('config', () => {
                 'layout.css.shadow-parts.enabled': true,
               },
             },
-            measurement: {kind: 'callback'},
+            measurement: [{
+              kind: 'callback',
+            }],
             url: {
               kind: 'local',
               urlPath: '/mybench/index.html',
@@ -146,10 +148,10 @@ suite('config', () => {
               name: 'chrome',
               cpuThrottlingRate: 6,
             },
-            measurement: {
+            measurement: [{
               kind: 'performance',
               entryName: 'first-contentful-paint',
-            },
+            }],
             url: {
               kind: 'remote',
               url: 'http://example.com?foo=bar',
@@ -185,10 +187,10 @@ suite('config', () => {
               kind: 'remote',
               url: 'http://example.com?foo=bar',
             },
-            measurement: {
+            measurement: [{
               kind: 'performance',
               entryName: 'first-contentful-paint',
-            },
+            }],
             browser: defaultBrowser,
           },
           {
@@ -198,7 +200,9 @@ suite('config', () => {
               urlPath: '/mybench/index.html',
               queryString: '?foo=bar',
             },
-            measurement: {kind: 'callback'},
+            measurement: [{
+              kind: 'callback',
+            }],
             browser: defaultBrowser,
           },
         ],
@@ -246,9 +250,9 @@ suite('config', () => {
               urlPath: '/mybench/index.html',
               queryString: '?foo=a',
             },
-            measurement: {
+            measurement: [{
               kind: 'callback',
-            },
+            }],
             browser: defaultBrowser,
           },
           {
@@ -258,10 +262,10 @@ suite('config', () => {
               urlPath: '/mybench/index.html',
               queryString: '?foo=b',
             },
-            measurement: {
+            measurement: [{
               kind: 'expression',
               expression: 'window.foo',
-            },
+            }],
             browser: defaultBrowser,
           },
           {
@@ -271,10 +275,10 @@ suite('config', () => {
               urlPath: '/mybench/index.html',
               queryString: '?foo=c',
             },
-            measurement: {
+            measurement: [{
               kind: 'performance',
               entryName: 'foo-measure',
-            },
+            }],
             browser: defaultBrowser,
           },
         ],
@@ -319,19 +323,19 @@ suite('config', () => {
           {
             name: 'http://example.com',
             url: {kind: 'remote', url: 'http://example.com'},
-            measurement: {
+            measurement: [{
               kind: 'performance',
               entryName: 'first-contentful-paint',
-            },
+            }],
             browser: defaultBrowser,
           },
           {
             name: 'http://example.com',
             url: {kind: 'remote', url: 'http://example.com'},
-            measurement: {
+            measurement: [{
               kind: 'performance',
               entryName: 'first-contentful-paint',
-            },
+            }],
             browser: {
               ...defaultBrowser,
               name: 'firefox',
@@ -340,13 +344,17 @@ suite('config', () => {
           {
             name: 'http://example.com',
             url: {kind: 'remote', url: 'http://example.com'},
-            measurement: {kind: 'callback'},
+            measurement: [{
+              kind: 'callback',
+            }],
             browser: defaultBrowser,
           },
           {
             name: 'http://example.com',
             url: {kind: 'remote', url: 'http://example.com'},
-            measurement: {kind: 'callback'},
+            measurement: [{
+              kind: 'callback',
+            }],
             browser: {
               ...defaultBrowser,
               name: 'firefox',
@@ -389,10 +397,10 @@ suite('config', () => {
               kind: 'remote',
               url: 'http://example.com?foo=bar',
             },
-            measurement: {
+            measurement: [{
               kind: 'performance',
               entryName: 'first-contentful-paint',
-            },
+            }],
             browser: {
               name: 'chrome',
               headless: false,

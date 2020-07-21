@@ -7,6 +7,11 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+- Add ability to specify multiple measurements from the same page load by
+  setting the `measurement` property in the JSON config file to an array. For
+  example, you can now use the performance API to define two intervals on the
+  same page, and compare them to each other or to other pages.
+
 - Add ability to pull measurements from the browser performance measurement API,
   e.g.:
 

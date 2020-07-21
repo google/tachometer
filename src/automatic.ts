@@ -17,10 +17,10 @@ import ansi = require('ansi-escape-sequences');
 
 import {jsonOutput, legacyJsonOutput} from './json-output';
 import {browserSignature, makeDriver, openAndSwitchToNewTab} from './browser';
-import {measure} from './measure';
+import {measure, measurementName} from './measure';
 import {BenchmarkResult, BenchmarkSpec} from './types';
 import {formatCsvStats, formatCsvRaw} from './csv';
-import {ResultStats, ResultStatsWithDifferences, horizonsResolved, summaryStats, computeDifferences} from './stats';
+import {ResultStatsWithDifferences, horizonsResolved, summaryStats, computeDifferences} from './stats';
 import {verticalTermResultTable, horizontalTermResultTable, verticalHtmlResultTable, horizontalHtmlResultTable, automaticResultTable, spinner, benchmarkOneLiner} from './format';
 import {Config} from './config';
 import * as github from './github';
@@ -41,7 +41,7 @@ export class AutomaticMode {
   private browsers = new Map<string, Browser>();
   private bar: ProgressBar;
   private completeGithubCheck?: (markdown: string) => void;
-  private specResults = new Map<BenchmarkSpec, BenchmarkResult[]>();
+  private results = new Map<BenchmarkSpec, BenchmarkResult[]>();
   private hitTimeout = false;
 
   constructor(config: Config, servers: Map<BenchmarkSpec, Server>) {
@@ -62,9 +62,6 @@ export class AutomaticMode {
     }
     console.log('Running benchmarks\n');
     await this.warmup();
-    for (const spec of this.specs) {
-      this.specResults.set(spec, []);
-    }
     await this.takeMinimumSamples();
     await this.takeAdditionalSamples();
     await this.closeBrowsers();
@@ -111,14 +108,31 @@ export class AutomaticMode {
       bar.tick(0, {
         status: `warmup ${i + 1}/${specs.length} ${benchmarkOneLiner(spec)}`,
       });
-      await this.takeSample(spec);
+      await this.takeSamples(spec);
       bar.tick(1);
+    }
+  }
+
+  private recordSamples(spec: BenchmarkSpec, newResults: BenchmarkResult[]) {
+    let specResults = this.results.get(spec);
+    if (specResults === undefined) {
+      specResults = [];
+      this.results.set(spec, specResults);
+    }
+
+    for (const newResult of newResults) {
+      const primary = specResults[newResult.measurementIdx];
+      if (primary === undefined) {
+        specResults[newResult.measurementIdx] = newResult;
+      } else {
+        primary.millis.push(...newResult.millis);
+      }
     }
   }
 
   private async takeMinimumSamples() {
     // Always collect our minimum number of samples.
-    const {config, specs, bar, specResults} = this;
+    const {config, specs, bar} = this;
     const numRuns = specs.length * config.sampleSize;
     let run = 0;
     for (let sample = 0; sample < config.sampleSize; sample++) {
@@ -126,7 +140,7 @@ export class AutomaticMode {
         bar.tick(0, {
           status: `${++run}/${numRuns} ${benchmarkOneLiner(spec)}`,
         });
-        specResults.get(spec)!.push(await this.takeSample(spec));
+        this.recordSamples(spec, await this.takeSamples(spec));
         if (bar.curr === bar.total - 1) {
           // Note if we tick with 0 after we've completed, the status is
           // rendered on the next line for some reason.
@@ -139,7 +153,7 @@ export class AutomaticMode {
   }
 
   private async takeAdditionalSamples() {
-    const {config, specs, specResults} = this;
+    const {config, specs} = this;
     if (config.timeout > 0) {
       console.log();
       const timeoutMs = config.timeout * 60 * 1000;  // minutes -> millis
@@ -170,14 +184,14 @@ export class AutomaticMode {
             process.stdout.write(
                 `\r${spinner[run % spinner.length]} Auto-sample ${sample} ` +
                 `(timeout in ${mins}m${secs}s)` + ansi.erase.inLine(0));
-            specResults.get(spec)!.push(await this.takeSample(spec));
+            this.recordSamples(spec, await this.takeSamples(spec));
           }
         }
       }
     }
   }
 
-  private async takeSample(spec: BenchmarkSpec): Promise<BenchmarkResult> {
+  private async takeSamples(spec: BenchmarkSpec): Promise<BenchmarkResult[]> {
     const {servers, config, browsers} = this;
 
     let server;
@@ -192,19 +206,31 @@ export class AutomaticMode {
     const {driver, initialTabHandle} =
         browsers.get(browserSignature(spec.browser))!;
 
-    let millis: number|undefined;
     let bytesSent = 0;
     let userAgent = '';
     // TODO(aomarks) Make maxAttempts and timeouts configurable.
     const maxAttempts = 3;
+    const measurements = spec.measurement;
+    let millis: number[];
+    let numPending: number;
     for (let attempt = 1;; attempt++) {
+      millis = [];
+      numPending = measurements.length;
       await openAndSwitchToNewTab(driver, spec.browser);
       await driver.get(url);
-      for (let waited = 0; millis === undefined && waited <= 10000;
-           waited += 50) {
+      for (let waited = 0; numPending > 0 && waited <= 10000; waited += 50) {
         // TODO(aomarks) You don't have to wait in callback mode!
         await wait(50);
-        millis = await measure(driver, spec.measurement, server);
+        for (let i = 0; i < measurements.length; i++) {
+          if (millis[i] !== undefined) {
+            continue;
+          }
+          const result = await measure(driver, measurements[i], server);
+          if (result !== undefined) {
+            millis[i] = result;
+            numPending--;
+          }
+        }
       }
 
       // Close the active tab (but not the whole browser, since the
@@ -218,7 +244,7 @@ export class AutomaticMode {
         userAgent = session.userAgent;
       }
 
-      if (millis !== undefined || attempt >= maxAttempts) {
+      if (numPending === 0 || attempt >= maxAttempts) {
         break;
       }
 
@@ -228,7 +254,7 @@ export class AutomaticMode {
           `in ${spec.browser.name} from ${url}. Retrying.`);
     }
 
-    if (millis === undefined) {
+    if (numPending > 0) {
       console.log();
       throw new Error(
           `\n\nFailed ${maxAttempts}/${maxAttempts} times ` +
@@ -236,36 +262,32 @@ export class AutomaticMode {
           `in ${spec.browser.name} from ${url}. Retrying.`);
     }
 
-    return {
-      name: spec.name,
-      queryString: spec.url.kind === 'local' ? spec.url.queryString : '',
-      version: spec.url.kind === 'local' && spec.url.version !== undefined ?
-          spec.url.version.label :
-          '',
-      millis: [millis],
-      bytesSent,
-      browser: spec.browser,
-      userAgent,
-    };
+    return measurements.map(
+        (measurement, measurementIdx) => ({
+          name: measurements.length === 1 ?
+              spec.name :
+              `${spec.name} [${measurementName(measurement)}]`,
+          measurementIdx,
+          queryString: spec.url.kind === 'local' ? spec.url.queryString : '',
+          version: spec.url.kind === 'local' && spec.url.version !== undefined ?
+              spec.url.version.label :
+              '',
+          millis: [millis[measurementIdx]],
+          bytesSent,
+          browser: spec.browser,
+          userAgent,
+        }));
   }
 
   makeResults() {
-    const results: BenchmarkResult[] = [];
-    for (const sr of this.specResults.values()) {
-      const combined: BenchmarkResult = {
-        ...sr[0],
-        millis: [],
-      };
-      for (const result of sr) {
-        combined.millis.push(...result.millis);
+    const resultStats = [];
+    for (const results of this.results.values()) {
+      for (let r = 0; r < results.length; r++) {
+        const result = results[r];
+        resultStats.push({result, stats: summaryStats(result.millis)});
       }
-      results.push(combined);
     }
-    const withStats = results.map((result): ResultStats => ({
-                                    result,
-                                    stats: summaryStats(result.millis),
-                                  }));
-    return computeDifferences(withStats);
+    return computeDifferences(resultStats);
   }
 
   private async outputResults(withDifferences: ResultStatsWithDifferences[]) {

@@ -106,8 +106,9 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
         const spec: BenchmarkSpec = {
           name: arg.alias || arg.url,
           browser,
-          measurement: measurement === undefined ? defaults.measurement(url) :
-                                                   measurement,
+          measurement:
+              [measurement === undefined ? defaults.measurement(url) :
+                                           measurement],
           url,
         };
         specs.push(spec);
@@ -132,8 +133,9 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
           const spec: BenchmarkSpec = {
             name,
             browser,
-            measurement: measurement === undefined ? defaults.measurement(url) :
-                                                     measurement,
+            measurement:
+                [measurement === undefined ? defaults.measurement(url) :
+                                             measurement],
             url,
           };
           specs.push(spec);

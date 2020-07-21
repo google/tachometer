@@ -114,6 +114,22 @@
                             "$ref": "#/definitions/ExpressionMeasurement"
                         },
                         {
+                            "items": {
+                                "anyOf": [
+                                    {
+                                        "$ref": "#/definitions/CallbackMeasurement"
+                                    },
+                                    {
+                                        "$ref": "#/definitions/PerformanceEntryMeasurement"
+                                    },
+                                    {
+                                        "$ref": "#/definitions/ExpressionMeasurement"
+                                    }
+                                ]
+                            },
+                            "type": "array"
+                        },
+                        {
                             "enum": [
                                 "callback",
                                 "fcp",

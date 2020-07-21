@@ -72,7 +72,7 @@ export const measurements = new Set<string>(['callback', 'fcp', 'global']);
 /** A specification of a benchmark to run. */
 export interface BenchmarkSpec {
   url: LocalUrl|RemoteUrl;
-  measurement: Measurement;
+  measurement: Measurement[];
   name: string;
   browser: BrowserConfig;
 }
@@ -96,6 +96,7 @@ export interface BenchmarkResponse {
 
 export interface BenchmarkResult {
   name: string;
+  measurementIdx: number;
   queryString: string;
   version: string;
   millis: number[];
