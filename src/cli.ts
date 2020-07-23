@@ -24,7 +24,7 @@ import {Server} from './server';
 import {ResultStatsWithDifferences} from './stats';
 import {prepareVersionDirectory, makeServerPlans} from './versions';
 import {manualMode} from './manual';
-import {automaticMode} from './automatic';
+import {Runner} from './runner';
 import {runNpm} from './util';
 
 const installedVersion = (): string =>
@@ -150,8 +150,9 @@ $ tach http://example.com
     await manualMode(config, servers);
 
   } else {
+    const runner = new Runner(config, servers);
     try {
-      return await automaticMode(config, servers);
+      return await runner.run();
     } finally {
       const allServers = new Set<Server>([...servers.values()]);
       await Promise.all([...allServers].map((server) => server.close()));
