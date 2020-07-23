@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](http://semver.org/).
 
-## Unreleased
+<!-- ## Unreleased -->
+
+## [0.4.21] 2020-07-23
 
 - Add ability to specify multiple measurements from the same page load by
   setting the `measurement` property in the JSON config file to an array. For
