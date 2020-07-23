@@ -51,13 +51,13 @@ export async function fakeResults(configFile: ConfigFile):
       ...new Array(Math.floor(config.sampleSize / 2)).fill(averageMillis - 5),
       ...new Array(Math.ceil(config.sampleSize / 2)).fill(averageMillis + 5),
     ];
-    for (let measurementIdx = 0; measurementIdx < measurement.length;
-         measurementIdx++) {
+    for (let measurementIndex = 0; measurementIndex < measurement.length;
+         measurementIndex++) {
       results.push({
         stats: summaryStats(millis),
         result: {
           name,
-          measurementIdx,
+          measurementIndex,
           queryString: url.kind === 'local' ? url.queryString : '',
           version: url.kind === 'local' && url.version !== undefined ?
               url.version.label :

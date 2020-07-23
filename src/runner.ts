@@ -24,7 +24,7 @@ import {ResultStatsWithDifferences, horizonsResolved, summaryStats, computeDiffe
 import {verticalTermResultTable, horizontalTermResultTable, verticalHtmlResultTable, horizontalHtmlResultTable, automaticResultTable, spinner, benchmarkOneLiner} from './format';
 import {Config} from './config';
 import * as github from './github';
-import {Server} from './server';
+import {Server, Session} from './server';
 import {specUrl} from './specs';
 import {wait} from './util';
 
@@ -41,6 +41,24 @@ export class Runner {
   private readonly browsers = new Map<string, Browser>();
   private readonly bar: ProgressBar;
   private readonly results = new Map<BenchmarkSpec, BenchmarkResult[]>();
+
+  /**
+   * How many times we will load a page and try to collect all measurements
+   * before fully failing.
+   */
+  private readonly maxAttempts = 3;
+
+  /**
+   * Maximum milliseconds we will wait for all measurements to be collected per
+   * attempt before reloading and trying a new attempt.
+   */
+  private readonly attemptTimeout = 10000;
+
+  /**
+   * How many milliseconds we will wait between each poll for measurements.
+   */
+  private readonly pollTime = 50;
+
   private completeGithubCheck?: (markdown: string) => void;
   private hitTimeout = false;
 
@@ -120,10 +138,21 @@ export class Runner {
       this.results.set(spec, specResults);
     }
 
+    // This function is called once per page per sample. The first time this
+    // function is called for a page, that result object becomes our "primary"
+    // one. On subsequent calls, we accrete the additional sample data into this
+    // primary one. The other fields are always the same, so we can just ignore
+    // them after the first call.
+
+    // TODO(aomarks) The other fields (user agent, bytes sent, etc.) only need
+    // to be collected on the first run of each page, so we could do that in the
+    // warmup phase, and then function would only need to take sample data,
+    // since it's a bit confusing how we throw away a bunch of fields after the
+    // first call.
     for (const newResult of newResults) {
-      const primary = specResults[newResult.measurementIdx];
+      const primary = specResults[newResult.measurementIndex];
       if (primary === undefined) {
-        specResults[newResult.measurementIdx] = newResult;
+        specResults[newResult.measurementIndex] = newResult;
       } else {
         primary.millis.push(...newResult.millis);
       }
@@ -207,29 +236,38 @@ export class Runner {
     const {driver, initialTabHandle} =
         browsers.get(browserSignature(spec.browser))!;
 
-    let bytesSent = 0;
-    let userAgent = '';
-    // TODO(aomarks) Make maxAttempts and timeouts configurable.
-    const maxAttempts = 3;
-    const measurements = spec.measurement;
-    let millis: number[];
-    let numPending: number;
-    for (let attempt = 1;; attempt++) {
-      millis = [];
-      numPending = measurements.length;
+    let session: Session;
+    let pendingMeasurements;
+    let measurementResults: number[];
+
+    // We'll try N attempts per page. Within each attempt, we'll try to collect
+    // all of the measurements by polling. If we hit our per-attempt timeout
+    // before collecting all measurements, we'll move onto the next attempt
+    // where we reload the whole page and start from scratch. If we hit our max
+    // attempts, we'll throw.
+    for (let pageAttempt = 1;; pageAttempt++) {
+      // New attempt. Reset all measurements and results.
+      pendingMeasurements = new Set(spec.measurement);
+      measurementResults = [];
       await openAndSwitchToNewTab(driver, spec.browser);
       await driver.get(url);
-      for (let waited = 0; numPending > 0 && waited <= 10000; waited += 50) {
+      for (let waited = 0;
+           pendingMeasurements.size > 0 && waited <= this.attemptTimeout;
+           waited += this.pollTime) {
         // TODO(aomarks) You don't have to wait in callback mode!
-        await wait(50);
-        for (let i = 0; i < measurements.length; i++) {
-          if (millis[i] !== undefined) {
+        await wait(this.pollTime);
+        for (let measurementIndex = 0;
+             measurementIndex < spec.measurement.length;
+             measurementIndex++) {
+          if (measurementResults[measurementIndex] !== undefined) {
+            // Already collected this measurement on this attempt.
             continue;
           }
-          const result = await measure(driver, measurements[i], server);
+          const measurement = spec.measurement[measurementIndex];
+          const result = await measure(driver, measurement, server);
           if (result !== undefined) {
-            millis[i] = result;
-            numPending--;
+            measurementResults[measurementIndex] = result;
+            pendingMeasurements.delete(measurement);
           }
         }
       }
@@ -240,43 +278,51 @@ export class Runner {
       await driver.switchTo().window(initialTabHandle);
 
       if (server !== undefined) {
-        const session = server.endSession();
-        bytesSent = session.bytesSent;
-        userAgent = session.userAgent;
+        session = server.endSession();
       }
 
-      if (numPending === 0 || attempt >= maxAttempts) {
+      if (pendingMeasurements.size === 0 || pageAttempt >= this.maxAttempts) {
         break;
       }
 
       console.log(
-          `\n\nFailed ${attempt}/${maxAttempts} times ` +
-          `to get a measurement ` +
-          `in ${spec.browser.name} from ${url}. Retrying.`);
+          `\n\nFailed ${pageAttempt}/${this.maxAttempts} times ` +
+          `to get measurement(s) ${spec.name}` +
+          (spec.measurement.length > 1 ? ` [${
+                                                 [...pendingMeasurements]
+                                                     .map(measurementName)
+                                                     .join(', ')}]` :
+                                         '') +
+          ` in ${spec.browser.name} from ${url}. Retrying.`);
     }
 
-    if (numPending > 0) {
+    if (pendingMeasurements.size > 0) {
       console.log();
       throw new Error(
-          `\n\nFailed ${maxAttempts}/${maxAttempts} times ` +
-          `to get a measurement ` +
-          `in ${spec.browser.name} from ${url}. Retrying.`);
+          `\n\nFailed ${this.maxAttempts}/${this.maxAttempts} times ` +
+          `to get measurement(s) ${spec.name}` +
+          (spec.measurement.length > 1 ? ` [${
+                                                 [...pendingMeasurements]
+                                                     .map(measurementName)
+                                                     .join(', ')}]` :
+                                         '') +
+          ` in ${spec.browser.name} from ${url}`);
     }
 
-    return measurements.map(
-        (measurement, measurementIdx) => ({
-          name: measurements.length === 1 ?
+    return spec.measurement.map(
+        (measurement, measurementIndex) => ({
+          name: spec.measurement.length === 1 ?
               spec.name :
               `${spec.name} [${measurementName(measurement)}]`,
-          measurementIdx,
+          measurementIndex: measurementIndex,
           queryString: spec.url.kind === 'local' ? spec.url.queryString : '',
           version: spec.url.kind === 'local' && spec.url.version !== undefined ?
               spec.url.version.label :
               '',
-          millis: [millis[measurementIdx]],
-          bytesSent,
+          millis: [measurementResults[measurementIndex]],
+          bytesSent: session ? session.bytesSent : 0,
           browser: spec.browser,
-          userAgent,
+          userAgent: session ? session.userAgent : '',
         }));
   }
 
