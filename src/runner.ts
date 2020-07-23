@@ -34,14 +34,14 @@ interface Browser {
   initialTabHandle: string;
 }
 
-export class AutomaticMode {
-  private config: Config;
-  private specs: BenchmarkSpec[];
-  private servers: Map<BenchmarkSpec, Server>;
-  private browsers = new Map<string, Browser>();
-  private bar: ProgressBar;
+export class Runner {
+  private readonly config: Config;
+  private readonly specs: BenchmarkSpec[];
+  private readonly servers: Map<BenchmarkSpec, Server>;
+  private readonly browsers = new Map<string, Browser>();
+  private readonly bar: ProgressBar;
+  private readonly specResults = new Map<BenchmarkSpec, BenchmarkResult[]>();
   private completeGithubCheck?: (markdown: string) => void;
-  private specResults = new Map<BenchmarkSpec, BenchmarkResult[]>();
   private hitTimeout = false;
 
   constructor(config: Config, servers: Map<BenchmarkSpec, Server>) {
@@ -140,38 +140,39 @@ export class AutomaticMode {
 
   private async takeAdditionalSamples() {
     const {config, specs, specResults} = this;
-    if (config.timeout > 0) {
-      console.log();
-      const timeoutMs = config.timeout * 60 * 1000;  // minutes -> millis
-      const startMs = Date.now();
-      let run = 0;
-      let sample = 0;
-      let elapsed = 0;
-      while (true) {
-        if (horizonsResolved(this.makeResults(), config.horizons)) {
-          console.log();
-          break;
-        }
-        if (elapsed >= timeoutMs) {
-          this.hitTimeout = true;
-          break;
-        }
-        // Run batches of 10 additional samples at a time for more presentable
-        // sample sizes, and to nudge sample sizes up a little.
-        for (let i = 0; i < 10; i++) {
-          sample++;
-          for (const spec of specs) {
-            run++;
-            elapsed = Date.now() - startMs;
-            const remainingSecs =
-                Math.max(0, Math.round((timeoutMs - elapsed) / 1000));
-            const mins = Math.floor(remainingSecs / 60);
-            const secs = remainingSecs % 60;
-            process.stdout.write(
-                `\r${spinner[run % spinner.length]} Auto-sample ${sample} ` +
-                `(timeout in ${mins}m${secs}s)` + ansi.erase.inLine(0));
-            specResults.get(spec)!.push(await this.takeSample(spec));
-          }
+    if (config.timeout <= 0) {
+      return;
+    }
+    console.log();
+    const timeoutMs = config.timeout * 60 * 1000;  // minutes -> millis
+    const startMs = Date.now();
+    let run = 0;
+    let sample = 0;
+    let elapsed = 0;
+    while (true) {
+      if (horizonsResolved(this.makeResults(), config.horizons)) {
+        console.log();
+        break;
+      }
+      if (elapsed >= timeoutMs) {
+        this.hitTimeout = true;
+        break;
+      }
+      // Run batches of 10 additional samples at a time for more presentable
+      // sample sizes, and to nudge sample sizes up a little.
+      for (let i = 0; i < 10; i++) {
+        sample++;
+        for (const spec of specs) {
+          run++;
+          elapsed = Date.now() - startMs;
+          const remainingSecs =
+              Math.max(0, Math.round((timeoutMs - elapsed) / 1000));
+          const mins = Math.floor(remainingSecs / 60);
+          const secs = remainingSecs % 60;
+          process.stdout.write(
+              `\r${spinner[run % spinner.length]} Auto-sample ${sample} ` +
+              `(timeout in ${mins}m${secs}s)` + ansi.erase.inLine(0));
+          specResults.get(spec)!.push(await this.takeSample(spec));
         }
       }
     }
