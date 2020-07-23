@@ -180,6 +180,35 @@ suite('e2e', function() {
             assert.isAbove(ciAverage(diffBA.relative), 0);
           }));
 
+      test('performance entry', hideOutput(async function() {
+             const delayA = 20;
+             const delayB = 60;
+
+             // TODO(aomarks) This isn't actually testing each browser, since
+             // the browser is hard coded in the config file. Generate the JSON
+             // file dynamically instead.
+             const argv = [
+               `--config=${path.join(testData, 'performance-measure.json')}`,
+             ];
+
+             const actual = await main(argv);
+             assert.isDefined(actual);
+             assert.lengthOf(actual!, 2);
+             const [a, b] = actual!;
+             const diffAB = a.differences[1]!;
+             const diffBA = b.differences[0]!;
+
+             // We can't be very precise with expectations here, since
+             // setTimeout can be quite variable on a resource starved machine
+             // (e.g. some of our CI builds).
+             assert.isAtLeast(a.stats.mean, delayA);
+             assert.isAtLeast(b.stats.mean, delayB);
+             assert.isBelow(ciAverage(diffAB.absolute), 0);
+             assert.isAbove(ciAverage(diffBA.absolute), 0);
+             assert.isBelow(ciAverage(diffAB.relative), 0);
+             assert.isAbove(ciAverage(diffBA.relative), 0);
+           }));
+
       // Only Chrome supports FCP and CPU throttling.
       if (browser.startsWith('chrome')) {
         test('fcp', hideOutput(async function() {

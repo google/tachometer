@@ -88,13 +88,29 @@
                     "type": "array"
                 },
                 "measurement": {
-                    "description": "Which time interval to measure.\n\nOptions:\n   - callback: bench.start() to bench.stop() (default for fully qualified\n     URLs.\n   - fcp: first contentful paint (default for local paths)\n   - global: result returned from window.tachometerResult (or custom\n       expression set via measurementExpression)",
-                    "enum": [
-                        "callback",
-                        "fcp",
-                        "global"
+                    "anyOf": [
+                        {
+                            "additionalProperties": false,
+                            "properties": {
+                                "performanceEntry": {
+                                    "$ref": "#/definitions/PerformanceEntryCriteria"
+                                }
+                            },
+                            "required": [
+                                "performanceEntry"
+                            ],
+                            "type": "object"
+                        },
+                        {
+                            "enum": [
+                                "callback",
+                                "fcp",
+                                "global"
+                            ],
+                            "type": "string"
+                        }
                     ],
-                    "type": "string"
+                    "description": "Which time interval to measure.\n\nOptions:\n   - callback: bench.start() to bench.stop() (default for local paths)\n   - fcp: first contentful paint (default for fully qualified URLs)\n   - global: result returned from window.tachometerResult (or custom\n       expression set via measurementExpression)\n   - {\n       performanceEntry: {\n         //\nhttps://developer.mozilla.org/en-US/docs/Web/API/PerformanceEntry/name\n         name: string;\n       }\n     }"
                 },
                 "measurementExpression": {
                     "description": "Expression to use to retrieve global result.  Defaults to\n`window.tachometerResult`.",
@@ -236,6 +252,19 @@
                 "type": "string"
             },
             "description": "A mapping from NPM package name to version specifier, as used in a\npackage.json's \"dependencies\" and \"devDependencies\".",
+            "type": "object"
+        },
+        "PerformanceEntryCriteria": {
+            "additionalProperties": false,
+            "description": "Criteria for matching a Performance Entry.",
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "name"
+            ],
             "type": "object"
         },
         "SafariConfig": {

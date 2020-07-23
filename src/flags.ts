@@ -146,7 +146,7 @@ export const optDefs: commandLineUsage.OptionDefinition[] = [
         '*   global: set window.tachometerResult = <milliseconds>\n' +
         '*      fcp: first contentful paint',
     type: (str: string): string => {
-      if (!measurements.has(str as Measurement)) {
+      if (!measurements.has(str)) {
         throw new Error(
             `Expected --measure flag to be one of: ` +
             `${[...measurements.values()].join(', ')} ` +

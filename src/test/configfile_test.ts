@@ -414,7 +414,7 @@ suite('config', () => {
         };
         await assert.isRejected(
             parseConfigFile(config),
-            'config.benchmarks[0].measurement is not one of enum values: callback');
+            'config.benchmarks[0].measurement is not one of: callback, fcp');
       });
 
       test('sampleSize too small', async () => {

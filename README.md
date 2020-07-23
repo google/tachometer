@@ -83,8 +83,49 @@ confidence in them.
 
 ## Measurement modes
 
-Tachometer currently supports three kinds of time interval measurements,
-controlled with the `--measure` flag.
+Tachometer supports four kinds of time interval measurements, controlled with
+the `measurement` config file property, or the `--measure` flag.
+
+#### Performance API
+
+Retrieve a measure, mark, or paint timing from the
+[`performance.getEntriesByName`](https://developer.mozilla.org/en-US/docs/Web/API/Performance/getEntriesByName)
+API. Note this mode can only be used with a config file.
+
+For example, in your benchmark:
+
+```javascript
+performance.mark('foo-start');
+// Do some work ...
+performance.mark('foo-stop');
+performance.measure('foo', 'foo-start', 'foo-stop');
+```
+
+And in your config file:
+
+```json
+"benchmarks": [
+  {
+    "measurement": {
+      "performanceEntry": {
+        "name": "foo"
+      }
+    }
+  }
+]
+```
+
+The following performance entry types are supported:
+
+- [`measure`](https://developer.mozilla.org/en-US/docs/Web/API/PerformanceMeasure):
+  Retrieve the `duration` of a user-defined interval between two marks. Use for
+  measuring the timing of a specific chunk of your code.
+- [`mark`](https://developer.mozilla.org/en-US/docs/Web/API/User_Timing_API/Using_the_User_Timing_API#Performance_measures):
+  Retrieve the `startTime` of a user-defined instant. Use for measuring the time
+  between initial page navigation and a specific point in your code.
+- [`paint`](https://developer.mozilla.org/en-US/docs/Web/API/PerformancePaintTiming):
+  Retrieve the `startTime` of a built-in paint measurement (e.g.
+  `first-contentful-paint`).
 
 #### Callback
 

@@ -7,6 +7,21 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+- Add ability to pull measurements from the browser performance measurement API,
+  e.g.:
+
+  ```
+  "benchmarks": [
+    {
+      "measurement": {
+        "performanceEntry": {
+          "name": "foo"
+        }
+      }
+    }
+  ]
+  ```
+
 - Fix `main` entry in package.json to point to `lib/cli.js`.
 
 - Added more fields to JSON output file to more closely match table printed to the console

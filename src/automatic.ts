@@ -16,7 +16,8 @@ import ProgressBar = require('progress');
 import ansi = require('ansi-escape-sequences');
 
 import {jsonOutput, legacyJsonOutput} from './json-output';
-import {browserSignature, makeDriver, openAndSwitchToNewTab, pollForGlobalResult, pollForFirstContentfulPaint} from './browser';
+import {browserSignature, makeDriver, openAndSwitchToNewTab} from './browser';
+import {measure} from './measure';
 import {BenchmarkResult, BenchmarkSpec} from './types';
 import {formatCsvStats, formatCsvRaw} from './csv';
 import {ResultStats, ResultStatsWithDifferences, horizonsResolved, summaryStats, computeDifferences} from './stats';
@@ -25,6 +26,7 @@ import {Config} from './config';
 import * as github from './github';
 import {Server} from './server';
 import {specUrl} from './specs';
+import {wait} from './util';
 
 function combineResults(results: BenchmarkResult[]): BenchmarkResult {
   const combined: BenchmarkResult = {
@@ -92,7 +94,7 @@ export async function automaticMode(
     const {driver, initialTabHandle} =
         browsers.get(browserSignature(spec.browser))!;
 
-    let millis;
+    let millis: number|undefined;
     let bytesSent = 0;
     let userAgent = '';
     // TODO(aomarks) Make maxAttempts and timeouts configurable.
@@ -100,17 +102,10 @@ export async function automaticMode(
     for (let attempt = 1;; attempt++) {
       await openAndSwitchToNewTab(driver, spec.browser);
       await driver.get(url);
-
-      if (spec.measurement === 'fcp') {
-        millis = await pollForFirstContentfulPaint(driver);
-      } else if (spec.measurement === 'global') {
-        millis = await pollForGlobalResult(
-            driver, spec.measurementExpression || 'undefined');
-      } else {  // bench.start() and bench.stop() callback
-        if (server === undefined) {
-          throw new Error('Internal error: no server for spec');
-        }
-        millis = (await server.nextResults()).millis;
+      for (let waited = 0; millis === undefined && waited <= 10000;
+           waited += 50) {
+        await wait(50);
+        millis = await measure(driver, spec, server);
       }
 
       // Close the active tab (but not the whole browser, since the

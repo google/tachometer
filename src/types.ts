@@ -48,9 +48,15 @@ export interface NpmPackageJson {
 }
 
 /** The kinds of intervals we can measure. */
-export type Measurement = 'callback'|'fcp'|'global';
+export type Measurement =
+    'callback'|'fcp'|'global'|{performanceEntry: PerformanceEntryCriteria};
 
-export const measurements = new Set<Measurement>(['callback', 'fcp', 'global']);
+export const measurements = new Set<string>(['callback', 'fcp', 'global']);
+
+/** Criteria for matching a Performance Entry. */
+export interface PerformanceEntryCriteria {
+  name: string;
+}
 
 /** A specification of a benchmark to run. */
 export interface BenchmarkSpec {
