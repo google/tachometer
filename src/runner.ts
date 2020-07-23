@@ -203,8 +203,9 @@ export class Runner {
       await driver.get(url);
       for (let waited = 0; millis === undefined && waited <= 10000;
            waited += 50) {
+        // TODO(aomarks) You don't have to wait in callback mode!
         await wait(50);
-        millis = await measure(driver, spec, server);
+        millis = await measure(driver, spec.measurement, server);
       }
 
       // Close the active tab (but not the whole browser, since the
@@ -224,10 +225,7 @@ export class Runner {
 
       console.log(
           `\n\nFailed ${attempt}/${maxAttempts} times ` +
-          `to get a ${spec.measurement} measurement ` +
-          (spec.measurement === 'global' ?
-               `(from '${spec.measurementExpression}') ` :
-               '') +
+          `to get a measurement ` +
           `in ${spec.browser.name} from ${url}. Retrying.`);
     }
 
@@ -235,10 +233,7 @@ export class Runner {
       console.log();
       throw new Error(
           `\n\nFailed ${maxAttempts}/${maxAttempts} times ` +
-          `to get a ${spec.measurement} measurement ` +
-          (spec.measurement === 'global' ?
-               `(from '${spec.measurementExpression}') ` :
-               '') +
+          `to get a measurement ` +
           `in ${spec.browser.name} from ${url}. Retrying.`);
     }
 

@@ -107,9 +107,8 @@ And in your config file:
 "benchmarks": [
   {
     "measurement": {
-      "performanceEntry": {
-        "name": "foo"
-      }
+      "kind": "performance",
+      "entryName": "foo"
     }
   }
 ]

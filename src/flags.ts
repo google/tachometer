@@ -14,7 +14,7 @@ import * as path from 'path';
 
 import {supportedBrowsers} from './browser';
 import * as defaults from './defaults';
-import {Measurement, measurements} from './types';
+import {CommandLineMeasurements, measurements} from './types';
 
 import commandLineArgs = require('command-line-args');
 import commandLineUsage = require('command-line-usage');
@@ -216,7 +216,7 @@ export interface Opts {
   'sample-size': number|undefined;
   manual: boolean;
   save: string;
-  measure: Measurement|undefined;
+  measure: CommandLineMeasurements|undefined;
   'measurement-expression': string|undefined;
   horizon: string|undefined;
   timeout: number|undefined;

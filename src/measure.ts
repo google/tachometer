@@ -12,7 +12,7 @@
 import * as webdriver from 'selenium-webdriver';
 
 import {Server} from './server';
-import {BenchmarkSpec, PerformanceEntryCriteria} from './types';
+import {Measurement, PerformanceEntryMeasurement} from './types';
 import {throwUnreachable} from './util';
 
 /**
@@ -22,25 +22,18 @@ import {throwUnreachable} from './util';
  */
 export async function measure(
     driver: webdriver.WebDriver,
-    {measurement, measurementExpression}: BenchmarkSpec,
+    measurement: Measurement,
     server: Server|undefined): Promise<number|undefined> {
-  if (measurement === 'fcp') {
-    return queryForPerformanceEntry(driver, {name: 'first-contentful-paint'});
-  }
-  if (measurement === 'callback') {
-    if (server === undefined) {
-      throw new Error('Internal error: no server for spec');
-    }
-    return (await server.nextResults()).millis;
-  }
-  if (measurement === 'global') {
-    if (!measurementExpression) {
-      throw new Error('Internal error: no measurement expression');
-    }
-    return queryForExpression(driver, measurementExpression);
-  }
-  if (measurement && 'performanceEntry' in measurement) {
-    return queryForPerformanceEntry(driver, measurement.performanceEntry);
+  switch (measurement.kind) {
+    case 'callback':
+      if (server === undefined) {
+        throw new Error('Internal error: no server for spec');
+      }
+      return (await server.nextResults()).millis;
+    case 'expression':
+      return queryForExpression(driver, measurement.expression);
+    case 'performance':
+      return queryForPerformanceEntry(driver, measurement);
   }
   throwUnreachable(
       measurement,
@@ -71,8 +64,8 @@ interface PerformanceEntry {
  */
 async function queryForPerformanceEntry(
     driver: webdriver.WebDriver,
-    criteria: PerformanceEntryCriteria): Promise<number|undefined> {
-  const escaped = escapeStringLiteral(criteria.name);
+    measurement: PerformanceEntryMeasurement): Promise<number|undefined> {
+  const escaped = escapeStringLiteral(measurement.entryName);
   const script = `return window.performance.getEntriesByName(\`${escaped}\`);`;
   const entries = await driver.executeScript(script) as PerformanceEntry[];
   if (entries.length === 0) {

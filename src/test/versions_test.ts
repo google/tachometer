@@ -45,7 +45,10 @@ suite('versions', () => {
             },
             queryString: '',
           },
-          measurement: 'fcp',
+          measurement: {
+            kind: 'performance',
+            entryName: 'first-contentful-paint',
+          },
           browser: defaultBrowser,
         },
         {
@@ -61,7 +64,10 @@ suite('versions', () => {
             },
             queryString: '',
           },
-          measurement: 'fcp',
+          measurement: {
+            kind: 'performance',
+            entryName: 'first-contentful-paint',
+          },
           browser: defaultBrowser,
         },
 
@@ -73,7 +79,10 @@ suite('versions', () => {
             urlPath: '/mylib/mybench/',
             queryString: '',
           },
-          measurement: 'fcp',
+          measurement: {
+            kind: 'performance',
+            entryName: 'first-contentful-paint',
+          },
           browser: defaultBrowser,
         },
         {
@@ -83,7 +92,10 @@ suite('versions', () => {
             urlPath: '/otherlib/otherbench/',
             queryString: '',
           },
-          measurement: 'fcp',
+          measurement: {
+            kind: 'performance',
+            entryName: 'first-contentful-paint',
+          },
           browser: defaultBrowser,
         },
 
@@ -94,7 +106,10 @@ suite('versions', () => {
             kind: 'remote',
             url: 'http://example.com',
           },
-          measurement: 'fcp',
+          measurement: {
+            kind: 'performance',
+            entryName: 'first-contentful-paint',
+          },
           browser: defaultBrowser,
         },
       ];
@@ -189,7 +204,10 @@ suite('versions', () => {
             },
             queryString: '',
           },
-          measurement: 'fcp',
+          measurement: {
+            kind: 'performance',
+            entryName: 'first-contentful-paint',
+          },
           browser: defaultBrowser,
         },
       ];

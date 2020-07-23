@@ -114,7 +114,7 @@ interface ConfigFileBenchmark {
    *       }
    *     }
    */
-  measurement?: Measurement;
+  measurement?: ConfigFileMeasurement;
 
   /**
    * Expression to use to retrieve global result.  Defaults to
@@ -135,6 +135,8 @@ interface ConfigFileBenchmark {
    */
   expand?: ConfigFileBenchmark[];
 }
+
+type ConfigFileMeasurement = 'callback'|'fcp'|'global'|Measurement;
 
 type BrowserConfigs =
     ChromeConfig|FirefoxConfig|SafariConfig|EdgeConfig|IEConfig;
@@ -338,12 +340,23 @@ async function parseBenchmark(benchmark: ConfigFileBenchmark, root: string):
     spec.browser = browser;
   }
 
-  if (benchmark.measurement !== undefined) {
+  if (benchmark.measurement === 'callback') {
+    spec.measurement = {
+      kind: 'callback',
+    };
+  } else if (benchmark.measurement === 'fcp') {
+    spec.measurement = {
+      kind: 'performance',
+      entryName: 'first-contentful-paint',
+    };
+  } else if (benchmark.measurement === 'global') {
+    spec.measurement = {
+      kind: 'expression',
+      expression:
+          benchmark.measurementExpression || defaults.measurementExpression,
+    };
+  } else {
     spec.measurement = benchmark.measurement;
-  }
-  if (spec.measurement === 'global' &&
-      benchmark.measurementExpression !== undefined) {
-    spec.measurementExpression = benchmark.measurementExpression;
   }
 
   const url = benchmark.url;
@@ -460,15 +473,7 @@ function applyDefaults(partialSpec: Partial<BenchmarkSpec>): BenchmarkSpec {
   if (measurement === undefined) {
     measurement = defaults.measurement(url);
   }
-  const spec: BenchmarkSpec = {name, url, browser, measurement};
-  if (measurement === 'global') {
-    if (partialSpec.measurementExpression === undefined) {
-      spec.measurementExpression = defaults.measurementExpression;
-    } else {
-      spec.measurementExpression = partialSpec.measurementExpression;
-    }
-  }
-  return spec;
+  return {name, url, browser, measurement};
 }
 
 export async function writeBackSchemaIfNeeded(

@@ -54,7 +54,10 @@ suite('config', () => {
           {
             name: 'remote',
             browser: defaultBrowser,
-            measurement: 'fcp',
+            measurement: {
+              kind: 'performance',
+              entryName: 'first-contentful-paint',
+            },
             url: 'http://example.com?foo=bar',
           },
           {
@@ -66,7 +69,7 @@ suite('config', () => {
                 'layout.css.shadow-parts.enabled': true,
               },
             },
-            measurement: 'callback',
+            measurement: {kind: 'callback'},
             url: 'mybench/index.html?foo=bar',
             packageVersions: {
               label: 'master',
@@ -83,7 +86,10 @@ suite('config', () => {
               name: 'chrome',
               cpuThrottlingRate: 6,
             },
-            measurement: 'fcp',
+            measurement: {
+              kind: 'performance',
+              entryName: 'first-contentful-paint',
+            },
             url: 'http://example.com?foo=bar',
           },
         ],
@@ -101,7 +107,10 @@ suite('config', () => {
           {
             name: 'remote',
             browser: defaultBrowser,
-            measurement: 'fcp',
+            measurement: {
+              kind: 'performance',
+              entryName: 'first-contentful-paint',
+            },
             url: {
               kind: 'remote',
               url: 'http://example.com?foo=bar',
@@ -116,7 +125,7 @@ suite('config', () => {
                 'layout.css.shadow-parts.enabled': true,
               },
             },
-            measurement: 'callback',
+            measurement: {kind: 'callback'},
             url: {
               kind: 'local',
               urlPath: '/mybench/index.html',
@@ -137,7 +146,10 @@ suite('config', () => {
               name: 'chrome',
               cpuThrottlingRate: 6,
             },
-            measurement: 'fcp',
+            measurement: {
+              kind: 'performance',
+              entryName: 'first-contentful-paint',
+            },
             url: {
               kind: 'remote',
               url: 'http://example.com?foo=bar',
@@ -173,7 +185,10 @@ suite('config', () => {
               kind: 'remote',
               url: 'http://example.com?foo=bar',
             },
-            measurement: 'fcp',
+            measurement: {
+              kind: 'performance',
+              entryName: 'first-contentful-paint',
+            },
             browser: defaultBrowser,
           },
           {
@@ -183,7 +198,83 @@ suite('config', () => {
               urlPath: '/mybench/index.html',
               queryString: '?foo=bar',
             },
-            measurement: 'callback',
+            measurement: {kind: 'callback'},
+            browser: defaultBrowser,
+          },
+        ],
+      };
+      const actual = await parseConfigFile(config);
+      assert.deepEqual(actual, expected);
+    });
+
+    test('object-style measurement specifications', async () => {
+      const config = {
+        benchmarks: [
+          {
+            url: 'mybench/index.html?foo=a',
+            measurement: {
+              kind: 'callback',
+            }
+          },
+          {
+            url: 'mybench/index.html?foo=b',
+            measurement: {
+              kind: 'expression',
+              expression: 'window.foo',
+            }
+          },
+          {
+            url: 'mybench/index.html?foo=c',
+            measurement: {
+              kind: 'performance',
+              entryName: 'foo-measure',
+            }
+          },
+        ],
+      };
+      const expected: Partial<Config> = {
+        root: '.',
+        sampleSize: undefined,
+        timeout: undefined,
+        horizons: undefined,
+        resolveBareModules: undefined,
+        benchmarks: [
+          {
+            name: '/mybench/index.html?foo=a',
+            url: {
+              kind: 'local',
+              urlPath: '/mybench/index.html',
+              queryString: '?foo=a',
+            },
+            measurement: {
+              kind: 'callback',
+            },
+            browser: defaultBrowser,
+          },
+          {
+            name: '/mybench/index.html?foo=b',
+            url: {
+              kind: 'local',
+              urlPath: '/mybench/index.html',
+              queryString: '?foo=b',
+            },
+            measurement: {
+              kind: 'expression',
+              expression: 'window.foo',
+            },
+            browser: defaultBrowser,
+          },
+          {
+            name: '/mybench/index.html?foo=c',
+            url: {
+              kind: 'local',
+              urlPath: '/mybench/index.html',
+              queryString: '?foo=c',
+            },
+            measurement: {
+              kind: 'performance',
+              entryName: 'foo-measure',
+            },
             browser: defaultBrowser,
           },
         ],
@@ -199,14 +290,17 @@ suite('config', () => {
           url: 'http://example.com',
           expand: [
             {
-              measurement: 'fcp',
+              measurement: {
+                kind: 'performance',
+                entryName: 'first-contentful-paint',
+              },
               expand: [
                 {browser: 'chrome'},
                 {browser: 'firefox'},
               ],
             },
             {
-              measurement: 'callback',
+              measurement: {kind: 'callback'},
               expand: [
                 {browser: 'chrome'},
                 {browser: 'firefox'},
@@ -225,13 +319,19 @@ suite('config', () => {
           {
             name: 'http://example.com',
             url: {kind: 'remote', url: 'http://example.com'},
-            measurement: 'fcp',
+            measurement: {
+              kind: 'performance',
+              entryName: 'first-contentful-paint',
+            },
             browser: defaultBrowser,
           },
           {
             name: 'http://example.com',
             url: {kind: 'remote', url: 'http://example.com'},
-            measurement: 'fcp',
+            measurement: {
+              kind: 'performance',
+              entryName: 'first-contentful-paint',
+            },
             browser: {
               ...defaultBrowser,
               name: 'firefox',
@@ -240,13 +340,13 @@ suite('config', () => {
           {
             name: 'http://example.com',
             url: {kind: 'remote', url: 'http://example.com'},
-            measurement: 'callback',
+            measurement: {kind: 'callback'},
             browser: defaultBrowser,
           },
           {
             name: 'http://example.com',
             url: {kind: 'remote', url: 'http://example.com'},
-            measurement: 'callback',
+            measurement: {kind: 'callback'},
             browser: {
               ...defaultBrowser,
               name: 'firefox',
@@ -289,7 +389,10 @@ suite('config', () => {
               kind: 'remote',
               url: 'http://example.com?foo=bar',
             },
-            measurement: 'fcp',
+            measurement: {
+              kind: 'performance',
+              entryName: 'first-contentful-paint',
+            },
             browser: {
               name: 'chrome',
               headless: false,
@@ -388,7 +491,10 @@ suite('config', () => {
         const config = {
           benchmarks: [{
             browser: 'chrome',
-            measurement: 'fcp',
+            measurement: {
+              kind: 'performance',
+              entryName: 'first-contentful-paint',
+            },
           }],
         };
         await assert.isRejected(parseConfigFile(config), /no url specified/i);
