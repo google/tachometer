@@ -55,7 +55,7 @@ suite('config', () => {
             name: 'remote',
             browser: defaultBrowser,
             measurement: {
-              kind: 'performance',
+              mode: 'performance',
               entryName: 'first-contentful-paint',
             },
             url: 'http://example.com?foo=bar',
@@ -69,7 +69,7 @@ suite('config', () => {
                 'layout.css.shadow-parts.enabled': true,
               },
             },
-            measurement: {kind: 'callback'},
+            measurement: {mode: 'callback'},
             url: 'mybench/index.html?foo=bar',
             packageVersions: {
               label: 'master',
@@ -87,7 +87,7 @@ suite('config', () => {
               cpuThrottlingRate: 6,
             },
             measurement: {
-              kind: 'performance',
+              mode: 'performance',
               entryName: 'first-contentful-paint',
             },
             url: 'http://example.com?foo=bar',
@@ -108,7 +108,7 @@ suite('config', () => {
             name: 'remote',
             browser: defaultBrowser,
             measurement: [{
-              kind: 'performance',
+              mode: 'performance',
               entryName: 'first-contentful-paint',
             }],
             url: {
@@ -126,7 +126,7 @@ suite('config', () => {
               },
             },
             measurement: [{
-              kind: 'callback',
+              mode: 'callback',
             }],
             url: {
               kind: 'local',
@@ -149,7 +149,7 @@ suite('config', () => {
               cpuThrottlingRate: 6,
             },
             measurement: [{
-              kind: 'performance',
+              mode: 'performance',
               entryName: 'first-contentful-paint',
             }],
             url: {
@@ -188,7 +188,7 @@ suite('config', () => {
               url: 'http://example.com?foo=bar',
             },
             measurement: [{
-              kind: 'performance',
+              mode: 'performance',
               entryName: 'first-contentful-paint',
             }],
             browser: defaultBrowser,
@@ -201,7 +201,7 @@ suite('config', () => {
               queryString: '?foo=bar',
             },
             measurement: [{
-              kind: 'callback',
+              mode: 'callback',
             }],
             browser: defaultBrowser,
           },
@@ -217,20 +217,20 @@ suite('config', () => {
           {
             url: 'mybench/index.html?foo=a',
             measurement: {
-              kind: 'callback',
+              mode: 'callback',
             }
           },
           {
             url: 'mybench/index.html?foo=b',
             measurement: {
-              kind: 'expression',
+              mode: 'expression',
               expression: 'window.foo',
             }
           },
           {
             url: 'mybench/index.html?foo=c',
             measurement: {
-              kind: 'performance',
+              mode: 'performance',
               entryName: 'foo-measure',
             }
           },
@@ -251,7 +251,7 @@ suite('config', () => {
               queryString: '?foo=a',
             },
             measurement: [{
-              kind: 'callback',
+              mode: 'callback',
             }],
             browser: defaultBrowser,
           },
@@ -263,7 +263,7 @@ suite('config', () => {
               queryString: '?foo=b',
             },
             measurement: [{
-              kind: 'expression',
+              mode: 'expression',
               expression: 'window.foo',
             }],
             browser: defaultBrowser,
@@ -276,7 +276,7 @@ suite('config', () => {
               queryString: '?foo=c',
             },
             measurement: [{
-              kind: 'performance',
+              mode: 'performance',
               entryName: 'foo-measure',
             }],
             browser: defaultBrowser,
@@ -295,7 +295,7 @@ suite('config', () => {
           expand: [
             {
               measurement: {
-                kind: 'performance',
+                mode: 'performance',
                 entryName: 'first-contentful-paint',
               },
               expand: [
@@ -304,7 +304,7 @@ suite('config', () => {
               ],
             },
             {
-              measurement: {kind: 'callback'},
+              measurement: {mode: 'callback'},
               expand: [
                 {browser: 'chrome'},
                 {browser: 'firefox'},
@@ -324,7 +324,7 @@ suite('config', () => {
             name: 'http://example.com',
             url: {kind: 'remote', url: 'http://example.com'},
             measurement: [{
-              kind: 'performance',
+              mode: 'performance',
               entryName: 'first-contentful-paint',
             }],
             browser: defaultBrowser,
@@ -333,7 +333,7 @@ suite('config', () => {
             name: 'http://example.com',
             url: {kind: 'remote', url: 'http://example.com'},
             measurement: [{
-              kind: 'performance',
+              mode: 'performance',
               entryName: 'first-contentful-paint',
             }],
             browser: {
@@ -345,7 +345,7 @@ suite('config', () => {
             name: 'http://example.com',
             url: {kind: 'remote', url: 'http://example.com'},
             measurement: [{
-              kind: 'callback',
+              mode: 'callback',
             }],
             browser: defaultBrowser,
           },
@@ -353,7 +353,7 @@ suite('config', () => {
             name: 'http://example.com',
             url: {kind: 'remote', url: 'http://example.com'},
             measurement: [{
-              kind: 'callback',
+              mode: 'callback',
             }],
             browser: {
               ...defaultBrowser,
@@ -398,7 +398,7 @@ suite('config', () => {
               url: 'http://example.com?foo=bar',
             },
             measurement: [{
-              kind: 'performance',
+              mode: 'performance',
               entryName: 'first-contentful-paint',
             }],
             browser: {
@@ -500,7 +500,7 @@ suite('config', () => {
           benchmarks: [{
             browser: 'chrome',
             measurement: {
-              kind: 'performance',
+              mode: 'performance',
               entryName: 'first-contentful-paint',
             },
           }],

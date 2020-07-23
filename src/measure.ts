@@ -24,7 +24,7 @@ export async function measure(
     driver: webdriver.WebDriver,
     measurement: Measurement,
     server: Server|undefined): Promise<number|undefined> {
-  switch (measurement.kind) {
+  switch (measurement.mode) {
     case 'callback':
       if (server === undefined) {
         throw new Error('Internal error: no server for spec');
@@ -125,7 +125,7 @@ function escapeStringLiteral(unescaped: string): string {
  * where there are multiple measurements on the same page.
  */
 export function measurementName(measurement: Measurement): string {
-  switch (measurement.kind) {
+  switch (measurement.mode) {
     case 'callback':
       return 'callback';
     case 'expression':

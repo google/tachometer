@@ -5,7 +5,7 @@
         "CallbackMeasurement": {
             "additionalProperties": false,
             "properties": {
-                "kind": {
+                "mode": {
                     "enum": [
                         "callback"
                     ],
@@ -13,7 +13,7 @@
                 }
             },
             "required": [
-                "kind"
+                "mode"
             ],
             "type": "object"
         },
@@ -207,7 +207,7 @@
                 "expression": {
                     "type": "string"
                 },
-                "kind": {
+                "mode": {
                     "enum": [
                         "expression"
                     ],
@@ -216,7 +216,7 @@
             },
             "required": [
                 "expression",
-                "kind"
+                "mode"
             ],
             "type": "object"
         },
@@ -307,7 +307,7 @@
                 "entryName": {
                     "type": "string"
                 },
-                "kind": {
+                "mode": {
                     "enum": [
                         "performance"
                     ],
@@ -316,7 +316,7 @@
             },
             "required": [
                 "entryName",
-                "kind"
+                "mode"
             ],
             "type": "object"
         },

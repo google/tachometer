@@ -52,16 +52,16 @@ export type Measurement =
     CallbackMeasurement|PerformanceEntryMeasurement|ExpressionMeasurement;
 
 export interface CallbackMeasurement {
-  kind: 'callback';
+  mode: 'callback';
 }
 
 export interface PerformanceEntryMeasurement {
-  kind: 'performance';
+  mode: 'performance';
   entryName: string;
 }
 
 export interface ExpressionMeasurement {
-  kind: 'expression';
+  mode: 'expression';
   expression: string;
 }
 

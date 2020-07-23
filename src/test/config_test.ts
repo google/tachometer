@@ -61,7 +61,7 @@ suite('makeConfig', function() {
             },
           },
           measurement: [{
-            kind: 'callback',
+            mode: 'callback',
           }],
           name: 'random-global.html',
           url: {
@@ -104,7 +104,7 @@ suite('makeConfig', function() {
             },
           },
           measurement: [{
-            kind: 'callback',
+            mode: 'callback',
           }],
           // TODO(aomarks) Why does this have a forward-slash?
           name: '/random-global.html',
@@ -147,7 +147,7 @@ suite('makeConfig', function() {
             },
           },
           measurement: [{
-            kind: 'callback',
+            mode: 'callback',
           }],
           // TODO(aomarks) Why does this have a forward-slash?
           name: '/random-global.html',
@@ -197,7 +197,7 @@ suite('makeConfig', function() {
             },
           },
           measurement: [{
-            kind: 'callback',
+            mode: 'callback',
           }],
           // TODO(aomarks) Why does this have a forward-slash?
           name: '/random-global.html',

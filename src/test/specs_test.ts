@@ -66,7 +66,7 @@ suite('specsFromOpts', () => {
         },
         browser: defaultBrowser,
         measurement: [{
-          kind: 'performance',
+          mode: 'performance',
           entryName: 'first-contentful-paint',
         }],
       },
@@ -86,7 +86,7 @@ suite('specsFromOpts', () => {
         },
         browser: defaultBrowser,
         measurement: [{
-          kind: 'performance',
+          mode: 'performance',
           entryName: 'first-contentful-paint',
         }],
       },
@@ -108,7 +108,7 @@ suite('specsFromOpts', () => {
         },
         browser: defaultBrowser,
         measurement: [{
-          kind: 'callback',
+          mode: 'callback',
         }],
       },
     ];
@@ -129,7 +129,7 @@ suite('specsFromOpts', () => {
         },
         browser: defaultBrowser,
         measurement: [{
-          kind: 'callback',
+          mode: 'callback',
         }],
       },
     ];
@@ -150,7 +150,7 @@ suite('specsFromOpts', () => {
         },
         browser: defaultBrowser,
         measurement: [{
-          kind: 'callback',
+          mode: 'callback',
         }],
       },
     ];
@@ -171,7 +171,7 @@ suite('specsFromOpts', () => {
         },
         browser: defaultBrowser,
         measurement: [{
-          kind: 'callback',
+          mode: 'callback',
         }],
       },
     ];
@@ -192,7 +192,7 @@ suite('specsFromOpts', () => {
         },
         browser: defaultBrowser,
         measurement: [{
-          kind: 'callback',
+          mode: 'callback',
         }],
       },
     ];
@@ -213,7 +213,7 @@ suite('specsFromOpts', () => {
         },
         browser: defaultBrowser,
         measurement: [{
-          kind: 'callback',
+          mode: 'callback',
         }],
       },
     ];
@@ -243,7 +243,7 @@ suite('specsFromOpts', () => {
         },
         browser: defaultBrowser,
         measurement: [{
-          kind: 'callback',
+          mode: 'callback',
         }],
       },
       {
@@ -261,7 +261,7 @@ suite('specsFromOpts', () => {
         },
         browser: defaultBrowser,
         measurement: [{
-          kind: 'callback',
+          mode: 'callback',
         }],
       },
     ];

@@ -19,7 +19,7 @@ project adheres to [Semantic Versioning](http://semver.org/).
   "benchmarks": [
     {
       "measurement": {
-        "kind": "performance",
+        "mode": "performance",
         "entryName": "foo"
       }
     }
@@ -32,12 +32,12 @@ project adheres to [Semantic Versioning](http://semver.org/).
   "benchmarks": [
     {
       "measurement": {
-        "kind": "callback"
+        "mode": "callback"
       }
     },
     {
       "measurement": {
-        "kind": "expression",
+        "mode": "expression",
         "expression": "window.tachometerResult"
       }
     }

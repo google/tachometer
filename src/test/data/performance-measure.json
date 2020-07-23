@@ -7,7 +7,7 @@
       "name": "20",
       "url": "src/test/data/performance-measure.html?wait=20",
       "measurement": {
-        "kind": "performance",
+        "mode": "performance",
         "entryName": "foo"
       },
       "browser": {
@@ -19,7 +19,7 @@
       "name": "60",
       "url": "src/test/data/performance-measure.html?wait=60",
       "measurement": {
-        "kind": "performance",
+        "mode": "performance",
         "entryName": "foo"
       },
       "browser": {

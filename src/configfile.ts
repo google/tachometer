@@ -343,16 +343,16 @@ async function parseBenchmark(benchmark: ConfigFileBenchmark, root: string):
 
   if (benchmark.measurement === 'callback') {
     spec.measurement = [{
-      kind: 'callback',
+      mode: 'callback',
     }];
   } else if (benchmark.measurement === 'fcp') {
     spec.measurement = [{
-      kind: 'performance',
+      mode: 'performance',
       entryName: 'first-contentful-paint',
     }];
   } else if (benchmark.measurement === 'global') {
     spec.measurement = [{
-      kind: 'expression',
+      mode: 'expression',
       expression:
           benchmark.measurementExpression || defaults.measurementExpression,
     }];

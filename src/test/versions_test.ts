@@ -46,7 +46,7 @@ suite('versions', () => {
             queryString: '',
           },
           measurement: [{
-            kind: 'performance',
+            mode: 'performance',
             entryName: 'first-contentful-paint',
           }],
           browser: defaultBrowser,
@@ -65,7 +65,7 @@ suite('versions', () => {
             queryString: '',
           },
           measurement: [{
-            kind: 'performance',
+            mode: 'performance',
             entryName: 'first-contentful-paint',
           }],
           browser: defaultBrowser,
@@ -80,7 +80,7 @@ suite('versions', () => {
             queryString: '',
           },
           measurement: [{
-            kind: 'performance',
+            mode: 'performance',
             entryName: 'first-contentful-paint',
           }],
           browser: defaultBrowser,
@@ -93,7 +93,7 @@ suite('versions', () => {
             queryString: '',
           },
           measurement: [{
-            kind: 'performance',
+            mode: 'performance',
             entryName: 'first-contentful-paint',
           }],
           browser: defaultBrowser,
@@ -107,7 +107,7 @@ suite('versions', () => {
             url: 'http://example.com',
           },
           measurement: [{
-            kind: 'performance',
+            mode: 'performance',
             entryName: 'first-contentful-paint',
           }],
           browser: defaultBrowser,
@@ -205,7 +205,7 @@ suite('versions', () => {
             queryString: '',
           },
           measurement: [{
-            kind: 'performance',
+            mode: 'performance',
             entryName: 'first-contentful-paint',
           }],
           browser: defaultBrowser,

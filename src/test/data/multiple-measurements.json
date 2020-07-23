@@ -8,11 +8,11 @@
             "url": "src/test/data/multiple-measurements.html?foo=20&bar=60",
             "measurement": [
                 {
-                    "kind": "performance",
+                    "mode": "performance",
                     "entryName": "foo"
                 },
                 {
-                    "kind": "performance",
+                    "mode": "performance",
                     "entryName": "bar"
                 }
             ],

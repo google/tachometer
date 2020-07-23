@@ -124,7 +124,7 @@ export async function makeConfig(opts: Opts): Promise<Config> {
 
   for (const spec of config.benchmarks) {
     for (const measurement of spec.measurement) {
-      if (measurement.kind === 'performance' &&
+      if (measurement.mode === 'performance' &&
           measurement.entryName === 'first-contentful-paint' &&
           !fcpBrowsers.has(spec.browser.name)) {
         throw new Error(

@@ -72,16 +72,16 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
   let measurement: Measurement|undefined;
   if (opts.measure === 'callback') {
     measurement = {
-      kind: 'callback',
+      mode: 'callback',
     };
   } else if (opts.measure === 'fcp') {
     measurement = {
-      kind: 'performance',
+      mode: 'performance',
       entryName: 'first-contentful-paint',
     };
   } else if (opts.measure === 'global') {
     measurement = {
-      kind: 'expression',
+      mode: 'expression',
       expression:
           opts['measurement-expression'] || defaults.measurementExpression,
     };
