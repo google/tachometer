@@ -118,9 +118,11 @@ And in your config file:
 The following performance entry types are supported:
 
 - [`measure`](https://developer.mozilla.org/en-US/docs/Web/API/PerformanceMeasure):
-  Retrieve the `duration` of a user-defined interval between two marks.
+  Retrieve the `duration` of a user-defined interval between two marks. Use for
+  measuring the timing of a specific chunk of your code.
 - [`mark`](https://developer.mozilla.org/en-US/docs/Web/API/User_Timing_API/Using_the_User_Timing_API#Performance_measures):
-  Retrieve the `startTime` of a user-defined instant.
+  Retrieve the `startTime` of a user-defined instant. Use for measuring the time
+  between initial page navigation and a specific point in your code.
 - [`paint`](https://developer.mozilla.org/en-US/docs/Web/API/PerformancePaintTiming):
   Retrieve the `startTime` of a built-in paint measurement (e.g.
   `first-contentful-paint`).

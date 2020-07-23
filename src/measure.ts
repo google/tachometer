@@ -13,7 +13,7 @@ import * as webdriver from 'selenium-webdriver';
 
 import {Server} from './server';
 import {BenchmarkSpec, PerformanceEntryCriteria} from './types';
-import {escapeStringLiteral, throwUnreachable} from './util';
+import {throwUnreachable} from './util';
 
 /**
  * Try to take a measurement in milliseconds from the given browser. Returns
@@ -115,4 +115,14 @@ async function queryForExpression(
     }
     return result;
   }
+}
+
+/**
+ * Escape a string such that it can be safely embedded in a JavaScript template
+ * literal (backtick string).
+ */
+function escapeStringLiteral(unescaped: string): string {
+  return unescaped.replace(/\\/g, '\\\\')
+      .replace(/`/g, '\\`')
+      .replace(/\$/g, '\\$');
 }
