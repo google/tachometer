@@ -123,12 +123,14 @@ export async function makeConfig(opts: Opts): Promise<Config> {
   }
 
   for (const spec of config.benchmarks) {
-    if (spec.measurement.kind === 'performance' &&
-        spec.measurement.entryName === 'first-contentful-paint' &&
-        !fcpBrowsers.has(spec.browser.name)) {
-      throw new Error(
-          `Browser ${spec.browser.name} does not support the ` +
-          `first contentful paint (FCP) measurement`);
+    for (const measurement of spec.measurement) {
+      if (measurement.mode === 'performance' &&
+          measurement.entryName === 'first-contentful-paint' &&
+          !fcpBrowsers.has(spec.browser.name)) {
+        throw new Error(
+            `Browser ${spec.browser.name} does not support the ` +
+            `first contentful paint (FCP) measurement`);
+      }
     }
   }
 

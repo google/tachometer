@@ -42,7 +42,7 @@ export interface MountPoint {
 
 const clientLib = path.resolve(__dirname, '..', 'client', 'lib');
 
-interface Session {
+export interface Session {
   bytesSent: number;
   userAgent: string;
 }

@@ -45,10 +45,10 @@ suite('versions', () => {
             },
             queryString: '',
           },
-          measurement: {
-            kind: 'performance',
+          measurement: [{
+            mode: 'performance',
             entryName: 'first-contentful-paint',
-          },
+          }],
           browser: defaultBrowser,
         },
         {
@@ -64,10 +64,10 @@ suite('versions', () => {
             },
             queryString: '',
           },
-          measurement: {
-            kind: 'performance',
+          measurement: [{
+            mode: 'performance',
             entryName: 'first-contentful-paint',
-          },
+          }],
           browser: defaultBrowser,
         },
 
@@ -79,10 +79,10 @@ suite('versions', () => {
             urlPath: '/mylib/mybench/',
             queryString: '',
           },
-          measurement: {
-            kind: 'performance',
+          measurement: [{
+            mode: 'performance',
             entryName: 'first-contentful-paint',
-          },
+          }],
           browser: defaultBrowser,
         },
         {
@@ -92,10 +92,10 @@ suite('versions', () => {
             urlPath: '/otherlib/otherbench/',
             queryString: '',
           },
-          measurement: {
-            kind: 'performance',
+          measurement: [{
+            mode: 'performance',
             entryName: 'first-contentful-paint',
-          },
+          }],
           browser: defaultBrowser,
         },
 
@@ -106,10 +106,10 @@ suite('versions', () => {
             kind: 'remote',
             url: 'http://example.com',
           },
-          measurement: {
-            kind: 'performance',
+          measurement: [{
+            mode: 'performance',
             entryName: 'first-contentful-paint',
-          },
+          }],
           browser: defaultBrowser,
         },
       ];
@@ -204,10 +204,10 @@ suite('versions', () => {
             },
             queryString: '',
           },
-          measurement: {
-            kind: 'performance',
+          measurement: [{
+            mode: 'performance',
             entryName: 'first-contentful-paint',
-          },
+          }],
           browser: defaultBrowser,
         },
       ];

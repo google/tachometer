@@ -52,16 +52,16 @@ export type Measurement =
     CallbackMeasurement|PerformanceEntryMeasurement|ExpressionMeasurement;
 
 export interface CallbackMeasurement {
-  kind: 'callback';
+  mode: 'callback';
 }
 
 export interface PerformanceEntryMeasurement {
-  kind: 'performance';
+  mode: 'performance';
   entryName: string;
 }
 
 export interface ExpressionMeasurement {
-  kind: 'expression';
+  mode: 'expression';
   expression: string;
 }
 
@@ -72,7 +72,7 @@ export const measurements = new Set<string>(['callback', 'fcp', 'global']);
 /** A specification of a benchmark to run. */
 export interface BenchmarkSpec {
   url: LocalUrl|RemoteUrl;
-  measurement: Measurement;
+  measurement: Measurement[];
   name: string;
   browser: BrowserConfig;
 }
@@ -94,11 +94,27 @@ export interface BenchmarkResponse {
   millis: number;
 }
 
+/**
+ * Benchmark results for a particular measurement on a particular page, across
+ * all samples.
+ */
 export interface BenchmarkResult {
+  /**
+   * Label for this result. When there is more than one per page, this will
+   * contain both the page and measurement labels as "page [measurement]".
+   */
   name: string;
+  /**
+   * A single page can return multiple measurements. The offset into the array
+   * of measurements in the spec that this particular result corresponds to.
+   */
+  measurementIndex: number;
+  /**
+   * Millisecond measurements for each sample.
+   */
+  millis: number[];
   queryString: string;
   version: string;
-  millis: number[];
   browser: BrowserConfig;
   userAgent: string;
   bytesSent: number;

@@ -5,7 +5,7 @@
         "CallbackMeasurement": {
             "additionalProperties": false,
             "properties": {
-                "kind": {
+                "mode": {
                     "enum": [
                         "callback"
                     ],
@@ -13,7 +13,7 @@
                 }
             },
             "required": [
-                "kind"
+                "mode"
             ],
             "type": "object"
         },
@@ -114,6 +114,22 @@
                             "$ref": "#/definitions/ExpressionMeasurement"
                         },
                         {
+                            "items": {
+                                "anyOf": [
+                                    {
+                                        "$ref": "#/definitions/CallbackMeasurement"
+                                    },
+                                    {
+                                        "$ref": "#/definitions/PerformanceEntryMeasurement"
+                                    },
+                                    {
+                                        "$ref": "#/definitions/ExpressionMeasurement"
+                                    }
+                                ]
+                            },
+                            "type": "array"
+                        },
+                        {
                             "enum": [
                                 "callback",
                                 "fcp",
@@ -191,7 +207,7 @@
                 "expression": {
                     "type": "string"
                 },
-                "kind": {
+                "mode": {
                     "enum": [
                         "expression"
                     ],
@@ -200,7 +216,7 @@
             },
             "required": [
                 "expression",
-                "kind"
+                "mode"
             ],
             "type": "object"
         },
@@ -291,7 +307,7 @@
                 "entryName": {
                     "type": "string"
                 },
-                "kind": {
+                "mode": {
                     "enum": [
                         "performance"
                     ],
@@ -300,7 +316,7 @@
             },
             "required": [
                 "entryName",
-                "kind"
+                "mode"
             ],
             "type": "object"
         },

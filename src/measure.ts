@@ -24,7 +24,7 @@ export async function measure(
     driver: webdriver.WebDriver,
     measurement: Measurement,
     server: Server|undefined): Promise<number|undefined> {
-  switch (measurement.kind) {
+  switch (measurement.mode) {
     case 'callback':
       if (server === undefined) {
         throw new Error('Internal error: no server for spec');
@@ -118,4 +118,25 @@ function escapeStringLiteral(unescaped: string): string {
   return unescaped.replace(/\\/g, '\\\\')
       .replace(/`/g, '\\`')
       .replace(/\$/g, '\\$');
+}
+
+/**
+ * Return a good-enough label for the given measurement, to disambiguate cases
+ * where there are multiple measurements on the same page.
+ */
+export function measurementName(measurement: Measurement): string {
+  switch (measurement.mode) {
+    case 'callback':
+      return 'callback';
+    case 'expression':
+      return measurement.expression;
+    case 'performance':
+      return measurement.entryName === 'first-contentful-paint' ?
+          'fcp' :
+          measurement.entryName;
+  }
+  throwUnreachable(
+      measurement,
+      `Internal error: unknown measurement type ` +
+          JSON.stringify(measurement));
 }

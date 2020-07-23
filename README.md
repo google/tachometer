@@ -83,8 +83,12 @@ confidence in them.
 
 ## Measurement modes
 
-Tachometer supports four kinds of time interval measurements, controlled with
+Tachometer supports four modes of time interval measurements, controlled with
 the `measurement` config file property, or the `--measure` flag.
+
+If `measurement` is an array, then all of the given measurements will be
+retrieved from each page load. Each measurement from a page is treated as its
+own benchmark.
 
 #### Performance API
 
@@ -107,7 +111,7 @@ And in your config file:
 "benchmarks": [
   {
     "measurement": {
-      "kind": "performance",
+      "mode": "performance",
       "entryName": "foo"
     }
   }

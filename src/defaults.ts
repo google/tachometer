@@ -28,9 +28,9 @@ export const measurementExpression = 'window.tachometerResult';
 export function measurement(url: LocalUrl|RemoteUrl): Measurement {
   if (url.kind === 'remote') {
     return {
-      kind: 'performance',
+      mode: 'performance',
       entryName: 'first-contentful-paint',
     };
   }
-  return {kind: 'callback'};
+  return {mode: 'callback'};
 }
