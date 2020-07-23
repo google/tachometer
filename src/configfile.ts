@@ -15,7 +15,7 @@ import * as jsonschema from 'jsonschema';
 import {BrowserConfig, BrowserName, parseBrowserConfigString, validateBrowserConfig} from './browser';
 import {Config, parseHorizons, urlFromLocalPath} from './config';
 import * as defaults from './defaults';
-import {BenchmarkSpec, Measurement, PackageDependencyMap} from './types';
+import {BenchmarkSpec, Measurement, measurements, PackageDependencyMap} from './types';
 import {isHttpUrl} from './util';
 
 /**
@@ -279,7 +279,8 @@ export async function parseConfigFile(parsedJson: unknown):
   const result =
       jsonschema.validate(parsedJson, schema, {propertyName: 'config'});
   if (result.errors.length > 0) {
-    throw new Error(result.errors[0].toString());
+    throw new Error(
+        [...new Set(result.errors.map(customizeJsonSchemaError))].join('\n'));
   }
   const validated = parsedJson as ConfigFile;
   const root = validated.root || '.';
@@ -300,6 +301,19 @@ export async function parseConfigFile(parsedJson: unknown):
     benchmarks,
     resolveBareModules: validated.resolveBareModules,
   };
+}
+
+/**
+ * Some of the automatically generated jsonschema errors are unclear, e.g. when
+ * there is a union of complex types they are reported as "[schema1],
+ * [schema2]" etc.
+ */
+function customizeJsonSchemaError(error: jsonschema.ValidationError): string {
+  if (error.property.match(/^config\.benchmarks\[\d+\]\.measurement$/)) {
+    return `${error.property} is not one of: ${[...measurements].join(', ')}` +
+        ' or an object like `performanceEntry: string`';
+  }
+  return error.toString();
 }
 
 async function parseBenchmark(benchmark: ConfigFileBenchmark, root: string):

@@ -24,7 +24,7 @@ import {Server} from './server';
 import {ResultStatsWithDifferences} from './stats';
 import {prepareVersionDirectory, makeServerPlans} from './versions';
 import {manualMode} from './manual';
-import {AutomaticMode} from './automatic';
+import {Runner} from './runner';
 import {runNpm} from './util';
 
 const installedVersion = (): string =>
@@ -150,7 +150,7 @@ $ tach http://example.com
     await manualMode(config, servers);
 
   } else {
-    const runner = new AutomaticMode(config, servers);
+    const runner = new Runner(config, servers);
     try {
       return await runner.run();
     } finally {
