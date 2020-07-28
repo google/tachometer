@@ -10,7 +10,7 @@
  */
 
 import * as chai from 'chai';
-import * as chaiAsPromised from 'chai-as-promised';
+import chaiAsPromised from 'chai-as-promised';
 import {suite, suiteSetup, suiteTeardown, test} from 'mocha';
 import * as path from 'path';
 
@@ -74,8 +74,8 @@ suite('config', () => {
             packageVersions: {
               label: 'master',
               dependencies: {
-                'foo': 'github:Polymer/foo#master',
-                'bar': '=1.2.3',
+                foo: 'github:Polymer/foo#master',
+                bar: '=1.2.3',
               },
             },
           },
@@ -107,10 +107,12 @@ suite('config', () => {
           {
             name: 'remote',
             browser: defaultBrowser,
-            measurement: [{
-              mode: 'performance',
-              entryName: 'first-contentful-paint',
-            }],
+            measurement: [
+              {
+                mode: 'performance',
+                entryName: 'first-contentful-paint',
+              },
+            ],
             url: {
               kind: 'remote',
               url: 'http://example.com?foo=bar',
@@ -125,9 +127,11 @@ suite('config', () => {
                 'layout.css.shadow-parts.enabled': true,
               },
             },
-            measurement: [{
-              mode: 'callback',
-            }],
+            measurement: [
+              {
+                mode: 'callback',
+              },
+            ],
             url: {
               kind: 'local',
               urlPath: '/mybench/index.html',
@@ -135,8 +139,8 @@ suite('config', () => {
               version: {
                 label: 'master',
                 dependencyOverrides: {
-                  'foo': 'github:Polymer/foo#master',
-                  'bar': '=1.2.3',
+                  foo: 'github:Polymer/foo#master',
+                  bar: '=1.2.3',
                 },
               },
             },
@@ -148,10 +152,12 @@ suite('config', () => {
               name: 'chrome',
               cpuThrottlingRate: 6,
             },
-            measurement: [{
-              mode: 'performance',
-              entryName: 'first-contentful-paint',
-            }],
+            measurement: [
+              {
+                mode: 'performance',
+                entryName: 'first-contentful-paint',
+              },
+            ],
             url: {
               kind: 'remote',
               url: 'http://example.com?foo=bar',
@@ -187,10 +193,12 @@ suite('config', () => {
               kind: 'remote',
               url: 'http://example.com?foo=bar',
             },
-            measurement: [{
-              mode: 'performance',
-              entryName: 'first-contentful-paint',
-            }],
+            measurement: [
+              {
+                mode: 'performance',
+                entryName: 'first-contentful-paint',
+              },
+            ],
             browser: defaultBrowser,
           },
           {
@@ -200,9 +208,11 @@ suite('config', () => {
               urlPath: '/mybench/index.html',
               queryString: '?foo=bar',
             },
-            measurement: [{
-              mode: 'callback',
-            }],
+            measurement: [
+              {
+                mode: 'callback',
+              },
+            ],
             browser: defaultBrowser,
           },
         ],
@@ -218,21 +228,21 @@ suite('config', () => {
             url: 'mybench/index.html?foo=a',
             measurement: {
               mode: 'callback',
-            }
+            },
           },
           {
             url: 'mybench/index.html?foo=b',
             measurement: {
               mode: 'expression',
               expression: 'window.foo',
-            }
+            },
           },
           {
             url: 'mybench/index.html?foo=c',
             measurement: {
               mode: 'performance',
               entryName: 'foo-measure',
-            }
+            },
           },
         ],
       };
@@ -250,9 +260,11 @@ suite('config', () => {
               urlPath: '/mybench/index.html',
               queryString: '?foo=a',
             },
-            measurement: [{
-              mode: 'callback',
-            }],
+            measurement: [
+              {
+                mode: 'callback',
+              },
+            ],
             browser: defaultBrowser,
           },
           {
@@ -262,10 +274,12 @@ suite('config', () => {
               urlPath: '/mybench/index.html',
               queryString: '?foo=b',
             },
-            measurement: [{
-              mode: 'expression',
-              expression: 'window.foo',
-            }],
+            measurement: [
+              {
+                mode: 'expression',
+                expression: 'window.foo',
+              },
+            ],
             browser: defaultBrowser,
           },
           {
@@ -275,10 +289,12 @@ suite('config', () => {
               urlPath: '/mybench/index.html',
               queryString: '?foo=c',
             },
-            measurement: [{
-              mode: 'performance',
-              entryName: 'foo-measure',
-            }],
+            measurement: [
+              {
+                mode: 'performance',
+                entryName: 'foo-measure',
+              },
+            ],
             browser: defaultBrowser,
           },
         ],
@@ -290,28 +306,24 @@ suite('config', () => {
     test('expanded twice deep', async () => {
       const config = {
         root: '.',
-        benchmarks: [{
-          url: 'http://example.com',
-          expand: [
-            {
-              measurement: {
-                mode: 'performance',
-                entryName: 'first-contentful-paint',
+        benchmarks: [
+          {
+            url: 'http://example.com',
+            expand: [
+              {
+                measurement: {
+                  mode: 'performance',
+                  entryName: 'first-contentful-paint',
+                },
+                expand: [{browser: 'chrome'}, {browser: 'firefox'}],
               },
-              expand: [
-                {browser: 'chrome'},
-                {browser: 'firefox'},
-              ],
-            },
-            {
-              measurement: {mode: 'callback'},
-              expand: [
-                {browser: 'chrome'},
-                {browser: 'firefox'},
-              ],
-            }
-          ],
-        }],
+              {
+                measurement: {mode: 'callback'},
+                expand: [{browser: 'chrome'}, {browser: 'firefox'}],
+              },
+            ],
+          },
+        ],
       };
       const expected: Partial<Config> = {
         root: '.',
@@ -323,19 +335,23 @@ suite('config', () => {
           {
             name: 'http://example.com',
             url: {kind: 'remote', url: 'http://example.com'},
-            measurement: [{
-              mode: 'performance',
-              entryName: 'first-contentful-paint',
-            }],
+            measurement: [
+              {
+                mode: 'performance',
+                entryName: 'first-contentful-paint',
+              },
+            ],
             browser: defaultBrowser,
           },
           {
             name: 'http://example.com',
             url: {kind: 'remote', url: 'http://example.com'},
-            measurement: [{
-              mode: 'performance',
-              entryName: 'first-contentful-paint',
-            }],
+            measurement: [
+              {
+                mode: 'performance',
+                entryName: 'first-contentful-paint',
+              },
+            ],
             browser: {
               ...defaultBrowser,
               name: 'firefox',
@@ -344,17 +360,21 @@ suite('config', () => {
           {
             name: 'http://example.com',
             url: {kind: 'remote', url: 'http://example.com'},
-            measurement: [{
-              mode: 'callback',
-            }],
+            measurement: [
+              {
+                mode: 'callback',
+              },
+            ],
             browser: defaultBrowser,
           },
           {
             name: 'http://example.com',
             url: {kind: 'remote', url: 'http://example.com'},
-            measurement: [{
-              mode: 'callback',
-            }],
+            measurement: [
+              {
+                mode: 'callback',
+              },
+            ],
             browser: {
               ...defaultBrowser,
               name: 'firefox',
@@ -374,13 +394,9 @@ suite('config', () => {
             browser: {
               name: 'chrome',
               binary: '/my/special/chrome',
-              addArguments: [
-                'be-good',
-              ],
-              removeArguments: [
-                'be-bad',
-              ],
-            }
+              addArguments: ['be-good'],
+              removeArguments: ['be-bad'],
+            },
           },
         ],
       };
@@ -397,10 +413,12 @@ suite('config', () => {
               kind: 'remote',
               url: 'http://example.com?foo=bar',
             },
-            measurement: [{
-              mode: 'performance',
-              entryName: 'first-contentful-paint',
-            }],
+            measurement: [
+              {
+                mode: 'performance',
+                entryName: 'first-contentful-paint',
+              },
+            ],
             browser: {
               name: 'chrome',
               headless: false,
@@ -409,13 +427,9 @@ suite('config', () => {
                 height: defaults.windowHeight,
               },
               binary: '/my/special/chrome',
-              addArguments: [
-                'be-good',
-              ],
-              removeArguments: [
-                'be-bad',
-              ],
-            }
+              addArguments: ['be-good'],
+              removeArguments: ['be-bad'],
+            },
           },
         ],
       };
@@ -459,9 +473,7 @@ suite('config', () => {
 
       test('invalid expand type', async () => {
         const config = {
-          benchmarks: [
-            {expand: 42},
-          ],
+          benchmarks: [{expand: 42}],
         };
         await assert.isRejected(
             parseConfigFile(config),
@@ -497,23 +509,27 @@ suite('config', () => {
 
       test('missing url', async () => {
         const config = {
-          benchmarks: [{
-            browser: 'chrome',
-            measurement: {
-              mode: 'performance',
-              entryName: 'first-contentful-paint',
+          benchmarks: [
+            {
+              browser: 'chrome',
+              measurement: {
+                mode: 'performance',
+                entryName: 'first-contentful-paint',
+              },
             },
-          }],
+          ],
         };
         await assert.isRejected(parseConfigFile(config), /no url specified/i);
       });
 
       test('unsupported browser', async () => {
         const config = {
-          benchmarks: [{
-            url: 'http://example.com',
-            browser: 'potato',
-          }],
+          benchmarks: [
+            {
+              url: 'http://example.com',
+              browser: 'potato',
+            },
+          ],
         };
         await assert.isRejected(
             parseConfigFile(config), 'Browser potato is not supported');
@@ -521,10 +537,12 @@ suite('config', () => {
 
       test('invalid measurement', async () => {
         const config = {
-          benchmarks: [{
-            url: 'http://example.com',
-            measurement: 'potato',
-          }],
+          benchmarks: [
+            {
+              url: 'http://example.com',
+              measurement: 'potato',
+            },
+          ],
         };
         await assert.isRejected(
             parseConfigFile(config),
@@ -534,9 +552,11 @@ suite('config', () => {
       test('sampleSize too small', async () => {
         const config = {
           sampleSize: 1,
-          benchmarks: [{
-            url: 'http://example.com',
-          }],
+          benchmarks: [
+            {
+              url: 'http://example.com',
+            },
+          ],
         };
         await assert.isRejected(
             parseConfigFile(config),
@@ -546,9 +566,11 @@ suite('config', () => {
       test('non-integer sampleSize', async () => {
         const config = {
           sampleSize: 2.1,
-          benchmarks: [{
-            url: 'http://example.com',
-          }],
+          benchmarks: [
+            {
+              url: 'http://example.com',
+            },
+          ],
         };
         await assert.isRejected(
             parseConfigFile(config),
@@ -562,7 +584,7 @@ suite('config', () => {
               url: '/my/local.index',
               packageVersions: {
                 dependencies: {
-                  'foo': '=1.2.3',
+                  foo: '=1.2.3',
                 },
               },
             },

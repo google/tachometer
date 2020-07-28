@@ -9,7 +9,7 @@
  * rights grant found at http://polymer.github.io/PATENTS.txt
  */
 
-import * as csvStringify from 'csv-stringify/lib/sync';
+import csvStringify from 'csv-stringify/lib/sync';
 
 import {ResultStatsWithDifferences} from './stats';
 
@@ -33,8 +33,7 @@ export function formatCsvStats(results: ResultStatsWithDifferences[]): string {
     row.push(
         result.result.name,
         result.stats.meanCI.low.toFixed(precision),
-        result.stats.meanCI.high.toFixed(precision),
-    );
+        result.stats.meanCI.high.toFixed(precision));
     for (const diff of result.differences) {
       if (diff === null) {
         row.push('', '', '', '');
@@ -43,8 +42,7 @@ export function formatCsvStats(results: ResultStatsWithDifferences[]): string {
             (diff.relative.low * 100).toFixed(precision) + '%',
             (diff.relative.high * 100).toFixed(precision) + '%',
             diff.absolute.low.toFixed(precision),
-            diff.absolute.high.toFixed(precision),
-        );
+            diff.absolute.high.toFixed(precision));
       }
     }
     rows.push(row);

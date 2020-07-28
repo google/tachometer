@@ -3,16 +3,14 @@
     "target": "es2017",
     "module": "es2015",
     "moduleResolution": "node",
+    "esModuleInterop": true,
 
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "preserveConstEnums": true,
 
-    "lib": [
-      "es2017",
-      "esnext.asynciterable"
-    ],
+    "lib": ["es2017", "esnext.asynciterable"],
 
     "declaration": true,
     "sourceMap": true,
