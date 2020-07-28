@@ -9,32 +9,36 @@
  * rights grant found at http://polymer.github.io/PATENTS.txt
  */
 
-// It's not ideal that these WebDriver plugin packages are dependencies of the
-// tachometer package, since on install they download binaries for each plugin.
-// IE in particular is rarely used, so is particularly wasteful. An alternative
-// might be to not depend on any of these packages, and instead prompt the user
-// to install them only the first time they try to drive a browser that we
-// detect there is no plugin for.
-//
-// Also note that the edgedriver package doesn't work on recent versions of
-// Windows 10, so users must manually install following Microsoft's
-// documentation.
-require('chromedriver');
-require('geckodriver');
-require('iedriver');
-
 import * as webdriver from 'selenium-webdriver';
 import * as chrome from 'selenium-webdriver/chrome';
-import * as firefox from 'selenium-webdriver/firefox';
 import * as edge from 'selenium-webdriver/edge';
+import * as firefox from 'selenium-webdriver/firefox';
+
+import {installOnDemand} from './install';
 import {isHttpUrl} from './util';
 
 /** Tachometer browser names. Often but not always equal to WebDriver's. */
 export type BrowserName = 'chrome'|'firefox'|'safari'|'edge'|'ie';
 
 /** Browsers we can drive. */
-export const supportedBrowsers =
-    new Set<BrowserName>(['chrome', 'firefox', 'safari', 'edge', 'ie']);
+export const supportedBrowsers = new Set<BrowserName>([
+  'chrome',
+  'firefox',
+  'safari',
+  'edge',
+  'ie',
+]);
+
+type WebdriverModuleName = 'chromedriver'|'geckodriver'|'iedriver';
+
+// Note that the edgedriver package doesn't work on recent versions of
+// Windows 10, so users must manually install following Microsoft's
+// documentation.
+const browserWebdriverModules = new Map<BrowserName, WebdriverModuleName>([
+  ['chrome', 'chromedriver'],
+  ['firefox', 'geckodriver'],
+  ['ie', 'iedriver'],
+]);
 
 /** Cases where Tachometer's browser name scheme does not equal WebDriver's. */
 const webdriverBrowserNames = new Map<BrowserName, string>([
@@ -120,8 +124,12 @@ export function parseBrowserConfigString(str: string):
 /**
  * Throw if any property of the given BrowserConfig is invalid.
  */
-export function validateBrowserConfig(
-    {name, headless, remoteUrl, windowSize}: BrowserConfig) {
+export function validateBrowserConfig({
+  name,
+  headless,
+  remoteUrl,
+  windowSize,
+}: BrowserConfig) {
   if (!supportedBrowsers.has(name)) {
     throw new Error(
         `Browser ${name} is not supported, ` +
@@ -143,6 +151,14 @@ export function validateBrowserConfig(
  */
 export async function makeDriver(config: BrowserConfig):
     Promise<webdriver.WebDriver> {
+  const browserName: BrowserName = config.name;
+  const webdriverModuleName = browserWebdriverModules.get(browserName);
+
+  if (webdriverModuleName != null) {
+    await installOnDemand(webdriverModuleName);
+    require(webdriverModuleName);
+  }
+
   const builder = new webdriver.Builder();
   const webdriverName = webdriverBrowserNames.get(config.name) || config.name;
   builder.forBrowser(webdriverName);
@@ -264,11 +280,11 @@ export async function openAndSwitchToNewTab(
     await driver.manage().window().setRect(rect);
   }
   type WithSendDevToolsCommand = {
-    sendDevToolsCommand?: (command: string, config: {}) => Promise<void>,
+    sendDevToolsCommand?: (command: string, config: {}) => Promise<void>;
   };
 
   const driverWithSendDevToolsCommand =
-      (driver as {} as WithSendDevToolsCommand);
+      (driver as {}) as WithSendDevToolsCommand;
   if (driverWithSendDevToolsCommand.sendDevToolsCommand &&
       config.cpuThrottlingRate !== undefined) {
     // Enables CPU throttling to emulate slow CPUs.
