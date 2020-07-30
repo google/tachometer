@@ -15,23 +15,16 @@ import {onDemandDependenciesFromPackageJSON} from '../install';
 
 suite('install', () => {
   suite('onDemandDependenciesFromPackageJSON', () => {
-    test('only includes devDependencies', () => {
+    test('only includes packages enumerated in "installsOnDemand"', () => {
       const dependencies = onDemandDependenciesFromPackageJSON({
-        dependencies: {foo: '*'},
-        devDependencies: {bar: '*'},
-        installsOnDemand: ['bar']
+        devDependencies: {foo: '*'},
+        dependencies: {bar: '*'},
+        installsOnDemand: ['baz'],
       });
 
       assert.isFalse(dependencies.has('foo'));
-      assert.isTrue(dependencies.has('bar'));
-    });
-
-    test('only includes packages enumerated in "installsOnDemand"', () => {
-      const dependencies = onDemandDependenciesFromPackageJSON(
-          {devDependencies: {foo: '*', bar: '*'}, installsOnDemand: ['bar']});
-
-      assert.isFalse(dependencies.has('foo'));
-      assert.isTrue(dependencies.has('bar'));
+      assert.isFalse(dependencies.has('bar'));
+      assert.isTrue(dependencies.has('baz'));
     });
   });
 });
