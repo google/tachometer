@@ -18,7 +18,6 @@ export type OnDemandDependencies = Map<string, string>;
 
 export interface ContainsOnDemandDependencies {
   [index: string]: unknown;
-  devDependencies?: {[index: string]: string};
   installsOnDemand?: string[];
 }
 
@@ -39,23 +38,19 @@ export const onDemandDependenciesFromPackageJSON =
     (packageJSON: ContainsOnDemandDependencies): OnDemandDependencies => {
       const onDemandDependencies = new Map<string, string>();
 
-      const devDependencies = packageJSON?.devDependencies || {};
       const onDemandList: string[] = packageJSON?.installsOnDemand || [];
 
       for (const packageName of onDemandList) {
-        if (packageName in devDependencies) {
-          onDemandDependencies.set(packageName, devDependencies[packageName]);
-        }
+        onDemandDependencies.set(packageName, '*');
       }
 
       return onDemandDependencies;
     };
 
 /**
- * So-called "on-demand" dependencies are any packages that match both of the
+ * So-called "on-demand" dependencies are any packages that match the
  * following requirements:
  *
- *  - They are listed in package.json as "devDependencies"
  *  - They are enumerated in the non-normative package.json field
  *    "installsOnDemand"
  *
@@ -66,18 +61,15 @@ export const getOnDemandDependencies = (() => {
   let cached: OnDemandDependencies|null = null;
   return async(): Promise<OnDemandDependencies> => {
     if (cached == null) {
-      try {
-        const packageJSONPath = await getPackageJSONPath();
+      const packageJSONPath = await getPackageJSONPath();
 
-        if (packageJSONPath != null) {
-          const rawPackageJSON = await fs.readFile(packageJSONPath);
-          const packageJSON = JSON.parse(rawPackageJSON.toString('utf-8')) as
-              ContainsOnDemandDependencies;
+      if (packageJSONPath != null) {
+        const rawPackageJSON =
+            await fs.readFile(packageJSONPath, {encoding: 'utf-8'});
+        const packageJSON = JSON.parse(rawPackageJSON.toString()) as
+            ContainsOnDemandDependencies;
 
-          cached = onDemandDependenciesFromPackageJSON(packageJSON);
-        }
-      } catch (_error) {
-        cached = new Map();
+        cached = onDemandDependenciesFromPackageJSON(packageJSON);
       }
     }
 
@@ -103,7 +95,12 @@ export const installOnDemand = async (packageName: string) => {
   } catch (_error) {
   }
 
-  const dependencies = await getOnDemandDependencies();
+  let dependencies = new Map();
+  try {
+    dependencies = await getOnDemandDependencies();
+  } catch (error) {
+    console.error(error);
+  }
 
   if (!dependencies.has(packageName)) {
     throw new Error(`Package "${packageName}" cannot be installed on demand. ${
@@ -114,7 +111,7 @@ export const installOnDemand = async (packageName: string) => {
 
   await install(
       {[packageName]: version},
-      {stdio: 'inherit', cwd: await getPackageRoot() || process.cwd()});
+      {stdio: 'inherit', cwd: (await getPackageRoot()) || process.cwd()});
 
   console.log(`Package "${packageName}@${version} installed."`);
 };
