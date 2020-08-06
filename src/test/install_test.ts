@@ -10,8 +10,12 @@
  */
 
 import {assert} from 'chai';
+import {promises as fs} from 'fs';
 import {suite, test} from 'mocha';
-import {onDemandDependenciesFromPackageJSON} from '../install';
+import * as os from 'os';
+import * as path from 'path';
+
+import {assertResolvable, onDemandDependenciesFromPackageJSON} from '../install';
 
 suite('install', () => {
   suite('onDemandDependenciesFromPackageJSON', () => {
@@ -26,5 +30,44 @@ suite('install', () => {
       assert.isFalse(dependencies.has('bar'));
       assert.isTrue(dependencies.has('baz'));
     });
+  });
+
+  suite('assertResolvable', () => {
+    test('resolves for resolvable module specifiers', async () => {
+      await assertResolvable('chai');
+    });
+
+    test('rejects for not-resolvable module specifiers', async () => {
+      let rejected = false;
+
+      try {
+        await assertResolvable('./definitely-not-resolvable.js');
+      } catch {
+        rejected = true;
+      }
+
+      assert.isTrue(rejected);
+    });
+
+    test(
+        'eventually resolves a module that was installed asynchronously',
+        async () => {
+          let rejected = false;
+          const someModulePath = path.join(os.tmpdir(), 'foo.js');
+
+          try {
+            await assertResolvable(someModulePath);
+          } catch {
+            rejected = true;
+          }
+
+          assert.isTrue(rejected);
+
+          await fs.writeFile(someModulePath, 'console.log("hi")');
+
+          await assertResolvable(someModulePath);
+
+          await fs.unlink(someModulePath);
+        });
   });
 });

@@ -9,6 +9,7 @@
  * rights grant found at http://polymer.github.io/PATENTS.txt
  */
 
+import {exec} from 'child_process';
 import {promises as fs} from 'fs';
 import path from 'path';
 import {install} from 'pkg-install';
@@ -16,13 +17,39 @@ import pkgUp from 'pkg-up';
 
 export type OnDemandDependencies = Map<string, string>;
 
+/**
+ * Asynchronously checks to see if a module is resolvable. This gives the
+ * invoker information that is similar to what they would get from using
+ * require.resolve. However, require.resolve is backed by an unclearable
+ * internal cache, which this helper bypasses via a child process.
+ *
+ * @see https://github.com/nodejs/node/issues/31803
+ */
+export const assertResolvable = async (id: string) => {
+  await new Promise(async (resolve, reject) => {
+    exec(
+        `${process.execPath} -e "require.resolve(process.env.ID)"`,
+        {
+          cwd: await getPackageRoot() || process.cwd(),
+          env: {...process.env, ID: id}
+        },
+        (error) => {
+          if (error != null) {
+            reject(error);
+            return;
+          }
+          resolve();
+        });
+  });
+};
+
 export interface ContainsOnDemandDependencies {
   [index: string]: unknown;
   installsOnDemand?: string[];
 }
 
 export const getPackageJSONPath = async(): Promise<string|null> => {
-  return pkgUp({cwd: __dirname});
+  return pkgUp({cwd: module.path});
 };
 
 export const getPackageRoot = async(): Promise<string|null> => {
@@ -64,8 +91,9 @@ export const getOnDemandDependencies = (() => {
       const packageJSONPath = await getPackageJSONPath();
 
       if (packageJSONPath != null) {
-        const rawPackageJSON =
-            await fs.readFile(packageJSONPath, {encoding: 'utf-8'});
+        const rawPackageJSON = await fs.readFile(packageJSONPath, {
+          encoding: 'utf-8',
+        });
         const packageJSON = JSON.parse(rawPackageJSON.toString()) as
             ContainsOnDemandDependencies;
 
@@ -89,8 +117,7 @@ export const getOnDemandDependencies = (() => {
  */
 export const installOnDemand = async (packageName: string) => {
   try {
-    require.resolve(packageName);
-    // Implies the package is already installed
+    await assertResolvable(packageName);
     return;
   } catch (_error) {
   }
@@ -109,9 +136,11 @@ export const installOnDemand = async (packageName: string) => {
 
   const version = dependencies.get(packageName);
 
-  await install(
-      {[packageName]: version},
-      {stdio: 'inherit', cwd: (await getPackageRoot()) || process.cwd()});
+  await install({[packageName]: version}, {
+    stdio: 'inherit',
+    cwd: (await getPackageRoot()) || process.cwd(),
+    noSave: true,
+  });
 
   console.log(`Package "${packageName}@${version} installed."`);
 };
