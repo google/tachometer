@@ -59,7 +59,7 @@ suite('e2e', function() {
 
   for (const browser of browsers) {
     suite(browser, function() {
-      test('window.tachometerResult', async function() {
+      test('window.tachometerResult', hideOutput(async function() {
         const avgA = 1;
         const minA = avgA - 0.1;
         const maxA = avgA + 0.1;
@@ -92,7 +92,7 @@ suite('e2e', function() {
         assert.closeTo(ciAverage(diffBA.absolute), avgB - avgA, 0.1);
         assert.closeTo(ciAverage(diffAB.relative), (avgA - avgB) / avgB, 0.1);
         assert.closeTo(ciAverage(diffBA.relative), (avgB - avgA) / avgA, 0.1);
-      });
+      }));
 
       test('measurement expression', hideOutput(async function() {
              const avgA = 1;
@@ -154,7 +154,7 @@ suite('e2e', function() {
             const argv = [
               `--browser=${browser}`,
               '--measure=callback',
-              '--sample-size=10',
+              '--sample-size=30',
               '--timeout=0',
               path.join(testData, 'delayed-callback.html') + `?delay=${delayA}`,
               path.join(testData, 'delayed-callback.html') + `?delay=${delayB}`,
