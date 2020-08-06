@@ -7,6 +7,8 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 <!-- ## Unreleased -->
 
+## [0.5.0] 2020-08-06
+
 - Change WebDriver-related packages for Chrome, Firefox and IE to be installed
   on-demand. This saves a lot of time during the intial installation of the
   `tachometer` package. See the README for more details.
