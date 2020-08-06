@@ -394,6 +394,24 @@ section of the WebDriver IE plugin documentation. In particular, setting "Enable
 Protected Mode" so that it is consistently either enabled or disabled across all
 security zones appears to resolve `NoSuchSessionError` errors.
 
+#### On-demand dependencies
+
+Tachometer will install WebDriver plugins for Chrome, Firefox and IE on-demand.
+The first time that Tachometer runs a benchmark in any of these browsers, it
+will install the appropriate plug-in from via NPM or Yarn if it is not already
+installed.
+
+If you wish to avoid on-demand installations like this, you can install the
+related packages (`chromedriver`, `geckodriver` and `iedriver`, respectively)
+ahead of time with `npm install`, for example:
+
+```
+npm install tachometer chromedriver
+```
+
+In the example above, Tachometer will detect the manually installed `chromedriver`
+package and will skip any attempt to install it on-demand later.
+
 ### Headless
 
 If supported by the browser, you can launch in headless mode by adding

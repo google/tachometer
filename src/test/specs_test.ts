@@ -10,7 +10,7 @@
  */
 
 import * as chai from 'chai';
-import * as chaiAsPromised from 'chai-as-promised';
+import chaiAsPromised from 'chai-as-promised';
 import {suite, suiteSetup, suiteTeardown, test} from 'mocha';
 import * as path from 'path';
 
@@ -65,10 +65,12 @@ suite('specsFromOpts', () => {
           url: 'http://example.com',
         },
         browser: defaultBrowser,
-        measurement: [{
-          mode: 'performance',
-          entryName: 'first-contentful-paint',
-        }],
+        measurement: [
+          {
+            mode: 'performance',
+            entryName: 'first-contentful-paint',
+          },
+        ],
       },
     ];
     assert.deepEqual(actual, expected);
@@ -85,10 +87,12 @@ suite('specsFromOpts', () => {
           url: 'http://example.com',
         },
         browser: defaultBrowser,
-        measurement: [{
-          mode: 'performance',
-          entryName: 'first-contentful-paint',
-        }],
+        measurement: [
+          {
+            mode: 'performance',
+            entryName: 'first-contentful-paint',
+          },
+        ],
       },
     ];
     assert.deepEqual(actual, expected);
@@ -107,9 +111,11 @@ suite('specsFromOpts', () => {
           version: undefined,
         },
         browser: defaultBrowser,
-        measurement: [{
-          mode: 'callback',
-        }],
+        measurement: [
+          {
+            mode: 'callback',
+          },
+        ],
       },
     ];
     assert.deepEqual(actual, expected);
@@ -128,9 +134,11 @@ suite('specsFromOpts', () => {
           version: undefined,
         },
         browser: defaultBrowser,
-        measurement: [{
-          mode: 'callback',
-        }],
+        measurement: [
+          {
+            mode: 'callback',
+          },
+        ],
       },
     ];
     assert.deepEqual(actual, expected);
@@ -149,9 +157,11 @@ suite('specsFromOpts', () => {
           version: undefined,
         },
         browser: defaultBrowser,
-        measurement: [{
-          mode: 'callback',
-        }],
+        measurement: [
+          {
+            mode: 'callback',
+          },
+        ],
       },
     ];
     assert.deepEqual(actual, expected);
@@ -170,9 +180,11 @@ suite('specsFromOpts', () => {
           version: undefined,
         },
         browser: defaultBrowser,
-        measurement: [{
-          mode: 'callback',
-        }],
+        measurement: [
+          {
+            mode: 'callback',
+          },
+        ],
       },
     ];
     assert.deepEqual(actual, expected);
@@ -191,9 +203,11 @@ suite('specsFromOpts', () => {
           version: undefined,
         },
         browser: defaultBrowser,
-        measurement: [{
-          mode: 'callback',
-        }],
+        measurement: [
+          {
+            mode: 'callback',
+          },
+        ],
       },
     ];
     assert.deepEqual(actual, expected);
@@ -212,9 +226,11 @@ suite('specsFromOpts', () => {
           version: undefined,
         },
         browser: defaultBrowser,
-        measurement: [{
-          mode: 'callback',
-        }],
+        measurement: [
+          {
+            mode: 'callback',
+          },
+        ],
       },
     ];
     assert.deepEqual(actual, expected);
@@ -242,9 +258,11 @@ suite('specsFromOpts', () => {
           },
         },
         browser: defaultBrowser,
-        measurement: [{
-          mode: 'callback',
-        }],
+        measurement: [
+          {
+            mode: 'callback',
+          },
+        ],
       },
       {
         name: 'mybench',
@@ -260,9 +278,11 @@ suite('specsFromOpts', () => {
           },
         },
         browser: defaultBrowser,
-        measurement: [{
-          mode: 'callback',
-        }],
+        measurement: [
+          {
+            mode: 'callback',
+          },
+        ],
       },
     ];
     assert.deepEqual(actual, expected);

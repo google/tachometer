@@ -7,6 +7,10 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 <!-- ## Unreleased -->
 
+- Change WebDriver-related packages for Chrome, Firefox and IE to be installed
+  on-demand. This saves a lot of time during the intial installation of the
+  `tachometer` package. See the README for more details.
+
 ## [0.4.21] 2020-07-23
 
 - Add ability to specify multiple measurements from the same page load by
