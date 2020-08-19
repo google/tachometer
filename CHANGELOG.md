@@ -7,6 +7,12 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 <!-- ## Unreleased -->
 
+## [0.5.1] 2020-08-19
+
+- Fix `Package "chromedriver" cannot be installed on demand` and similar errors
+  affecting Node versions 10 and below
+  ([#182](https://github.com/Polymer/tachometer/issues/182)).
+
 ## [0.5.0] 2020-08-06
 
 - Change WebDriver-related packages for Chrome, Firefox and IE to be installed
