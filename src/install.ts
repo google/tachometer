@@ -49,7 +49,13 @@ export interface ContainsOnDemandDependencies {
 }
 
 export const getPackageJSONPath = async(): Promise<string|null> => {
-  return pkgUp({cwd: module.path});
+  // NOTE: This used to search starting with module.path, but module.path was
+  // not added until Node.js v11. In order to preserve Node.js v10 compatibility
+  // we use __dirname instead, which should be mostly the same thing (docs are
+  // fuzzy on the specific differences, unfortunately).
+  // @see https://nodejs.org/docs/latest/api/modules.html#modules_module_path
+  // @see https://nodejs.org/docs/latest/api/modules.html#modules_dirname
+  return pkgUp({cwd: __dirname});
 };
 
 export const getPackageRoot = async(): Promise<string|null> => {
