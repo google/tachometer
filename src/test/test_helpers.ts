@@ -53,7 +53,7 @@ export async function fakeResults(configFile: ConfigFile):
     ];
     for (let measurementIndex = 0; measurementIndex < measurement.length;
          measurementIndex++) {
-      const resultName = measurement.length == 1 ?
+      const resultName = measurement.length === 1 ?
           name :
           `${name} [${measurement[measurementIndex].name}]`;
       results.push({
