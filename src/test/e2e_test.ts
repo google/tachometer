@@ -60,39 +60,41 @@ suite('e2e', function() {
   for (const browser of browsers) {
     suite(browser, function() {
       test('window.tachometerResult', hideOutput(async function() {
-        const avgA = 1;
-        const minA = avgA - 0.1;
-        const maxA = avgA + 0.1;
+             const avgA = 1;
+             const minA = avgA - 0.1;
+             const maxA = avgA + 0.1;
 
-        const avgB = 2;
-        const minB = avgB - 0.1;
-        const maxB = avgB + 0.1;
+             const avgB = 2;
+             const minB = avgB - 0.1;
+             const maxB = avgB + 0.1;
 
-        const argv = [
-          `--browser=${browser}`,
-          '--measure=global',
-          '--sample-size=20',
-          '--timeout=0',
-          path.join(testData, 'random-global.html') +
-              `?min=${minA}&max=${maxA}`,
-          path.join(testData, 'random-global.html') +
-              `?min=${minB}&max=${maxB}`,
-        ];
+             const argv = [
+               `--browser=${browser}`,
+               '--measure=global',
+               '--sample-size=20',
+               '--timeout=0',
+               path.join(testData, 'random-global.html') +
+                   `?min=${minA}&max=${maxA}`,
+               path.join(testData, 'random-global.html') +
+                   `?min=${minB}&max=${maxB}`,
+             ];
 
-        const actual = await main(argv);
-        assert.isDefined(actual);
-        assert.lengthOf(actual!, 2);
-        const [a, b] = actual!;
-        const diffAB = a.differences[1]!;
-        const diffBA = b.differences[0]!;
+             const actual = await main(argv);
+             assert.isDefined(actual);
+             assert.lengthOf(actual!, 2);
+             const [a, b] = actual!;
+             const diffAB = a.differences[1]!;
+             const diffBA = b.differences[0]!;
 
-        assert.closeTo(a.stats.mean, avgA, 0.1);
-        assert.closeTo(b.stats.mean, avgB, 0.1);
-        assert.closeTo(ciAverage(diffAB.absolute), avgA - avgB, 0.1);
-        assert.closeTo(ciAverage(diffBA.absolute), avgB - avgA, 0.1);
-        assert.closeTo(ciAverage(diffAB.relative), (avgA - avgB) / avgB, 0.1);
-        assert.closeTo(ciAverage(diffBA.relative), (avgB - avgA) / avgA, 0.1);
-      }));
+             assert.closeTo(a.stats.mean, avgA, 0.1);
+             assert.closeTo(b.stats.mean, avgB, 0.1);
+             assert.closeTo(ciAverage(diffAB.absolute), avgA - avgB, 0.1);
+             assert.closeTo(ciAverage(diffBA.absolute), avgB - avgA, 0.1);
+             assert.closeTo(
+                 ciAverage(diffAB.relative), (avgA - avgB) / avgB, 0.1);
+             assert.closeTo(
+                 ciAverage(diffBA.relative), (avgB - avgA) / avgA, 0.1);
+           }));
 
       test('measurement expression', hideOutput(async function() {
              const avgA = 1;
