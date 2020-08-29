@@ -10,6 +10,9 @@
                         "callback"
                     ],
                     "type": "string"
+                },
+                "name": {
+                    "type": "string"
                 }
             },
             "required": [
@@ -212,6 +215,9 @@
                         "expression"
                     ],
                     "type": "string"
+                },
+                "name": {
+                    "type": "string"
                 }
             },
             "required": [
@@ -311,6 +317,9 @@
                     "enum": [
                         "performance"
                     ],
+                    "type": "string"
+                },
+                "name": {
                     "type": "string"
                 }
             },

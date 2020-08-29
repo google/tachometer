@@ -51,16 +51,20 @@ export interface NpmPackageJson {
 export type Measurement =
     CallbackMeasurement|PerformanceEntryMeasurement|ExpressionMeasurement;
 
-export interface CallbackMeasurement {
+export interface MeasurementBase {
+  name?: string;
+}
+
+export interface CallbackMeasurement extends MeasurementBase {
   mode: 'callback';
 }
 
-export interface PerformanceEntryMeasurement {
+export interface PerformanceEntryMeasurement extends MeasurementBase {
   mode: 'performance';
   entryName: string;
 }
 
-export interface ExpressionMeasurement {
+export interface ExpressionMeasurement extends MeasurementBase {
   mode: 'expression';
   expression: string;
 }
