@@ -314,6 +314,7 @@ export class Runner {
           name: spec.measurement.length === 1 ?
               spec.name :
               `${spec.name} [${measurementName(measurement)}]`,
+          measurement,
           measurementIndex: measurementIndex,
           queryString: spec.url.kind === 'local' ? spec.url.queryString : '',
           version: spec.url.kind === 'local' && spec.url.version !== undefined ?

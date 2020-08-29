@@ -64,6 +64,10 @@ suite('jsonOutput', () => {
           name: 'foo',
           bytesSent: 1024,
           version: undefined,
+          measurement: {
+            mode: 'performance',
+            entryName: 'first-contentful-paint',
+          },
           browser: {
             name: 'chrome',
             headless: false,
@@ -97,6 +101,10 @@ suite('jsonOutput', () => {
           name: 'bar',
           bytesSent: 2048,
           version: undefined,
+          measurement: {
+            mode: 'performance',
+            entryName: 'first-contentful-paint',
+          },
           browser: {
             name: 'chrome',
             headless: false,
@@ -122,6 +130,181 @@ suite('jsonOutput', () => {
                 low: 67.90324,
                 high: 132.09676,
               },
+            },
+            null,
+          ],
+        },
+      ],
+    };
+    assert.deepEqual(roundPlacesAll(actual, 5), expected);
+  });
+
+  test('2x2 matrix with multiple measurements', async () => {
+    const config: ConfigFile = {
+      benchmarks: [
+        {
+          name: 'foo',
+          url: 'http://example.com?foo',
+          measurement: [
+            {name: 'Metric 1', mode: 'performance', entryName: 'metric1'},
+            {name: 'Metric 2', mode: 'performance', entryName: 'metric2'}
+          ]
+        },
+        {
+          name: 'bar',
+          url: 'http://example.com?bar',
+          measurement: [
+            {name: 'Metric 1', mode: 'performance', entryName: 'metric1'},
+            {name: 'Metric 2', mode: 'performance', entryName: 'metric2'}
+          ]
+        },
+      ],
+    };
+    const results = await fakeResults(config);
+    const actual = jsonOutput(results);
+    const expected: JsonOutputFile = {
+      benchmarks: [
+        {
+          name: 'foo [Metric 1]',
+          bytesSent: 1024,
+          version: undefined,
+          measurement: {
+            name: 'Metric 1',
+            mode: 'performance',
+            entryName: 'metric1',
+          },
+          browser: {
+            name: 'chrome',
+            headless: false,
+            windowSize: {width: 1024, height: 768},
+            userAgent:
+                'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36',
+          },
+          samples: [
+            ...new Array(25).fill(5),
+            ...new Array(25).fill(15),
+          ],
+          mean: {low: 8.56459, high: 11.43541},
+          differences: [
+            null,
+            {
+              absolute: {high: 2.02998, low: -2.02998},
+              percentChange: {high: 20.29978, low: -20.29978}
+            },
+            {
+              absolute: {low: -12.02998, high: -7.97002},
+              percentChange: {low: -58.02419, high: -41.97581},
+            },
+            {
+              absolute: {high: -7.97002, low: -12.02998},
+              percentChange: {high: -41.97581, low: -58.02419}
+            }
+          ],
+        },
+        {
+          name: 'foo [Metric 2]',
+          bytesSent: 1024,
+          version: undefined,
+          measurement: {
+            name: 'Metric 2',
+            mode: 'performance',
+            entryName: 'metric2',
+          },
+          browser: {
+            name: 'chrome',
+            headless: false,
+            windowSize: {width: 1024, height: 768},
+            userAgent:
+                'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36',
+          },
+          samples: [...new Array(25).fill(5), ...new Array(25).fill(15)],
+          mean: {high: 11.43541, low: 8.56459},
+          differences: [
+            {
+              absolute: {high: 2.02998, low: -2.02998},
+              percentChange: {high: 20.29978, low: -20.29978}
+            },
+            null,
+            {
+              absolute: {high: -7.97002, low: -12.02998},
+              percentChange: {high: -41.97581, low: -58.02419}
+            },
+            {
+              absolute: {high: -7.97002, low: -12.02998},
+              percentChange: {high: -41.97581, low: -58.02419},
+            },
+          ],
+        },
+        {
+          name: 'bar [Metric 1]',
+          bytesSent: 2048,
+          version: undefined,
+          measurement: {
+            name: 'Metric 1',
+            mode: 'performance',
+            entryName: 'metric1',
+          },
+          browser: {
+            name: 'chrome',
+            headless: false,
+            windowSize: {width: 1024, height: 768},
+            userAgent:
+                'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36',
+          },
+          samples: [
+            ...new Array(25).fill(15),
+            ...new Array(25).fill(25),
+          ],
+          mean: {low: 18.56459, high: 21.43541},
+          differences: [
+            {
+              absolute: {low: 7.97002, high: 12.02998},
+              percentChange: {low: 67.90324, high: 132.09676},
+            },
+            {
+              absolute: {high: 12.02998, low: 7.97002},
+              percentChange: {high: 132.09676, low: 67.90324}
+            },
+            null,
+            {
+              absolute: {high: 2.02998, low: -2.02998},
+              percentChange: {high: 10.14989, low: -10.14989}
+            }
+          ],
+        },
+        {
+          name: 'bar [Metric 2]',
+          bytesSent: 2048,
+          version: undefined,
+          measurement: {
+            name: 'Metric 2',
+            mode: 'performance',
+            entryName: 'metric2',
+          },
+          browser: {
+            name: 'chrome',
+            headless: false,
+            windowSize: {width: 1024, height: 768},
+            userAgent:
+                'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36',
+          },
+          samples: [
+            ...new Array(25).fill(15),
+            ...new Array(25).fill(25),
+          ],
+          mean: {low: 18.56459, high: 21.43541},
+          differences: [
+            {
+              absolute: {high: 12.02998, low: 7.97002},
+              percentChange: {high: 132.09676, low: 67.90324}
+            },
+            {
+              absolute: {high: 12.02998, low: 7.97002},
+              percentChange: {high: 132.09676, low: 67.90324}
+            },
+            {
+              absolute: {high: 2.02998, low: -2.02998},
+              percentChange: {high: 10.14989, low: -10.14989}
             },
             null,
           ],

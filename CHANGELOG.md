@@ -8,6 +8,7 @@ project adheres to [Semantic Versioning](http://semver.org/).
 ## Unreleased
 
 - Add `name` property to measurement config
+- Include `measurement` object for each benchmark in JSON results output
 
 ## [0.5.1] 2020-08-19
 

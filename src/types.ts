@@ -109,6 +109,10 @@ export interface BenchmarkResult {
    */
   name: string;
   /**
+   * The measurement that produced this result
+   */
+  measurement: Measurement;
+  /**
    * A single page can return multiple measurements. The offset into the array
    * of measurements in the spec that this particular result corresponds to.
    */

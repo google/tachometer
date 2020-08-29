@@ -53,10 +53,14 @@ export async function fakeResults(configFile: ConfigFile):
     ];
     for (let measurementIndex = 0; measurementIndex < measurement.length;
          measurementIndex++) {
+      const resultName = measurement.length == 1 ?
+          name :
+          `${name} [${measurement[measurementIndex].name}]`;
       results.push({
         stats: summaryStats(millis),
         result: {
-          name,
+          name: resultName,
+          measurement: measurement[measurementIndex],
           measurementIndex,
           queryString: url.kind === 'local' ? url.queryString : '',
           version: url.kind === 'local' && url.version !== undefined ?

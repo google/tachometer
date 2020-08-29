@@ -13,7 +13,7 @@ import * as systeminformation from 'systeminformation';
 
 import {BrowserConfig} from './browser';
 import {ResultStatsWithDifferences} from './stats';
-import {BenchmarkResult} from './types';
+import {BenchmarkResult, Measurement} from './types';
 
 export interface JsonOutputFile {
   benchmarks: Benchmark[];
@@ -27,6 +27,7 @@ interface Benchmark {
   name: string;
   bytesSent: number;
   version?: string;
+  measurement: Measurement;
   browser?: BrowserConfigResult;
   mean: ConfidenceInterval;
   differences: Array<Difference|null>;
@@ -68,6 +69,7 @@ export function jsonOutput(results: ResultStatsWithDifferences[]):
       name: result.result.name,
       bytesSent: result.result.bytesSent,
       version: result.result.version ? result.result.version : undefined,
+      measurement: result.result.measurement,
       browser: {
         ...result.result.browser,
         userAgent: result.result.userAgent,
