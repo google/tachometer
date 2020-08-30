@@ -65,6 +65,7 @@ suite('jsonOutput', () => {
           bytesSent: 1024,
           version: undefined,
           measurement: {
+            name: 'fcp',
             mode: 'performance',
             entryName: 'first-contentful-paint',
           },
@@ -102,6 +103,7 @@ suite('jsonOutput', () => {
           bytesSent: 2048,
           version: undefined,
           measurement: {
+            name: 'fcp',
             mode: 'performance',
             entryName: 'first-contentful-paint',
           },
