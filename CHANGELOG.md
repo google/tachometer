@@ -5,7 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](http://semver.org/).
 
-<!-- ## Unreleased -->
+## Unreleased
+
+- Add support for `name` property to measurement config
+- Include `measurement` object for each benchmark in JSON results output
 
 ## [0.5.1] 2020-08-19
 

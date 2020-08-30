@@ -125,6 +125,10 @@ function escapeStringLiteral(unescaped: string): string {
  * where there are multiple measurements on the same page.
  */
 export function measurementName(measurement: Measurement): string {
+  if (measurement.name) {
+    return measurement.name;
+  }
+
   switch (measurement.mode) {
     case 'callback':
       return 'callback';

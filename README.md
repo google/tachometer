@@ -90,6 +90,9 @@ If `measurement` is an array, then all of the given measurements will be
 retrieved from each page load. Each measurement from a page is treated as its
 own benchmark.
 
+A measurement can specify a `name` property that will be used to display its
+results.
+
 #### Performance API
 
 Retrieve a measure, mark, or paint timing from the

@@ -51,16 +51,20 @@ export interface NpmPackageJson {
 export type Measurement =
     CallbackMeasurement|PerformanceEntryMeasurement|ExpressionMeasurement;
 
-export interface CallbackMeasurement {
+export interface MeasurementBase {
+  name?: string;
+}
+
+export interface CallbackMeasurement extends MeasurementBase {
   mode: 'callback';
 }
 
-export interface PerformanceEntryMeasurement {
+export interface PerformanceEntryMeasurement extends MeasurementBase {
   mode: 'performance';
   entryName: string;
 }
 
-export interface ExpressionMeasurement {
+export interface ExpressionMeasurement extends MeasurementBase {
   mode: 'expression';
   expression: string;
 }
@@ -104,6 +108,10 @@ export interface BenchmarkResult {
    * contain both the page and measurement labels as "page [measurement]".
    */
   name: string;
+  /**
+   * The measurement that produced this result
+   */
+  measurement: Measurement;
   /**
    * A single page can return multiple measurements. The offset into the array
    * of measurements in the spec that this particular result corresponds to.
