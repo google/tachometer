@@ -11,7 +11,7 @@
     "tachometer": "bin/tach.js"
   },
   "scripts": {
-    "prepare": "npm run build",
+    "prepare": "if [ -f './tsconfig.json' ]; then npm run build; fi;",
     "build": "rimraf lib/ client/lib/ && mkdir lib && npm run generate-json-schema && tsc && tsc -p client/ && npm run lint",
     "generate-json-schema": "typescript-json-schema tsconfig.json ConfigFile --include src/configfile.ts --required --noExtraProps > config.schema.json",
     "lint": "tslint --project . --format stylish",
