@@ -29,7 +29,27 @@ export class Deferred<T> {
  * package.json's "dependencies" and "devDependencies".
  */
 export interface PackageDependencyMap {
-  [pkg: string]: string;
+  [pkg: string]: string|GitDependency;
+}
+
+/**
+ * Configuration for cloning a Git repo at some ref with an optional package
+ * sub-path for monorepos, for use as an NPM dependency.
+ */
+export interface GitDependency {
+  kind: 'git';
+  // The git repository to clone. Any valid `git clone <repository>` argument
+  // (e.g. "git@github.com:webcomponents/polyfills.git").
+  repo: string;
+  // The branch, tag, or SHA to checkout (e.g. "master", "my-feature").
+  ref: string;
+  // For monorepos or other unusual file layouts, the path relative to the root
+  // of the git repo where the "package.json" for the appropriate package can be
+  // found (e.g. "packages/shadycss").
+  subdir?: string;
+  // Install, bootstrap, build, etc. commands to run before installing this
+  // package as a dependency (e.g. ["npm install", "npm run build"]).
+  setupCommands?: string[];
 }
 
 /**

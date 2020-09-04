@@ -22,7 +22,7 @@ import {BenchmarkSpec} from './types';
 import {makeConfig} from './config';
 import {Server} from './server';
 import {ResultStatsWithDifferences} from './stats';
-import {prepareVersionDirectory, makeServerPlans} from './versions';
+import {prepareVersionDirectory, makeServerPlans, installGitDependency} from './versions';
 import {manualMode} from './manual';
 import {Runner} from './runner';
 import {runNpm} from './util';
@@ -118,8 +118,12 @@ $ tach http://example.com
         `--save will be removed in the next major version.`);
   }
 
-  const plans = await makeServerPlans(
+  const {plans, gitInstalls} = await makeServerPlans(
       config.root, opts['npm-install-dir'], config.benchmarks);
+
+  await Promise.all(gitInstalls.map(
+      (gitInstall) =>
+          installGitDependency(gitInstall, config.forceCleanNpmInstall)));
 
   const servers = new Map<BenchmarkSpec, Server>();
   const promises = [];
