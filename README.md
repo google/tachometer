@@ -69,9 +69,9 @@ confidence in them.
   is faster or slower, and by how much, with statistical significance.
 
 
-- [*Swap dependency versions*](#swap-npm-dependency-versions) of any NPM package
-  you depend on, to compare published versions, remote GitHub branches, or local
-  git repos.
+- [*Swap dependency versions*](#swap-npm-dependencies) of any NPM package you
+  depend on, to compare published versions, remote GitHub branches, or local git
+  repos.
 
 
 - [*Automatically sample*](#auto-sampling) until we have enough precision to
@@ -218,16 +218,76 @@ Tachometer has specialized support for swapping in custom versions of any NPM
 dependency in your `package.json`. This can be used to compare the same
 benchmark against one or more versions of a library it depends on.
 
-Use the `--package-version` flag to specify a version to swap in, with format
-`[label=]package@version`.
+Use the `benchmarks.packageVersions` JSON config property to specify the version
+to swap in, like this:
+
+```json
+{
+  "benchmarks": [
+    {
+      "name": "my-benchmark",
+      "url": "my-benchmark.html",
+      "packageVersions": {
+        "label": "my-label",
+        "dependencies": {
+          "my-package": "github:MyOrg/my-repo#my-branch",
+        },
+      }
+    },
+  ],
+}
+```
+
+The version for a dependency can be any of the following:
+
+- Any version range supported by NPM, including semver ranges, git repos, and
+  local paths. See the [NPM
+  documentation](https://docs.npmjs.com/configuring-npm/package-json.html#dependencies)
+  for more details.
+
+- For monorepos, or other git repos where the `package.json` is not located at
+  the root of the repository (which is required for NPM's git install function),
+  you can use an advanced git configuration object
+  ([schema](https://github.com/Polymer/tachometer/blob/master/config.schema.json#:~:text=GitDependency))
+  in place of the NPM version string, e.g.:
+
+  ```json
+  {
+    "benchmarks": [
+      {
+        "name": "my-benchmark",
+        "url": "my-benchmark.html",
+        "packageVersions": {
+          "label": "my-label",
+          "dependencies": {
+            "my-package": {
+              "kind": "git",
+              "repo": "git@github.com:MyOrg/my-repo.git",
+              "ref": "my-branch",
+              "subdir": "packages/my-package",
+              "setupCommands": [
+                "npm install",
+                "npm run build"
+              ]
+            }
+          },
+        }
+      },
+    ],
+  }
+  ```
+
+You can also use the `--package-version` flag to specify a version to swap in
+from the command-line, with format `[label=]package@version`. Note that the
+advanced git install configuration is not supported from the commandline:
 
 ```
 tach mybench.html \
-  --package-version=mylib@1.0.0 \
-  --package-version=master=mylib@github:MyOrg/mylib#master
+  --package-version=my-package@1.0.0 \
+  --package-version=my-label=my-package@github:MyOrg/my-repo#my-branch
 ```
 
-When you use the `--package-version` flag, the following happens:
+When you specify a dependency to swap, the following happens:
 
 1. The `package.json` file closest to your benchmark HTML file is found.
 
@@ -573,9 +633,9 @@ Defaults are the same as the corresponding command-line flags.
       },
       "measure": "fcp",
       "packageVersions": {
-        "label": "master",
+        "label": "my-branch",
         "dependencies": {
-          "mylib": "github:Polymer/mylib#master",
+          "mylib": "github:Polymer/mylib#my-branch",
         },
       }
     },

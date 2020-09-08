@@ -9,6 +9,8 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [0.5.2] 2020-09-08
 
+- Add advanced configuration for cloning a git repo as a dependency swap for
+  monorepos and other git layouts where the `package.json` is not at the root.
 - Add support for `name` property to measurement config
 - Include `measurement` object for each benchmark in JSON results output
 - Fix errors with auto-installing WebDriver modules using Yarn

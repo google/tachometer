@@ -71,6 +71,7 @@ suite('versions', () => {
           browser: defaultBrowser,
         },
 
+
         // mybench and other bench only need the default server.
         {
           name: 'mybench',
@@ -115,12 +116,13 @@ suite('versions', () => {
       ];
 
       const tempDir = '/tmp';
-      const actual = await makeServerPlans(testData, tempDir, specs);
+      const {plans: actualPlans, gitInstalls: actualGitInstalls} =
+          await makeServerPlans(testData, tempDir, specs);
 
       const v1Hash = hashStrings(path.join(testData, 'mylib'), 'v1');
       const v2Hash = hashStrings(path.join(testData, 'mylib'), 'v2');
 
-      const expected: ServerPlan[] = [
+      const expectedPlans: ServerPlan[] = [
         {
           specs: [specs[2], specs[3]],
           npmInstalls: [],
@@ -181,7 +183,8 @@ suite('versions', () => {
         },
       ];
 
-      assert.deepEqual(actual, expected);
+      assert.deepEqual(actualPlans, expectedPlans);
+      assert.deepEqual(actualGitInstalls, []);
     });
 
     /**
@@ -198,9 +201,7 @@ suite('versions', () => {
             urlPath: '/mybench/',
             version: {
               label: 'v1',
-              dependencyOverrides: {
-                mylib: '1.0.0',
-              },
+              dependencyOverrides: {mylib: '1.0.0'},
             },
             queryString: '',
           },
@@ -213,11 +214,11 @@ suite('versions', () => {
       ];
 
       const tempDir = '/tmp';
-      const actual =
+      const {plans: actualPlans, gitInstalls: actualGitInstalls} =
           await makeServerPlans(path.join(testData, 'mylib'), tempDir, specs);
 
       const v1Hash = hashStrings(path.join(testData, 'mylib'), 'v1');
-      const expected: ServerPlan[] = [
+      const expectedPlans: ServerPlan[] = [
         {
           specs: [specs[0]],
           npmInstalls: [{
@@ -243,7 +244,8 @@ suite('versions', () => {
         },
       ];
 
-      assert.deepEqual(actual, expected);
+      assert.deepEqual(actualPlans, expectedPlans);
+      assert.deepEqual(actualGitInstalls, []);
     });
   });
 });
