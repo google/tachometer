@@ -276,6 +276,39 @@
             ],
             "type": "object"
         },
+        "GitDependency": {
+            "additionalProperties": false,
+            "description": "Configuration for cloning a Git repo at some ref with an optional package\nsub-path for monorepos, for use as an NPM dependency.",
+            "properties": {
+                "kind": {
+                    "enum": [
+                        "git"
+                    ],
+                    "type": "string"
+                },
+                "ref": {
+                    "type": "string"
+                },
+                "repo": {
+                    "type": "string"
+                },
+                "setupCommands": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "subdir": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "kind",
+                "ref",
+                "repo"
+            ],
+            "type": "object"
+        },
         "IEConfig": {
             "additionalProperties": false,
             "properties": {
@@ -302,7 +335,14 @@
         },
         "PackageDependencyMap": {
             "additionalProperties": {
-                "type": "string"
+                "anyOf": [
+                    {
+                        "$ref": "#/definitions/GitDependency"
+                    },
+                    {
+                        "type": "string"
+                    }
+                ]
             },
             "description": "A mapping from NPM package name to version specifier, as used in a\npackage.json's \"dependencies\" and \"devDependencies\".",
             "type": "object"

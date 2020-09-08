@@ -9,6 +9,8 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 - Add support for `name` property to measurement config
 - Include `measurement` object for each benchmark in JSON results output
+- Add advanced configuration for cloning a git repo as a dependency swap for
+  monorepos and other git layouts where the `package.json` is not at the root.
 
 ## [0.5.1] 2020-08-19
 

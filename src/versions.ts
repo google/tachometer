@@ -9,13 +9,22 @@
  * rights grant found at http://polymer.github.io/PATENTS.txt
  */
 
+import * as childProcess from 'child_process';
 import * as crypto from 'crypto';
 import * as fsExtra from 'fs-extra';
 import * as path from 'path';
+import * as util from 'util';
+
+const execFilePromise = util.promisify(childProcess.execFile);
+const execPromise = util.promisify(childProcess.exec);
 
 import {MountPoint} from './server';
-import {BenchmarkSpec, NpmPackageJson, PackageDependencyMap, PackageVersion} from './types';
-import {fileKind, runNpm} from './util';
+import {BenchmarkSpec, GitDependency, NpmPackageJson, PackageDependencyMap, PackageVersion} from './types';
+import {fileKind, runNpm, throwUnreachable} from './util';
+
+interface GitDependencyWithTempDir extends GitDependency {
+  tempDir: string;
+}
 
 /**
  * Parse an array of strings of the form <package>@<version>.
@@ -54,10 +63,11 @@ export interface NpmInstall {
 
 export async function makeServerPlans(
     benchmarkRoot: string, npmInstallRoot: string, specs: BenchmarkSpec[]):
-    Promise<ServerPlan[]> {
+    Promise<{plans: ServerPlan[], gitInstalls: GitDependencyWithTempDir[]}> {
   const keySpecs = new Map<string, BenchmarkSpec[]>();
   const keyDeps = new Map<string, PackageDependencyMap>();
   const defaultSpecs = [];
+  const gitInstalls = new Map<string, GitDependencyWithTempDir>();
   for (const spec of specs) {
     if (spec.url.kind === 'remote') {
       // No server needed for remote URLs.
@@ -93,10 +103,46 @@ export async function makeServerPlans(
     }
     arr.push(spec);
 
+
     const newDeps = {
       ...originalPackageJson.dependencies,
-      ...spec.url.version.dependencyOverrides,
     };
+    for (const pkg of Object.keys(spec.url.version.dependencyOverrides)) {
+      const version = spec.url.version.dependencyOverrides[pkg];
+      if (typeof version === 'string') {
+        // NPM dependency syntax that can be handled directly by NPM without any
+        // help from us. This includes NPM packages, file paths, git repos (but
+        // not monorepos!), etc. (see
+        // https://docs.npmjs.com/configuring-npm/package-json.html#dependencies)
+        newDeps[pkg] = version;
+      } else {
+        switch (version.kind) {
+          case 'git':
+            // NPM doesn't support directly installing from a sub-directory of a
+            // git repo, like in monorepos, so we handle those cases ourselves.
+            const hash = hashStrings(
+                pkg,
+                version.kind,
+                version.repo,
+                version.ref,
+                normalizePath(version.subdir || ''),
+                ...(version.setupCommands || []));
+            const tempDir = path.join(npmInstallRoot, hash);
+            const tempPackageDir =
+                version.subdir ? path.join(tempDir, version.subdir) : tempDir;
+            newDeps[pkg] = tempPackageDir;
+            // We're using a Map here because we want to de-duplicate git
+            // installations that have the exact same parameters, since they can
+            // be re-used across multiple benchmarks.
+            gitInstalls.set(hash, {...version, tempDir});
+            break;
+          default:
+            throwUnreachable(
+                version.kind,
+                'Unknown dependency version kind: ' + version.kind);
+        }
+      }
+    }
     keyDeps.set(key, newDeps);
   }
 
@@ -150,9 +196,10 @@ export async function makeServerPlans(
     });
   }
 
-  return plans;
+  return {plans, gitInstalls: [...gitInstalls.values()]};
 }
 
+// TODO(aomarks) Some consolidation with install.ts may be possible.
 async function findPackageJsonPath(startDir: string):
     Promise<string|undefined> {
   let cur = path.resolve(startDir);
@@ -223,4 +270,49 @@ export async function prepareVersionDirectory(
   await fsExtra.ensureDir(installDir);
   await fsExtra.writeFile(packageJsonPath, serializedPackageJson);
   await runNpm(['install'], {cwd: installDir});
+}
+
+export async function installGitDependency(
+    gitInstall: GitDependencyWithTempDir,
+    forceCleanInstall: boolean): Promise<void> {
+  if (forceCleanInstall) {
+    await fsExtra.remove(gitInstall.tempDir);
+  } else if (await fsExtra.pathExists(gitInstall.tempDir)) {
+    // TODO(aomarks) We can be smarter here: if the ref is a branch or tag, we
+    // can check if it has changed upstream with a fetch, and then re-install.
+    // https://github.com/Polymer/tachometer/issues/190
+    console.log(
+        `\nRe-using git checkout: ${gitInstall.repo}#${gitInstall.ref}`);
+    return;
+  }
+
+  console.log(`\nCloning git repo to temp dir:\n  ${gitInstall.repo}\n`);
+  await execFilePromise('git', [
+    'clone',
+    '--single-branch',
+    '--depth=1',
+    gitInstall.repo,
+    gitInstall.tempDir,
+  ]);
+
+  console.log(`\nFetching and checking out ref:\n  ${gitInstall.ref}\n`);
+  const cwdOpts = {cwd: gitInstall.tempDir};
+  await execFilePromise(
+      'git',
+      ['fetch', 'origin', '--depth=1', '--tags', gitInstall.ref],
+      cwdOpts);
+  await execFilePromise('git', ['checkout', gitInstall.ref], cwdOpts);
+
+  for (const setupCommand of gitInstall.setupCommands || []) {
+    console.log(`\nRunning setup command:\n  ${setupCommand}\n`);
+    await execPromise(setupCommand, cwdOpts);
+  }
+}
+
+function normalizePath(p: string): string {
+  p = path.normalize(p);
+  if (p.endsWith(path.sep)) {
+    p = p.substring(0, p.length - 1);
+  }
+  return p;
 }
