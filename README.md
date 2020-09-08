@@ -228,9 +228,9 @@ to swap in, like this:
       "name": "my-benchmark",
       "url": "my-benchmark.html",
       "packageVersions": {
-        "label": "master",
+        "label": "my-label",
         "dependencies": {
-          "my-lib": "github:MyOrg/my-lib#master",
+          "my-package": "github:MyOrg/my-repo#my-branch",
         },
       }
     },
@@ -247,23 +247,33 @@ The version for a dependency can be any of the following:
 
 - For monorepos, or other git repos where the `package.json` is not located at
   the root of the repository (which is required for NPM's git install function),
-  you can use the advanced git configuration:
+  you can use an advanced git configuration object
+  ([schema](https://github.com/Polymer/tachometer/blob/master/config.schema.json#:~:text=GitDependency))
+  in place of the NPM version string, e.g.:
 
-  ```ts
-  interface GitDependency {
-    kind: 'git';
-    // The git repository to clone. Any valid `git clone <repository>` argument
-    // (e.g. "git@github.com:webcomponents/polyfills.git").
-    repo: string;
-    // The branch, tag, or SHA to checkout (e.g. "master", "my-feature").
-    ref: string;
-    // For monorepos or other unusual file layouts, the path relative to the root
-    // of the git repo where the "package.json" for the appropriate package can be
-    // found (e.g. "packages/shadycss").
-    subdir?: string;
-    // Install, bootstrap, build, etc. commands to run before installing this
-    // package as a dependency (e.g. ["npm install", "npm run build"]).
-    setupCommands?: string[];
+  ```json
+  {
+    "benchmarks": [
+      {
+        "name": "my-benchmark",
+        "url": "my-benchmark.html",
+        "packageVersions": {
+          "label": "my-label",
+          "dependencies": {
+            "my-package": {
+              "kind": "git",
+              "repo": "git@github.com:MyOrg/my-repo.git",
+              "ref": "my-branch",
+              "subdir": "packages/my-package",
+              "setupCommands": [
+                "npm install",
+                "npm run build"
+              ]
+            }
+          },
+        }
+      },
+    ],
   }
   ```
 
@@ -273,8 +283,8 @@ advanced git install configuration is not supported from the commandline:
 
 ```
 tach mybench.html \
-  --package-version=mylib@1.0.0 \
-  --package-version=master=mylib@github:MyOrg/mylib#master
+  --package-version=my-package@1.0.0 \
+  --package-version=my-label=my-package@github:MyOrg/my-repo#my-branch
 ```
 
 When you specify a dependency to swap, the following happens:
@@ -623,9 +633,9 @@ Defaults are the same as the corresponding command-line flags.
       },
       "measure": "fcp",
       "packageVersions": {
-        "label": "master",
+        "label": "my-branch",
         "dependencies": {
-          "mylib": "github:Polymer/mylib#master",
+          "mylib": "github:Polymer/mylib#my-branch",
         },
       }
     },

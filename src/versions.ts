@@ -125,7 +125,7 @@ export async function makeServerPlans(
                 version.kind,
                 version.repo,
                 version.ref,
-                version.subdir || '',
+                normalizePath(version.subdir || ''),
                 ...(version.setupCommands || []));
             const tempDir = path.join(npmInstallRoot, hash);
             const tempPackageDir =
@@ -199,6 +199,7 @@ export async function makeServerPlans(
   return {plans, gitInstalls: [...gitInstalls.values()]};
 }
 
+// TODO(aomarks) Some consolidation with install.ts may be possible.
 async function findPackageJsonPath(startDir: string):
     Promise<string|undefined> {
   let cur = path.resolve(startDir);
@@ -279,6 +280,7 @@ export async function installGitDependency(
   } else if (await fsExtra.pathExists(gitInstall.tempDir)) {
     // TODO(aomarks) We can be smarter here: if the ref is a branch or tag, we
     // can check if it has changed upstream with a fetch, and then re-install.
+    // https://github.com/Polymer/tachometer/issues/190
     console.log(
         `\nRe-using git checkout: ${gitInstall.repo}#${gitInstall.ref}`);
     return;
@@ -305,4 +307,12 @@ export async function installGitDependency(
     console.log(`\nRunning setup command:\n  ${setupCommand}\n`);
     await execPromise(setupCommand, cwdOpts);
   }
+}
+
+function normalizePath(p: string): string {
+  p = path.normalize(p);
+  if (p.endsWith(path.sep)) {
+    p = p.substring(0, p.length - 1);
+  }
+  return p;
 }
