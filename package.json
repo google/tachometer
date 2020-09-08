@@ -1,6 +1,6 @@
 {
   "name": "tachometer",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "Web benchmark runner",
   "main": "lib/cli.js",
   "directories": {
@@ -42,7 +42,7 @@
     "command-line-usage": "^6.1.0",
     "csv-stringify": "^5.3.0",
     "fs-extra": "^9.0.1",
-    "get-stream": "^5.1.0",
+    "get-stream": "^6.0.0",
     "got": "^11.5.0",
     "jsonschema": "^1.2.4",
     "jsonwebtoken": "^8.5.1",
@@ -61,7 +61,7 @@
     "source-map-support": "^0.5.16",
     "strip-ansi": "^6.0.0",
     "systeminformation": "^4.14.17",
-    "table": "^5.2.1",
+    "table": "^6.0.3",
     "ua-parser-js": "^0.7.19"
   },
   "devDependencies": {
@@ -80,7 +80,7 @@
     "@types/koa-mount": "^4.0.0",
     "@types/koa-send": "^4.1.2",
     "@types/koa-static": "^4.0.0",
-    "@types/mocha": "^7.0.2",
+    "@types/mocha": "^8.0.3",
     "@types/node-fetch": "^2.5.3",
     "@types/progress": "^2.0.3",
     "@types/semver": "^7.3.1",
@@ -93,7 +93,7 @@
     "node-fetch": "^2.6.0",
     "rimraf": "^3.0.2",
     "tslint": "^6.1.2",
-    "typescript": "^3.6.4",
-    "typescript-json-schema": "^0.42.0"
+    "typescript": "^4.0.2",
+    "typescript-json-schema": "^0.43.0"
   }
 }
