@@ -249,6 +249,12 @@ export const tachometerVersion =
     require(path.join(__dirname, '..', 'package.json')).version;
 
 /**
+ * Name of special file used to indicate that an NPM or git install directory
+ * completed successfully.
+ */
+const installSuccessFile = '__TACHOMETER_INSTALL_SUCCESS__';
+
+/**
  * Write the given package.json to the given directory and run "npm install" in
  * it. If the directory already exists, don't do anything except log.
  */
@@ -258,8 +264,13 @@ export async function prepareVersionDirectory(
   if (forceCleanInstall) {
     await fsExtra.remove(installDir);
   } else if (await fsExtra.pathExists(installDir)) {
-    console.log(`\nRe-using NPM install dir:\n ${installDir}\n`);
-    return;
+    if (await fsExtra.pathExists(path.join(installDir, installSuccessFile))) {
+      console.log(`\nRe-using NPM install dir:\n ${installDir}\n`);
+      return;
+    } else {
+      console.log(`\nCleaning up failed npm install:\n  ${installDir}\n`);
+      await fsExtra.remove(installDir);
+    }
   }
 
   console.log(`\nRunning npm install in temp dir:\n  ${installDir}\n`);
@@ -268,6 +279,7 @@ export async function prepareVersionDirectory(
       path.join(installDir, 'package.json'),
       JSON.stringify(packageJson, null, 2));
   await runNpm(['install'], {cwd: installDir});
+  await fsExtra.writeFile(path.join(installDir, installSuccessFile), '');
 }
 
 /**
@@ -280,11 +292,18 @@ export async function installGitDependency(
   if (forceCleanInstall) {
     await fsExtra.remove(gitInstall.tempDir);
   } else if (await fsExtra.pathExists(gitInstall.tempDir)) {
-    console.log(
-        `\nRe-using git checkout:\n` +
-        `  ${gitInstall.repo}#${gitInstall.ref}\n` +
-        `  ${gitInstall.tempDir}\n`);
-    return;
+    if (await fsExtra.pathExists(
+            path.join(gitInstall.tempDir, installSuccessFile))) {
+      console.log(
+          `\nRe-using git checkout:\n` +
+          `  ${gitInstall.repo}#${gitInstall.ref}\n` +
+          `  ${gitInstall.tempDir}\n`);
+      return;
+    } else {
+      console.log(
+          `\nCleaning up failed git checkout:\n  ${gitInstall.tempDir}\n`);
+      await fsExtra.remove(gitInstall.tempDir);
+    }
   }
 
   console.log(
@@ -306,6 +325,8 @@ export async function installGitDependency(
     console.log(`\nRunning setup command:\n  ${setupCommand}\n`);
     await execPromise(setupCommand, cwdOpts);
   }
+  await fsExtra.writeFile(
+      path.join(gitInstall.tempDir, installSuccessFile), '');
 }
 
 /**

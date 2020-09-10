@@ -19,6 +19,9 @@ project adheres to [Semantic Versioning](http://semver.org/).
   configured `ref` is still up to date. If it is stale, a fresh install will be
   performed.
 
+- When using dependency swapping, temp directories will be deleted when there is
+  an installation failure, so that they are not re-used in a broken state.
+
 ## [0.5.2] 2020-09-08
 
 - Add advanced configuration for cloning a git repo as a dependency swap for
