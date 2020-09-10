@@ -166,7 +166,7 @@
             "additionalProperties": false,
             "properties": {
                 "dependencies": {
-                    "$ref": "#/definitions/PackageDependencyMap",
+                    "$ref": "#/definitions/ExtendedPackageDependencyMap",
                     "description": "Map from NPM package to version. Any version syntax supported by NPM is\nsupported here."
                 },
                 "label": {
@@ -224,6 +224,20 @@
                 "expression",
                 "mode"
             ],
+            "type": "object"
+        },
+        "ExtendedPackageDependencyMap": {
+            "additionalProperties": {
+                "anyOf": [
+                    {
+                        "$ref": "#/definitions/GitDependency"
+                    },
+                    {
+                        "type": "string"
+                    }
+                ]
+            },
+            "description": "Tachometer's extensions to the NPM \"dependencies\" field, which allows for\nmore advanced configurations.",
             "type": "object"
         },
         "FirefoxConfig": {
@@ -331,20 +345,6 @@
             "required": [
                 "name"
             ],
-            "type": "object"
-        },
-        "PackageDependencyMap": {
-            "additionalProperties": {
-                "anyOf": [
-                    {
-                        "$ref": "#/definitions/GitDependency"
-                    },
-                    {
-                        "type": "string"
-                    }
-                ]
-            },
-            "description": "A mapping from NPM package name to version specifier, as used in a\npackage.json's \"dependencies\" and \"devDependencies\".",
             "type": "object"
         },
         "PerformanceEntryMeasurement": {

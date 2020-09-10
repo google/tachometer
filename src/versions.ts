@@ -24,6 +24,7 @@ import {fileKind, runNpm, throwUnreachable} from './util';
 
 interface GitDependencyWithTempDir extends GitDependency {
   tempDir: string;
+  sha: string;
 }
 
 /**
@@ -64,8 +65,12 @@ export interface NpmInstall {
 export async function makeServerPlans(
     benchmarkRoot: string, npmInstallRoot: string, specs: BenchmarkSpec[]):
     Promise<{plans: ServerPlan[], gitInstalls: GitDependencyWithTempDir[]}> {
-  const keySpecs = new Map<string, BenchmarkSpec[]>();
-  const keyDeps = new Map<string, PackageDependencyMap>();
+  const depSwaps = new Map<string, {
+    installDir: string,
+    packageJsonPath: string,
+    specs: BenchmarkSpec[],
+    dependencies: PackageDependencyMap,
+  }>();
   const defaultSpecs = [];
   const gitInstalls = new Map<string, GitDependencyWithTempDir>();
   for (const spec of specs) {
@@ -78,7 +83,7 @@ export async function makeServerPlans(
       continue;
     }
 
-    const diskPath = path.join(benchmarkRoot, spec.url.urlPath);  // TODO
+    const diskPath = path.join(benchmarkRoot, spec.url.urlPath);
     const kind = await fileKind(diskPath);
     if (kind === undefined) {
       throw new Error(`No such file or directory ${diskPath}`);
@@ -88,23 +93,10 @@ export async function makeServerPlans(
     if (originalPackageJsonPath === undefined) {
       throw new Error(`Could not find a package.json for ${diskPath}`);
     }
-    const originalPackageJson = await fsExtra.readJson(originalPackageJsonPath);
+    const originalPackageJson =
+        await fsExtra.readJson(originalPackageJsonPath) as NpmPackageJson;
 
-    // TODO Key should use the actual dependencies instead of the label.
-    const key = JSON.stringify([
-      path.dirname(originalPackageJsonPath),
-      spec.url.urlPath,
-      spec.url.version.label,
-    ]);
-    let arr = keySpecs.get(key);
-    if (arr === undefined) {
-      arr = [];
-      keySpecs.set(key, arr);
-    }
-    arr.push(spec);
-
-
-    const newDeps = {
+    const updatedDeps: PackageDependencyMap = {
       ...originalPackageJson.dependencies,
     };
     for (const pkg of Object.keys(spec.url.version.dependencyOverrides)) {
@@ -114,27 +106,41 @@ export async function makeServerPlans(
         // help from us. This includes NPM packages, file paths, git repos (but
         // not monorepos!), etc. (see
         // https://docs.npmjs.com/configuring-npm/package-json.html#dependencies)
-        newDeps[pkg] = version;
+        updatedDeps[pkg] = version;
       } else {
         switch (version.kind) {
           case 'git':
             // NPM doesn't support directly installing from a sub-directory of a
             // git repo, like in monorepos, so we handle those cases ourselves.
-            const hash = hashStrings(
-                pkg,
-                version.kind,
+
+            // Immediately resolve the git reference (branch, tag, etc.) to a
+            // SHA and use that going forward, so that we never fall behind the
+            // origin repo when re-using temp directories.
+            const sha = looksLikeGitSha(version.ref) ?
+                version.ref :
+                await remoteResolveGitRefToSha(version.repo, version.ref);
+            if (sha === undefined) {
+              throw new Error(`Git repo ${
+                  version.repo} could not resolve ref "${version.ref}"`);
+            }
+
+            // This hash uniquely identifies a `git clone` directory for some
+            // dependency at a particular SHA, with a particular setup routine.
+            const gitInstallHash = hashStrings(
+                // Include the tachometer version in case any changes or bugs
+                // would affect how we do this installation.
+                tachometerVersion,
                 version.repo,
-                version.ref,
-                normalizePath(version.subdir || ''),
-                ...(version.setupCommands || []));
-            const tempDir = path.join(npmInstallRoot, hash);
+                sha,
+                JSON.stringify(version.setupCommands));
+            const tempDir = path.join(npmInstallRoot, gitInstallHash);
             const tempPackageDir =
                 version.subdir ? path.join(tempDir, version.subdir) : tempDir;
-            newDeps[pkg] = tempPackageDir;
+            updatedDeps[pkg] = tempPackageDir;
             // We're using a Map here because we want to de-duplicate git
             // installations that have the exact same parameters, since they can
             // be re-used across multiple benchmarks.
-            gitInstalls.set(hash, {...version, tempDir});
+            gitInstalls.set(gitInstallHash, {...version, tempDir, sha});
             break;
           default:
             throwUnreachable(
@@ -143,7 +149,31 @@ export async function makeServerPlans(
         }
       }
     }
-    keyDeps.set(key, newDeps);
+
+    // This hash uniquely identifes the `npm install` location for some
+    // `package.json` where some of its dependencies have been swapped.
+    const depSwapHash = hashStrings(
+        // Include the tachometer version in case any changes or bugs
+        // would affect how we do this installation.
+        tachometerVersion,
+        originalPackageJsonPath,
+        // Sort deps by package name for more temp-directory cache hits since
+        // the order declared in the dependencies object doesn't matter.
+        JSON.stringify(
+            Object.entries(updatedDeps)
+                .sort(([pkgA], [pkgB]) => pkgA.localeCompare(pkgB))));
+
+    let swap = depSwaps.get(depSwapHash);
+    if (swap === undefined) {
+      swap = {
+        specs: [],
+        installDir: path.join(npmInstallRoot, depSwapHash),
+        dependencies: updatedDeps,
+        packageJsonPath: originalPackageJsonPath,
+      };
+      depSwaps.set(depSwapHash, swap);
+    }
+    swap.specs.push(spec);
   }
 
   const plans = [];
@@ -161,15 +191,8 @@ export async function makeServerPlans(
     });
   }
 
-  for (const [key, specs] of keySpecs.entries()) {
-    const [packageDir, , label] = JSON.parse(key);
-    const dependencies = keyDeps.get(key);
-    if (dependencies === undefined) {
-      throw new Error(`Internal error: no deps for key ${key}`);
-    }
-
-    const installDir =
-        path.join(npmInstallRoot, hashStrings(packageDir, label));
+  for (const {specs, installDir, dependencies, packageJsonPath} of depSwaps
+           .values()) {
     plans.push({
       specs,
       npmInstalls: [{
@@ -183,7 +206,7 @@ export async function makeServerPlans(
         {
           urlPath: path.posix.join(
               '/',
-              path.relative(benchmarkRoot, packageDir)
+              path.relative(benchmarkRoot, path.dirname(packageJsonPath))
                   .replace(path.win32.sep, '/'),
               'node_modules'),
           diskPath: path.join(installDir, 'node_modules'),
@@ -222,86 +245,62 @@ export function hashStrings(...strings: string[]) {
       .digest('hex');
 }
 
-const tachometerVersion =
+export const tachometerVersion =
     require(path.join(__dirname, '..', 'package.json')).version;
 
 /**
- * Write the given package.json to the given directory and run "npm install"
- * in it. If the directory already exists and its package.json is identical,
- * don't install, just log instead.
+ * Write the given package.json to the given directory and run "npm install" in
+ * it. If the directory already exists, don't do anything except log.
  */
 export async function prepareVersionDirectory(
     {installDir, packageJson}: NpmInstall,
     forceCleanInstall: boolean): Promise<void> {
-  const serializedPackageJson = JSON.stringify(
-      {
-        // Include our version here so that we automatically re-install any
-        // existing package version install directories when tachometer updates.
-        __tachometer_version: tachometerVersion,
-        ...packageJson,
-      },
-      null,
-      2);
-  const packageJsonPath = path.join(installDir, 'package.json');
-
-  if (await fsExtra.pathExists(installDir)) {
-    if (forceCleanInstall === false) {
-      const previousPackageJson =
-          await fsExtra.readFile(packageJsonPath, 'utf8');
-      // Note we're comparing the serialized JSON. Node JSON serialization is
-      // deterministic where property order is based on property creation order.
-      // That's good enough for our purposes, since we know this exact code also
-      // wrote the previous version of this file.
-      if (previousPackageJson.trimRight() ===
-          serializedPackageJson.trimRight()) {
-        console.log(
-            `\nRe-using NPM install dir because ` +
-            `its package.json did not change:\n  ${installDir}\n`);
-        return;
-      }
-      console.log(
-          `\nDeleting previous NPM install dir ` +
-          `because its package.json changed:\n  ${installDir}`);
-    }
-    await fsExtra.emptyDir(installDir);
+  if (forceCleanInstall) {
+    await fsExtra.remove(installDir);
+  } else if (await fsExtra.pathExists(installDir)) {
+    console.log(`\nRe-using NPM install dir:\n ${installDir}\n`);
+    return;
   }
 
-  console.log(`\nRunning npm install:\n  ${installDir}\n`);
+  console.log(`\nRunning npm install in temp dir:\n  ${installDir}\n`);
   await fsExtra.ensureDir(installDir);
-  await fsExtra.writeFile(packageJsonPath, serializedPackageJson);
+  await fsExtra.writeFile(
+      path.join(installDir, 'package.json'),
+      JSON.stringify(packageJson, null, 2));
   await runNpm(['install'], {cwd: installDir});
 }
 
+/**
+ * Check out the given commit from the given git repo, and run setup commands.
+ * If the directory already exists, don't do anything except log.
+ */
 export async function installGitDependency(
     gitInstall: GitDependencyWithTempDir,
     forceCleanInstall: boolean): Promise<void> {
   if (forceCleanInstall) {
     await fsExtra.remove(gitInstall.tempDir);
   } else if (await fsExtra.pathExists(gitInstall.tempDir)) {
-    // TODO(aomarks) We can be smarter here: if the ref is a branch or tag, we
-    // can check if it has changed upstream with a fetch, and then re-install.
-    // https://github.com/Polymer/tachometer/issues/190
     console.log(
-        `\nRe-using git checkout: ${gitInstall.repo}#${gitInstall.ref}`);
+        `\nRe-using git checkout:\n` +
+        `  ${gitInstall.repo}#${gitInstall.ref}\n` +
+        `  ${gitInstall.tempDir}\n`);
     return;
   }
 
-  console.log(`\nCloning git repo to temp dir:\n  ${gitInstall.repo}\n`);
-  await execFilePromise('git', [
-    'clone',
-    '--single-branch',
-    '--depth=1',
-    gitInstall.repo,
-    gitInstall.tempDir,
-  ]);
-
-  console.log(`\nFetching and checking out ref:\n  ${gitInstall.ref}\n`);
+  console.log(
+      `\nFetching git commit to temp dir:\n` +
+      `  ${gitInstall.repo}#${gitInstall.ref}\n` +
+      `  ${gitInstall.tempDir}\n`);
+  // This approach only requires us to hit the remote repo once (as opposed to
+  // using `git clone`, which doesn't support fetching only one commit).
+  await fsExtra.ensureDir(gitInstall.tempDir);
   const cwdOpts = {cwd: gitInstall.tempDir};
+  await execFilePromise('git', ['init'], cwdOpts);
   await execFilePromise(
-      'git',
-      ['fetch', 'origin', '--depth=1', '--tags', gitInstall.ref],
-      cwdOpts);
-  await execFilePromise('git', ['checkout', gitInstall.ref], cwdOpts);
+      'git', ['remote', 'add', 'origin', gitInstall.repo], cwdOpts);
+  await execFilePromise(
+      'git', ['fetch', 'origin', '--depth=1', gitInstall.sha], cwdOpts);
+  await execFilePromise('git', ['checkout', gitInstall.sha], cwdOpts);
 
   for (const setupCommand of gitInstall.setupCommands || []) {
     console.log(`\nRunning setup command:\n  ${setupCommand}\n`);
@@ -309,10 +308,31 @@ export async function installGitDependency(
   }
 }
 
-function normalizePath(p: string): string {
-  p = path.normalize(p);
-  if (p.endsWith(path.sep)) {
-    p = p.substring(0, p.length - 1);
+/**
+ * Return whether the given string looks like a 40-characters of hexadecimal,
+ * i.e. a valid full length git commit SHA-1 hash.
+ */
+function looksLikeGitSha(ref: string): boolean {
+  return ref.match(/^[a-fA-F0-9]{40}$/) !== null;
+}
+
+/**
+ * Use the `git ls-remote` command to remotely query the given git repo, and
+ * resolve the given ref (e.g. a branch or tag) to a commit SHA. Returns
+ * `undefined` if the ref does not resolve to anything in the repo. Throws if
+ * the repo is invalid or errors.
+ */
+async function remoteResolveGitRefToSha(
+    repo: string, ref: string): Promise<string|undefined> {
+  const {stdout} =
+      await execFilePromise('git', ['ls-remote', repo, '--symref', ref]);
+  if (stdout.trim() === '') {
+    return undefined;
   }
-  return p;
+  const parts = stdout.trim().split(/\W/);
+  if (parts.length > 0 && looksLikeGitSha(parts[0])) {
+    return parts[0];
+  }
+  throw new Error(`Could not parse output of \`git ls-remote ${repo} --symref ${
+      ref}\`:\n${stdout}`);
 }

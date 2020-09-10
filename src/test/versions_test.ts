@@ -15,7 +15,7 @@ import * as path from 'path';
 
 import * as defaults from '../defaults';
 import {BenchmarkSpec} from '../types';
-import {hashStrings, makeServerPlans, ServerPlan} from '../versions';
+import {hashStrings, makeServerPlans, ServerPlan, tachometerVersion} from '../versions';
 import {testData} from './test_helpers';
 
 const defaultBrowser = {
@@ -119,8 +119,14 @@ suite('versions', () => {
       const {plans: actualPlans, gitInstalls: actualGitInstalls} =
           await makeServerPlans(testData, tempDir, specs);
 
-      const v1Hash = hashStrings(path.join(testData, 'mylib'), 'v1');
-      const v2Hash = hashStrings(path.join(testData, 'mylib'), 'v2');
+      const v1Hash = hashStrings(
+          tachometerVersion,
+          path.join(testData, 'mylib', 'package.json'),
+          JSON.stringify([['mylib', '1.0.0'], ['otherlib', '0.0.0']]));
+      const v2Hash = hashStrings(
+          tachometerVersion,
+          path.join(testData, 'mylib', 'package.json'),
+          JSON.stringify([['mylib', '2.0.0'], ['otherlib', '0.0.0']]));
 
       const expectedPlans: ServerPlan[] = [
         {
@@ -217,7 +223,10 @@ suite('versions', () => {
       const {plans: actualPlans, gitInstalls: actualGitInstalls} =
           await makeServerPlans(path.join(testData, 'mylib'), tempDir, specs);
 
-      const v1Hash = hashStrings(path.join(testData, 'mylib'), 'v1');
+      const v1Hash = hashStrings(
+          tachometerVersion,
+          path.join(testData, 'mylib', 'package.json'),
+          JSON.stringify([['mylib', '1.0.0'], ['otherlib', '0.0.0']]));
       const expectedPlans: ServerPlan[] = [
         {
           specs: [specs[0]],
