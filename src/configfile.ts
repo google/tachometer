@@ -15,7 +15,7 @@ import * as jsonschema from 'jsonschema';
 import {BrowserConfig, BrowserName, parseBrowserConfigString, validateBrowserConfig} from './browser';
 import {Config, parseHorizons, urlFromLocalPath} from './config';
 import * as defaults from './defaults';
-import {BenchmarkSpec, Measurement, measurements, PackageDependencyMap} from './types';
+import {BenchmarkSpec, ExtendedPackageDependencyMap, Measurement, measurements} from './types';
 import {isHttpUrl} from './util';
 
 /**
@@ -266,7 +266,7 @@ interface ConfigFilePackageVersion {
    * Map from NPM package to version. Any version syntax supported by NPM is
    * supported here.
    */
-  dependencies: PackageDependencyMap;
+  dependencies: ExtendedPackageDependencyMap;
 }
 
 /**

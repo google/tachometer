@@ -29,6 +29,14 @@ export class Deferred<T> {
  * package.json's "dependencies" and "devDependencies".
  */
 export interface PackageDependencyMap {
+  [pkg: string]: string;
+}
+
+/**
+ * Tachometer's extensions to the NPM "dependencies" field, which allows for
+ * more advanced configurations.
+ */
+export interface ExtendedPackageDependencyMap {
   [pkg: string]: string|GitDependency;
 }
 
@@ -58,7 +66,7 @@ export interface GitDependency {
  */
 export interface PackageVersion {
   label: string;
-  dependencyOverrides: PackageDependencyMap;
+  dependencyOverrides: ExtendedPackageDependencyMap;
 }
 
 /** The subset of the format of an NPM package.json file we care about. */

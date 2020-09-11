@@ -5,7 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](http://semver.org/).
 
-<!-- ## Unreleased -->
+## Unreleased
+
+- Fix `git checkout` errors when using advanced git-based dependency swapping.
+
+- When using dependency swapping, a fresh install will now be performed whenever
+  any dependency version has changed (either in the original `package.json`, or
+  in the dependency-swap configuration). The `label` field is no longer
+  significant in this respect.
+
+- When using advanced git-based dependency swapping `{kind: 'git', ...}`, a
+  query will now always be made to the remote git repo to determine if the
+  configured `ref` is still up to date. If it is stale, a fresh install will be
+  performed.
+
+- When using dependency swapping, temp directories will be deleted when there is
+  an installation failure, so that they are not re-used in a broken state.
 
 ## [0.5.2] 2020-09-08
 
