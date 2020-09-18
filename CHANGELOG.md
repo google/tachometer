@@ -5,7 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](http://semver.org/).
 
-<!-- ## Unreleased -->
+## Unreleased
+
+- Fix bug where a unique browser would not be launched if the only difference
+  between browser configurations was `binary`, `addArguments`,
+  `removeArguments`, `cpuThrottlingRate` or `preferences`.
 
 ## [0.5.3] 2020-09-11
 

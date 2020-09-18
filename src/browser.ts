@@ -85,9 +85,14 @@ export function browserSignature(config: BrowserConfig): string {
   return JSON.stringify([
     config.name,
     config.headless,
-    config.remoteUrl || '',
+    config.remoteUrl ?? '',
     config.windowSize.width,
     config.windowSize.height,
+    config.binary ?? '',
+    config.addArguments ?? [],
+    config.removeArguments ?? [],
+    config.cpuThrottlingRate ?? 1,
+    config.preferences ?? {},
   ]);
 }
 
