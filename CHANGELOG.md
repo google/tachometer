@@ -5,7 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](http://semver.org/).
 
-<!-- ## Unreleased -->
+## Unreleased
+
+- A warning is now displayed when there are multiple performance marks or
+  measurements being retrieved with the same name.
 
 ## [0.5.4] 2020-09-18
 

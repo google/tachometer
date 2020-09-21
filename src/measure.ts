@@ -71,6 +71,12 @@ async function queryForPerformanceEntry(
   if (entries.length === 0) {
     return undefined;
   }
+  if (entries.length > 1) {
+    console.log(
+        'WARNING: Found multiple performance marks/measurements with name ' +
+        `"${measurement.entryName}". This likely indicates an error. ` +
+        'Picking the first one.');
+  }
   const entry = entries[0];
   switch (entry.entryType) {
     case 'measure':
