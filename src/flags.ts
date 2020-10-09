@@ -201,6 +201,13 @@ export const optDefs: commandLineUsage.OptionDefinition[] = [
         ` (default "${defaults.windowWidth},${defaults.windowHeight}").`,
     type: String,
   },
+  {
+    name: 'collate',
+    description:
+        `Whether to collate result table by measurement (when multiple ` +
+        `measurements are in use)`,
+    type: Boolean,
+  },
 ];
 
 export interface Opts {
@@ -228,6 +235,7 @@ export interface Opts {
   'csv-file': string;
   'csv-file-raw': string;
   'json-file': string;
+  collate: boolean;
 
   // Extra arguments not associated with a flag are put here. These are our
   // benchmark names/URLs.

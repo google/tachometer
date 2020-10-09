@@ -24,6 +24,7 @@ export const mode = 'automatic';
 export const resolveBareModules = true;
 export const forceCleanNpmInstall = false;
 export const measurementExpression = 'window.tachometerResult';
+export const collate = false;
 
 export function measurement(url: LocalUrl|RemoteUrl): Measurement {
   if (url.kind === 'remote') {

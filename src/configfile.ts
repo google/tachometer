@@ -48,6 +48,12 @@ export interface ConfigFile {
   horizons?: string[];
 
   /**
+   * Whether to collate result table by measurement (when multiple measurements
+   * are in use)
+   */
+  collate?: boolean;
+
+  /**
    * Benchmarks to run.
    * @TJS-minItems 1
    */
@@ -300,6 +306,7 @@ export async function parseConfigFile(parsedJson: unknown):
         undefined,
     benchmarks,
     resolveBareModules: validated.resolveBareModules,
+    collate: validated.collate,
   };
 }
 

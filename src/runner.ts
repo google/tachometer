@@ -21,7 +21,7 @@ import {measure, measurementName} from './measure';
 import {BenchmarkResult, BenchmarkSpec} from './types';
 import {formatCsvStats, formatCsvRaw} from './csv';
 import {ResultStatsWithDifferences, horizonsResolved, summaryStats, computeDifferences} from './stats';
-import {verticalTermResultTable, horizontalTermResultTable, verticalHtmlResultTable, horizontalHtmlResultTable, automaticResultTable, spinner, benchmarkOneLiner} from './format';
+import {verticalTermResultTable, horizontalTermResultTable, verticalHtmlResultTable, horizontalHtmlResultTable, automaticResultTable, spinner, benchmarkOneLiner, collatedResultTables} from './format';
 import {Config} from './config';
 import * as github from './github';
 import {Server, Session} from './server';
@@ -343,7 +343,13 @@ export class Runner {
     console.log();
     const {fixed, unfixed} = automaticResultTable(withDifferences);
     console.log(horizontalTermResultTable(fixed));
-    console.log(verticalTermResultTable(unfixed));
+    if (config.collate) {
+      for (const {unfixed} of collatedResultTables(withDifferences)) {
+        console.log(verticalTermResultTable(unfixed));
+      }
+    } else {
+      console.log(verticalTermResultTable(unfixed));
+    }
 
     if (hitTimeout === true) {
       console.log(ansi.format(

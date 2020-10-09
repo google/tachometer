@@ -104,6 +104,32 @@ export function automaticResultTable(results: ResultStats[]): AutomaticResults {
   return {fixed: fixedTable, unfixed: unfixedTable};
 }
 
+const nameAndMeas = (resultName: string) => {
+  const match = /(.*) \[(.*)\]/.exec(resultName);
+  if (match) {
+    return {name: match[1], meas: match[2]};
+  } else {
+    return {name: resultName, meas: ''};
+  }
+};
+
+export function collatedResultTables(results: ResultStatsWithDifferences[]) {
+  const collated: {[index: string]: ResultStatsWithDifferences[]} = {};
+  results.forEach((result) => {
+    const {meas} = nameAndMeas(result.result.name);
+    (collated[meas] || (collated[meas] = [])).push({
+      ...result,
+      differences: result.differences.filter(
+          (_, i) => nameAndMeas(results[i].result.name).meas === meas)
+    });
+  });
+  const tables: AutomaticResults[] = [];
+  for (const results of Object.values(collated)) {
+    tables.push(automaticResultTable(results));
+  }
+  return tables;
+}
+
 /**
  * Format a terminal text result table where each result is a row:
  *

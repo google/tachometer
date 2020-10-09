@@ -428,6 +428,10 @@
             "minItems": 1,
             "type": "array"
         },
+        "collate": {
+            "description": "Whether to collate result table by measurement (when multiple measurements\nare in use)",
+            "type": "boolean"
+        },
         "horizons": {
             "description": "The degrees of difference to try and resolve when auto-sampling\n(e.g. 0ms, +1ms, -1ms, 0%, +1%, -1%, default 0%).",
             "items": {
