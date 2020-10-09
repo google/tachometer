@@ -50,6 +50,7 @@ suite('config', () => {
         timeout: 7,
         horizons: ['0ms', '1ms', '2%', '+3%'],
         resolveBareModules: false,
+        collate: true,
         benchmarks: [
           {
             name: 'remote',
@@ -103,6 +104,7 @@ suite('config', () => {
           relative: [-0.02, 0.02, 0.03],
         },
         resolveBareModules: false,
+        collate: true,
         benchmarks: [
           {
             name: 'remote',
@@ -186,6 +188,7 @@ suite('config', () => {
         timeout: undefined,
         horizons: undefined,
         resolveBareModules: undefined,
+        collate: undefined,
         benchmarks: [
           {
             name: 'http://example.com?foo=bar',
@@ -252,6 +255,7 @@ suite('config', () => {
         timeout: undefined,
         horizons: undefined,
         resolveBareModules: undefined,
+        collate: undefined,
         benchmarks: [
           {
             name: '/mybench/index.html?foo=a',
@@ -331,6 +335,7 @@ suite('config', () => {
         timeout: undefined,
         horizons: undefined,
         resolveBareModules: undefined,
+        collate: undefined,
         benchmarks: [
           {
             name: 'http://example.com',
@@ -406,6 +411,7 @@ suite('config', () => {
         timeout: undefined,
         horizons: undefined,
         resolveBareModules: undefined,
+        collate: undefined,
         benchmarks: [
           {
             name: 'http://example.com?foo=bar',
