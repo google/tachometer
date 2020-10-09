@@ -17,6 +17,7 @@ import ansi = require('ansi-escape-sequences');
 
 import {Difference, ConfidenceInterval, ResultStats, ResultStatsWithDifferences} from './stats';
 import {BenchmarkSpec, BenchmarkResult} from './types';
+import { measurementName } from './measure';
 
 export const spinner = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'].map(
     (frame) => ansi.format(`[blue]{${frame}}`));
@@ -104,19 +105,14 @@ export function automaticResultTable(results: ResultStats[]): AutomaticResults {
   return {fixed: fixedTable, unfixed: unfixedTable};
 }
 
-const measurementForName = (resultName: string) => {
-  const match = /.* \[(.*)\]/.exec(resultName);
-  return match ? match[1] : '';
-};
-
 export function collatedResultTables(results: ResultStatsWithDifferences[]) {
   const collated: {[index: string]: ResultStatsWithDifferences[]} = {};
   results.forEach((result) => {
-    const meas = measurementForName(result.result.name);
+    const meas = measurementName(result.result.measurement);
     (collated[meas] || (collated[meas] = [])).push({
       ...result,
       differences: result.differences.filter(
-          (_, i) => measurementForName(results[i].result.name) === meas)
+          (_, i) => measurementName(results[i].result.measurement) === meas)
     });
   });
   const tables: AutomaticResults[] = [];
