@@ -7,6 +7,9 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 <!-- ## Unreleased -->
 
+- Add `collate` option for collating results tables by measurement (when
+  multiple measurements are in use)
+
 ## [0.5.5] 2020-09-21
 
 - A warning is now displayed when there are multiple performance marks or
