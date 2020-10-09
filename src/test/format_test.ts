@@ -15,7 +15,7 @@ import * as path from 'path';
 import stripAnsi = require('strip-ansi');
 
 import {ConfigFile} from '../configfile';
-import {automaticResultTable, verticalTermResultTable} from '../format';
+import {automaticResultTable, verticalTermResultTable, collatedResultTables} from '../format';
 import {fakeResults, testData} from './test_helpers';
 
 /**
@@ -27,6 +27,18 @@ async function fakeResultTable(configFile: ConfigFile): Promise<string> {
   const results = await fakeResults(configFile);
   const resultTable = automaticResultTable(results).unfixed;
   return stripAnsi(verticalTermResultTable(resultTable));
+}
+
+/**
+ * Given a config file object, generates fake measurement results, and returns
+ * the collated terminal formatted result table that would be printed (minus
+ * color etc. formatting).
+ */
+async function fakeCollatedResultTable(configFile: ConfigFile): Promise<string> {
+  const results = await fakeResults(configFile);
+  return collatedResultTables(results).map((result) => {
+    return stripAnsi(verticalTermResultTable(result.unfixed));
+  }).join('\n');
 }
 
 suite('format', () => {
@@ -169,4 +181,123 @@ suite('format', () => {
     `;
     assert.equal(actual, expected.trim() + '\n');
   });
+
+  test('multiple measurements, collate: false', async () => {
+    const config: ConfigFile = {
+      benchmarks: [
+        {
+          name: 'foo',
+          url: 'http://foo.com',
+          measurement: [{
+            name: 'render',
+            mode: 'performance',
+            entryName: 'render'
+          }, {
+            name: 'update',
+            mode: 'performance',
+            entryName: 'update'
+          }],
+        },
+        {
+          name: 'bar',
+          url: 'http://bar.com',
+          measurement: [{
+            name: 'render',
+            mode: 'performance',
+            entryName: 'render'
+          }, {
+            name: 'update',
+            mode: 'performance',
+            entryName: 'update'
+          }],
+        },
+      ],
+    };
+
+    const actual = await fakeResultTable(config);
+    const expected = `
+┌──────────────┬──────────┬───────────────────┬───────────────────┬───────────────────┬───────────────────┬───────────────────┐
+│ Benchmark    │ Bytes    │          Avg time │   vs foo [render] │   vs foo [update] │   vs bar [render] │   vs bar [update] │
+├──────────────┼──────────┼───────────────────┼───────────────────┼───────────────────┼───────────────────┼───────────────────┤
+│ foo [render] │ 1.00 KiB │  8.56ms - 11.44ms │                   │            unsure │            faster │            faster │
+│              │          │                   │          -        │       -20% - +20% │         42% - 58% │         42% - 58% │
+│              │          │                   │                   │ -2.03ms - +2.03ms │  7.97ms - 12.03ms │  7.97ms - 12.03ms │
+├──────────────┼──────────┼───────────────────┼───────────────────┼───────────────────┼───────────────────┼───────────────────┤
+│ foo [update] │ 1.00 KiB │  8.56ms - 11.44ms │            unsure │                   │            faster │            faster │
+│              │          │                   │       -20% - +20% │          -        │         42% - 58% │         42% - 58% │
+│              │          │                   │ -2.03ms - +2.03ms │                   │  7.97ms - 12.03ms │  7.97ms - 12.03ms │
+├──────────────┼──────────┼───────────────────┼───────────────────┼───────────────────┼───────────────────┼───────────────────┤
+│ bar [render] │ 2.00 KiB │ 18.56ms - 21.44ms │            slower │            slower │                   │            unsure │
+│              │          │                   │        68% - 132% │        68% - 132% │          -        │       -10% - +10% │
+│              │          │                   │  7.97ms - 12.03ms │  7.97ms - 12.03ms │                   │ -2.03ms - +2.03ms │
+├──────────────┼──────────┼───────────────────┼───────────────────┼───────────────────┼───────────────────┼───────────────────┤
+│ bar [update] │ 2.00 KiB │ 18.56ms - 21.44ms │            slower │            slower │            unsure │                   │
+│              │          │                   │        68% - 132% │        68% - 132% │       -10% - +10% │          -        │
+│              │          │                   │  7.97ms - 12.03ms │  7.97ms - 12.03ms │ -2.03ms - +2.03ms │                   │
+└──────────────┴──────────┴───────────────────┴───────────────────┴───────────────────┴───────────────────┴───────────────────┘
+    `;
+    assert.equal(actual, expected.trim() + '\n');
+  });
+
+  test('multiple measurements, collate: false', async () => {
+    const config: ConfigFile = {
+      benchmarks: [
+        {
+          name: 'foo',
+          url: 'http://foo.com',
+          measurement: [{
+            name: 'render',
+            mode: 'performance',
+            entryName: 'render'
+          }, {
+            name: 'update',
+            mode: 'performance',
+            entryName: 'update'
+          }],
+        },
+        {
+          name: 'bar',
+          url: 'http://bar.com',
+          measurement: [{
+            name: 'render',
+            mode: 'performance',
+            entryName: 'render'
+          }, {
+            name: 'update',
+            mode: 'performance',
+            entryName: 'update'
+          }],
+        },
+      ],
+    };
+
+    const actual = await fakeCollatedResultTable(config);
+    const expected = `
+┌──────────────┬──────────┬───────────────────┬──────────────────┬──────────────────┐
+│ Benchmark    │ Bytes    │          Avg time │  vs foo [render] │  vs bar [render] │
+├──────────────┼──────────┼───────────────────┼──────────────────┼──────────────────┤
+│ foo [render] │ 1.00 KiB │  8.56ms - 11.44ms │                  │           faster │
+│              │          │                   │         -        │        42% - 58% │
+│              │          │                   │                  │ 7.97ms - 12.03ms │
+├──────────────┼──────────┼───────────────────┼──────────────────┼──────────────────┤
+│ bar [render] │ 2.00 KiB │ 18.56ms - 21.44ms │           slower │                  │
+│              │          │                   │       68% - 132% │         -        │
+│              │          │                   │ 7.97ms - 12.03ms │                  │
+└──────────────┴──────────┴───────────────────┴──────────────────┴──────────────────┘
+
+┌──────────────┬──────────┬───────────────────┬──────────────────┬──────────────────┐
+│ Benchmark    │ Bytes    │          Avg time │  vs foo [update] │  vs bar [update] │
+├──────────────┼──────────┼───────────────────┼──────────────────┼──────────────────┤
+│ foo [update] │ 1.00 KiB │  8.56ms - 11.44ms │                  │           faster │
+│              │          │                   │         -        │        42% - 58% │
+│              │          │                   │                  │ 7.97ms - 12.03ms │
+├──────────────┼──────────┼───────────────────┼──────────────────┼──────────────────┤
+│ bar [update] │ 2.00 KiB │ 18.56ms - 21.44ms │           slower │                  │
+│              │          │                   │       68% - 132% │         -        │
+│              │          │                   │ 7.97ms - 12.03ms │                  │
+└──────────────┴──────────┴───────────────────┴──────────────────┴──────────────────┘
+    `;
+    assert.equal(actual, expected.trim() + '\n');
+  });
+
 });
