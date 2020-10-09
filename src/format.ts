@@ -104,23 +104,19 @@ export function automaticResultTable(results: ResultStats[]): AutomaticResults {
   return {fixed: fixedTable, unfixed: unfixedTable};
 }
 
-const nameAndMeas = (resultName: string) => {
-  const match = /(.*) \[(.*)\]/.exec(resultName);
-  if (match) {
-    return {name: match[1], meas: match[2]};
-  } else {
-    return {name: resultName, meas: ''};
-  }
+const measurementForName = (resultName: string) => {
+  const match = /.* \[(.*)\]/.exec(resultName);
+  return match ? match[1] : '';
 };
 
 export function collatedResultTables(results: ResultStatsWithDifferences[]) {
   const collated: {[index: string]: ResultStatsWithDifferences[]} = {};
   results.forEach((result) => {
-    const {meas} = nameAndMeas(result.result.name);
+    const meas = measurementForName(result.result.name);
     (collated[meas] || (collated[meas] = [])).push({
       ...result,
       differences: result.differences.filter(
-          (_, i) => nameAndMeas(results[i].result.name).meas === meas)
+          (_, i) => measurementForName(results[i].result.name) === meas)
     });
   });
   const tables: AutomaticResults[] = [];
