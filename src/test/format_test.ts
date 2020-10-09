@@ -34,11 +34,14 @@ async function fakeResultTable(configFile: ConfigFile): Promise<string> {
  * the collated terminal formatted result table that would be printed (minus
  * color etc. formatting).
  */
-async function fakeCollatedResultTable(configFile: ConfigFile): Promise<string> {
+async function fakeCollatedResultTable(configFile: ConfigFile):
+    Promise<string> {
   const results = await fakeResults(configFile);
-  return collatedResultTables(results).map((result) => {
-    return stripAnsi(verticalTermResultTable(result.unfixed));
-  }).join('\n');
+  return collatedResultTables(results)
+      .map((result) => {
+        return stripAnsi(verticalTermResultTable(result.unfixed));
+      })
+      .join('\n');
 }
 
 suite('format', () => {
@@ -188,28 +191,18 @@ suite('format', () => {
         {
           name: 'foo',
           url: 'http://foo.com',
-          measurement: [{
-            name: 'render',
-            mode: 'performance',
-            entryName: 'render'
-          }, {
-            name: 'update',
-            mode: 'performance',
-            entryName: 'update'
-          }],
+          measurement: [
+            {name: 'render', mode: 'performance', entryName: 'render'},
+            {name: 'update', mode: 'performance', entryName: 'update'}
+          ],
         },
         {
           name: 'bar',
           url: 'http://bar.com',
-          measurement: [{
-            name: 'render',
-            mode: 'performance',
-            entryName: 'render'
-          }, {
-            name: 'update',
-            mode: 'performance',
-            entryName: 'update'
-          }],
+          measurement: [
+            {name: 'render', mode: 'performance', entryName: 'render'},
+            {name: 'update', mode: 'performance', entryName: 'update'}
+          ],
         },
       ],
     };
@@ -245,28 +238,18 @@ suite('format', () => {
         {
           name: 'foo',
           url: 'http://foo.com',
-          measurement: [{
-            name: 'render',
-            mode: 'performance',
-            entryName: 'render'
-          }, {
-            name: 'update',
-            mode: 'performance',
-            entryName: 'update'
-          }],
+          measurement: [
+            {name: 'render', mode: 'performance', entryName: 'render'},
+            {name: 'update', mode: 'performance', entryName: 'update'}
+          ],
         },
         {
           name: 'bar',
           url: 'http://bar.com',
-          measurement: [{
-            name: 'render',
-            mode: 'performance',
-            entryName: 'render'
-          }, {
-            name: 'update',
-            mode: 'performance',
-            entryName: 'update'
-          }],
+          measurement: [
+            {name: 'render', mode: 'performance', entryName: 'render'},
+            {name: 'update', mode: 'performance', entryName: 'update'}
+          ],
         },
       ],
     };
@@ -299,5 +282,4 @@ suite('format', () => {
     `;
     assert.equal(actual, expected.trim() + '\n');
   });
-
 });

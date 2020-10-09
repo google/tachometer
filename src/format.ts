@@ -17,7 +17,7 @@ import ansi = require('ansi-escape-sequences');
 
 import {Difference, ConfidenceInterval, ResultStats, ResultStatsWithDifferences} from './stats';
 import {BenchmarkSpec, BenchmarkResult} from './types';
-import { measurementName } from './measure';
+import {measurementName} from './measure';
 
 export const spinner = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'].map(
     (frame) => ansi.format(`[blue]{${frame}}`));
