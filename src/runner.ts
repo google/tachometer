@@ -236,6 +236,7 @@ export class Runner {
     const {driver, initialTabHandle} =
         browsers.get(browserSignature(spec.browser))!;
 
+    let perfEntries: webdriver.logging.Entry[] = [];
     let session: Session;
     let pendingMeasurements;
     let measurementResults: number[];
@@ -271,6 +272,28 @@ export class Runner {
           }
         }
       }
+
+      // TODO: Andre
+      if (spec.url.kind !== 'local') {
+        throw new Error('spec.url.kind remote is not supported.');
+      }
+      let newPerfEntries;
+      do {
+        newPerfEntries = await driver.manage().logs().get('performance');
+        perfEntries = perfEntries.concat(newPerfEntries);
+      } while (newPerfEntries.length > 0);
+      const outputDir =
+          process.cwd() + `\\logs\\${spec.url.version?.label ?? ''}`;
+      fsExtra.mkdirpSync(outputDir)
+      fsExtra.writeFileSync(
+          outputDir + `\\log-${Math.ceil(Math.random() * 999999) + 1}.json`,
+          '[\n' +
+              perfEntries.map(e => JSON.parse(e.message).message)
+                  .filter(log => log.method === 'Tracing.dataCollected')
+                  .map(log => JSON.stringify(log.params))
+                  .join(',\n') +
+              '\n]',
+          'utf8');
 
       // Close the active tab (but not the whole browser, since the
       // initial blank tab is still open).

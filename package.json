@@ -35,7 +35,7 @@
   ],
   "dependencies": {
     "@types/command-line-usage": "^5.0.1",
-    "@types/selenium-webdriver": "^4.0.5",
+    "@types/selenium-webdriver": "^4.0.9",
     "@types/table": "^6.0.0",
     "ansi-escape-sequences": "^5.0.0",
     "command-line-args": "^5.0.2",
@@ -56,7 +56,7 @@
     "pkg-install": "^1.0.0",
     "pkg-up": "^3.1.0",
     "progress": "^2.0.3",
-    "selenium-webdriver": "^4.0.0-alpha.1",
+    "selenium-webdriver": "^4.0.0-alpha.7",
     "semver": "^7.1.1",
     "source-map-support": "^0.5.16",
     "strip-ansi": "^6.0.0",

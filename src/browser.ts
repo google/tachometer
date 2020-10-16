@@ -164,6 +164,61 @@ export async function makeDriver(config: BrowserConfig):
     require(webdriverModuleName);
   }
 
+  // TODO: ANDRE
+  if (browserName == 'chrome') {
+    let capabilities = new webdriver.Capabilities({
+      browserName: 'chrome',
+      platform: 'ANY',
+      version: 'stable',
+      binary: config.binary,  // TODO: is this correct?
+      'goog:chromeOptions': {
+        args: [
+          // "--js-flags=--expose-gc",
+          // "--enable-precise-memory-info",
+          '--no-first-run',
+          '--disable-background-networking',
+          '--disable-background-timer-throttling',
+          '--disable-cache',
+          '--disable-translate',
+          '--disable-sync',
+          '--disable-extensions',
+          '--disable-default-apps',
+          '--no-sandbox',
+          config.headless ? '--headless' : '',
+          config.windowSize ? `--window-size=${config.windowSize.width},${
+                                  config.windowSize.height}` :
+                              ''
+        ].filter(Boolean)
+                  .concat(config.addArguments ? config.addArguments : []),
+        perfLoggingPrefs: {
+          enableNetwork: true,
+          enablePage: true,
+          traceCategories: [
+            'blink',
+            'blink.user_timing',
+            'v8',
+            'v8.execute',
+            'disabled-by-default-v8.compile',
+            // "disabled-by-default-v8.cpu_profiler", // Seems to cause errors
+            // in about:tracing
+            'disabled-by-default-v8.gc',
+            // "disabled-by-default-v8.gc_stats",
+            // "disabled-by-default-v8.ic_stats", // ? Not sure what this
+            // outputs... "disabled-by-default-v8.runtime_stats", // outputs
+            'disabled-by-default-v8.turbofan',
+          ].join(','),
+        },
+        excludeSwitches: config.removeArguments ? config.removeArguments : [],
+      },
+      'goog:loggingPrefs': {
+        browser: 'ALL',
+        performance: 'ALL',
+      },
+    });
+    let service = new chrome.ServiceBuilder().build();
+    return chrome.Driver.createSession(capabilities, service);
+  }
+
   const builder = new webdriver.Builder();
   const webdriverName = webdriverBrowserNames.get(config.name) || config.name;
   builder.forBrowser(webdriverName);
