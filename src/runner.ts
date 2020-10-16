@@ -154,7 +154,7 @@ export class Runner {
       if (primary === undefined) {
         specResults[newResult.measurementIndex] = newResult;
       } else {
-        primary.millis.push(...newResult.millis);
+        primary.rawData.push(...newResult.rawData);
       }
     }
   }
@@ -320,7 +320,7 @@ export class Runner {
           version: spec.url.kind === 'local' && spec.url.version !== undefined ?
               spec.url.version.label :
               '',
-          millis: [measurementResults[measurementIndex]],
+          rawData: [measurementResults[measurementIndex]],
           bytesSent: session ? session.bytesSent : 0,
           browser: spec.browser,
           userAgent: session ? session.userAgent : '',
@@ -332,7 +332,7 @@ export class Runner {
     for (const results of this.results.values()) {
       for (let r = 0; r < results.length; r++) {
         const result = results[r];
-        resultStats.push({result, stats: summaryStats(result.millis)});
+        resultStats.push({result, stats: summaryStats(result.rawData)});
       }
     }
     return computeDifferences(resultStats);

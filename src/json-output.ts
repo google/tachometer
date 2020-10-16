@@ -83,7 +83,7 @@ export function jsonOutput(results: ResultStatsWithDifferences[]):
         high: result.stats.meanCI.high,
       },
       differences,
-      samples: result.result.millis,
+      samples: result.result.rawData,
     });
   }
   return {benchmarks};

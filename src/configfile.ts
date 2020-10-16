@@ -362,6 +362,14 @@ async function parseBenchmark(benchmark: ConfigFileBenchmark, root: string):
     spec.measurement = [benchmark.measurement];
   }
 
+  if (spec.measurement) {
+    for (const measurement of spec.measurement) {
+      if (measurement.unit == null) {
+        measurement.unit = defaults.measurementUnit;
+      }
+    }
+  }
+
   const url = benchmark.url;
   if (url !== undefined) {
     if (isHttpUrl(url)) {

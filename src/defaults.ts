@@ -24,13 +24,15 @@ export const mode = 'automatic';
 export const resolveBareModules = true;
 export const forceCleanNpmInstall = false;
 export const measurementExpression = 'window.tachometerResult';
+export const measurementUnit = 'ms';
 
 export function measurement(url: LocalUrl|RemoteUrl): Measurement {
   if (url.kind === 'remote') {
     return {
       mode: 'performance',
       entryName: 'first-contentful-paint',
+      unit: measurementUnit
     };
   }
-  return {mode: 'callback'};
+  return {mode: 'callback', unit: measurementUnit};
 }

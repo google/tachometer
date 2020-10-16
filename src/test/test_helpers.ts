@@ -43,13 +43,13 @@ export async function fakeResults(configFile: ConfigFile):
   const results = [];
   for (let i = 0; i < config.benchmarks.length; i++) {
     const {name, url, browser, measurement} = config.benchmarks[i];
-    const averageMillis = (i + 1) * 10;
+    const averageData = (i + 1) * 10;
     const bytesSent = (i + 1) * 1024;
-    const millis = [
+    const rawData = [
       // Split the sample size in half to add +/- 5ms variance, just to make
       // things a little more interesting.
-      ...new Array(Math.floor(config.sampleSize / 2)).fill(averageMillis - 5),
-      ...new Array(Math.ceil(config.sampleSize / 2)).fill(averageMillis + 5),
+      ...new Array(Math.floor(config.sampleSize / 2)).fill(averageData - 5),
+      ...new Array(Math.ceil(config.sampleSize / 2)).fill(averageData + 5),
     ];
     for (let measurementIndex = 0; measurementIndex < measurement.length;
          measurementIndex++) {
@@ -57,7 +57,7 @@ export async function fakeResults(configFile: ConfigFile):
           name :
           `${name} [${measurement[measurementIndex].name}]`;
       results.push({
-        stats: summaryStats(millis),
+        stats: summaryStats(rawData),
         result: {
           name: resultName,
           measurement: measurement[measurementIndex],
@@ -66,7 +66,7 @@ export async function fakeResults(configFile: ConfigFile):
           version: url.kind === 'local' && url.version !== undefined ?
               url.version.label :
               '',
-          millis,
+          rawData,
           bytesSent,
           browser,
           userAgent: userAgents.get(browser.name) || '',

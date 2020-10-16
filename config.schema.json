@@ -13,6 +13,9 @@
                 },
                 "name": {
                     "type": "string"
+                },
+                "unit": {
+                    "type": "string"
                 }
             },
             "required": [
@@ -218,6 +221,9 @@
                 },
                 "name": {
                     "type": "string"
+                },
+                "unit": {
+                    "type": "string"
                 }
             },
             "required": [
@@ -360,6 +366,9 @@
                     "type": "string"
                 },
                 "name": {
+                    "type": "string"
+                },
+                "unit": {
                     "type": "string"
                 }
             },

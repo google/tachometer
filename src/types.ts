@@ -81,6 +81,7 @@ export type Measurement =
 
 export interface MeasurementBase {
   name?: string;
+  unit?: string;
 }
 
 export interface CallbackMeasurement extends MeasurementBase {
@@ -146,9 +147,9 @@ export interface BenchmarkResult {
    */
   measurementIndex: number;
   /**
-   * Millisecond measurements for each sample.
+   * Raw measurement results for each sample.
    */
-  millis: number[];
+  rawData: number[];
   queryString: string;
   version: string;
   browser: BrowserConfig;
