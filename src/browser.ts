@@ -181,81 +181,34 @@ export async function makeDriver(config: BrowserConfig):
     require(webdriverModuleName);
   }
 
-  // TODO: ANDRE
-  if (browserName === 'chrome') {
-    const chromeOptions = {
-      excludeSwitches: config.removeArguments ? config.removeArguments : [],
-      args: [
-        // "--js-flags=--expose-gc",
-        // "--enable-precise-memory-info",
-        '--no-first-run',
-        '--disable-background-networking',
-        '--disable-background-timer-throttling',
-        '--disable-cache',
-        '--disable-translate',
-        '--disable-sync',
-        '--disable-extensions',
-        '--disable-default-apps',
-        '--no-sandbox',
-        config.headless ? '--headless' : '',
-        config.windowSize ? `--window-size=${config.windowSize.width},${
-                                config.windowSize.height}` :
-                            ''
-      ].filter(Boolean)
-                .concat(config.addArguments ? config.addArguments : []),
-    };
-
-    const capabilities = new webdriver.Capabilities({
-      browserName: 'chrome',
-      platform: 'ANY',
-      version: 'stable',
-      binary: config.binary,
-      'goog:chromeOptions': {
-        args: chromeOptions.args,
-        perfLoggingPrefs: {
-          enableNetwork: true,
-          enablePage: true,
-          traceCategories: config.trace?.categories.join(','),
-        },
-      },
-      'goog:loggingPrefs': {
-        browser: 'ALL',
-        performance: 'ALL',
-      },
-    });
-    const service = new chrome.ServiceBuilder().build();
-    return chrome.Driver.createSession(capabilities, service);
-  } else {
-    const builder = new webdriver.Builder();
-    const webdriverName = webdriverBrowserNames.get(config.name) || config.name;
-    builder.forBrowser(webdriverName);
-    builder.setChromeOptions(chromeOpts(config));
-    builder.setFirefoxOptions(firefoxOpts(config));
-    if (config.remoteUrl !== undefined) {
-      builder.usingServer(config.remoteUrl);
-    } else if (config.name === 'edge') {
-      // There appears to be bug where WebDriver doesn't automatically start or
-      // find an Edge service and throws "Cannot read property 'start' of null"
-      // so we need to start the service ourselves.
-      // See https://stackoverflow.com/questions/48577924.
-      // tslint:disable-next-line:no-any TODO setEdgeService function is missing.
-      (builder as any).setEdgeService(new edge.ServiceBuilder());
-    }
-    const driver = await builder.build();
-    if (config.name === 'safari' || config.name === 'edge' ||
-        config.name === 'ie') {
-      // Safari, Edge, and IE don't have flags we can use to launch with a given
-      // window size, but webdriver can resize the window after we've started
-      // up. Some versions of Safari have a bug where it is required to also
-      // provide an x/y position (see
-      // https://github.com/SeleniumHQ/selenium/issues/3796).
-      const rect = config.name === 'safari' ?
-          {...config.windowSize, x: 0, y: 0} :
-          config.windowSize;
-      await driver.manage().window().setRect(rect);
-    }
-    return driver;
+  const builder = new webdriver.Builder();
+  const webdriverName = webdriverBrowserNames.get(config.name) || config.name;
+  builder.forBrowser(webdriverName);
+  builder.setChromeOptions(chromeOpts(config));
+  builder.setFirefoxOptions(firefoxOpts(config));
+  if (config.remoteUrl !== undefined) {
+    builder.usingServer(config.remoteUrl);
+  } else if (config.name === 'edge') {
+    // There appears to be bug where WebDriver doesn't automatically start or
+    // find an Edge service and throws "Cannot read property 'start' of null"
+    // so we need to start the service ourselves.
+    // See https://stackoverflow.com/questions/48577924.
+    // tslint:disable-next-line:no-any TODO setEdgeService function is missing.
+    (builder as any).setEdgeService(new edge.ServiceBuilder());
   }
+  const driver = await builder.build();
+  if (config.name === 'safari' || config.name === 'edge' ||
+      config.name === 'ie') {
+    // Safari, Edge, and IE don't have flags we can use to launch with a given
+    // window size, but webdriver can resize the window after we've started
+    // up. Some versions of Safari have a bug where it is required to also
+    // provide an x/y position (see
+    // https://github.com/SeleniumHQ/selenium/issues/3796).
+    const rect = config.name === 'safari' ? {...config.windowSize, x: 0, y: 0} :
+                                            config.windowSize;
+    await driver.manage().window().setRect(rect);
+  }
+  return driver;
 }
 
 function chromeOpts(config: BrowserConfig): chrome.Options {
@@ -271,6 +224,18 @@ function chromeOpts(config: BrowserConfig): chrome.Options {
   }
   if (config.removeArguments) {
     opts.excludeSwitches(...config.removeArguments);
+  }
+  if (config.trace) {
+    const loggingPrefs = new webdriver.logging.Preferences();
+    loggingPrefs.setLevel('browser', webdriver.logging.Level.ALL);
+    loggingPrefs.setLevel('performance', webdriver.logging.Level.ALL);
+    opts.setLoggingPrefs(loggingPrefs);
+
+    opts.setPerfLoggingPrefs({
+      enableNetwork: true,
+      enablePage: true,
+      traceCategories: config.trace.categories.join(',')
+    } as any);  // tslint:disable-line no-any "Selenium types are wrong"
   }
   const {width, height} = config.windowSize;
   opts.addArguments(`--window-size=${width},${height}`);

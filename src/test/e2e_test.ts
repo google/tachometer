@@ -69,7 +69,7 @@ function rimrafAsync(path: string) {
   });
 }
 
-suite.skip('e2e', function() {
+suite('e2e', function() {
   // We're launching real browsers and running multiple samples.
   this.timeout(1000 * 60 * 2);
 
