@@ -507,7 +507,7 @@ page, use the `preferences` property in the browser JSON config.
 
 ### Profiles
 
-It is normally reccommended to use the default behavior whereby a new, empty
+It is normally recommended to use the default behavior whereby a new, empty
 browser profile is created when the browser is launched, so that state from your
 personal profile (cookies, extensions, cache etc.) do not influence benchmark
 results.
@@ -538,6 +538,50 @@ For example, using the standard location of the default user profile on macOS:
   "removeArguments": [
     "use-mock-keychain"
   ]
+}
+```
+
+### Performance traces
+
+Once you determine that something is slower or faster in comparison to something
+else, investigating why is natural next step. To assist in determining why,
+consider collecting performance traces. These traces can be used to determine
+what the browser is doing differently between two version of code.
+
+When the `trace` option is turned on in Chromium-based browsers, each tachometer
+sample will produce a JSON file that can be viewed in Chromium's `about:tracing`
+tool. Enter `about:tracing` in the URL bar of Chromium, click load, and select
+the `json` file you want to view. Check out the [about:tracing doc
+page](https://www.chromium.org/developers/how-tos/trace-event-profiling-tool) to
+learn more about using the trace event profiling tool.
+
+To turn on tracing with the default configuration, add `trace: true` to a
+Chromium browser's config object. This config turns on tracing with some
+[default categories enabled](./src/defaults.ts#L29) and puts the JSON files into
+a directory called `logs` in your current working directory. 
+
+For example:
+
+```json
+{
+  "name": "chrome",
+  "trace": true
+}
+```
+
+To customize where the logs files are placed or what categories of events are
+traced, pass an object to the `trace` config as demonstrated below. The
+`categories` property is a list of trace categories to collect. The `logDir` is
+the directory to store the log files to. If it is relative, it is resolved
+relative to the current working directory.
+
+```json
+{
+  "name": "chrome",
+  "trace": {
+    "categories": ["blink", "cc", "netlog", "toplevel", "v8"],
+    "logDir": "results/trace-logs",
+  }
 }
 ```
 
