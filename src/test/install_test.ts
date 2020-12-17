@@ -10,7 +10,7 @@
  */
 
 import {assert} from 'chai';
-import {promises as fs} from 'fs';
+import {existsSync, promises as fs} from 'fs';
 import {suite, test} from 'mocha';
 import * as os from 'os';
 import * as path from 'path';
@@ -54,6 +54,9 @@ suite('install', () => {
         async () => {
           let rejected = false;
           const someModulePath = path.join(os.tmpdir(), 'foo.js');
+          if (existsSync(someModulePath)) {
+            await fs.unlink(someModulePath);
+          }
 
           try {
             await assertResolvable(someModulePath);
