@@ -57,7 +57,7 @@
     "pkg-up": "^3.1.0",
     "progress": "^2.0.3",
     "sanitize-filename": "^1.6.3",
-    "selenium-webdriver": "^4.0.0-alpha.7",
+    "selenium-webdriver": "^4.0.0-alpha.8",
     "semver": "^7.1.1",
     "source-map-support": "^0.5.16",
     "strip-ansi": "^6.0.0",
