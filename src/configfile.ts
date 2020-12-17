@@ -11,10 +11,13 @@
 
 import * as fsExtra from 'fs-extra';
 import * as jsonschema from 'jsonschema';
+import * as path from 'path';
+import sanitizeFileName from 'sanitize-filename';
 
 import {BrowserConfig, BrowserName, parseBrowserConfigString, validateBrowserConfig} from './browser';
 import {Config, parseHorizons, urlFromLocalPath} from './config';
 import * as defaults from './defaults';
+import {makeUniqueSpecLabelFn} from './format';
 import {BenchmarkSpec, ExtendedPackageDependencyMap, Measurement, measurements} from './types';
 import {isHttpUrl} from './util';
 
@@ -215,6 +218,26 @@ interface ChromeConfig extends BrowserConfigBase {
    * @TJS-minimum 1
    */
   cpuThrottlingRate?: number;
+
+  /**
+   * Optional config to turn on Chrome tracing and log.
+   */
+  trace?: TraceConfig|boolean;
+}
+
+/**
+ * Configuration to turn on Chrome tracing
+ */
+interface TraceConfig {
+  /**
+   * The list tracing categories Chrome should log
+   */
+  categories?: string[];
+
+  /**
+   * The directory to log Chrome traces to
+   */
+  logDir?: string;
 }
 
 interface FirefoxConfig extends BrowserConfigBase {
@@ -288,6 +311,15 @@ export async function parseConfigFile(parsedJson: unknown):
   for (const benchmark of validated.benchmarks) {
     for (const expanded of applyExpansions(benchmark)) {
       benchmarks.push(applyDefaults(await parseBenchmark(expanded, root)));
+    }
+  }
+
+  // Update trace logDir with label per spec
+  const labelFn = makeUniqueSpecLabelFn(benchmarks);
+  for (const spec of benchmarks) {
+    if (spec.browser.trace !== undefined) {
+      spec.browser.trace.logDir =
+          path.join(spec.browser.trace.logDir, sanitizeFileName(labelFn(spec)));
     }
   }
 
@@ -425,6 +457,25 @@ function parseBrowserObject(config: BrowserConfigs): BrowserConfig {
   }
   if ('preferences' in config && config.preferences) {
     parsed.preferences = config.preferences;
+  }
+  if ('trace' in config && config.trace !== undefined) {
+    if (config.trace === false) {
+      // Do nothing
+    } else if (config.trace === true) {
+      parsed.trace = {
+        categories: defaults.traceCategories,
+        logDir: defaults.traceLogDir,
+      };
+    } else {
+      parsed.trace = {
+        categories: config.trace.categories ?? defaults.traceCategories,
+        logDir: config.trace.logDir === undefined ?
+            defaults.traceLogDir :
+            path.isAbsolute(config.trace.logDir) ?
+            config.trace.logDir :
+            path.join(process.cwd(), config.trace.logDir)
+      };
+    }
   }
   return parsed;
 }

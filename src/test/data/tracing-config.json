@@ -4,25 +4,25 @@
     "timeout": 0,
     "benchmarks": [
         {
-            "name": "one-plus-one",
+            "name": "bench1",
             "url": "src/test/data/for-loop.html",
-            "measurement": "global",
-            "measurementExpression": "1+1",
             "browser": {
                 "name": "chrome",
                 "headless": true,
-                "trace": true
+                "trace": {
+                    "logDir": "src/test/data/logs"
+                }
             }
         },
         {
-            "name": "two-plus-two",
+            "name": "bench2",
             "url": "src/test/data/for-loop.html",
-            "measurement": "global",
-            "measurementExpression": "2+2",
             "browser": {
                 "name": "chrome",
                 "headless": true,
-                "trace": true
+                "trace": {
+                    "logDir": "src/test/data/logs"
+                }
             }
         }
     ]

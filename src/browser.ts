@@ -71,6 +71,23 @@ export interface BrowserConfig {
   cpuThrottlingRate?: number;
   /** Advanced preferences usually set from the about:config page. */
   preferences?: {[name: string]: string|number|boolean};
+  /** Trace browser logs configuration */
+  trace?: TraceConfig;
+}
+
+/**
+ * Configuration to turn on Chrome tracing
+ */
+interface TraceConfig {
+  /**
+   * The list tracing categories Chrome should log
+   */
+  categories: string[];
+
+  /**
+   * The directory to log Chrome traces to
+   */
+  logDir: string;
 }
 
 export interface WindowSize {
@@ -165,87 +182,80 @@ export async function makeDriver(config: BrowserConfig):
   }
 
   // TODO: ANDRE
-  if (browserName == 'chrome') {
-    let capabilities = new webdriver.Capabilities({
+  if (browserName === 'chrome') {
+    const chromeOptions = {
+      excludeSwitches: config.removeArguments ? config.removeArguments : [],
+      args: [
+        // "--js-flags=--expose-gc",
+        // "--enable-precise-memory-info",
+        '--no-first-run',
+        '--disable-background-networking',
+        '--disable-background-timer-throttling',
+        '--disable-cache',
+        '--disable-translate',
+        '--disable-sync',
+        '--disable-extensions',
+        '--disable-default-apps',
+        '--no-sandbox',
+        config.headless ? '--headless' : '',
+        config.windowSize ? `--window-size=${config.windowSize.width},${
+                                config.windowSize.height}` :
+                            ''
+      ].filter(Boolean)
+                .concat(config.addArguments ? config.addArguments : []),
+    };
+
+    const capabilities = new webdriver.Capabilities({
       browserName: 'chrome',
       platform: 'ANY',
       version: 'stable',
-      binary: config.binary,  // TODO: is this correct?
+      binary: config.binary,
       'goog:chromeOptions': {
-        args: [
-          // "--js-flags=--expose-gc",
-          // "--enable-precise-memory-info",
-          '--no-first-run',
-          '--disable-background-networking',
-          '--disable-background-timer-throttling',
-          '--disable-cache',
-          '--disable-translate',
-          '--disable-sync',
-          '--disable-extensions',
-          '--disable-default-apps',
-          '--no-sandbox',
-          config.headless ? '--headless' : '',
-          config.windowSize ? `--window-size=${config.windowSize.width},${
-                                  config.windowSize.height}` :
-                              ''
-        ].filter(Boolean)
-                  .concat(config.addArguments ? config.addArguments : []),
+        args: chromeOptions.args,
         perfLoggingPrefs: {
           enableNetwork: true,
           enablePage: true,
-          traceCategories: [
-            'blink',
-            'blink.user_timing',
-            'v8',
-            'v8.execute',
-            'disabled-by-default-v8.compile',
-            // "disabled-by-default-v8.cpu_profiler", // Seems to cause errors
-            // in about:tracing
-            'disabled-by-default-v8.gc',
-            // "disabled-by-default-v8.gc_stats",
-            // "disabled-by-default-v8.ic_stats", // ? Not sure what this
-            // outputs... "disabled-by-default-v8.runtime_stats", // outputs
-            'disabled-by-default-v8.turbofan',
-          ].join(','),
+          traceCategories: config.trace?.categories.join(','),
         },
-        excludeSwitches: config.removeArguments ? config.removeArguments : [],
       },
       'goog:loggingPrefs': {
         browser: 'ALL',
         performance: 'ALL',
       },
     });
-    let service = new chrome.ServiceBuilder().build();
+    const service = new chrome.ServiceBuilder().build();
     return chrome.Driver.createSession(capabilities, service);
+  } else {
+    const builder = new webdriver.Builder();
+    const webdriverName = webdriverBrowserNames.get(config.name) || config.name;
+    builder.forBrowser(webdriverName);
+    builder.setChromeOptions(chromeOpts(config));
+    builder.setFirefoxOptions(firefoxOpts(config));
+    if (config.remoteUrl !== undefined) {
+      builder.usingServer(config.remoteUrl);
+    } else if (config.name === 'edge') {
+      // There appears to be bug where WebDriver doesn't automatically start or
+      // find an Edge service and throws "Cannot read property 'start' of null"
+      // so we need to start the service ourselves.
+      // See https://stackoverflow.com/questions/48577924.
+      // tslint:disable-next-line:no-any TODO setEdgeService function is missing.
+      (builder as any).setEdgeService(new edge.ServiceBuilder());
+    }
+    const driver = await builder.build();
+    if (config.name === 'safari' || config.name === 'edge' ||
+        config.name === 'ie') {
+      // Safari, Edge, and IE don't have flags we can use to launch with a given
+      // window size, but webdriver can resize the window after we've started
+      // up. Some versions of Safari have a bug where it is required to also
+      // provide an x/y position (see
+      // https://github.com/SeleniumHQ/selenium/issues/3796).
+      const rect = config.name === 'safari' ?
+          {...config.windowSize, x: 0, y: 0} :
+          config.windowSize;
+      await driver.manage().window().setRect(rect);
+    }
+    return driver;
   }
-
-  const builder = new webdriver.Builder();
-  const webdriverName = webdriverBrowserNames.get(config.name) || config.name;
-  builder.forBrowser(webdriverName);
-  builder.setChromeOptions(chromeOpts(config));
-  builder.setFirefoxOptions(firefoxOpts(config));
-  if (config.remoteUrl !== undefined) {
-    builder.usingServer(config.remoteUrl);
-  } else if (config.name === 'edge') {
-    // There appears to be bug where WebDriver doesn't automatically start or
-    // find an Edge service and throws "Cannot read property 'start' of null"
-    // so we need to start the service ourselves.
-    // See https://stackoverflow.com/questions/48577924.
-    // tslint:disable-next-line:no-any TODO setEdgeService function is missing.
-    (builder as any).setEdgeService(new edge.ServiceBuilder());
-  }
-  const driver = await builder.build();
-  if (config.name === 'safari' || config.name === 'edge' ||
-      config.name === 'ie') {
-    // Safari, Edge, and IE don't have flags we can use to launch with a given
-    // window size, but webdriver can resize the window after we've started up.
-    // Some versions of Safari have a bug where it is required to also provide
-    // an x/y position (see https://github.com/SeleniumHQ/selenium/issues/3796).
-    const rect = config.name === 'safari' ? {...config.windowSize, x: 0, y: 0} :
-                                            config.windowSize;
-    await driver.manage().window().setRect(rect);
-  }
-  return driver;
 }
 
 function chromeOpts(config: BrowserConfig): chrome.Options {

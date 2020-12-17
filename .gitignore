@@ -6,3 +6,4 @@ lib/
 npm-debug.log
 *.tgz
 *.code-workspace
+logs

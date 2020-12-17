@@ -61,6 +61,17 @@
                     },
                     "type": "array"
                 },
+                "trace": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/definitions/TraceConfig"
+                        },
+                        {
+                            "type": "boolean"
+                        }
+                    ],
+                    "description": "Optional config to turn on Chrome tracing and log."
+                },
                 "windowSize": {
                     "$ref": "#/definitions/WindowSize",
                     "description": "The size of new windows created from this browser. Defaults to 1024x768."
@@ -391,6 +402,24 @@
             "required": [
                 "name"
             ],
+            "type": "object"
+        },
+        "TraceConfig": {
+            "additionalProperties": false,
+            "description": "Configuration to turn on Chrome tracing",
+            "properties": {
+                "categories": {
+                    "description": "The list tracing categories Chrome should log",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "logDir": {
+                    "description": "The directory to log Chrome traces to",
+                    "type": "string"
+                }
+            },
             "type": "object"
         },
         "WindowSize": {
