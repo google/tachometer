@@ -585,6 +585,9 @@ relative to the current working directory.
 }
 ```
 
+Tracing can also be enabled via command line flags. See the table at the end of
+the file for details.
+
 ## Remote control
 
 Tachometer can control and benchmark browsers running on remote machines by
@@ -771,3 +774,6 @@ Flag                    -  | Default     | Description
 `--csv-file-raw`           | *none*      | Save raw sample measurements to this CSV file.
 `--json-file`              | *none*      | Save results to this JSON file.
 `--manual`                 | `false`     | Don't run automatically, just show URLs and collect results
+`--trace`                  | `false`     | Enable performance tracing ([details](#performance-traces))
+`--trace-log-dir`          | `${cwd}/logs`| The directory to put tracing log files. Defaults to `${cwd}/logs`.
+`--trace-cat`              | [default categories](./src/defaults.ts) | The tracing categories to record. Should be a string of comma-separated category names

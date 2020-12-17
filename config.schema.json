@@ -70,7 +70,7 @@
                             "type": "boolean"
                         }
                     ],
-                    "description": "Optional config to turn on Chrome tracing and log."
+                    "description": "Optional config to turn on performance tracing."
                 },
                 "windowSize": {
                     "$ref": "#/definitions/WindowSize",
@@ -406,17 +406,17 @@
         },
         "TraceConfig": {
             "additionalProperties": false,
-            "description": "Configuration to turn on Chrome tracing",
+            "description": "Configuration to turn on performance tracing",
             "properties": {
                 "categories": {
-                    "description": "The list tracing categories Chrome should log",
+                    "description": "The tracing categories the browser should log",
                     "items": {
                         "type": "string"
                     },
                     "type": "array"
                 },
                 "logDir": {
-                    "description": "The directory to log Chrome traces to",
+                    "description": "The directory to log performance traces to",
                     "type": "string"
                 }
             },

@@ -78,7 +78,7 @@ export interface BrowserConfig {
 /**
  * Configuration to turn on performance tracing
  */
-interface TraceConfig {
+export interface TraceConfig {
   /**
    * The tracing categories the browser should log
    */

@@ -201,6 +201,23 @@ export const optDefs: commandLineUsage.OptionDefinition[] = [
         ` (default "${defaults.windowWidth},${defaults.windowHeight}").`,
     type: String,
   },
+  {
+    name: 'trace',
+    description: '',
+    type: Boolean,
+  },
+  {
+    name: 'trace-log-dir',
+    description: '',
+    type: String,
+    defaultValue: defaults.traceLogDir
+  },
+  {
+    name: 'trace-cat',
+    description: '',
+    type: String,
+    defaultValue: defaults.traceCategories.join(',')
+  }
 ];
 
 export interface Opts {
@@ -228,6 +245,9 @@ export interface Opts {
   'csv-file': string;
   'csv-file-raw': string;
   'json-file': string;
+  'trace': boolean;
+  'trace-log-dir': string;
+  'trace-cat': string;
 
   // Extra arguments not associated with a flag are put here. These are our
   // benchmark names/URLs.
