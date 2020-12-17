@@ -14,10 +14,8 @@ import {existsSync} from 'fs';
 import {suite, test} from 'mocha';
 import * as path from 'path';
 import rimraf from 'rimraf';
-
 import {main} from '../cli';
 import {ConfidenceInterval} from '../stats';
-
 import {testData} from './test_helpers';
 
 // Set this environment variable to change the browsers under test.
@@ -300,20 +298,20 @@ suite('e2e', function() {
              }));
 
         test('tracing', hideOutput(async function() {
-                    const logDir = path.join(testData, 'logs');
-                    if (existsSync(logDir)) {
-                      await rimrafAsync(logDir);
-                    }
-                    const argv = [
-                      `--config=${path.join(testData, 'tracing-config.json')}`,
-                    ];
-                    const actual = await main(argv);
-                    assert.isDefined(actual);
-                    assert.lengthOf(actual!, 2);
-                    assert.isTrue(existsSync(logDir));
-                    assert.isTrue(existsSync(path.join(logDir, 'bench1')));
-                    assert.isTrue(existsSync(path.join(logDir, 'bench2')));
-                  }));
+               const logDir = path.join(testData, 'logs');
+               if (existsSync(logDir)) {
+                 await rimrafAsync(logDir);
+               }
+               const argv = [
+                 `--config=${path.join(testData, 'tracing-config.json')}`,
+               ];
+               const actual = await main(argv);
+               assert.isDefined(actual);
+               assert.lengthOf(actual!, 2);
+               assert.isTrue(existsSync(logDir));
+               assert.isTrue(existsSync(path.join(logDir, 'bench1')));
+               assert.isTrue(existsSync(path.join(logDir, 'bench2')));
+             }));
       }
 
       test('window size', hideOutput(async function() {

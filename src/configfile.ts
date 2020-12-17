@@ -220,22 +220,22 @@ interface ChromeConfig extends BrowserConfigBase {
   cpuThrottlingRate?: number;
 
   /**
-   * Optional config to turn on Chrome tracing and log.
+   * Optional config to turn on performance tracing.
    */
   trace?: TraceConfig|boolean;
 }
 
 /**
- * Configuration to turn on Chrome tracing
+ * Configuration to turn on performance tracing
  */
 interface TraceConfig {
   /**
-   * The list tracing categories Chrome should log
+   * The tracing categories the browser should log
    */
   categories?: string[];
 
   /**
-   * The directory to log Chrome traces to
+   * The directory to log performance traces to
    */
   logDir?: string;
 }

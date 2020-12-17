@@ -1,6 +1,6 @@
 {
     "$schema": "https://raw.githubusercontent.com/Polymer/tachometer/master/config.schema.json",
-    "sampleSize": 2,
+    "sampleSize": 10,
     "timeout": 0,
     "benchmarks": [
         {
@@ -10,8 +10,7 @@
             "measurementExpression": "1+1",
             "browser": {
                 "name": "chrome",
-                "headless": true,
-                "trace": true
+                "headless": true
             }
         },
         {
@@ -21,8 +20,7 @@
             "measurementExpression": "2+2",
             "browser": {
                 "name": "chrome",
-                "headless": true,
-                "trace": true
+                "headless": true
             }
         }
     ]

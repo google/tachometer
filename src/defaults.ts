@@ -32,13 +32,9 @@ export const traceCategories = [
   'v8',
   'v8.execute',
   'disabled-by-default-v8.compile',
-  // Seems to cause errors in about:tracing
+  // Seems to sometimes cause errors in Chrome's about:tracing
   // "disabled-by-default-v8.cpu_profiler",
   'disabled-by-default-v8.gc',
-  // "disabled-by-default-v8.gc_stats",
-  // ? Not sure what this outputs...
-  // "disabled-by-default-v8.ic_stats",
-  // "disabled-by-default-v8.runtime_stats",
   'disabled-by-default-v8.turbofan',
 ];
 
