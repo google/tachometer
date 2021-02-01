@@ -113,12 +113,17 @@ export async function makeServerPlans(
             // NPM doesn't support directly installing from a sub-directory of a
             // git repo, like in monorepos, so we handle those cases ourselves.
 
+            // If repo is a local relative path, we need to make it absolute.
+            // Otherwise, when we run "npm install" in our temp directory, our
+            // dependency will reference the wrong path.
+            const repo = makeGitFileUrlAbsolute(version.repo, process.cwd());
+
             // Immediately resolve the git reference (branch, tag, etc.) to a
             // SHA and use that going forward, so that we never fall behind the
             // origin repo when re-using temp directories.
             const sha = looksLikeGitSha(version.ref) ?
                 version.ref :
-                await remoteResolveGitRefToSha(version.repo, version.ref);
+                await remoteResolveGitRefToSha(repo, version.ref);
             if (sha === undefined) {
               throw new Error(`Git repo ${
                   version.repo} could not resolve ref "${version.ref}"`);
@@ -130,7 +135,7 @@ export async function makeServerPlans(
                 // Include the tachometer version in case any changes or bugs
                 // would affect how we do this installation.
                 tachometerVersion,
-                version.repo,
+                repo,
                 sha,
                 JSON.stringify(version.setupCommands));
             const tempDir = path.join(npmInstallRoot, gitInstallHash);
@@ -140,7 +145,7 @@ export async function makeServerPlans(
             // We're using a Map here because we want to de-duplicate git
             // installations that have the exact same parameters, since they can
             // be re-used across multiple benchmarks.
-            gitInstalls.set(gitInstallHash, {...version, tempDir, sha});
+            gitInstalls.set(gitInstallHash, {...version, repo, tempDir, sha});
             break;
           default:
             throwUnreachable(
@@ -356,4 +361,20 @@ async function remoteResolveGitRefToSha(
   }
   throw new Error(`Could not parse output of \`git ls-remote ${repo} --symref ${
       ref}\`:\n${stdout}`);
+}
+
+function makeGitFileUrlAbsolute(str: string, root: string): string {
+  // Note we don't use standard URL to parse, because file:// URLs don't
+  // decompose into host/path parts, so it's simpler this way.
+  const urlMatch = str.match(/^([^:\/]+):\/\/(.*)/);
+  if (urlMatch === null) {
+    // If it's not a URL, it must be a file path.
+    return path.resolve(root, str);
+  }
+  const [, protocol, rest] = urlMatch;
+  if (protocol === 'file') {
+    return path.resolve(root, rest);
+  }
+  // A remote URL, do nothing.
+  return str;
 }
