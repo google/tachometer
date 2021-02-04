@@ -124,7 +124,9 @@ export function verticalTermResultTable({dimensions, results}: ResultTable):
   ];
   return table.table(rows, {
     border: table.getBorderCharacters('norc'),
-    columns,
+    // The table library only accepts an object with numeric keys, not an array.
+    // https://github.com/gajus/table/issues/134
+    columns: Object.fromEntries(Object.entries(columns)),
   });
 }
 
@@ -151,7 +153,9 @@ export function horizontalTermResultTable({dimensions, results}: ResultTable):
   });
   return table.table(rows, {
     border: table.getBorderCharacters('norc'),
-    columns,
+    // The table library only accepts an object with numeric keys, not an array.
+    // https://github.com/gajus/table/issues/134
+    columns: Object.fromEntries(Object.entries(columns)),
   });
 }
 

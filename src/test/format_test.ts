@@ -15,7 +15,7 @@ import * as path from 'path';
 import stripAnsi = require('strip-ansi');
 
 import {ConfigFile} from '../configfile';
-import {automaticResultTable, verticalTermResultTable} from '../format';
+import {automaticResultTable, horizontalTermResultTable, verticalTermResultTable} from '../format';
 import {fakeResults, testData} from './test_helpers';
 
 /**
@@ -25,8 +25,10 @@ import {fakeResults, testData} from './test_helpers';
  */
 async function fakeResultTable(configFile: ConfigFile): Promise<string> {
   const results = await fakeResults(configFile);
-  const resultTable = automaticResultTable(results).unfixed;
-  return stripAnsi(verticalTermResultTable(resultTable));
+  const {fixed, unfixed} = automaticResultTable(results);
+  return stripAnsi(
+      horizontalTermResultTable(fixed) + '\n' +
+      verticalTermResultTable(unfixed));
 }
 
 suite('format', () => {
@@ -54,6 +56,19 @@ suite('format', () => {
 
     const actual = await fakeResultTable(config);
     const expected = `
+┌─────────────┬────────────────────┐
+│   Benchmark │ http://example.com │
+├─────────────┼────────────────────┤
+│     Version │ <none>             │
+├─────────────┼────────────────────┤
+│     Browser │ chrome             │
+│             │ 75.0.3770.100      │
+├─────────────┼────────────────────┤
+│ Sample size │ 50                 │
+├─────────────┼────────────────────┤
+│       Bytes │ 1.00 KiB           │
+└─────────────┴────────────────────┘
+
 ┌──────────────────┐
 │         Avg time │
 ├──────────────────┤
@@ -83,6 +98,14 @@ suite('format', () => {
 
     const actual = await fakeResultTable(config);
     const expected = `
+┌─────────────┬────────────────────┐
+│   Benchmark │ http://example.com │
+├─────────────┼────────────────────┤
+│     Version │ <none>             │
+├─────────────┼────────────────────┤
+│ Sample size │ 50                 │
+└─────────────┴────────────────────┘
+
 ┌───────────────┬──────────┬───────────────────┬──────────────────┬──────────────────┐
 │ Browser       │ Bytes    │          Avg time │        vs chrome │       vs firefox │
 ├───────────────┼──────────┼───────────────────┼──────────────────┼──────────────────┤
@@ -118,6 +141,15 @@ suite('format', () => {
 
     const actual = await fakeResultTable(config);
     const expected = `
+┌─────────────┬───────────────┐
+│     Version │ <none>        │
+├─────────────┼───────────────┤
+│     Browser │ chrome        │
+│             │ 75.0.3770.100 │
+├─────────────┼───────────────┤
+│ Sample size │ 50            │
+└─────────────┴───────────────┘
+
 ┌───────────────────────────┬──────────┬───────────────────┬─────────────────────────────┬──────────────────────────────┐
 │ Benchmark                 │ Bytes    │          Avg time │ vs http://example.com?p=bar │ vs /mybench/index.html?p=bar │
 ├───────────────────────────┼──────────┼───────────────────┼─────────────────────────────┼──────────────────────────────┤
@@ -155,6 +187,15 @@ suite('format', () => {
 
     const actual = await fakeResultTable(config);
     const expected = `
+┌─────────────┬───────────────┐
+│     Version │ <none>        │
+├─────────────┼───────────────┤
+│     Browser │ chrome        │
+│             │ 75.0.3770.100 │
+├─────────────┼───────────────┤
+│ Sample size │ 50            │
+└─────────────┴───────────────┘
+
 ┌───────────┬──────────┬───────────────────┬──────────────────┬──────────────────┐
 │ Benchmark │ Bytes    │          Avg time │           vs foo │           vs bar │
 ├───────────┼──────────┼───────────────────┼──────────────────┼──────────────────┤
