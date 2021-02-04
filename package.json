@@ -44,7 +44,7 @@
     "fs-extra": "^9.0.1",
     "get-stream": "^6.0.0",
     "got": "^11.5.0",
-    "jsonschema": "^1.2.4",
+    "jsonschema": "~1.2.11",
     "jsonwebtoken": "^8.5.1",
     "jstat": "^1.9.2",
     "koa": "^2.11.0",

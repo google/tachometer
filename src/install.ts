@@ -26,7 +26,7 @@ export type OnDemandDependencies = Map<string, string>;
  * @see https://github.com/nodejs/node/issues/31803
  */
 export const assertResolvable = async (id: string) => {
-  await new Promise(async (resolve, reject) => {
+  await new Promise<void>(async (resolve, reject) => {
     exec(
         `${process.execPath} -e "require.resolve(process.env.ID)"`,
         {

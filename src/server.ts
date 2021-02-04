@@ -141,7 +141,7 @@ export class Server {
   }
 
   async close() {
-    return new Promise((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
       this.server.close((error: unknown) => {
         if (error) {
           reject(error);
