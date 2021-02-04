@@ -61,7 +61,7 @@
     "source-map-support": "^0.5.16",
     "strip-ansi": "^6.0.0",
     "systeminformation": "^4.14.17",
-    "table": "^6.0.3",
+    "table": "^6.0.7",
     "ua-parser-js": "^0.7.19"
   },
   "devDependencies": {
