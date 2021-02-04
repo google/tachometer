@@ -5,7 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](http://semver.org/).
 
-<!-- ## Unreleased -->
+## Unreleased
+
+- Fix bug in dependency swapping where local file paths in `git` dependencies
+  would fail to install if they were relative.
 
 ## [0.5.5] 2020-09-21
 
