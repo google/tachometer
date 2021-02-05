@@ -111,6 +111,7 @@ suite('config', () => {
               {
                 mode: 'performance',
                 entryName: 'first-contentful-paint',
+                unit: 'ms'
               },
             ],
             url: {
@@ -130,6 +131,7 @@ suite('config', () => {
             measurement: [
               {
                 mode: 'callback',
+                unit: 'ms',
               },
             ],
             url: {
@@ -156,6 +158,7 @@ suite('config', () => {
               {
                 mode: 'performance',
                 entryName: 'first-contentful-paint',
+                unit: 'ms'
               },
             ],
             url: {
@@ -197,6 +200,7 @@ suite('config', () => {
               {
                 mode: 'performance',
                 entryName: 'first-contentful-paint',
+                unit: 'ms'
               },
             ],
             browser: defaultBrowser,
@@ -209,9 +213,7 @@ suite('config', () => {
               queryString: '?foo=bar',
             },
             measurement: [
-              {
-                mode: 'callback',
-              },
+              {mode: 'callback', unit: 'ms'},
             ],
             browser: defaultBrowser,
           },
@@ -261,9 +263,7 @@ suite('config', () => {
               queryString: '?foo=a',
             },
             measurement: [
-              {
-                mode: 'callback',
-              },
+              {mode: 'callback', unit: 'ms'},
             ],
             browser: defaultBrowser,
           },
@@ -275,10 +275,7 @@ suite('config', () => {
               queryString: '?foo=b',
             },
             measurement: [
-              {
-                mode: 'expression',
-                expression: 'window.foo',
-              },
+              {mode: 'expression', expression: 'window.foo', unit: 'ms'},
             ],
             browser: defaultBrowser,
           },
@@ -290,10 +287,7 @@ suite('config', () => {
               queryString: '?foo=c',
             },
             measurement: [
-              {
-                mode: 'performance',
-                entryName: 'foo-measure',
-              },
+              {mode: 'performance', entryName: 'foo-measure', unit: 'ms'},
             ],
             browser: defaultBrowser,
           },
@@ -339,6 +333,7 @@ suite('config', () => {
               {
                 mode: 'performance',
                 entryName: 'first-contentful-paint',
+                unit: 'ms',
               },
             ],
             browser: defaultBrowser,
@@ -350,6 +345,7 @@ suite('config', () => {
               {
                 mode: 'performance',
                 entryName: 'first-contentful-paint',
+                unit: 'ms',
               },
             ],
             browser: {
@@ -363,6 +359,7 @@ suite('config', () => {
             measurement: [
               {
                 mode: 'callback',
+                unit: 'ms',
               },
             ],
             browser: defaultBrowser,
@@ -373,6 +370,7 @@ suite('config', () => {
             measurement: [
               {
                 mode: 'callback',
+                unit: 'ms',
               },
             ],
             browser: {
@@ -417,6 +415,7 @@ suite('config', () => {
               {
                 mode: 'performance',
                 entryName: 'first-contentful-paint',
+                unit: 'ms',
               },
             ],
             browser: {

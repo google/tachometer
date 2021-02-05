@@ -69,11 +69,11 @@ export function formatCsvRaw(results: ResultStatsWithDifferences[]): string {
   for (let r = 0; r < results.length; r++) {
     const {result} = results[r];
     headers.push(result.name);
-    for (let m = 0; m < result.millis.length; m++) {
+    for (let m = 0; m < result.rawData.length; m++) {
       if (rows[m] === undefined) {
         rows[m] = [];
       }
-      rows[m][r] = result.millis[m];
+      rows[m][r] = result.rawData[m];
     }
   }
   return csvStringify([headers, ...rows]);

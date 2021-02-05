@@ -73,17 +73,20 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
   if (opts.measure === 'callback') {
     measurement = {
       mode: 'callback',
+      unit: defaults.measurementUnit,
     };
   } else if (opts.measure === 'fcp') {
     measurement = {
       mode: 'performance',
       entryName: 'first-contentful-paint',
+      unit: defaults.measurementUnit,
     };
   } else if (opts.measure === 'global') {
     measurement = {
       mode: 'expression',
       expression:
           opts['measurement-expression'] || defaults.measurementExpression,
+      unit: defaults.measurementUnit,
     };
   } else if (opts.measure !== undefined) {
     throwUnreachable(

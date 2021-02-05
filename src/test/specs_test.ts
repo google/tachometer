@@ -69,6 +69,7 @@ suite('specsFromOpts', () => {
           {
             mode: 'performance',
             entryName: 'first-contentful-paint',
+            unit: 'ms'
           },
         ],
       },
@@ -91,6 +92,7 @@ suite('specsFromOpts', () => {
           {
             mode: 'performance',
             entryName: 'first-contentful-paint',
+            unit: 'ms'
           },
         ],
       },
@@ -112,9 +114,7 @@ suite('specsFromOpts', () => {
         },
         browser: defaultBrowser,
         measurement: [
-          {
-            mode: 'callback',
-          },
+          {mode: 'callback', unit: 'ms'},
         ],
       },
     ];
@@ -135,9 +135,7 @@ suite('specsFromOpts', () => {
         },
         browser: defaultBrowser,
         measurement: [
-          {
-            mode: 'callback',
-          },
+          {mode: 'callback', unit: 'ms'},
         ],
       },
     ];
@@ -158,9 +156,7 @@ suite('specsFromOpts', () => {
         },
         browser: defaultBrowser,
         measurement: [
-          {
-            mode: 'callback',
-          },
+          {mode: 'callback', unit: 'ms'},
         ],
       },
     ];
@@ -181,9 +177,7 @@ suite('specsFromOpts', () => {
         },
         browser: defaultBrowser,
         measurement: [
-          {
-            mode: 'callback',
-          },
+          {mode: 'callback', unit: 'ms'},
         ],
       },
     ];
@@ -204,9 +198,7 @@ suite('specsFromOpts', () => {
         },
         browser: defaultBrowser,
         measurement: [
-          {
-            mode: 'callback',
-          },
+          {mode: 'callback', unit: 'ms'},
         ],
       },
     ];
@@ -227,9 +219,7 @@ suite('specsFromOpts', () => {
         },
         browser: defaultBrowser,
         measurement: [
-          {
-            mode: 'callback',
-          },
+          {mode: 'callback', unit: 'ms'},
         ],
       },
     ];
@@ -259,9 +249,7 @@ suite('specsFromOpts', () => {
         },
         browser: defaultBrowser,
         measurement: [
-          {
-            mode: 'callback',
-          },
+          {mode: 'callback', unit: 'ms'},
         ],
       },
       {
@@ -279,9 +267,7 @@ suite('specsFromOpts', () => {
         },
         browser: defaultBrowser,
         measurement: [
-          {
-            mode: 'callback',
-          },
+          {mode: 'callback', unit: 'ms'},
         ],
       },
     ];

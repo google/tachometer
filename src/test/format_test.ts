@@ -210,4 +210,53 @@ suite('format', () => {
     `;
     assert.equal(actual, expected.trim() + '\n');
   });
+
+  test('2 labels, custom units', async () => {
+    const config: ConfigFile = {
+      benchmarks: [
+        {
+          name: 'bench1',
+          url: 'http://example.com?p=bar',
+          browser: {
+            name: 'chrome',
+          },
+          measurement: {
+            name: 'measure1',
+            mode: 'expression',
+            expression: 'test',
+            unit: 'μs'
+          }
+        },
+        {
+          name: 'bench2',
+          url: 'http://example.com?p=bar',
+          browser: {
+            name: 'chrome',
+          },
+          measurement: {
+            name: 'measure1',
+            mode: 'expression',
+            expression: 'test',
+            unit: 'μs'
+          }
+        },
+      ],
+    };
+
+    const actual = await fakeResultTable(config);
+    const expected = `
+┌───────────┬──────────┬───────────────────┬──────────────────┬──────────────────┐
+│ Benchmark │ Bytes    │          Avg time │        vs bench1 │        vs bench2 │
+├───────────┼──────────┼───────────────────┼──────────────────┼──────────────────┤
+│ bench1    │ 1.00 KiB │  8.56μs - 11.44μs │                  │           faster │
+│           │          │                   │         -        │        42% - 58% │
+│           │          │                   │                  │ 7.97μs - 12.03μs │
+├───────────┼──────────┼───────────────────┼──────────────────┼──────────────────┤
+│ bench2    │ 2.00 KiB │ 18.56μs - 21.44μs │           slower │                  │
+│           │          │                   │       68% - 132% │         -        │
+│           │          │                   │ 7.97μs - 12.03μs │                  │
+└───────────┴──────────┴───────────────────┴──────────────────┴──────────────────┘
+    `;
+    assert.equal(actual, expected.trim() + '\n');
+  });
 });

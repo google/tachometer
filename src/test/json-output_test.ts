@@ -68,6 +68,7 @@ suite('jsonOutput', () => {
             name: 'fcp',
             mode: 'performance',
             entryName: 'first-contentful-paint',
+            unit: 'ms'
           },
           browser: {
             name: 'chrome',
@@ -106,6 +107,7 @@ suite('jsonOutput', () => {
             name: 'fcp',
             mode: 'performance',
             entryName: 'first-contentful-paint',
+            unit: 'ms'
           },
           browser: {
             name: 'chrome',
@@ -174,6 +176,7 @@ suite('jsonOutput', () => {
             name: 'Metric 1',
             mode: 'performance',
             entryName: 'metric1',
+            unit: 'ms'
           },
           browser: {
             name: 'chrome',
@@ -211,6 +214,7 @@ suite('jsonOutput', () => {
             name: 'Metric 2',
             mode: 'performance',
             entryName: 'metric2',
+            unit: 'ms'
           },
           browser: {
             name: 'chrome',
@@ -245,6 +249,7 @@ suite('jsonOutput', () => {
             name: 'Metric 1',
             mode: 'performance',
             entryName: 'metric1',
+            unit: 'ms'
           },
           browser: {
             name: 'chrome',
@@ -282,6 +287,7 @@ suite('jsonOutput', () => {
             name: 'Metric 2',
             mode: 'performance',
             entryName: 'metric2',
+            unit: 'ms'
           },
           browser: {
             name: 'chrome',

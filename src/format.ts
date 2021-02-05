@@ -16,7 +16,7 @@ import {UAParser} from 'ua-parser-js';
 import ansi = require('ansi-escape-sequences');
 
 import {Difference, ConfidenceInterval, ResultStats, ResultStatsWithDifferences} from './stats';
-import {BenchmarkSpec, BenchmarkResult} from './types';
+import {BenchmarkSpec, BenchmarkResult, Measurement} from './types';
 
 export const spinner = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'].map(
     (frame) => ansi.format(`[blue]{${frame}}`));
@@ -93,7 +93,7 @@ export function automaticResultTable(results: ResultStats[]): AutomaticResults {
           if (diff === null) {
             return ansi.format('\n[gray]{-}       ');
           }
-          return formatDifference(diff);
+          return formatDifference(diff, r.result.measurement);
         },
       });
     }
@@ -266,7 +266,7 @@ const browserDimension: Dimension = {
 
 const sampleSizeDimension: Dimension = {
   label: 'Sample size',
-  format: (r: ResultStats) => r.result.millis.length.toString(),
+  format: (r: ResultStats) => r.result.rawData.length.toString(),
 };
 
 const bytesSentDimension: Dimension = {
@@ -279,25 +279,28 @@ const runtimeConfidenceIntervalDimension: Dimension = {
   tableConfig: {
     alignment: 'right',
   },
-  format: (r: ResultStats) => formatConfidenceInterval(r.stats.meanCI, milli),
+  format: (r: ResultStats) => formatConfidenceInterval(
+      r.stats.meanCI, formatMeasure(r.result.measurement)),
 };
 
-function formatDifference({absolute, relative}: Difference): string {
+function formatDifference(
+    {absolute, relative}: Difference, measurement: Measurement): string {
+  const format = formatMeasure(measurement);
   let word, rel, abs;
   if (absolute.low > 0 && relative.low > 0) {
     word = `[bold red]{slower}`;
     rel = formatConfidenceInterval(relative, percent);
-    abs = formatConfidenceInterval(absolute, milli);
+    abs = formatConfidenceInterval(absolute, format);
 
   } else if (absolute.high < 0 && relative.high < 0) {
     word = `[bold green]{faster}`;
     rel = formatConfidenceInterval(negate(relative), percent);
-    abs = formatConfidenceInterval(negate(absolute), milli);
+    abs = formatConfidenceInterval(negate(absolute), format);
 
   } else {
     word = `[bold blue]{unsure}`;
     rel = formatConfidenceInterval(relative, (n) => colorizeSign(n, percent));
-    abs = formatConfidenceInterval(absolute, (n) => colorizeSign(n, milli));
+    abs = formatConfidenceInterval(absolute, (n) => colorizeSign(n, format));
   }
 
   return ansi.format(`${word}\n${rel}\n${abs}`);
@@ -307,9 +310,9 @@ function percent(n: number): string {
   return (n * 100).toFixed(0) + '%';
 }
 
-function milli(n: number): string {
-  return n.toFixed(2) + 'ms';
-}
+const formatMeasure = (measurement: Measurement) => (n: number) => {
+  return n.toFixed(2) + measurement.unit;
+};
 
 function negate(ci: ConfidenceInterval): ConfidenceInterval {
   return {
