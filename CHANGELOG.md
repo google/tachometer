@@ -10,6 +10,13 @@ project adheres to [Semantic Versioning](http://semver.org/).
 -  Add `trace` config to capture performance logs from browsers (currently only
    Chromium based browsers).
 
+## [0.5.6] 2021-02-03
+
+- Fix bug in dependency swapping where local file paths in `git` dependencies
+  would fail to install if they were relative.
+
+- Fix "should be object" exception during result table formatting.
+
 ## [0.5.5] 2020-09-21
 
 - A warning is now displayed when there are multiple performance marks or

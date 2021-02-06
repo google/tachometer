@@ -10,7 +10,7 @@
     "noUnusedParameters": true,
     "preserveConstEnums": true,
 
-    "lib": ["es2017", "esnext.asynciterable"],
+    "lib": ["esnext", "esnext.asynciterable"],
 
     "declaration": true,
     "sourceMap": true,
