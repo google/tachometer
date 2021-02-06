@@ -230,7 +230,9 @@ interface ChromeConfig extends BrowserConfigBase {
  */
 interface TraceConfig {
   /**
-   * The tracing categories the browser should log
+   * The tracing categories the browser should log. See Tachometer readme for a
+   * description of available categories. The source of the categories in
+   * Chromium can be found here: https://chromium.googlesource.com/chromium/src/+/master/base/trace_event/builtin_categories.h
    */
   categories?: string[];
 
