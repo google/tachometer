@@ -235,7 +235,7 @@ function chromeOpts(config: BrowserConfig): chrome.Options {
       enableNetwork: true,
       enablePage: true,
       traceCategories: config.trace.categories.join(',')
-    } as any);  // tslint:disable-line no-any "Selenium types are wrong"
+    });
   }
   const {width, height} = config.windowSize;
   opts.addArguments(`--window-size=${width},${height}`);

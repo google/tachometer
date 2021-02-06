@@ -35,7 +35,7 @@
   ],
   "dependencies": {
     "@types/command-line-usage": "^5.0.1",
-    "@types/selenium-webdriver": "^4.0.9",
+    "@types/selenium-webdriver": "^4.0.11",
     "@types/table": "^6.0.0",
     "ansi-escape-sequences": "^5.0.0",
     "command-line-args": "^5.0.2",
