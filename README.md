@@ -601,6 +601,17 @@ relative to the current working directory.
 }
 ```
 
+Available trace categories can be found by going to `about:tracing` in a
+Chromium browser by entering `about:tracing` in the URL bar. Press "Record" in
+the top right (1), then expand the "Edit categories" section (2). There, all the
+categories available for tracing are listed. Note, for the "Disabled by Default
+Categories", preface the name with the string `disabled-by-default-` when adding
+it to your tachometer config. For example, to enable the disabled by default
+`audio` category shown below (3), specify `disabled-by-default-audio` in your
+`browser.trace.categories` tachometer config.
+
+![about:tracing app demonstrating the steps above](./images/about-tracing-small.png)
+
 Tracing can also be enabled via command line flags. See the table at the end of
 the file for details.
 
