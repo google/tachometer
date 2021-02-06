@@ -222,7 +222,7 @@ interface ChromeConfig extends BrowserConfigBase {
   /**
    * Optional config to turn on performance tracing.
    */
-  trace?: TraceConfig|boolean;
+  trace?: TraceConfig|true;
 }
 
 /**
@@ -459,14 +459,12 @@ function parseBrowserObject(config: BrowserConfigs): BrowserConfig {
     parsed.preferences = config.preferences;
   }
   if ('trace' in config && config.trace !== undefined) {
-    if (config.trace === false) {
-      // Do nothing
-    } else if (config.trace === true) {
+    if (config.trace === true) {
       parsed.trace = {
         categories: defaults.traceCategories,
         logDir: defaults.traceLogDir,
       };
-    } else {
+    } else if (typeof config.trace === 'object') {
       parsed.trace = {
         categories: config.trace.categories ?? defaults.traceCategories,
         logDir: config.trace.logDir === undefined ?

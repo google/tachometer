@@ -564,8 +564,16 @@ For example:
 
 ```json
 {
-  "name": "chrome",
-  "trace": true
+  "benchmarks": [
+    {
+      "name": "my-benchmark",
+      "url": "my-benchmark.html",
+      "browser": {
+        "name": "chrome",
+        "trace": true
+      }
+    }
+  ]
 }
 ```
 
@@ -577,11 +585,19 @@ relative to the current working directory.
 
 ```json
 {
-  "name": "chrome",
-  "trace": {
-    "categories": ["blink", "cc", "netlog", "toplevel", "v8"],
-    "logDir": "results/trace-logs",
-  }
+  "benchmarks": [
+    {
+      "name": "my-benchmark",
+      "url": "my-benchmark.html",
+      "browser": {
+        "name": "chrome",
+        "trace": {
+          "categories": ["blink", "cc", "netlog", "toplevel", "v8"],
+          "logDir": "results/trace-logs",
+        }
+      }
+    }
+  ]
 }
 ```
 
