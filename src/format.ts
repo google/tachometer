@@ -348,6 +348,45 @@ function makeUniqueLabelFn(results: BenchmarkResult[]):
 }
 
 /**
+ * Create a function that will return the shortest unambiguous label for a
+ * benchmark spec, given the full array of specs
+ */
+export function makeUniqueSpecLabelFn(specs: BenchmarkSpec[]):
+    (spec: BenchmarkSpec) => string {
+  const names = new Set<string>();
+  const versions = new Set<string>();
+  const browsers = new Set<string>();
+  for (const spec of specs) {
+    names.add(spec.name);
+    browsers.add(spec.browser.name);
+
+    if (spec.url.kind === 'local' && spec.url.version !== undefined) {
+      versions.add(spec.url.version.label);
+    }
+  }
+  return (spec: BenchmarkSpec) => {
+    const fields: string[] = [];
+    if (names.size > 1) {
+      if (spec.name.startsWith('http://')) {
+        fields.push(spec.name.slice(6));
+      } else if (spec.name.startsWith('https://')) {
+        fields.push(spec.name.slice(7));
+      } else {
+        fields.push(spec.name);
+      }
+    }
+    if (versions.size > 1 && spec.url.kind === 'local' &&
+        spec.url.version !== undefined) {
+      fields.push(spec.url.version.label);
+    }
+    if (browsers.size > 1) {
+      fields.push(spec.browser.name);
+    }
+    return fields.join('-');
+  };
+}
+
+/**
  * A one-line summary of a benchmark, e.g. for a progress bar:
  *
  *   chrome my-benchmark [@my-version]

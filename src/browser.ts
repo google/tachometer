@@ -71,6 +71,23 @@ export interface BrowserConfig {
   cpuThrottlingRate?: number;
   /** Advanced preferences usually set from the about:config page. */
   preferences?: {[name: string]: string|number|boolean};
+  /** Trace browser performance logs configuration */
+  trace?: TraceConfig;
+}
+
+/**
+ * Configuration to turn on performance tracing
+ */
+export interface TraceConfig {
+  /**
+   * The tracing categories the browser should log
+   */
+  categories: string[];
+
+  /**
+   * The directory to log performance traces to
+   */
+  logDir: string;
 }
 
 export interface WindowSize {
@@ -183,9 +200,10 @@ export async function makeDriver(config: BrowserConfig):
   if (config.name === 'safari' || config.name === 'edge' ||
       config.name === 'ie') {
     // Safari, Edge, and IE don't have flags we can use to launch with a given
-    // window size, but webdriver can resize the window after we've started up.
-    // Some versions of Safari have a bug where it is required to also provide
-    // an x/y position (see https://github.com/SeleniumHQ/selenium/issues/3796).
+    // window size, but webdriver can resize the window after we've started
+    // up. Some versions of Safari have a bug where it is required to also
+    // provide an x/y position (see
+    // https://github.com/SeleniumHQ/selenium/issues/3796).
     const rect = config.name === 'safari' ? {...config.windowSize, x: 0, y: 0} :
                                             config.windowSize;
     await driver.manage().window().setRect(rect);
@@ -206,6 +224,18 @@ function chromeOpts(config: BrowserConfig): chrome.Options {
   }
   if (config.removeArguments) {
     opts.excludeSwitches(...config.removeArguments);
+  }
+  if (config.trace) {
+    const loggingPrefs = new webdriver.logging.Preferences();
+    loggingPrefs.setLevel('browser', webdriver.logging.Level.ALL);
+    loggingPrefs.setLevel('performance', webdriver.logging.Level.ALL);
+    opts.setLoggingPrefs(loggingPrefs);
+
+    opts.setPerfLoggingPrefs({
+      enableNetwork: true,
+      enablePage: true,
+      traceCategories: config.trace.categories.join(',')
+    });
   }
   const {width, height} = config.windowSize;
   opts.addArguments(`--window-size=${width},${height}`);

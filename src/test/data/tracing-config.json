@@ -1,0 +1,29 @@
+{
+    "$schema": "https://raw.githubusercontent.com/Polymer/tachometer/master/config.schema.json",
+    "sampleSize": 2,
+    "timeout": 0,
+    "benchmarks": [
+        {
+            "name": "bench1",
+            "url": "src/test/data/for-loop.html",
+            "browser": {
+                "name": "chrome",
+                "headless": true,
+                "trace": {
+                    "logDir": "src/test/data/logs"
+                }
+            }
+        },
+        {
+            "name": "bench2",
+            "url": "src/test/data/for-loop.html",
+            "browser": {
+                "name": "chrome",
+                "headless": true,
+                "trace": {
+                    "logDir": "src/test/data/logs"
+                }
+            }
+        }
+    ]
+}

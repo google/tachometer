@@ -437,6 +437,166 @@ suite('config', () => {
       assert.deepEqual(actual, expected);
     });
 
+    test('trace option - true', async () => {
+      const config = {
+        benchmarks: [
+          {
+            url: 'http://example.com?foo=bar',
+            browser: {name: 'chrome', trace: true},
+          },
+          {
+            url: 'http://example.com?test=1',
+            browser: {name: 'chrome', trace: true}
+          }
+        ],
+      };
+      const expected: Partial<Config> = {
+        root: '.',
+        sampleSize: undefined,
+        timeout: undefined,
+        horizons: undefined,
+        resolveBareModules: undefined,
+        benchmarks: [
+          {
+            name: 'http://example.com?foo=bar',
+            url: {
+              kind: 'remote',
+              url: 'http://example.com?foo=bar',
+            },
+            measurement: [
+              {
+                mode: 'performance',
+                entryName: 'first-contentful-paint',
+              },
+            ],
+            browser: {
+              name: 'chrome',
+              headless: false,
+              windowSize: {
+                width: defaults.windowWidth,
+                height: defaults.windowHeight,
+              },
+              trace: {
+                categories: defaults.traceCategories,
+                logDir: path.join(defaults.traceLogDir, 'example.comfoo=bar')
+              }
+            },
+          },
+          {
+            name: 'http://example.com?test=1',
+            url: {
+              kind: 'remote',
+              url: 'http://example.com?test=1',
+            },
+            measurement: [
+              {
+                mode: 'performance',
+                entryName: 'first-contentful-paint',
+              },
+            ],
+            browser: {
+              name: 'chrome',
+              headless: false,
+              windowSize: {
+                width: defaults.windowWidth,
+                height: defaults.windowHeight,
+              },
+              trace: {
+                categories: defaults.traceCategories,
+                logDir: path.join(defaults.traceLogDir, 'example.comtest=1')
+              }
+            },
+          },
+        ],
+      };
+      const actual = await parseConfigFile(config);
+      assert.deepEqual(actual, expected);
+    });
+
+    test('trace option - config object', async () => {
+      const config = {
+        benchmarks: [
+          {
+            name: 'benchmark',
+            url: 'mybench/index.html',
+            packageVersions: {label: 'version1', dependencies: {}},
+            browser:
+                {name: 'chrome', trace: {categories: ['test'], logDir: 'test'}},
+          },
+          {
+            name: 'benchmark',
+            url: 'mybench/index.html',
+            packageVersions: {label: 'version2', dependencies: {}},
+            browser:
+                {name: 'chrome', trace: {categories: ['test'], logDir: 'test'}},
+          }
+        ],
+      };
+      const expected: Partial<Config> = {
+        root: '.',
+        sampleSize: undefined,
+        timeout: undefined,
+        horizons: undefined,
+        resolveBareModules: undefined,
+        benchmarks: [
+          {
+            name: 'benchmark',
+            url: {
+              kind: 'local',
+              queryString: '',
+              urlPath: '/mybench/index.html',
+              version: {label: 'version1', dependencyOverrides: {}}
+            },
+            measurement: [
+              {
+                mode: 'callback',
+              },
+            ],
+            browser: {
+              name: 'chrome',
+              headless: false,
+              windowSize: {
+                width: defaults.windowWidth,
+                height: defaults.windowHeight,
+              },
+              trace: {
+                categories: ['test'],
+                logDir: path.join(process.cwd(), 'test', 'version1')
+              }
+            },
+          },
+          {
+            name: 'benchmark',
+            url: {
+              kind: 'local',
+              queryString: '',
+              urlPath: '/mybench/index.html',
+              version: {label: 'version2', dependencyOverrides: {}}
+            },
+            measurement: [
+              {
+                mode: 'callback',
+              },
+            ],
+            browser: {
+              name: 'chrome',
+              headless: false,
+              windowSize: {
+                width: defaults.windowWidth,
+                height: defaults.windowHeight,
+              },
+              trace: {
+                categories: ['test'],
+                logDir: path.join(process.cwd(), 'test', 'version2')
+              }
+            },
+          },
+        ],
+      };
+      const actual = await parseConfigFile(config);
+      assert.deepEqual(actual, expected);
+    });
+
     suite('errors', () => {
       test('invalid top-level type', async () => {
         const config = 42;

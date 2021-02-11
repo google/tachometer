@@ -28,7 +28,7 @@ export type OnDemandDependencies = Map<string, string>;
 export const assertResolvable = async (id: string) => {
   await new Promise<void>(async (resolve, reject) => {
     exec(
-        `${process.execPath} -e "require.resolve(process.env.ID)"`,
+        `"${process.execPath}" -e "require.resolve(process.env.ID)"`,
         {
           cwd: await getPackageRoot() || process.cwd(),
           env: {...process.env, ID: id}

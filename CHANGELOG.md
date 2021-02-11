@@ -5,7 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](http://semver.org/).
 
-<!-- ## Unreleased -->
+## Unreleased
+
+-  Add `trace` config to capture performance logs from browsers (currently only
+   Chromium based browsers).
 
 ## [0.5.6] 2021-02-03
 

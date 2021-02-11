@@ -9,6 +9,7 @@
  * rights grant found at http://polymer.github.io/PATENTS.txt
  */
 
+import * as path from 'path';
 import {BrowserName} from './browser';
 import {LocalUrl, Measurement, RemoteUrl} from './types';
 
@@ -24,6 +25,18 @@ export const mode = 'automatic';
 export const resolveBareModules = true;
 export const forceCleanNpmInstall = false;
 export const measurementExpression = 'window.tachometerResult';
+export const traceLogDir = path.join(process.cwd(), 'logs');
+export const traceCategories = [
+  'blink',
+  'blink.user_timing',
+  'v8',
+  'v8.execute',
+  'disabled-by-default-v8.compile',
+  // Seems to sometimes cause errors in Chrome's about:tracing
+  // "disabled-by-default-v8.cpu_profiler",
+  'disabled-by-default-v8.gc',
+  'disabled-by-default-v8.turbofan',
+];
 
 export function measurement(url: LocalUrl|RemoteUrl): Measurement {
   if (url.kind === 'remote') {

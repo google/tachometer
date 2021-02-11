@@ -10,8 +10,10 @@
  */
 
 import {assert} from 'chai';
+import {existsSync} from 'fs';
 import {suite, test} from 'mocha';
 import * as path from 'path';
+import rimraf from 'rimraf';
 import {main} from '../cli';
 import {ConfidenceInterval} from '../stats';
 import {testData} from './test_helpers';
@@ -51,6 +53,18 @@ const hideOutput = (test: () => Promise<void>) => async () => {
 
 function ciAverage(ci: ConfidenceInterval): number {
   return (ci.high + ci.low) / 2;
+}
+
+function rimrafAsync(path: string) {
+  return new Promise<void>(function(resolve, reject) {
+    rimraf(path, {}, (error) => {
+      if (error) {
+        reject(error);
+      } else {
+        resolve();
+      }
+    });
+  });
 }
 
 suite('e2e', function() {
@@ -281,6 +295,22 @@ suite('e2e', function() {
                // that the rankings we expect hold.
                assert.isAbove(x2.stats.mean, x1.stats.mean);
                assert.isAbove(x4.stats.mean, x2.stats.mean);
+             }));
+
+        test('tracing', hideOutput(async function() {
+               const logDir = path.join(testData, 'logs');
+               if (existsSync(logDir)) {
+                 await rimrafAsync(logDir);
+               }
+               const argv = [
+                 `--config=${path.join(testData, 'tracing-config.json')}`,
+               ];
+               const actual = await main(argv);
+               assert.isDefined(actual);
+               assert.lengthOf(actual!, 2);
+               assert.isTrue(existsSync(logDir));
+               assert.isTrue(existsSync(path.join(logDir, 'bench1')));
+               assert.isTrue(existsSync(path.join(logDir, 'bench2')));
              }));
       }
 

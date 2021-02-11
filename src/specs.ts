@@ -11,7 +11,7 @@
 
 import * as path from 'path';
 
-import {parseBrowserConfigString, validateBrowserConfig, WindowSize} from './browser';
+import {parseBrowserConfigString, TraceConfig, validateBrowserConfig, WindowSize} from './browser';
 import {Config, urlFromLocalPath} from './config';
 import * as defaults from './defaults';
 import {Opts} from './flags';
@@ -45,6 +45,16 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
     };
   }
 
+  let trace: TraceConfig|undefined;
+  if (opts['trace']) {
+    const rawLogDir = opts['trace-log-dir'];
+    trace = {
+      categories: opts['trace-cat'].split(','),
+      logDir: path.isAbsolute(rawLogDir) ? rawLogDir :
+                                           path.join(process.cwd(), rawLogDir)
+    };
+  }
+
   const browserStrings = new Set((opts.browser || defaults.browserName)
                                      .replace(/\s+/, '')
                                      .split(',')
@@ -57,6 +67,9 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
       ...parseBrowserConfigString(str),
       windowSize,
     };
+    if (trace) {
+      config.trace = trace;
+    }
     validateBrowserConfig(config);
     return config;
   });

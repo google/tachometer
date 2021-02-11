@@ -123,10 +123,14 @@ export class Runner {
     const {specs, bar} = this;
     for (let i = 0; i < specs.length; i++) {
       const spec = specs[i];
+      if (spec.browser.trace !== undefined) {
+        await fsExtra.mkdirp(spec.browser.trace.logDir);
+      }
+
       bar.tick(0, {
         status: `warmup ${i + 1}/${specs.length} ${benchmarkOneLiner(spec)}`,
       });
-      await this.takeSamples(spec);
+      await this.takeSamples(spec, 'warmup');
       bar.tick(1);
     }
   }
@@ -163,13 +167,17 @@ export class Runner {
     // Always collect our minimum number of samples.
     const {config, specs, bar} = this;
     const numRuns = specs.length * config.sampleSize;
+    const maxLength = config.sampleSize.toString().length;
     let run = 0;
     for (let sample = 0; sample < config.sampleSize; sample++) {
+      const sampleLabel =
+          `sample-${sample.toString().padStart(maxLength, '0')}`;
+
       for (const spec of specs) {
         bar.tick(0, {
           status: `${++run}/${numRuns} ${benchmarkOneLiner(spec)}`,
         });
-        this.recordSamples(spec, await this.takeSamples(spec));
+        this.recordSamples(spec, await this.takeSamples(spec, sampleLabel));
         if (bar.curr === bar.total - 1) {
           // Note if we tick with 0 after we've completed, the status is
           // rendered on the next line for some reason.
@@ -215,13 +223,17 @@ export class Runner {
           process.stdout.write(
               `\r${spinner[run % spinner.length]} Auto-sample ${sample} ` +
               `(timeout in ${mins}m${secs}s)` + ansi.erase.inLine(0));
-          this.recordSamples(spec, await this.takeSamples(spec));
+
+          const sampleLabel =
+              `auto-sample-${sample.toString().padStart(2, '0')}`;
+          this.recordSamples(spec, await this.takeSamples(spec, sampleLabel));
         }
       }
     }
   }
 
-  private async takeSamples(spec: BenchmarkSpec): Promise<BenchmarkResult[]> {
+  private async takeSamples(spec: BenchmarkSpec, sampleLabel: string):
+      Promise<BenchmarkResult[]> {
     const {servers, config, browsers} = this;
 
     let server;
@@ -271,6 +283,8 @@ export class Runner {
           }
         }
       }
+
+      await this.capturePerfTraces(spec, driver, sampleLabel);
 
       // Close the active tab (but not the whole browser, since the
       // initial blank tab is still open).
@@ -325,6 +339,32 @@ export class Runner {
           browser: spec.browser,
           userAgent: session ? session.userAgent : '',
         }));
+  }
+
+  async capturePerfTraces(
+      spec: BenchmarkSpec, driver: webdriver.WebDriver, sampleLabel: string) {
+    if (spec.browser.trace === undefined) {
+      return;
+    }
+
+    let perfEntries: webdriver.logging.Entry[] = [];
+    let newPerfEntries: webdriver.logging.Entry[];
+    do {
+      newPerfEntries = await driver.manage().logs().get('performance');
+      perfEntries = perfEntries.concat(newPerfEntries);
+    } while (newPerfEntries.length > 0);
+
+    const logDir = spec.browser.trace.logDir;
+    await fsExtra.writeFile(
+        logDir + `\\log-${sampleLabel}.json`,
+        // Convert perf logs into a format about:tracing can parse
+        '[\n' +
+            perfEntries.map((e) => JSON.parse(e.message).message)
+                .filter((log) => log.method === 'Tracing.dataCollected')
+                .map((log) => JSON.stringify(log.params))
+                .join(',\n') +
+            '\n]',
+        'utf8');
   }
 
   makeResults() {
