@@ -135,16 +135,16 @@ export async function legacyJsonOutput(results: BenchmarkResult[]):
         manufacturer: cpu.manufacturer,
         model: cpu.model,
         family: cpu.family,
-        speed: cpu.speed,
+        speed: cpu.speed.toFixed(2),
         cores: cpu.cores,
       },
       load: {
-        average: currentLoad.avgload,
-        current: currentLoad.currentload,
+        average: currentLoad.avgLoad,
+        current: currentLoad.currentLoad,
       },
       battery: {
-        hasBattery: battery.hasbattery,
-        connected: battery.acconnected,
+        hasBattery: battery.hasBattery,
+        connected: battery.acConnected,
       },
       memory: {
         total: memory.total,
