@@ -7,6 +7,10 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 <!-- ## Unreleased -->
 
+## [0.5.8] 2021-02-16
+
+- Upgrade `systeminformation` dependency with security vulnerability alert.
+
 ## [0.5.7] 2021-02-11
 
 -  Add `trace` config to capture performance logs from browsers (currently only
