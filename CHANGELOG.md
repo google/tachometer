@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](http://semver.org/).
 
-## Unreleased
+<!-- ## Unreleased -->
+
+## [0.5.9] 2021-04-22
 
 - Fix bug where git URLs like `git@github.com/MyOrg/my-repo.git` were treated as
   local paths.
