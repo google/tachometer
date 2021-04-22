@@ -10,6 +10,8 @@ project adheres to [Semantic Versioning](http://semver.org/).
 - Fix bug where git URLs like `git@github.com/MyOrg/my-repo.git` were treated as
   local paths.
 
+- Bump dependencies.
+
 ## [0.5.8] 2021-02-16
 
 - Upgrade `systeminformation` dependency with security vulnerability alert.
