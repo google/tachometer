@@ -116,7 +116,7 @@ export async function makeServerPlans(
             // If repo is a local relative path, we need to make it absolute.
             // Otherwise, when we run "npm install" in our temp directory, our
             // dependency will reference the wrong path.
-            const repo = makeGitFileUrlAbsolute(version.repo, process.cwd());
+            const repo = makeLocalRelativeGitRepoAbsolute(version.repo, process.cwd());
 
             // Immediately resolve the git reference (branch, tag, etc.) to a
             // SHA and use that going forward, so that we never fall behind the
@@ -363,18 +363,10 @@ async function remoteResolveGitRefToSha(
       ref}\`:\n${stdout}`);
 }
 
-function makeGitFileUrlAbsolute(str: string, root: string): string {
-  // Note we don't use standard URL to parse, because file:// URLs don't
-  // decompose into host/path parts, so it's simpler this way.
-  const urlMatch = str.match(/^([^:\/]+):\/\/(.*)/);
-  if (urlMatch === null) {
-    // If it's not a URL, it must be a file path.
-    return path.resolve(root, str);
+function makeLocalRelativeGitRepoAbsolute(repo: string, root: string): string {
+  if (repo.startsWith('.') || repo.startsWith('file://.')) {
+    const rel = repo.replace(/^file:\/\//, '');
+    return path.resolve(root, rel);
   }
-  const [, protocol, rest] = urlMatch;
-  if (protocol === 'file') {
-    return path.resolve(root, rest);
-  }
-  // A remote URL, do nothing.
-  return str;
+  return repo;
 }

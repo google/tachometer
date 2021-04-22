@@ -5,7 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](http://semver.org/).
 
-<!-- ## Unreleased -->
+## Unreleased
+
+- Fix bug where git URLs like `git@github.com/MyOrg/my-repo.git` were treated as
+  local paths.
 
 ## [0.5.8] 2021-02-16
 
@@ -13,8 +16,8 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [0.5.7] 2021-02-11
 
--  Add `trace` config to capture performance logs from browsers (currently only
-   Chromium based browsers).
+- Add `trace` config to capture performance logs from browsers (currently only
+  Chromium based browsers).
 
 ## [0.5.6] 2021-02-03
 
