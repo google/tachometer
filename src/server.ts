@@ -159,7 +159,7 @@ export class Server {
       return next();
     }
 
-    session.userAgent = ctx.headers['user-agent'];
+    session.userAgent = ctx.headers['user-agent'] ?? '';
     // Note this assumes serial runs, as we guarantee in automatic mode.
     // If we ever wanted to support parallel requests, we would require
     // some kind of session tracking.
@@ -214,7 +214,7 @@ export class Server {
     this.urlCache.set(ctx.url, {
       body: bodyString,
       status: ctx.response.status,
-      headers: ctx.response.headers,
+      headers: ctx.response.headers as {[key: string]: string},
     });
   }
 

@@ -1,6 +1,6 @@
 {
   "name": "tachometer",
-  "version": "0.5.8",
+  "version": "0.5.9",
   "description": "Web benchmark runner",
   "main": "lib/cli.js",
   "directories": {
@@ -37,7 +37,7 @@
     "@types/command-line-usage": "^5.0.1",
     "@types/selenium-webdriver": "^4.0.11",
     "@types/table": "^6.0.0",
-    "ansi-escape-sequences": "^5.0.0",
+    "ansi-escape-sequences": "^6.0.1",
     "command-line-args": "^5.0.2",
     "command-line-usage": "^6.1.0",
     "csv-stringify": "^5.3.0",

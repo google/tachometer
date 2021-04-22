@@ -7,14 +7,21 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 <!-- ## Unreleased -->
 
+## [0.5.9] 2021-04-22
+
+- Fix bug where git URLs like `git@github.com/MyOrg/my-repo.git` were treated as
+  local paths.
+
+- Bump dependencies.
+
 ## [0.5.8] 2021-02-16
 
 - Upgrade `systeminformation` dependency with security vulnerability alert.
 
 ## [0.5.7] 2021-02-11
 
--  Add `trace` config to capture performance logs from browsers (currently only
-   Chromium based browsers).
+- Add `trace` config to capture performance logs from browsers (currently only
+  Chromium based browsers).
 
 ## [0.5.6] 2021-02-03
 
