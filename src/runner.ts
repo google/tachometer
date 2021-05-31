@@ -356,7 +356,7 @@ export class Runner {
 
     const logDir = spec.browser.trace.logDir;
     await fsExtra.writeFile(
-        logDir + `\\log-${sampleLabel}.json`,
+        logDir + `/log-${sampleLabel}.json`,
         // Convert perf logs into a format about:tracing can parse
         '[\n' +
             perfEntries.map((e) => JSON.parse(e.message).message)
