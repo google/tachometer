@@ -179,10 +179,7 @@ export const optDefs: commandLineUsage.OptionDefinition[] = [
     description:
       'The degrees of difference to try and resolve when auto-sampling ' +
       '(milliseconds, comma-delimited, optionally signed, ' +
-      // TODO Not sure why, but tslint throws a compilation error without the
-      // "|| []" short-circuit "TypeError: Cannot read property 'join' of
-      // undefined".
-      `default ${(defaults.horizons || []).join(',')})`,
+      `default ${defaults.horizons.join(',')})`,
     type: String,
   },
   {
