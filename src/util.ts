@@ -36,7 +36,7 @@ export async function fileKind(path: string): Promise<'file'|'dir'|undefined> {
       return 'file';
     }
   } catch (e) {
-    if (e.code === 'ENOENT') {
+    if ((e as Error & {code?: string}).code === 'ENOENT') {
       return undefined;
     }
     throw e;
