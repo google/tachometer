@@ -329,10 +329,10 @@ export async function openAndSwitchToNewTab(
     await driver.manage().window().setRect(rect);
   }
   type WithSendDevToolsCommand = {
-    sendDevToolsCommand?: (command: string, config: {}) => Promise<void>;
+    sendDevToolsCommand?: (command: string, config: unknown) => Promise<void>;
   };
 
-  const driverWithSendDevToolsCommand = driver as {} as WithSendDevToolsCommand;
+  const driverWithSendDevToolsCommand = driver as WithSendDevToolsCommand;
   if (
     driverWithSendDevToolsCommand.sendDevToolsCommand &&
     config.cpuThrottlingRate !== undefined

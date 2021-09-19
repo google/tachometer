@@ -249,6 +249,6 @@ function isStream(value: unknown): value is Stream {
   return (
     value !== null &&
     typeof value === 'object' &&
-    typeof (value as {pipe: Function | undefined}).pipe === 'function'
+    typeof (value as {pipe: (() => unknown) | undefined}).pipe === 'function'
   );
 }
