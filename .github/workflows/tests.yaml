@@ -1,0 +1,36 @@
+name: Tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        job: [linux, macos]
+        include:
+          - job: linux
+            os: ubuntu-latest
+            browsers: chrome-headless, firefox-headless
+
+          - job: macos
+            # Note macos-11 is currently more recent than macos-latest
+            # https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#github-hosted-runners
+            os: macos-11
+            browsers: safari
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 14
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
+
+      - run: npm test
+        env:
+          TACHOMETER_E2E_TEST_BROWSERS: ${{ matrix.browsers }}
+          TACHOMETER_E2E_TEST_SHOW_OUTPUT: true
