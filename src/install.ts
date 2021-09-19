@@ -10,10 +10,13 @@
  */
 
 import {exec} from 'child_process';
+import {promisify} from 'util';
 import {promises as fs} from 'fs';
 import path from 'path';
 import {install} from 'pkg-install';
 import pkgUp from 'pkg-up';
+
+const execPromise = promisify(exec);
 
 export type OnDemandDependencies = Map<string, string>;
 
@@ -26,22 +29,13 @@ export type OnDemandDependencies = Map<string, string>;
  * @see https://github.com/nodejs/node/issues/31803
  */
 export const assertResolvable = async (id: string) => {
-  await new Promise<void>(async (resolve, reject) => {
-    exec(
-      `"${process.execPath}" -e "require.resolve(process.env.ID)"`,
-      {
-        cwd: (await getPackageRoot()) || process.cwd(),
-        env: {...process.env, ID: id},
-      },
-      (error) => {
-        if (error != null) {
-          reject(error);
-          return;
-        }
-        resolve();
-      }
-    );
-  });
+  await execPromise(
+    `"${process.execPath}" -e "require.resolve(process.env.ID)"`,
+    {
+      cwd: (await getPackageRoot()) || process.cwd(),
+      env: {...process.env, ID: id},
+    }
+  );
 };
 
 export interface ContainsOnDemandDependencies {

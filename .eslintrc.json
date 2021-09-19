@@ -17,7 +17,6 @@
     "@typescript-eslint/explicit-module-boundary-types": "off",
     "@typescript-eslint/no-non-null-assertion": "off",
     "@typescript-eslint/no-var-requires": "off",
-    "no-async-promise-executor": "off",
     "no-case-declarations": "off",
     "no-constant-condition": "off",
     "no-empty": "off"
