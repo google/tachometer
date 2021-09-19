@@ -650,7 +650,7 @@ suite('config', () => {
           ],
         };
         await assert.isRejected(
-            parseConfigFile(config), 'config additionalProperty "nonsense"');
+            parseConfigFile(config), 'config is not allowed to have the additional property "nonsense"');
       });
 
       test('unknown benchmark property', async () => {
@@ -664,7 +664,7 @@ suite('config', () => {
         };
         await assert.isRejected(
             parseConfigFile(config),
-            'config.benchmarks[0] additionalProperty "nonsense"');
+            'config.benchmarks[0] is not allowed to have the additional property "nonsense"');
       });
 
       test('missing url', async () => {
@@ -706,7 +706,7 @@ suite('config', () => {
         };
         await assert.isRejected(
             parseConfigFile(config),
-            'config.benchmarks[0].measurement is not one of: callback, fcp');
+            'config.benchmarks[0].measurement is not any of: callback, fcp');
       });
 
       test('sampleSize too small', async () => {
@@ -720,7 +720,7 @@ suite('config', () => {
         };
         await assert.isRejected(
             parseConfigFile(config),
-            'config.sampleSize must have a minimum value of 2');
+            'config.sampleSize must be greater than or equal to 2');
       });
 
       test('non-integer sampleSize', async () => {
