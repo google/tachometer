@@ -5,7 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](http://semver.org/).
 
-<!-- ## Unreleased -->
+## Unreleased
+
+- Fix bug where log files would be created with '\' backslash names instead of
+  nested directories.
 
 ## [0.5.9] 2021-04-22
 
