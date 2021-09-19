@@ -16,6 +16,7 @@
     "generate-json-schema": "typescript-json-schema tsconfig.json ConfigFile --include src/configfile.ts --required --noExtraProps > config.schema.json",
     "lint": "eslint .",
     "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "test": "npm run build && mocha 'lib/test/**/*.js'"
   },
   "repository": {
