@@ -17,7 +17,7 @@ import {parseFlags} from '../flags';
 
 import {testData} from './test_helpers';
 
-suite('makeConfig', function() {
+suite('makeConfig', function () {
   let prevCwd: string;
 
   suiteSetup(() => {
@@ -60,9 +60,11 @@ suite('makeConfig', function() {
               width: 1024,
             },
           },
-          measurement: [{
-            mode: 'callback',
-          }],
+          measurement: [
+            {
+              mode: 'callback',
+            },
+          ],
           name: 'random-global.html',
           url: {
             kind: 'local',
@@ -103,9 +105,11 @@ suite('makeConfig', function() {
               width: 1024,
             },
           },
-          measurement: [{
-            mode: 'callback',
-          }],
+          measurement: [
+            {
+              mode: 'callback',
+            },
+          ],
           // TODO(aomarks) Why does this have a forward-slash?
           name: '/random-global.html',
           url: {
@@ -146,9 +150,11 @@ suite('makeConfig', function() {
               width: 1024,
             },
           },
-          measurement: [{
-            mode: 'callback',
-          }],
+          measurement: [
+            {
+              mode: 'callback',
+            },
+          ],
           // TODO(aomarks) Why does this have a forward-slash?
           name: '/random-global.html',
           url: {
@@ -196,9 +202,11 @@ suite('makeConfig', function() {
               width: 1024,
             },
           },
-          measurement: [{
-            mode: 'callback',
-          }],
+          measurement: [
+            {
+              mode: 'callback',
+            },
+          ],
           // TODO(aomarks) Why does this have a forward-slash?
           name: '/random-global.html',
           url: {
@@ -213,7 +221,7 @@ suite('makeConfig', function() {
   });
 });
 
-suite('parseHorizons', function() {
+suite('parseHorizons', function () {
   test('0ms', () => {
     assert.deepEqual(parseHorizons(['0ms']), {
       absolute: [0],
@@ -280,16 +288,18 @@ suite('parseHorizons', function() {
   test('0%,1%,10%', () => {
     assert.deepEqual(parseHorizons(['0%', '1%', '10%']), {
       absolute: [],
-      relative: [-0.1, -0.01, 0, 0.01, 0.10],
+      relative: [-0.1, -0.01, 0, 0.01, 0.1],
     });
   });
 
   test('0ms,0.1ms,1ms,0%,1%,10%', () => {
     assert.deepEqual(
-        parseHorizons(['0ms', '0.1ms', '1ms', '0%', '1%', '10%']), {
-          absolute: [-1, -0.1, 0, 0.1, 1],
-          relative: [-0.1, -0.01, 0, 0.01, 0.10],
-        });
+      parseHorizons(['0ms', '0.1ms', '1ms', '0%', '1%', '10%']),
+      {
+        absolute: [-1, -0.1, 0, 0.1, 1],
+        relative: [-0.1, -0.01, 0, 0.01, 0.1],
+      }
+    );
   });
 
   test('throws on nonsense', () => {

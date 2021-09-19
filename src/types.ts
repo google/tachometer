@@ -37,7 +37,7 @@ export interface PackageDependencyMap {
  * more advanced configurations.
  */
 export interface ExtendedPackageDependencyMap {
-  [pkg: string]: string|GitDependency;
+  [pkg: string]: string | GitDependency;
 }
 
 /**
@@ -77,7 +77,9 @@ export interface NpmPackageJson {
 
 /** The kinds of intervals we can measure. */
 export type Measurement =
-    CallbackMeasurement|PerformanceEntryMeasurement|ExpressionMeasurement;
+  | CallbackMeasurement
+  | PerformanceEntryMeasurement
+  | ExpressionMeasurement;
 
 export interface MeasurementBase {
   name?: string;
@@ -97,13 +99,13 @@ export interface ExpressionMeasurement extends MeasurementBase {
   expression: string;
 }
 
-export type CommandLineMeasurements = 'callback'|'fcp'|'global';
+export type CommandLineMeasurements = 'callback' | 'fcp' | 'global';
 
 export const measurements = new Set<string>(['callback', 'fcp', 'global']);
 
 /** A specification of a benchmark to run. */
 export interface BenchmarkSpec {
-  url: LocalUrl|RemoteUrl;
+  url: LocalUrl | RemoteUrl;
   measurement: Measurement[];
   name: string;
   browser: BrowserConfig;

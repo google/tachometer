@@ -26,7 +26,9 @@ export function isHttpUrl(str: string): boolean {
   }
 }
 
-export async function fileKind(path: string): Promise<'file'|'dir'|undefined> {
+export async function fileKind(
+  path: string
+): Promise<'file' | 'dir' | undefined> {
   try {
     const stat = await fsExtra.stat(path);
     if (stat.isDirectory()) {
@@ -45,7 +47,9 @@ export async function fileKind(path: string): Promise<'file'|'dir'|undefined> {
 
 const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 export async function runNpm(
-    args: string[], options?: ExecFileOptions): Promise<string|Buffer> {
+  args: string[],
+  options?: ExecFileOptions
+): Promise<string | Buffer> {
   return promisify(execFile)(npmCmd, args, options).then(({stdout}) => stdout);
 }
 
@@ -53,7 +57,7 @@ export async function runNpm(
  * Promisified version of setTimeout.
  */
 export const wait = (ms: number) =>
-    new Promise((resolve) => setTimeout(resolve, ms));
+  new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
  * A function that should never be called. But if it somehow is anyway, throw an

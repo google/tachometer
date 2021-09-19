@@ -53,11 +53,14 @@ export class Server {
   private readonly server: net.Server;
   private session: Session = {bytesSent: 0, userAgent: ''};
   private deferredResults = new Deferred<BenchmarkResponse>();
-  private readonly urlCache = new Map<string, {
-    status: number,
-    headers: {[key: string]: string},
-    body: string|null|undefined,
-  }>();
+  private readonly urlCache = new Map<
+    string,
+    {
+      status: number;
+      headers: {[key: string]: string};
+      body: string | null | undefined;
+    }
+  >();
 
   static start(opts: ServerOpts): Promise<Server> {
     const server = http.createServer();
@@ -99,24 +102,27 @@ export class Server {
     app.use(this.serveBenchLib.bind(this));
 
     if (opts.resolveBareModules === true) {
-      const npmRoot = opts.npmInstalls.length > 0 ?
-          opts.npmInstalls[0].installDir :
-          opts.root;
+      const npmRoot =
+        opts.npmInstalls.length > 0
+          ? opts.npmInstalls[0].installDir
+          : opts.root;
 
-      app.use(nodeResolve({
-        root: npmRoot,
-        // TODO Use default logging options after issues resolved:
-        // https://github.com/Polymer/koa-node-resolve/issues/16
-        // https://github.com/Polymer/koa-node-resolve/issues/17
-        logger: false,
-      }));
+      app.use(
+        nodeResolve({
+          root: npmRoot,
+          // TODO Use default logging options after issues resolved:
+          // https://github.com/Polymer/koa-node-resolve/issues/16
+          // https://github.com/Polymer/koa-node-resolve/issues/17
+          logger: false,
+        })
+      );
     }
     for (const {diskPath, urlPath} of opts.mountPoints) {
       app.use(mount(urlPath, serve(diskPath, {index: 'index.html'})));
     }
 
     this.server.on('request', app.callback());
-    const address = (this.server.address() as net.AddressInfo);
+    const address = this.server.address() as net.AddressInfo;
     let host = address.address;
     if (address.family === 'IPv6') {
       host = `[${host}]`;
@@ -152,8 +158,10 @@ export class Server {
     });
   }
 
-  private async instrumentRequests(ctx: Koa.Context, next: () => Promise<void>):
-      Promise<void> {
+  private async instrumentRequests(
+    ctx: Koa.Context,
+    next: () => Promise<void>
+  ): Promise<void> {
     const session = this.session;
     if (session === undefined) {
       return next();
@@ -168,8 +176,9 @@ export class Server {
       session.bytesSent += ctx.response.length;
     } else if (ctx.status === 200) {
       console.log(
-          `No response length for 200 response for ${ctx.url}, ` +
-          `byte count may be inaccurate.`);
+        `No response length for 200 response for ${ctx.url}, ` +
+          `byte count may be inaccurate.`
+      );
     }
   }
 
@@ -192,8 +201,12 @@ export class Server {
     }
 
     await next();
-    const body =
-        ctx.response.body as string | Buffer | Stream | null | undefined;
+    const body = ctx.response.body as
+      | string
+      | Buffer
+      | Stream
+      | null
+      | undefined;
     let bodyString;
     if (typeof body === 'string') {
       bodyString = body;
@@ -233,6 +246,9 @@ export class Server {
 }
 
 function isStream(value: unknown): value is Stream {
-  return value !== null && typeof value === 'object' &&
-      typeof (value as {pipe: Function | undefined}).pipe === 'function';
+  return (
+    value !== null &&
+    typeof value === 'object' &&
+    typeof (value as {pipe: Function | undefined}).pipe === 'function'
+  );
 }

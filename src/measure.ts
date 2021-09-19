@@ -21,9 +21,10 @@ import {throwUnreachable} from './util';
  * wait some more time).
  */
 export async function measure(
-    driver: webdriver.WebDriver,
-    measurement: Measurement,
-    server: Server|undefined): Promise<number|undefined> {
+  driver: webdriver.WebDriver,
+  measurement: Measurement,
+  server: Server | undefined
+): Promise<number | undefined> {
   switch (measurement.mode) {
     case 'callback':
       if (server === undefined) {
@@ -36,9 +37,9 @@ export async function measure(
       return queryForPerformanceEntry(driver, measurement);
   }
   throwUnreachable(
-      measurement,
-      `Internal error: unknown measurement type ` +
-          JSON.stringify(measurement));
+    measurement,
+    `Internal error: unknown measurement type ` + JSON.stringify(measurement)
+  );
 }
 
 /**
@@ -49,8 +50,14 @@ export async function measure(
  * DOM types ambiently defined.
  */
 interface PerformanceEntry {
-  entryType: 'frame'|'navigation'|'resource'|'mark'|'measure'|'paint'|
-      'longtask';
+  entryType:
+    | 'frame'
+    | 'navigation'
+    | 'resource'
+    | 'mark'
+    | 'measure'
+    | 'paint'
+    | 'longtask';
   name: string;
   startTime: number;
   duration: number;
@@ -63,19 +70,21 @@ interface PerformanceEntry {
  * same criteria, returns only the first one.
  */
 async function queryForPerformanceEntry(
-    driver: webdriver.WebDriver,
-    measurement: PerformanceEntryMeasurement): Promise<number|undefined> {
+  driver: webdriver.WebDriver,
+  measurement: PerformanceEntryMeasurement
+): Promise<number | undefined> {
   const escaped = escapeStringLiteral(measurement.entryName);
   const script = `return window.performance.getEntriesByName(\`${escaped}\`);`;
-  const entries = await driver.executeScript(script) as PerformanceEntry[];
+  const entries = (await driver.executeScript(script)) as PerformanceEntry[];
   if (entries.length === 0) {
     return undefined;
   }
   if (entries.length > 1) {
     console.log(
-        'WARNING: Found multiple performance marks/measurements with name ' +
+      'WARNING: Found multiple performance marks/measurements with name ' +
         `"${measurement.entryName}". This likely indicates an error. ` +
-        'Picking the first one.');
+        'Picking the first one.'
+    );
   }
   const entry = entries[0];
   switch (entry.entryType) {
@@ -89,7 +98,8 @@ async function queryForPerformanceEntry(
       // how to interpret them, and we may need additional criteria to decide
       // which exact numbers to report from them.
       throw new Error(
-          `Performance entry type not supported: ${entry.entryType}`);
+        `Performance entry type not supported: ${entry.entryType}`
+      );
   }
 }
 
@@ -99,15 +109,17 @@ async function queryForPerformanceEntry(
  * throws.
  */
 async function queryForExpression(
-    driver: webdriver.WebDriver,
-    expression: string): Promise<number|undefined> {
-  const result =
-      await driver.executeScript(`return (${expression});`) as unknown;
+  driver: webdriver.WebDriver,
+  expression: string
+): Promise<number | undefined> {
+  const result = (await driver.executeScript(
+    `return (${expression});`
+  )) as unknown;
   if (result !== undefined && result !== null) {
     if (typeof result !== 'number') {
       throw new Error(
-          `'${expression}' was type ` +
-          `${typeof result}, expected number.`);
+        `'${expression}' was type ` + `${typeof result}, expected number.`
+      );
     }
     if (result < 0) {
       throw new Error(`'${expression}' was negative: ${result}`);
@@ -121,9 +133,10 @@ async function queryForExpression(
  * literal (backtick string).
  */
 function escapeStringLiteral(unescaped: string): string {
-  return unescaped.replace(/\\/g, '\\\\')
-      .replace(/`/g, '\\`')
-      .replace(/\$/g, '\\$');
+  return unescaped
+    .replace(/\\/g, '\\\\')
+    .replace(/`/g, '\\`')
+    .replace(/\$/g, '\\$');
 }
 
 /**
@@ -141,12 +154,12 @@ export function measurementName(measurement: Measurement): string {
     case 'expression':
       return measurement.expression;
     case 'performance':
-      return measurement.entryName === 'first-contentful-paint' ?
-          'fcp' :
-          measurement.entryName;
+      return measurement.entryName === 'first-contentful-paint'
+        ? 'fcp'
+        : measurement.entryName;
   }
   throwUnreachable(
-      measurement,
-      `Internal error: unknown measurement type ` +
-          JSON.stringify(measurement));
+    measurement,
+    `Internal error: unknown measurement type ` + JSON.stringify(measurement)
+  );
 }

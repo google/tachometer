@@ -25,14 +25,16 @@ suite('server', () => {
   setup(async () => {
     server = await Server.start({
       host: 'localhost',
-      ports: [0],  // random
+      ports: [0], // random
       root: testData,
       resolveBareModules: true,
       npmInstalls: [],
-      mountPoints: [{
-        diskPath: testData,
-        urlPath: '/',
-      }],
+      mountPoints: [
+        {
+          diskPath: testData,
+          urlPath: '/',
+        },
+      ],
       cache: true,
     });
   });
@@ -90,14 +92,16 @@ suite('server', () => {
 
       server = await Server.start({
         host: 'localhost',
-        ports: [0],  // random
+        ports: [0], // random
         root: testData,
         resolveBareModules: true,
         npmInstalls: [{installDir, packageJson}],
-        mountPoints: [{
-          diskPath: testData,
-          urlPath: '/',
-        }],
+        mountPoints: [
+          {
+            diskPath: testData,
+            urlPath: '/',
+          },
+        ],
         cache: true,
       });
     });

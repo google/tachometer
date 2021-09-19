@@ -15,7 +15,11 @@ import * as path from 'path';
 import stripAnsi = require('strip-ansi');
 
 import {ConfigFile} from '../configfile';
-import {automaticResultTable, horizontalTermResultTable, verticalTermResultTable} from '../format';
+import {
+  automaticResultTable,
+  horizontalTermResultTable,
+  verticalTermResultTable,
+} from '../format';
 import {fakeResults, testData} from './test_helpers';
 
 /**
@@ -27,8 +31,8 @@ async function fakeResultTable(configFile: ConfigFile): Promise<string> {
   const results = await fakeResults(configFile);
   const {fixed, unfixed} = automaticResultTable(results);
   return stripAnsi(
-      horizontalTermResultTable(fixed) + '\n' +
-      verticalTermResultTable(unfixed));
+    horizontalTermResultTable(fixed) + '\n' + verticalTermResultTable(unfixed)
+  );
 }
 
 suite('format', () => {

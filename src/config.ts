@@ -31,7 +31,7 @@ export interface Config {
   timeout: number;
   benchmarks: BenchmarkSpec[];
   horizons: Horizons;
-  mode: 'automatic'|'manual';
+  mode: 'automatic' | 'manual';
   jsonFile: string;
   // TODO(aomarks) Remove this in next major version.
   legacyJsonFile: string;
@@ -47,15 +47,16 @@ export async function makeConfig(opts: Opts): Promise<Config> {
   // These options are only controlled by flags.
   const baseConfig: Partial<Config> = {
     mode: (opts.manual === true ? 'manual' : 'automatic') as
-        ('manual' | 'automatic'),
+      | 'manual'
+      | 'automatic',
     jsonFile: opts['json-file'],
     legacyJsonFile: opts['save'],
     csvFileStats: opts['csv-file'],
     csvFileRaw: opts['csv-file-raw'],
     forceCleanNpmInstall: opts['force-clean-npm-install'],
-    githubCheck: opts['github-check'] ?
-        parseGithubCheckFlag(opts['github-check']) :
-        undefined,
+    githubCheck: opts['github-check']
+      ? parseGithubCheckFlag(opts['github-check'])
+      : undefined,
     remoteAccessibleHost: opts['remote-accessible-host'],
   };
 
@@ -81,7 +82,8 @@ export async function makeConfig(opts: Opts): Promise<Config> {
     }
     if (opts['resolve-bare-modules'] !== undefined) {
       throw new Error(
-          '--resolve-bare-modules cannot be specified when using --config');
+        '--resolve-bare-modules cannot be specified when using --config'
+      );
     }
     if (opts['window-size'] !== undefined) {
       throw new Error('--window-size cannot be specified when using --config');
@@ -95,16 +97,16 @@ export async function makeConfig(opts: Opts): Promise<Config> {
       ...baseConfig,
       ...validatedConfigObj,
     });
-
   } else {
     config = applyDefaults({
       ...baseConfig,
       root: opts.root,
       sampleSize: opts['sample-size'],
       timeout: opts.timeout,
-      horizons: opts.horizon !== undefined ?
-          parseHorizons(opts.horizon.split(',')) :
-          undefined,
+      horizons:
+        opts.horizon !== undefined
+          ? parseHorizons(opts.horizon.split(','))
+          : undefined,
       benchmarks: await specsFromOpts(opts),
       resolveBareModules: opts['resolve-bare-modules'],
     });
@@ -124,12 +126,15 @@ export async function makeConfig(opts: Opts): Promise<Config> {
 
   for (const spec of config.benchmarks) {
     for (const measurement of spec.measurement) {
-      if (measurement.mode === 'performance' &&
-          measurement.entryName === 'first-contentful-paint' &&
-          !fcpBrowsers.has(spec.browser.name)) {
+      if (
+        measurement.mode === 'performance' &&
+        measurement.entryName === 'first-contentful-paint' &&
+        !fcpBrowsers.has(spec.browser.name)
+      ) {
         throw new Error(
-            `Browser ${spec.browser.name} does not support the ` +
-            `first contentful paint (FCP) measurement`);
+          `Browser ${spec.browser.name} does not support the ` +
+            `first contentful paint (FCP) measurement`
+        );
       }
     }
   }
@@ -140,28 +145,34 @@ export async function makeConfig(opts: Opts): Promise<Config> {
 export function applyDefaults(partial: Partial<Config>): Config {
   return {
     benchmarks: partial.benchmarks !== undefined ? partial.benchmarks : [],
-    csvFileStats: partial.csvFileStats !== undefined ? partial.csvFileStats :
-                                                       '',
+    csvFileStats:
+      partial.csvFileStats !== undefined ? partial.csvFileStats : '',
     csvFileRaw: partial.csvFileRaw !== undefined ? partial.csvFileRaw : '',
-    forceCleanNpmInstall: partial.forceCleanNpmInstall !== undefined ?
-        partial.forceCleanNpmInstall :
-        defaults.forceCleanNpmInstall,
+    forceCleanNpmInstall:
+      partial.forceCleanNpmInstall !== undefined
+        ? partial.forceCleanNpmInstall
+        : defaults.forceCleanNpmInstall,
     githubCheck: partial.githubCheck,
-    horizons: partial.horizons !== undefined ?
-        partial.horizons :
-        parseHorizons([...defaults.horizons]),
+    horizons:
+      partial.horizons !== undefined
+        ? partial.horizons
+        : parseHorizons([...defaults.horizons]),
     jsonFile: partial.jsonFile !== undefined ? partial.jsonFile : '',
     legacyJsonFile:
-        partial.legacyJsonFile !== undefined ? partial.legacyJsonFile : '',
-    sampleSize: partial.sampleSize !== undefined ? partial.sampleSize :
-                                                   defaults.sampleSize,
+      partial.legacyJsonFile !== undefined ? partial.legacyJsonFile : '',
+    sampleSize:
+      partial.sampleSize !== undefined
+        ? partial.sampleSize
+        : defaults.sampleSize,
     mode: partial.mode !== undefined ? partial.mode : defaults.mode,
-    remoteAccessibleHost: partial.remoteAccessibleHost !== undefined ?
-        partial.remoteAccessibleHost :
-        '',
-    resolveBareModules: partial.resolveBareModules !== undefined ?
-        partial.resolveBareModules :
-        defaults.resolveBareModules,
+    remoteAccessibleHost:
+      partial.remoteAccessibleHost !== undefined
+        ? partial.remoteAccessibleHost
+        : '',
+    resolveBareModules:
+      partial.resolveBareModules !== undefined
+        ? partial.resolveBareModules
+        : defaults.resolveBareModules,
     root: partial.root !== undefined ? partial.root : defaults.root,
     timeout: partial.timeout !== undefined ? partial.timeout : defaults.timeout,
   };
@@ -173,11 +184,14 @@ export function applyDefaults(partial: Partial<Config>): Config {
  * it's a file that doesn't exist, or a directory without an index.html.
  */
 export async function urlFromLocalPath(
-    rootDir: string, diskPath: string): Promise<string> {
+  rootDir: string,
+  diskPath: string
+): Promise<string> {
   const serverRelativePath = path.relative(rootDir, diskPath);
   if (serverRelativePath.startsWith('..')) {
     throw new Error(
-        'File or directory is not accessible from server root: ' + diskPath);
+      'File or directory is not accessible from server root: ' + diskPath
+    );
   }
 
   const kind = await fileKind(diskPath);
@@ -187,7 +201,7 @@ export async function urlFromLocalPath(
 
   let urlPath = `/${serverRelativePath.replace(path.win32.sep, '/')}`;
   if (kind === 'dir') {
-    if (await fileKind(path.join(diskPath, 'index.html')) !== 'file') {
+    if ((await fileKind(path.join(diskPath, 'index.html'))) !== 'file') {
       throw new Error(`Directory did not contain an index.html: ${diskPath}`);
     }
     // We need a trailing slash when serving a directory. Our static server
@@ -217,7 +231,7 @@ export function parseHorizons(strs: string[]): Horizons {
       absOrRel = relative;
     } else {
       // Otherwise ends with "ms".
-      num = Number(str.slice(0, -2));  // Note that Number("+1") === 1
+      num = Number(str.slice(0, -2)); // Note that Number("+1") === 1
       absOrRel = absolute;
     }
 

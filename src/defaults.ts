@@ -38,7 +38,7 @@ export const traceCategories = [
   'disabled-by-default-v8.turbofan',
 ];
 
-export function measurement(url: LocalUrl|RemoteUrl): Measurement {
+export function measurement(url: LocalUrl | RemoteUrl): Measurement {
   if (url.kind === 'remote') {
     return {
       mode: 'performance',

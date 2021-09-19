@@ -6,14 +6,14 @@
 
 ## Why?
 
-Benchmarking is *hard*. Even if you run the exact same JavaScript, on the same
+Benchmarking is _hard_. Even if you run the exact same JavaScript, on the same
 browser, on the same machine, on the same day, you will likely get a
 significantly different result every time you measure. For this reason, at first
 pass, it is often very difficult to say anything meaningful about the
 performance of a script.
 
 But there is signal in the noise. Scripts do have true underlying performance
-characteristics on average. By taking enough *repeated samples* and applying the
+characteristics on average. By taking enough _repeated samples_ and applying the
 right statistics, we can reliably identify small differences and quantify our
 confidence in them.
 
@@ -21,40 +21,40 @@ confidence in them.
 
 1. Install tachometer from NPM.
 
-  ```sh
-  $ npm i tachometer
-  ```
+   ```sh
+   $ npm i tachometer
+   ```
 
 2. Create a simple `forloop.html` micro benchmark that times a `for` loop.
    tachometer benchmarks are HTML files that import and call `bench.start()` and
    `bench.stop()`. Note that when you are measuring [first contentful
    paint](#first-contentful-paint-fcp), you don't need to call these functions.
 
-  ```html
-  <html>
-  <body>
-  <script type="module">
-    import * as bench from '/bench.js';
-    bench.start();
-    for (let i = 0; i < 1000; i++) { }
-    bench.stop();
-  </script>
-  </body>
-  </html>
-  ```
+   ```html
+   <html>
+     <body>
+       <script type="module">
+         import * as bench from '/bench.js';
+         bench.start();
+         for (let i = 0; i < 1000; i++) {}
+         bench.stop();
+       </script>
+     </body>
+   </html>
+   ```
 
 3. Launch tachometer, which will launch Chrome and execute the benchmark 50
    times.
 
-  ```sh
-  $ tach forloop.html
-  ```
+   ```sh
+   $ tach forloop.html
+   ```
 
-  Along with some other information, tachometer will show you a range of
-  plausible values for how long this benchmark takes to run (more precisely, a
-  *95% confidence interval*, which is explained [below]()).
+   Along with some other information, tachometer will show you a range of
+   plausible values for how long this benchmark takes to run (more precisely, a
+   _95% confidence interval_, which is explained [below]()).
 
-  <img src="./images/screen1.png">
+   <img src="./images/screen1.png">
 
 ## Features
 
@@ -63,22 +63,18 @@ confidence in them.
   arbitrary JS expression), or measure [First Contentful Paint](#first-contentful-paint-fcp) on any local or remote
   URL.
 
-
-- [*Compare benchmarks*](#multiple-benchmarks) by round-robin between two or
+- [_Compare benchmarks_](#multiple-benchmarks) by round-robin between two or
   more files, URLs, URL query string parameters, or browsers, to measure which
   is faster or slower, and by how much, with statistical significance.
 
-
-- [*Swap dependency versions*](#swap-npm-dependencies) of any NPM package you
+- [_Swap dependency versions_](#swap-npm-dependencies) of any NPM package you
   depend on, to compare published versions, remote GitHub branches, or local git
   repos.
 
-
-- [*Automatically sample*](#auto-sampling) until we have enough precision to
+- [_Automatically sample_](#auto-sampling) until we have enough precision to
   answer the question you are asking.
 
-
-- [*Remote control*](#remote-control) browsers running on different machines
+- [_Remote control_](#remote-control) browsers running on different machines
   using remote WebDriver.
 
 ## Measurement modes
@@ -149,7 +145,7 @@ tachometer will poll until it finds a result assigned here.
 
 ```javascript
 const start = performance.now();
-for (const i = 0; i < 1000; i++) { }
+for (const i = 0; i < 1000; i++) {}
 window.tachometerResult = performance.now() - start;
 ```
 
@@ -159,7 +155,7 @@ server.
 
 Alternatively, to poll an arbitrary JS expression in `global` measurement mode
 (rather than `window.tachometerResult`), set `--measurement-expression` to the
-JS expression to poll.  This option is useful for scenarios where you cannot
+JS expression to poll. This option is useful for scenarios where you cannot
 easily modify the code under test to assign to `window.tachometerResult` but
 are otherwise able to extract a measurement from the page using JavaScript.
 
@@ -179,8 +175,8 @@ functions is not required, and has no effect.
 
 ## Average runtime
 
-When you execute just one benchmark, you'll get a single result: the ***average
-runtime*** of the benchmark, presented as a *95% confidence interval* (see
+When you execute just one benchmark, you'll get a single result: the **_average
+runtime_** of the benchmark, presented as a _95% confidence interval_ (see
 [below](#confidence-intervals) for interpretation) for the number of
 milliseconds that elapsed between `bench.start()` and `bench.stop()`.
 
@@ -189,8 +185,8 @@ milliseconds that elapsed between `bench.start()` and `bench.stop()`.
 ## Difference table
 
 When you run multiple benchmarks together in the same session, you'll get an NxN
-table summarizing all of the *differences* in runtimes, both in *absolute* and
-*relative* terms (percent-change).
+table summarizing all of the _differences_ in runtimes, both in _absolute_ and
+_relative_ terms (percent-change).
 
 In this example screenshot we're comparing `for` loops, each running with a
 different number of iterations (1, 1000, 1001, and 3000):
@@ -199,14 +195,12 @@ different number of iterations (1, 1000, 1001, and 3000):
 
 This table tells us:
 
-- 1 iteration was between 65% and 73% *faster* than 1000 iterations.
+- 1 iteration was between 65% and 73% _faster_ than 1000 iterations.
 
-
-- 1000 iterations was between 179% and 263% *slower* than 1 iteration. Note that
-  the difference between *1-vs-1000* and *1000-vs-1* is the choice of which
-  runtime is used as the *reference* in the percent-change calculation, where
-  the reference runtime comes from the *column* labeled *"vs X"*.
-
+- 1000 iterations was between 179% and 263% _slower_ than 1 iteration. Note that
+  the difference between _1-vs-1000_ and _1000-vs-1_ is the choice of which
+  runtime is used as the _reference_ in the percent-change calculation, where
+  the reference runtime comes from the _column_ labeled _"vs X"_.
 
 - The difference between 1000 and 1001 iterations was ambiguous. We can't tell
   which is faster, because the difference was too small. 1000 iterations could
@@ -230,11 +224,11 @@ to swap in, like this:
       "packageVersions": {
         "label": "my-label",
         "dependencies": {
-          "my-package": "github:MyOrg/my-repo#my-branch",
-        },
+          "my-package": "github:MyOrg/my-repo#my-branch"
+        }
       }
-    },
-  ],
+    }
+  ]
 }
 ```
 
@@ -265,15 +259,12 @@ The version for a dependency can be any of the following:
               "repo": "git@github.com:MyOrg/my-repo.git",
               "ref": "my-branch",
               "subdir": "packages/my-package",
-              "setupCommands": [
-                "npm install",
-                "npm run build"
-              ]
+              "setupCommands": ["npm install", "npm run build"]
             }
-          },
+          }
         }
-      },
-    ],
+      }
+    ]
   }
   ```
 
@@ -299,28 +290,28 @@ When you specify a dependency to swap, the following happens:
    request for the benchmark's `node_modules/` directory is served from that
    location.
 
-> **NOTE**: Tachometer will *re-use NPM install directories* as long as the
+> **NOTE**: Tachometer will _re-use NPM install directories_ as long as the
 > dependencies you specified haven't changed, and the version of tachometer used
-> to install it is the same. To *always* do a fresh `npm install`, set the
+> to install it is the same. To _always_ do a fresh `npm install`, set the
 > `--force-clean-npm-install` flag.
 
 ## Confidence intervals
 
 The most important concept needed to interpret results from tachometer is the
-***confidence interval***. Loosely speaking, a confidence interval is a range of
-*plausible values* for a parameter (e.g. runtime), and the *confidence level*
-(which we fix at *95%*) corresponds to the degree of confidence we have that
-interval contains the *true value* of that parameter.
+**_confidence interval_**. Loosely speaking, a confidence interval is a range of
+_plausible values_ for a parameter (e.g. runtime), and the _confidence level_
+(which we fix at _95%_) corresponds to the degree of confidence we have that
+interval contains the _true value_ of that parameter.
 
-> More precisely, the 95% confidence level describes the *long-run proportion of
-> confidence intervals that will contain the true value*. Hypothetically, if you
+> More precisely, the 95% confidence level describes the _long-run proportion of
+> confidence intervals that will contain the true value_. Hypothetically, if you
 > run tachometer over and over again in the same configuration, then while you'll
 > get a slightly different confidence interval every time, it should be the case
-> that *95% of those confidence intervals will contain the true value*. See
+> that _95% of those confidence intervals will contain the true value_. See
 > [Wikipedia](https://en.wikipedia.org/wiki/Confidence_interval#Meaning_and_interpretation)
 > for more information on interpreting confidence intervals.
 
-The *width* of a confidence interval determines the range of values it includes.
+The _width_ of a confidence interval determines the range of values it includes.
 Narrower confidence intervals give you a more precise estimate of what the true
 value might be. In general, we want narrower confidence intervals.
 
@@ -337,24 +328,22 @@ value might be. In general, we want narrower confidence intervals.
 
 Three knobs can shrink our confidence intervals:
 
-1. Dropping the chosen confidence level. *This is not a good idea!* We want our
-   results to be *consistently reported with high confidence*, so we always use
+1. Dropping the chosen confidence level. _This is not a good idea!_ We want our
+   results to be _consistently reported with high confidence_, so we always use
    95% confidence intervals.
 
-
-2. Decreasing the variation in the benchmark timing measurements. *This is hard
-   to do*. A great many factors lead to variation in timing measurements, most
+2. Decreasing the variation in the benchmark timing measurements. _This is hard
+   to do_. A great many factors lead to variation in timing measurements, most
    of which are very difficult to control, including some that are
    [intentionally built
    in](https://developers.google.com/web/updates/2018/02/meltdown-spectre#high-resolution_timers)!
-
 
 3. Increasing the sample size. The [central limit
    theorem](https://en.wikipedia.org/wiki/Central_limit_theorem) means that,
    even when we have high variance data, and even when that data is not normally
    distributed, as we take more and more samples, we'll be able to calculate a
-   more and more precise estimate of the true mean of the data. *Increasing the
-   sample size is the main knob we have.*
+   more and more precise estimate of the true mean of the data. _Increasing the
+   sample size is the main knob we have._
 
 ## Sample size
 
@@ -364,7 +353,7 @@ you to to draw a statistically significant conclusion.
 
 > For example, if you are interested in knowing which of A and B are faster, but
 > you find that the confidence interval for the percent change between the mean
-> runtimes of A and B *includes zero* (e.g. `[-3.08%, +2.97%]`), then it is
+> runtimes of A and B _includes zero_ (e.g. `[-3.08%, +2.97%]`), then it is
 > clearly not possible to draw a conclusion about whether A is faster than B or
 > vice-versa.
 
@@ -375,20 +364,20 @@ either certain stopping conditions that you specify are met, or until a timeout
 expires (3 minutes by default).
 
 The stopping conditions for auto-sampling are specified in terms of
-***horizons***. A horizon can be thought of as a *point of interest* on the
+**_horizons_**. A horizon can be thought of as a _point of interest_ on the
 number-line of either absolute or relative differences in runtime. By setting a
-horizon, you are asking tachometer to try to *shrink the confidence interval
-until it is unambiguously placed on one side or the other of that horizon*.
+horizon, you are asking tachometer to try to _shrink the confidence interval
+until it is unambiguously placed on one side or the other of that horizon_.
 
-Example horizon    | Question
------------------- | -----------
-`0%`               | Is X faster or slower than Y *at all*?
-`10%`              | Is X faster or slower than Y by at least 10%?
-`+10%`             | Is X slower than Y by at least 10%?
-`-10%`             | Is X faster than Y by at least 10%?
-`-10%,+10%`        | (Same as `10%`)
-`0%,10%,100%`      | Is X at all, a little, or a lot slower or faster than Y?
-`0.5ms`            | Is X faster or slower than Y by at least 0.5 milliseconds?
+| Example horizon | Question                                                   |
+| --------------- | ---------------------------------------------------------- |
+| `0%`            | Is X faster or slower than Y _at all_?                     |
+| `10%`           | Is X faster or slower than Y by at least 10%?              |
+| `+10%`          | Is X slower than Y by at least 10%?                        |
+| `-10%`          | Is X faster than Y by at least 10%?                        |
+| `-10%,+10%`     | (Same as `10%`)                                            |
+| `0%,10%,100%`   | Is X at all, a little, or a lot slower or faster than Y?   |
+| `0.5ms`         | Is X faster or slower than Y by at least 0.5 milliseconds? |
 
 In the following visual example, we have set `--horizon=10%` meaning that we are
 interested in knowing whether A differs from B by at least 10% in either
@@ -411,10 +400,10 @@ n     = sample size
 ```
 
 In the example, by `n=50` we are not sure whether A is faster or slower than B
-by more than 10%. By `n=100` we have ruled out that B is *faster* than A by more
-than 10%, but we're still not sure if it's *slower* by more than 10%. By `n=200`
+by more than 10%. By `n=100` we have ruled out that B is _faster_ than A by more
+than 10%, but we're still not sure if it's _slower_ by more than 10%. By `n=200`
 we have also ruled out that B is slower than A by more than 10%, so we stop
-sampling. Note that we still don't know which is *absolutely* faster, we just
+sampling. Note that we still don't know which is _absolutely_ faster, we just
 know that whatever the difference is, it is neither faster nor slower than 10%
 (and if we did want to know, we could add `0` to our horizons).
 
@@ -424,23 +413,21 @@ will expire.
 
 ## JavaScript module imports
 
-JavaScript module imports with *bare module specifiers* (e.g. `import {foo} from
-'mylib';`) will be automatically transformed to browser-compatible *path*
-imports using Node-style module resolution (e.g.`import {foo} from
-'./node_modules/mylib/index.js';`).
+JavaScript module imports with _bare module specifiers_ (e.g. `import {foo} from 'mylib';`) will be automatically transformed to browser-compatible _path_
+imports using Node-style module resolution (e.g.`import {foo} from './node_modules/mylib/index.js';`).
 
 This feature can be disabled with the `--resolve-bare-modules=false` flag, or
 the `resolveBareModules: false` JSON config file property.
 
 ## Browsers
 
-Browser | Headless | [FCP](#first-contentful-paint-fcp)
-------- | -------- | ---
-chrome  | yes      | yes
-firefox | yes      | no
-safari  | no       | no
-edge    | no       | no
-ie      | no       | no
+| Browser | Headless | [FCP](#first-contentful-paint-fcp) |
+| ------- | -------- | ---------------------------------- |
+| chrome  | yes      | yes                                |
+| firefox | yes      | no                                 |
+| safari  | no       | no                                 |
+| edge    | no       | no                                 |
+| ie      | no       | no                                 |
 
 ### Webdriver Plugins
 
@@ -535,9 +522,7 @@ For example, using the standard location of the default user profile on macOS:
   "addArguments": [
     "user-data-dir=/Users/<username>/Library/Application Support/Google/Chrome"
   ],
-  "removeArguments": [
-    "use-mock-keychain"
-  ]
+  "removeArguments": ["use-mock-keychain"]
 }
 ```
 
@@ -558,7 +543,7 @@ learn more about using the trace event profiling tool.
 To turn on tracing with the default configuration, add `trace: true` to a
 Chromium browser's config object. This config turns on tracing with some
 [default categories enabled](./src/defaults.ts#L29) and puts the JSON files into
-a directory called `logs` in your current working directory. 
+a directory called `logs` in your current working directory.
 
 For example:
 
@@ -593,7 +578,7 @@ relative to the current working directory.
         "name": "chrome",
         "trace": {
           "categories": ["blink", "cc", "netlog", "toplevel", "v8"],
-          "logDir": "results/trace-logs",
+          "logDir": "results/trace-logs"
         }
       }
     }
@@ -633,16 +618,14 @@ performance isolation.
 > directions, so if you encounter problems, it's possible that there is a
 > firewall or NAT preventing the connection.
 
-#### On the *remote* machine:
+#### On the _remote_ machine:
 
 1. Install a [Java Development Kit
    (JDK)](https://www.oracle.com/technetwork/java/javase/downloads/index.html)
    if you don't already have one.
 
-
 2. Download the latest Standalone Selenium Server `.jar` file from
    [seleniumhq.org](https://www.seleniumhq.org/download/).
-
 
 3. Download the driver plugins for the browsers you intend to remote control
    from [seleniumhq.org](https://www.seleniumhq.org/download/). Note that if you
@@ -650,16 +633,15 @@ performance isolation.
    placed either in the current working directory for the next command, or in a
    directory that is included in your `$PATH` environment variable.
 
-
 4. Launch the Standalone Selenium Server.
 
    ```bash
    java -jar selenium-server-standalone-<version>.jar
    ```
 
-#### On the *local* machine:
+#### On the _local_ machine:
 
- 1. Use the `--browser` flag or the `browser` config file property with syntax
+1.  Use the `--browser` flag or the `browser` config file property with syntax
     `<browser>@<remote-url>` to tell tachometer the IP address or hostname of
     the remote Standalone Selenium Server to launch the browser from. Note that
     `4444` is the default port, and the `/wd/hub` URL suffix is required.
@@ -668,15 +650,14 @@ performance isolation.
     --browser=chrome@http://my-remote-machine:4444/wd/hub
     ```
 
- 2. Use the `--host` flag to configure the network interface address that
+2.  Use the `--host` flag to configure the network interface address that
     tachometer's built-in static server will listen on (unless you are only
     benchmarking external URLs that do not require the static server). By
     default, for security, tachometer listens on `127.0.0.1` and will not be
     accessible from the remote machine unless you change this to an IP address
     or hostname that will be accessible from the remote machine.
 
-
- 3. If needed, use the `--remote-accessible-host` flag to configure the URL that
+3.  If needed, use the `--remote-accessible-host` flag to configure the URL that
     the remote browser will use when making requests to your local tachometer
     static server. By default this will match `--host`, but in some network
     configurations it may need to be different (e.g. if the machines are
@@ -702,18 +683,18 @@ Defaults are the same as the corresponding command-line flags.
         "headless": true,
         "windowSize": {
           "width": 800,
-          "height": 600,
-        },
+          "height": 600
+        }
       },
       "measure": "fcp",
       "packageVersions": {
         "label": "my-branch",
         "dependencies": {
-          "mylib": "github:Polymer/mylib#my-branch",
-        },
+          "mylib": "github:Polymer/mylib#my-branch"
+        }
       }
-    },
-  ],
+    }
+  ]
 }
 ```
 
@@ -733,10 +714,10 @@ duplicating the entire benchmark configuration:
         },
         {
           "browser": "firefox"
-        },
-      ],
-    },
-  ],
+        }
+      ]
+    }
+  ]
 }
 ```
 
@@ -752,55 +733,59 @@ Which is equivalent to:
     {
       "url": "foo/bar.html",
       "browser": "firefox"
-    },
-  ],
+    }
+  ]
 }
 ```
 
 ## Usage
 
 Run a benchmark from a local file:
+
 ```sh
 tach foo.html
 ```
 
 Compare a benchmark with different URL parameters:
+
 ```sh
 tach foo.html?i=1 foo.html?i=2
 ```
 
 Benchmark `index.html` in a directory:
+
 ```sh
 tach foo/bar
 ```
 
 Benchmark First Contentful Paint time of a remote URL:
+
 ```sh
 tach http://example.com
 ```
 
-Flag                    -  | Default     | Description
--------------------------- | ----------- | --------------------------------
-`--help`                   | `false`     | Show documentation
-`--root`                   | `./`        | Root directory to search for benchmarks
-`--host`                   | `127.0.0.1` | Which host to run on
-`--port`                   | `8080, 8081, ..., 0`| Which port to run on (comma-delimited preference list, `0` for random)
-`--config`                 | *(none)*    | Path to JSON config file ([details](#config-file))
-`--package-version` / `-p` | *(none)*    | Specify an NPM package version to swap in ([details](#swap-npm-dependencies))
-`--browser` / `-b`         | `chrome`    | Which browsers to launch in automatic mode, comma-delimited (chrome, firefox, safari, edge, ie) ([details](#browsers))
-`--window-size`            | `1024,768`  | "width,height" in pixels of the browser windows that will be created
-`--sample-size` / `-n`     | `50`        | Minimum number of times to run each benchmark ([details](#sample-size)]
-`--horizon`                | `10%`       | The degrees of difference to try and resolve when auto-sampling ("N%" or "Nms", comma-delimited) ([details](#auto-sampling))
-`--timeout`                | `3`         | The maximum number of minutes to spend auto-sampling ([details](#auto-sampling))
-`--measure`                | `callback`  | Which time interval to measure (`callback`, `global`, `fcp`) ([details](#measurement-modes))
-`--measurement-expression` | `window.tachometerResult`  | JS expression to poll for on page to retrieve measurement result when `measure` setting is set to `global`
-`--remote-accessible-host` | matches `--host` | When using a browser over a remote WebDriver connection, the URL that those browsers should use to access the local tachometer server ([details](#remote-control))
-`--npm-install-dir`        | system temp dir | Where to install custom package versions. ([details](#swap-npm-dependencies))
-`--force-clean-npm-install`| `false`     | Always do a from-scratch NPM install when using custom package versions. ([details](#swap-npm-dependencies))
-`--csv-file`               | *none*      | Save statistical summary to this CSV file.
-`--csv-file-raw`           | *none*      | Save raw sample measurements to this CSV file.
-`--json-file`              | *none*      | Save results to this JSON file.
-`--manual`                 | `false`     | Don't run automatically, just show URLs and collect results
-`--trace`                  | `false`     | Enable performance tracing ([details](#performance-traces))
-`--trace-log-dir`          | `${cwd}/logs`| The directory to put tracing log files. Defaults to `${cwd}/logs`.
-`--trace-cat`              | [default categories](./src/defaults.ts) | The tracing categories to record. Should be a string of comma-separated category names
+| Flag -                      | Default                                 | Description                                                                                                                                                        |
+| --------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `--help`                    | `false`                                 | Show documentation                                                                                                                                                 |
+| `--root`                    | `./`                                    | Root directory to search for benchmarks                                                                                                                            |
+| `--host`                    | `127.0.0.1`                             | Which host to run on                                                                                                                                               |
+| `--port`                    | `8080, 8081, ..., 0`                    | Which port to run on (comma-delimited preference list, `0` for random)                                                                                             |
+| `--config`                  | _(none)_                                | Path to JSON config file ([details](#config-file))                                                                                                                 |
+| `--package-version` / `-p`  | _(none)_                                | Specify an NPM package version to swap in ([details](#swap-npm-dependencies))                                                                                      |
+| `--browser` / `-b`          | `chrome`                                | Which browsers to launch in automatic mode, comma-delimited (chrome, firefox, safari, edge, ie) ([details](#browsers))                                             |
+| `--window-size`             | `1024,768`                              | "width,height" in pixels of the browser windows that will be created                                                                                               |
+| `--sample-size` / `-n`      | `50`                                    | Minimum number of times to run each benchmark ([details](#sample-size)]                                                                                            |
+| `--horizon`                 | `10%`                                   | The degrees of difference to try and resolve when auto-sampling ("N%" or "Nms", comma-delimited) ([details](#auto-sampling))                                       |
+| `--timeout`                 | `3`                                     | The maximum number of minutes to spend auto-sampling ([details](#auto-sampling))                                                                                   |
+| `--measure`                 | `callback`                              | Which time interval to measure (`callback`, `global`, `fcp`) ([details](#measurement-modes))                                                                       |
+| `--measurement-expression`  | `window.tachometerResult`               | JS expression to poll for on page to retrieve measurement result when `measure` setting is set to `global`                                                         |
+| `--remote-accessible-host`  | matches `--host`                        | When using a browser over a remote WebDriver connection, the URL that those browsers should use to access the local tachometer server ([details](#remote-control)) |
+| `--npm-install-dir`         | system temp dir                         | Where to install custom package versions. ([details](#swap-npm-dependencies))                                                                                      |
+| `--force-clean-npm-install` | `false`                                 | Always do a from-scratch NPM install when using custom package versions. ([details](#swap-npm-dependencies))                                                       |
+| `--csv-file`                | _none_                                  | Save statistical summary to this CSV file.                                                                                                                         |
+| `--csv-file-raw`            | _none_                                  | Save raw sample measurements to this CSV file.                                                                                                                     |
+| `--json-file`               | _none_                                  | Save results to this JSON file.                                                                                                                                    |
+| `--manual`                  | `false`                                 | Don't run automatically, just show URLs and collect results                                                                                                        |
+| `--trace`                   | `false`                                 | Enable performance tracing ([details](#performance-traces))                                                                                                        |
+| `--trace-log-dir`           | `${cwd}/logs`                           | The directory to put tracing log files. Defaults to `${cwd}/logs`.                                                                                                 |
+| `--trace-cat`               | [default categories](./src/defaults.ts) | The tracing categories to record. Should be a string of comma-separated category names                                                                             |

@@ -4,7 +4,5 @@
     "module": "commonjs",
     "outDir": "./lib"
   },
-  "include": [
-    "src/**/*.ts"
-  ]
+  "include": ["src/**/*.ts"]
 }

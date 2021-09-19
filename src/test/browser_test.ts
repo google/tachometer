@@ -12,7 +12,11 @@
 import {assert} from 'chai';
 import {suite, test} from 'mocha';
 
-import {BrowserName, parseBrowserConfigString, validateBrowserConfig} from '../browser';
+import {
+  BrowserName,
+  parseBrowserConfigString,
+  validateBrowserConfig,
+} from '../browser';
 import * as defaults from '../defaults';
 
 suite('browser', () => {
@@ -62,11 +66,13 @@ suite('browser', () => {
 
     test('chrome-headless remote', () => {
       assert.deepEqual(
-          parseBrowserConfigString('chrome-headless@http://example.com'), {
-            name: 'chrome',
-            headless: true,
-            remoteUrl: 'http://example.com',
-          });
+        parseBrowserConfigString('chrome-headless@http://example.com'),
+        {
+          name: 'chrome',
+          headless: true,
+          remoteUrl: 'http://example.com',
+        }
+      );
     });
   });
 
@@ -82,51 +88,61 @@ suite('browser', () => {
 
     test('unsupported browser', () => {
       assert.throws(
-          () => validateBrowserConfig({
+        () =>
+          validateBrowserConfig({
             ...defaultBrowser,
             name: 'potato' as BrowserName,
           }),
-          /browser potato is not supported/i);
+        /browser potato is not supported/i
+      );
     });
 
     test('headless not supported', () => {
       assert.throws(
-          () => validateBrowserConfig({
+        () =>
+          validateBrowserConfig({
             ...defaultBrowser,
             name: 'safari',
             headless: true,
           }),
-          /browser safari does not support headless/i);
+        /browser safari does not support headless/i
+      );
     });
 
     test('empty remote url', () => {
       assert.throws(
-          () => validateBrowserConfig({
+        () =>
+          validateBrowserConfig({
             ...defaultBrowser,
             remoteUrl: '',
           }),
-          /invalid browser remote url ""/i);
+        /invalid browser remote url ""/i
+      );
     });
 
     test('invalid remote url', () => {
       assert.throws(
-          () => validateBrowserConfig({
+        () =>
+          validateBrowserConfig({
             ...defaultBrowser,
             remoteUrl: 'potato',
           }),
-          /invalid browser remote url "potato"/i);
+        /invalid browser remote url "potato"/i
+      );
     });
 
     test('invalid window size', () => {
       assert.throws(
-          () => validateBrowserConfig({
+        () =>
+          validateBrowserConfig({
             ...defaultBrowser,
             windowSize: {
               width: -1,
               height: -1,
             },
           }),
-          /invalid window size/i);
+        /invalid window size/i
+      );
     });
   });
 });

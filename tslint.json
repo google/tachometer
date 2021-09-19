@@ -3,10 +3,7 @@
     "arrow-parens": true,
     "class-name": true,
     "curly": true,
-    "indent": [
-      true,
-      "spaces"
-    ],
+    "indent": [true, "spaces"],
     "no-any": true,
     "prefer-const": true,
     "no-duplicate-variable": true,
@@ -14,28 +11,11 @@
     "no-internal-module": true,
     "no-trailing-whitespace": true,
     "no-var-keyword": true,
-    "one-line": [
-      true,
-      "check-open-brace",
-      "check-whitespace"
-    ],
-    "quotemark": [
-      true,
-      "single",
-      "avoid-escape"
-    ],
-    "semicolon": [
-      true,
-      "always"
-    ],
-    "trailing-comma": [
-      true,
-      "multiline"
-    ],
-    "triple-equals": [
-      true,
-      "allow-null-check"
-    ],
+    "one-line": [true, "check-open-brace", "check-whitespace"],
+    "quotemark": [true, "single", "avoid-escape"],
+    "semicolon": [true, "always"],
+    "trailing-comma": [true, "multiline"],
+    "triple-equals": [true, "allow-null-check"],
     "typedef-whitespace": [
       true,
       {
@@ -46,10 +26,7 @@
         "variable-declaration": "nospace"
       }
     ],
-    "variable-name": [
-      true,
-      "ban-keywords"
-    ],
+    "variable-name": [true, "ban-keywords"],
     "whitespace": [
       true,
       "check-branch",
