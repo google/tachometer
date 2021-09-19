@@ -2,7 +2,6 @@ test/
 src/test/
 lib/test/
 .clang-format
-.travis.yml
 tsconfig-base.json
 tsconfig.json
 tslint.json
