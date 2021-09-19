@@ -5,6 +5,7 @@ lib/test/
 .prettierrc.json
 tsconfig-base.json
 tsconfig.json
-tslint.json
+.eslintignore
+.eslintrc.json
 *.tgz
 *.code-workspace

@@ -14,7 +14,7 @@
     "prepare": "if [ -f './tsconfig.json' ]; then npm run build; fi;",
     "build": "rimraf lib/ client/lib/ && mkdir lib && npm run generate-json-schema && tsc && tsc -p client/ && npm run lint",
     "generate-json-schema": "typescript-json-schema tsconfig.json ConfigFile --include src/configfile.ts --required --noExtraProps > config.schema.json",
-    "lint": "tslint --project . --format stylish",
+    "lint": "eslint .",
     "format": "prettier --write .",
     "test": "npm run build && mocha 'lib/test/**/*.js'"
   },
@@ -87,13 +87,16 @@
     "@types/rimraf": "^3.0.0",
     "@types/semver": "^7.3.1",
     "@types/ua-parser-js": "^0.7.32",
+    "@typescript-eslint/eslint-plugin": "^4.31.1",
+    "@typescript-eslint/parser": "^4.31.1",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
+    "eslint": "^7.32.0",
+    "eslint-plugin-no-only-tests": "^2.6.0",
     "mocha": "^9.1.1",
     "node-fetch": "^2.6.0",
     "prettier": "^2.4.1",
     "rimraf": "^3.0.2",
-    "tslint": "^6.1.2",
     "typescript": "^4.0.2",
     "typescript-json-schema": "^0.51.0"
   }
