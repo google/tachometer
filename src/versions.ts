@@ -122,7 +122,7 @@ export async function makeServerPlans(
         updatedDeps[pkg] = version;
       } else {
         switch (version.kind) {
-          case 'git':
+          case 'git': {
             // NPM doesn't support directly installing from a sub-directory of a
             // git repo, like in monorepos, so we handle those cases ourselves.
 
@@ -166,11 +166,13 @@ export async function makeServerPlans(
             // be re-used across multiple benchmarks.
             gitInstalls.set(gitInstallHash, {...version, repo, tempDir, sha});
             break;
-          default:
+          }
+          default: {
             throwUnreachable(
               version.kind,
               'Unknown dependency version kind: ' + version.kind
             );
+          }
         }
       }
     }
