@@ -1,7 +1,8 @@
 test/
 src/test/
 lib/test/
-.clang-format
+.prettierignore
+.prettierrc.json
 tsconfig-base.json
 tsconfig.json
 tslint.json
