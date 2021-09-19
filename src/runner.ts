@@ -27,6 +27,7 @@ import * as github from './github';
 import {Server, Session} from './server';
 import {specUrl} from './specs';
 import {wait} from './util';
+import * as pathlib from 'path';
 
 interface Browser {
   name: string;
@@ -356,7 +357,7 @@ export class Runner {
 
     const logDir = spec.browser.trace.logDir;
     await fsExtra.writeFile(
-        logDir + `\\log-${sampleLabel}.json`,
+        pathlib.join(logDir, `log-${sampleLabel}.json`),
         // Convert perf logs into a format about:tracing can parse
         '[\n' +
             perfEntries.map((e) => JSON.parse(e.message).message)
