@@ -11,6 +11,7 @@
 
 import {BenchmarkResult} from './types';
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const jstat = require('jstat'); // TODO Contribute typings.
 
 interface Distribution {

@@ -285,6 +285,7 @@ export function hashStrings(...strings: string[]) {
     .digest('hex');
 }
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 export const tachometerVersion = require(path.join(
   __dirname,
   '..',

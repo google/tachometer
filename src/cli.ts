@@ -9,13 +9,14 @@
  * rights grant found at http://polymer.github.io/PATENTS.txt
  */
 
-require('source-map-support').install();
+import sourceMapSupport from 'source-map-support';
+sourceMapSupport.install();
 
 import * as path from 'path';
-import ansi = require('ansi-escape-sequences');
+import ansi from 'ansi-escape-sequences';
 import * as semver from 'semver';
 
-import commandLineUsage = require('command-line-usage');
+import commandLineUsage from 'command-line-usage';
 
 import {optDefs, parseFlags} from './flags';
 import {BenchmarkSpec} from './types';
@@ -32,6 +33,7 @@ import {Runner} from './runner';
 import {runNpm} from './util';
 
 const installedVersion = (): string =>
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   require(path.join('..', 'package.json')).version;
 
 export async function main(

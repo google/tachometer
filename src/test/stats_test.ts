@@ -9,6 +9,7 @@
  * rights grant found at http://polymer.github.io/PATENTS.txt
  */
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const jstat = require('jstat');
 
 import {assert} from 'chai';
