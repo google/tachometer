@@ -23,7 +23,7 @@
     "type": "git",
     "url": "git+https://github.com/Polymer/tachometer.git"
   },
-  "author": "The Polymer Project Authors",
+  "author": "Google LLC",
   "license": "BSD-3-Clause",
   "bugs": {
     "url": "https://github.com/Polymer/tachometer/issues"
