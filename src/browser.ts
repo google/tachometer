@@ -198,8 +198,7 @@ export async function makeDriver(
     // find an Edge service and throws "Cannot read property 'start' of null"
     // so we need to start the service ourselves.
     // See https://stackoverflow.com/questions/48577924.
-    // tslint:disable-next-line:no-any TODO setEdgeService function is missing.
-    (builder as any).setEdgeService(new edge.ServiceBuilder());
+    builder.setEdgeService(new edge.ServiceBuilder());
   }
   const driver = await builder.build();
   if (
@@ -263,14 +262,11 @@ function firefoxOpts(config: BrowserConfig): firefox.Options {
     opts.setBinary(config.binary);
   }
   if (config.headless === true) {
-    // tslint:disable-next-line:no-any TODO Incorrect types.
-    (opts as any).addArguments('-headless');
+    opts.addArguments('-headless');
   }
   const {width, height} = config.windowSize;
-  // tslint:disable-next-line:no-any TODO Incorrect types.
-  (opts as any).addArguments(`-width=${width}`);
-  // tslint:disable-next-line:no-any TODO Incorrect types.
-  (opts as any).addArguments(`-height=${height}`);
+  opts.addArguments(`-width=${width}`);
+  opts.addArguments(`-height=${height}`);
   return opts;
 }
 
