@@ -31,18 +31,20 @@ export function formatCsvStats(results: ResultStatsWithDifferences[]): string {
     h3.push('min', 'max', 'min', 'max');
     const row = [];
     row.push(
-        result.result.name,
-        result.stats.meanCI.low.toFixed(precision),
-        result.stats.meanCI.high.toFixed(precision));
+      result.result.name,
+      result.stats.meanCI.low.toFixed(precision),
+      result.stats.meanCI.high.toFixed(precision)
+    );
     for (const diff of result.differences) {
       if (diff === null) {
         row.push('', '', '', '');
       } else {
         row.push(
-            (diff.relative.low * 100).toFixed(precision) + '%',
-            (diff.relative.high * 100).toFixed(precision) + '%',
-            diff.absolute.low.toFixed(precision),
-            diff.absolute.high.toFixed(precision));
+          (diff.relative.low * 100).toFixed(precision) + '%',
+          (diff.relative.high * 100).toFixed(precision) + '%',
+          diff.absolute.low.toFixed(precision),
+          diff.absolute.high.toFixed(precision)
+        );
       }
     }
     rows.push(row);

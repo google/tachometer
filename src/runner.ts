@@ -20,8 +20,21 @@ import {browserSignature, makeDriver, openAndSwitchToNewTab} from './browser';
 import {measure, measurementName} from './measure';
 import {BenchmarkResult, BenchmarkSpec} from './types';
 import {formatCsvStats, formatCsvRaw} from './csv';
-import {ResultStatsWithDifferences, horizonsResolved, summaryStats, computeDifferences} from './stats';
-import {verticalTermResultTable, horizontalTermResultTable, verticalHtmlResultTable, horizontalHtmlResultTable, automaticResultTable, spinner, benchmarkOneLiner} from './format';
+import {
+  ResultStatsWithDifferences,
+  horizonsResolved,
+  summaryStats,
+  computeDifferences,
+} from './stats';
+import {
+  verticalTermResultTable,
+  horizontalTermResultTable,
+  verticalHtmlResultTable,
+  horizontalHtmlResultTable,
+  automaticResultTable,
+  spinner,
+  benchmarkOneLiner,
+} from './format';
 import {Config} from './config';
 import * as github from './github';
 import {Server, Session} from './server';
@@ -73,11 +86,12 @@ export class Runner {
     });
   }
 
-  async run(): Promise<Array<ResultStatsWithDifferences>|undefined> {
+  async run(): Promise<Array<ResultStatsWithDifferences> | undefined> {
     await this.launchBrowsers();
     if (this.config.githubCheck !== undefined) {
-      this.completeGithubCheck =
-          await github.createCheck(this.config.githubCheck);
+      this.completeGithubCheck = await github.createCheck(
+        this.config.githubCheck
+      );
     }
     console.log('Running benchmarks\n');
     await this.warmup();
@@ -113,7 +127,8 @@ export class Runner {
   private async closeBrowsers() {
     // Close the browsers by closing each of their last remaining tabs.
     await Promise.all(
-        [...this.browsers.values()].map(({driver}) => driver.close()));
+      [...this.browsers.values()].map(({driver}) => driver.close())
+    );
   }
 
   /**
@@ -171,8 +186,9 @@ export class Runner {
     const maxLength = config.sampleSize.toString().length;
     let run = 0;
     for (let sample = 0; sample < config.sampleSize; sample++) {
-      const sampleLabel =
-          `sample-${sample.toString().padStart(maxLength, '0')}`;
+      const sampleLabel = `sample-${sample
+        .toString()
+        .padStart(maxLength, '0')}`;
 
       for (const spec of specs) {
         bar.tick(0, {
@@ -196,7 +212,7 @@ export class Runner {
       return;
     }
     console.log();
-    const timeoutMs = config.timeout * 60 * 1000;  // minutes -> millis
+    const timeoutMs = config.timeout * 60 * 1000; // minutes -> millis
     const startMs = Date.now();
     let run = 0;
     let sample = 0;
@@ -217,24 +233,31 @@ export class Runner {
         for (const spec of specs) {
           run++;
           elapsed = Date.now() - startMs;
-          const remainingSecs =
-              Math.max(0, Math.round((timeoutMs - elapsed) / 1000));
+          const remainingSecs = Math.max(
+            0,
+            Math.round((timeoutMs - elapsed) / 1000)
+          );
           const mins = Math.floor(remainingSecs / 60);
           const secs = remainingSecs % 60;
           process.stdout.write(
-              `\r${spinner[run % spinner.length]} Auto-sample ${sample} ` +
-              `(timeout in ${mins}m${secs}s)` + ansi.erase.inLine(0));
+            `\r${spinner[run % spinner.length]} Auto-sample ${sample} ` +
+              `(timeout in ${mins}m${secs}s)` +
+              ansi.erase.inLine(0)
+          );
 
-          const sampleLabel =
-              `auto-sample-${sample.toString().padStart(2, '0')}`;
+          const sampleLabel = `auto-sample-${sample
+            .toString()
+            .padStart(2, '0')}`;
           this.recordSamples(spec, await this.takeSamples(spec, sampleLabel));
         }
       }
     }
   }
 
-  private async takeSamples(spec: BenchmarkSpec, sampleLabel: string):
-      Promise<BenchmarkResult[]> {
+  private async takeSamples(
+    spec: BenchmarkSpec,
+    sampleLabel: string
+  ): Promise<BenchmarkResult[]> {
     const {servers, config, browsers} = this;
 
     let server;
@@ -246,8 +269,9 @@ export class Runner {
     }
 
     const url = specUrl(spec, servers, config);
-    const {driver, initialTabHandle} =
-        browsers.get(browserSignature(spec.browser))!;
+    const {driver, initialTabHandle} = browsers.get(
+      browserSignature(spec.browser)
+    )!;
 
     let session: Session;
     let pendingMeasurements;
@@ -258,20 +282,24 @@ export class Runner {
     // before collecting all measurements, we'll move onto the next attempt
     // where we reload the whole page and start from scratch. If we hit our max
     // attempts, we'll throw.
-    for (let pageAttempt = 1;; pageAttempt++) {
+    for (let pageAttempt = 1; ; pageAttempt++) {
       // New attempt. Reset all measurements and results.
       pendingMeasurements = new Set(spec.measurement);
       measurementResults = [];
       await openAndSwitchToNewTab(driver, spec.browser);
       await driver.get(url);
-      for (let waited = 0;
-           pendingMeasurements.size > 0 && waited <= this.attemptTimeout;
-           waited += this.pollTime) {
+      for (
+        let waited = 0;
+        pendingMeasurements.size > 0 && waited <= this.attemptTimeout;
+        waited += this.pollTime
+      ) {
         // TODO(aomarks) You don't have to wait in callback mode!
         await wait(this.pollTime);
-        for (let measurementIndex = 0;
-             measurementIndex < spec.measurement.length;
-             measurementIndex++) {
+        for (
+          let measurementIndex = 0;
+          measurementIndex < spec.measurement.length;
+          measurementIndex++
+        ) {
           if (measurementResults[measurementIndex] !== undefined) {
             // Already collected this measurement on this attempt.
             continue;
@@ -301,49 +329,51 @@ export class Runner {
       }
 
       console.log(
-          `\n\nFailed ${pageAttempt}/${this.maxAttempts} times ` +
+        `\n\nFailed ${pageAttempt}/${this.maxAttempts} times ` +
           `to get measurement(s) ${spec.name}` +
-          (spec.measurement.length > 1 ? ` [${
-                                                 [...pendingMeasurements]
-                                                     .map(measurementName)
-                                                     .join(', ')}]` :
-                                         '') +
-          ` in ${spec.browser.name} from ${url}. Retrying.`);
+          (spec.measurement.length > 1
+            ? ` [${[...pendingMeasurements].map(measurementName).join(', ')}]`
+            : '') +
+          ` in ${spec.browser.name} from ${url}. Retrying.`
+      );
     }
 
     if (pendingMeasurements.size > 0) {
       console.log();
       throw new Error(
-          `\n\nFailed ${this.maxAttempts}/${this.maxAttempts} times ` +
+        `\n\nFailed ${this.maxAttempts}/${this.maxAttempts} times ` +
           `to get measurement(s) ${spec.name}` +
-          (spec.measurement.length > 1 ? ` [${
-                                                 [...pendingMeasurements]
-                                                     .map(measurementName)
-                                                     .join(', ')}]` :
-                                         '') +
-          ` in ${spec.browser.name} from ${url}`);
+          (spec.measurement.length > 1
+            ? ` [${[...pendingMeasurements].map(measurementName).join(', ')}]`
+            : '') +
+          ` in ${spec.browser.name} from ${url}`
+      );
     }
 
-    return spec.measurement.map(
-        (measurement, measurementIndex) => ({
-          name: spec.measurement.length === 1 ?
-              spec.name :
-              `${spec.name} [${measurementName(measurement)}]`,
-          measurement,
-          measurementIndex: measurementIndex,
-          queryString: spec.url.kind === 'local' ? spec.url.queryString : '',
-          version: spec.url.kind === 'local' && spec.url.version !== undefined ?
-              spec.url.version.label :
-              '',
-          millis: [measurementResults[measurementIndex]],
-          bytesSent: session ? session.bytesSent : 0,
-          browser: spec.browser,
-          userAgent: session ? session.userAgent : '',
-        }));
+    return spec.measurement.map((measurement, measurementIndex) => ({
+      name:
+        spec.measurement.length === 1
+          ? spec.name
+          : `${spec.name} [${measurementName(measurement)}]`,
+      measurement,
+      measurementIndex: measurementIndex,
+      queryString: spec.url.kind === 'local' ? spec.url.queryString : '',
+      version:
+        spec.url.kind === 'local' && spec.url.version !== undefined
+          ? spec.url.version.label
+          : '',
+      millis: [measurementResults[measurementIndex]],
+      bytesSent: session ? session.bytesSent : 0,
+      browser: spec.browser,
+      userAgent: session ? session.userAgent : '',
+    }));
   }
 
   async capturePerfTraces(
-      spec: BenchmarkSpec, driver: webdriver.WebDriver, sampleLabel: string) {
+    spec: BenchmarkSpec,
+    driver: webdriver.WebDriver,
+    sampleLabel: string
+  ) {
     if (spec.browser.trace === undefined) {
       return;
     }
@@ -357,15 +387,17 @@ export class Runner {
 
     const logDir = spec.browser.trace.logDir;
     await fsExtra.writeFile(
-        pathlib.join(logDir, `log-${sampleLabel}.json`),
-        // Convert perf logs into a format about:tracing can parse
-        '[\n' +
-            perfEntries.map((e) => JSON.parse(e.message).message)
-                .filter((log) => log.method === 'Tracing.dataCollected')
-                .map((log) => JSON.stringify(log.params))
-                .join(',\n') +
-            '\n]',
-        'utf8');
+      pathlib.join(logDir, `log-${sampleLabel}.json`),
+      // Convert perf logs into a format about:tracing can parse
+      '[\n' +
+        perfEntries
+          .map((e) => JSON.parse(e.message).message)
+          .filter((log) => log.method === 'Tracing.dataCollected')
+          .map((log) => JSON.stringify(log.params))
+          .join(',\n') +
+        '\n]',
+      'utf8'
+    );
   }
 
   makeResults() {
@@ -387,9 +419,12 @@ export class Runner {
     console.log(verticalTermResultTable(unfixed));
 
     if (hitTimeout === true) {
-      console.log(ansi.format(
+      console.log(
+        ansi.format(
           `[bold red]{NOTE} Hit ${config.timeout} minute auto-sample timeout` +
-          ` trying to resolve horizon(s)`));
+            ` trying to resolve horizon(s)`
+        )
+      );
       console.log('Consider a longer --timeout or different --horizon');
     }
 
@@ -406,15 +441,19 @@ export class Runner {
 
     if (config.csvFileStats) {
       await fsExtra.writeFile(
-          config.csvFileStats, formatCsvStats(withDifferences));
+        config.csvFileStats,
+        formatCsvStats(withDifferences)
+      );
     }
     if (config.csvFileRaw) {
       await fsExtra.writeFile(config.csvFileRaw, formatCsvRaw(withDifferences));
     }
 
     if (this.completeGithubCheck !== undefined) {
-      const markdown = horizontalHtmlResultTable(fixed) + '\n' +
-          verticalHtmlResultTable(unfixed);
+      const markdown =
+        horizontalHtmlResultTable(fixed) +
+        '\n' +
+        verticalHtmlResultTable(unfixed);
       await this.completeGithubCheck(markdown);
     }
   }

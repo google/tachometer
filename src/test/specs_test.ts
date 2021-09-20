@@ -27,7 +27,7 @@ chai.use(chaiAsPromised);
 const {assert} = chai;
 
 const parse = (argv: string[]) =>
-    commandLineArgs(optDefs, {argv, partial: true}) as Opts;
+  commandLineArgs(optDefs, {argv, partial: true}) as Opts;
 
 const defaultBrowser = {
   name: defaults.browserName,
@@ -297,19 +297,25 @@ suite('specsFromOpts', () => {
     test('not accessible from server root', async () => {
       const argv = [path.resolve(__dirname, '..', '..')];
       await assert.isRejected(
-          specsFromOpts(parse(argv)), /not accessible from server root/i);
+        specsFromOpts(parse(argv)),
+        /not accessible from server root/i
+      );
     });
 
     test('did not contain an index.html', async () => {
       const argv = ['noindex'];
       await assert.isRejected(
-          specsFromOpts(parse(argv)), /did not contain an index\.html/i);
+        specsFromOpts(parse(argv)),
+        /did not contain an index\.html/i
+      );
     });
 
     test('browser not supported', async () => {
       const argv = ['mybench', '--browser=potato'];
       await assert.isRejected(
-          specsFromOpts(parse(argv)), /browser potato is not supported/i);
+        specsFromOpts(parse(argv)),
+        /browser potato is not supported/i
+      );
     });
   });
 });

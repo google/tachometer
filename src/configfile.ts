@@ -14,11 +14,21 @@ import * as jsonschema from 'jsonschema';
 import * as path from 'path';
 import sanitizeFileName from 'sanitize-filename';
 
-import {BrowserConfig, BrowserName, parseBrowserConfigString, validateBrowserConfig} from './browser';
+import {
+  BrowserConfig,
+  BrowserName,
+  parseBrowserConfigString,
+  validateBrowserConfig,
+} from './browser';
 import {Config, parseHorizons, urlFromLocalPath} from './config';
 import * as defaults from './defaults';
 import {makeUniqueSpecLabelFn} from './format';
-import {BenchmarkSpec, ExtendedPackageDependencyMap, Measurement, measurements} from './types';
+import {
+  BenchmarkSpec,
+  ExtendedPackageDependencyMap,
+  Measurement,
+  measurements,
+} from './types';
 import {isHttpUrl} from './util';
 
 /**
@@ -99,7 +109,7 @@ interface ConfigFileBenchmark {
    *   - edge
    *   - ie
    */
-  browser?: string|BrowserConfigs;
+  browser?: string | BrowserConfigs;
 
   /**
    * Which time interval to measure.
@@ -140,10 +150,18 @@ interface ConfigFileBenchmark {
 }
 
 type ConfigFileMeasurement =
-    'callback'|'fcp'|'global'|Measurement|Array<Measurement>;
+  | 'callback'
+  | 'fcp'
+  | 'global'
+  | Measurement
+  | Array<Measurement>;
 
 type BrowserConfigs =
-    ChromeConfig|FirefoxConfig|SafariConfig|EdgeConfig|IEConfig;
+  | ChromeConfig
+  | FirefoxConfig
+  | SafariConfig
+  | EdgeConfig
+  | IEConfig;
 
 interface BrowserConfigBase {
   /**
@@ -222,7 +240,7 @@ interface ChromeConfig extends BrowserConfigBase {
   /**
    * Optional config to turn on performance tracing.
    */
-  trace?: TraceConfig|true;
+  trace?: TraceConfig | true;
 }
 
 /**
@@ -266,7 +284,7 @@ interface FirefoxConfig extends BrowserConfigBase {
    * in Firefox (see
    * https://support.mozilla.org/en-US/kb/about-config-editor-firefox).
    */
-  preferences?: {[name: string]: string|number|boolean};
+  preferences?: {[name: string]: string | number | boolean};
 }
 
 interface SafariConfig extends BrowserConfigBase {
@@ -298,14 +316,16 @@ interface ConfigFilePackageVersion {
  * Validate the given JSON object parsed from a config file, and expand it into
  * a fully specified configuration.
  */
-export async function parseConfigFile(parsedJson: unknown):
-    Promise<Partial<Config>> {
+export async function parseConfigFile(
+  parsedJson: unknown
+): Promise<Partial<Config>> {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const schema = require('../config.schema.json');
-  const result =
-      jsonschema.validate(parsedJson, schema);
+  const result = jsonschema.validate(parsedJson, schema);
   if (result.errors.length > 0) {
     throw new Error(
-        [...new Set(result.errors.map(customizeJsonSchemaError))].join('\n'));
+      [...new Set(result.errors.map(customizeJsonSchemaError))].join('\n')
+    );
   }
   const validated = parsedJson as ConfigFile;
   const root = validated.root || '.';
@@ -320,8 +340,10 @@ export async function parseConfigFile(parsedJson: unknown):
   const labelFn = makeUniqueSpecLabelFn(benchmarks);
   for (const spec of benchmarks) {
     if (spec.browser.trace !== undefined) {
-      spec.browser.trace.logDir =
-          path.join(spec.browser.trace.logDir, sanitizeFileName(labelFn(spec)));
+      spec.browser.trace.logDir = path.join(
+        spec.browser.trace.logDir,
+        sanitizeFileName(labelFn(spec))
+      );
     }
   }
 
@@ -329,9 +351,10 @@ export async function parseConfigFile(parsedJson: unknown):
     root,
     sampleSize: validated.sampleSize,
     timeout: validated.timeout,
-    horizons: validated.horizons !== undefined ?
-        parseHorizons(validated.horizons) :
-        undefined,
+    horizons:
+      validated.horizons !== undefined
+        ? parseHorizons(validated.horizons)
+        : undefined,
     benchmarks,
     resolveBareModules: validated.resolveBareModules,
   };
@@ -345,16 +368,19 @@ export async function parseConfigFile(parsedJson: unknown):
 function customizeJsonSchemaError(error: jsonschema.ValidationError): string {
   let str;
   if (error.property.match(/^instance\.benchmarks\[\d+\]\.measurement$/)) {
-    str = `${error.property} is not any of: ${[...measurements].join(', ')}` +
-        ' or an object like `performanceEntry: string`';
+    str =
+      `${error.property} is not any of: ${[...measurements].join(', ')}` +
+      ' or an object like `performanceEntry: string`';
   } else {
     str = error.toString();
   }
   return str.replace(/^instance/, 'config');
 }
 
-async function parseBenchmark(benchmark: ConfigFileBenchmark, root: string):
-    Promise<Partial<BenchmarkSpec>> {
+async function parseBenchmark(
+  benchmark: ConfigFileBenchmark,
+  root: string
+): Promise<Partial<BenchmarkSpec>> {
   const spec: Partial<BenchmarkSpec> = {};
 
   if (benchmark.name !== undefined) {
@@ -379,20 +405,26 @@ async function parseBenchmark(benchmark: ConfigFileBenchmark, root: string):
   }
 
   if (benchmark.measurement === 'callback') {
-    spec.measurement = [{
-      mode: 'callback',
-    }];
+    spec.measurement = [
+      {
+        mode: 'callback',
+      },
+    ];
   } else if (benchmark.measurement === 'fcp') {
-    spec.measurement = [{
-      mode: 'performance',
-      entryName: 'first-contentful-paint',
-    }];
+    spec.measurement = [
+      {
+        mode: 'performance',
+        entryName: 'first-contentful-paint',
+      },
+    ];
   } else if (benchmark.measurement === 'global') {
-    spec.measurement = [{
-      mode: 'expression',
-      expression:
+    spec.measurement = [
+      {
+        mode: 'expression',
+        expression:
           benchmark.measurementExpression || defaults.measurementExpression,
-    }];
+      },
+    ];
   } else if (Array.isArray(benchmark.measurement)) {
     spec.measurement = benchmark.measurement;
   } else if (benchmark.measurement !== undefined) {
@@ -472,11 +504,12 @@ function parseBrowserObject(config: BrowserConfigs): BrowserConfig {
     } else if (typeof config.trace === 'object') {
       parsed.trace = {
         categories: config.trace.categories ?? defaults.traceCategories,
-        logDir: config.trace.logDir === undefined ?
-            defaults.traceLogDir :
-            path.isAbsolute(config.trace.logDir) ?
-            config.trace.logDir :
-            path.join(process.cwd(), config.trace.logDir)
+        logDir:
+          config.trace.logDir === undefined
+            ? defaults.traceLogDir
+            : path.isAbsolute(config.trace.logDir)
+            ? config.trace.logDir
+            : path.join(process.cwd(), config.trace.logDir),
       };
     }
   }
@@ -534,13 +567,15 @@ function applyDefaults(partialSpec: Partial<BenchmarkSpec>): BenchmarkSpec {
 }
 
 export async function writeBackSchemaIfNeeded(
-    rawConfigObj: Partial<ConfigFile>, configFile: string) {
+  rawConfigObj: Partial<ConfigFile>,
+  configFile: string
+) {
   // Add the $schema field to the original config file if it's absent.
   // We only want to do this if the file validated though, so we don't mutate
   // a file that's not actually a tachometer config file.
   if (!('$schema' in rawConfigObj)) {
     const $schema =
-        'https://raw.githubusercontent.com/Polymer/tachometer/master/config.schema.json';
+      'https://raw.githubusercontent.com/Polymer/tachometer/master/config.schema.json';
     // Extra IDE features can be activated if the config file has a schema.
     const withSchema = {
       $schema,

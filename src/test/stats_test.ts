@@ -9,15 +9,16 @@
  * rights grant found at http://polymer.github.io/PATENTS.txt
  */
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const jstat = require('jstat');
 
 import {assert} from 'chai';
 import {suite, test} from 'mocha';
 import {summaryStats, computeDifference, intervalContains} from '../stats';
 
-suite('statistics', function() {
-  test('confidence intervals', function() {
-    this.timeout(4 * 60_000);  // Lots of arithmetic.
+suite('statistics', function () {
+  test('confidence intervals', function () {
+    this.timeout(4 * 60_000); // Lots of arithmetic.
 
     // Increasing the number of trials increases the precision of our long-term
     // estimate of the proportion of correct confidence intervals (see below).
@@ -86,21 +87,24 @@ suite('statistics', function() {
  * Generate random numbers from the normal distribution with the given mean and
  * standard deviation.
  */
-const randNormalValues =
-    (size: number, mean: number, stdDev: number): number[] => {
-      // Note jstat.randn generates random numbers from the standard normal
-      // distribution (which has mean 0 and standard deviation 1) hence we must
-      // transform it to our distribution.
-      const [vals] = jstat.randn(1, size) as [number[]];
-      return vals.map((v) => v * stdDev + mean);
-    };
+const randNormalValues = (
+  size: number,
+  mean: number,
+  stdDev: number
+): number[] => {
+  // Note jstat.randn generates random numbers from the standard normal
+  // distribution (which has mean 0 and standard deviation 1) hence we must
+  // transform it to our distribution.
+  const [vals] = jstat.randn(1, size) as [number[]];
+  return vals.map((v) => v * stdDev + mean);
+};
 
 /**
  * Min inclusive, max exclusive.
  * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/random#Examples
  */
 const randFloat = (min: number, max: number): number =>
-    Math.random() * (max - min) + min;
+  Math.random() * (max - min) + min;
 
 /**
  * Min inclusive, max exclusive.

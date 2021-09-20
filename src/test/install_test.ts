@@ -15,7 +15,10 @@ import {suite, test} from 'mocha';
 import * as os from 'os';
 import * as path from 'path';
 
-import {assertResolvable, onDemandDependenciesFromPackageJSON} from '../install';
+import {
+  assertResolvable,
+  onDemandDependenciesFromPackageJSON,
+} from '../install';
 
 suite('install', () => {
   suite('onDemandDependenciesFromPackageJSON', () => {
@@ -49,28 +52,26 @@ suite('install', () => {
       assert.isTrue(rejected);
     });
 
-    test(
-        'eventually resolves a module that was installed asynchronously',
-        async () => {
-          let rejected = false;
-          const someModulePath = path.join(os.tmpdir(), 'foo.js');
-          if (existsSync(someModulePath)) {
-            await fs.unlink(someModulePath);
-          }
+    test('eventually resolves a module that was installed asynchronously', async () => {
+      let rejected = false;
+      const someModulePath = path.join(os.tmpdir(), 'foo.js');
+      if (existsSync(someModulePath)) {
+        await fs.unlink(someModulePath);
+      }
 
-          try {
-            await assertResolvable(someModulePath);
-          } catch {
-            rejected = true;
-          }
+      try {
+        await assertResolvable(someModulePath);
+      } catch {
+        rejected = true;
+      }
 
-          assert.isTrue(rejected);
+      assert.isTrue(rejected);
 
-          await fs.writeFile(someModulePath, 'console.log("hi")');
+      await fs.writeFile(someModulePath, 'console.log("hi")');
 
-          await assertResolvable(someModulePath);
+      await assertResolvable(someModulePath);
 
-          await fs.unlink(someModulePath);
-        });
+      await fs.unlink(someModulePath);
+    });
   });
 });

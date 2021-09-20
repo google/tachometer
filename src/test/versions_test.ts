@@ -15,7 +15,12 @@ import * as path from 'path';
 
 import * as defaults from '../defaults';
 import {BenchmarkSpec} from '../types';
-import {hashStrings, makeServerPlans, ServerPlan, tachometerVersion} from '../versions';
+import {
+  hashStrings,
+  makeServerPlans,
+  ServerPlan,
+  tachometerVersion,
+} from '../versions';
 import {testData} from './test_helpers';
 
 const defaultBrowser = {
@@ -45,10 +50,12 @@ suite('versions', () => {
             },
             queryString: '',
           },
-          measurement: [{
-            mode: 'performance',
-            entryName: 'first-contentful-paint',
-          }],
+          measurement: [
+            {
+              mode: 'performance',
+              entryName: 'first-contentful-paint',
+            },
+          ],
           browser: defaultBrowser,
         },
         {
@@ -64,13 +71,14 @@ suite('versions', () => {
             },
             queryString: '',
           },
-          measurement: [{
-            mode: 'performance',
-            entryName: 'first-contentful-paint',
-          }],
+          measurement: [
+            {
+              mode: 'performance',
+              entryName: 'first-contentful-paint',
+            },
+          ],
           browser: defaultBrowser,
         },
-
 
         // mybench and other bench only need the default server.
         {
@@ -80,10 +88,12 @@ suite('versions', () => {
             urlPath: '/mylib/mybench/',
             queryString: '',
           },
-          measurement: [{
-            mode: 'performance',
-            entryName: 'first-contentful-paint',
-          }],
+          measurement: [
+            {
+              mode: 'performance',
+              entryName: 'first-contentful-paint',
+            },
+          ],
           browser: defaultBrowser,
         },
         {
@@ -93,10 +103,12 @@ suite('versions', () => {
             urlPath: '/otherlib/otherbench/',
             queryString: '',
           },
-          measurement: [{
-            mode: 'performance',
-            entryName: 'first-contentful-paint',
-          }],
+          measurement: [
+            {
+              mode: 'performance',
+              entryName: 'first-contentful-paint',
+            },
+          ],
           browser: defaultBrowser,
         },
 
@@ -107,26 +119,36 @@ suite('versions', () => {
             kind: 'remote',
             url: 'http://example.com',
           },
-          measurement: [{
-            mode: 'performance',
-            entryName: 'first-contentful-paint',
-          }],
+          measurement: [
+            {
+              mode: 'performance',
+              entryName: 'first-contentful-paint',
+            },
+          ],
           browser: defaultBrowser,
         },
       ];
 
       const tempDir = '/tmp';
       const {plans: actualPlans, gitInstalls: actualGitInstalls} =
-          await makeServerPlans(testData, tempDir, specs);
+        await makeServerPlans(testData, tempDir, specs);
 
       const v1Hash = hashStrings(
-          tachometerVersion,
-          path.join(testData, 'mylib', 'package.json'),
-          JSON.stringify([['mylib', '1.0.0'], ['otherlib', '0.0.0']]));
+        tachometerVersion,
+        path.join(testData, 'mylib', 'package.json'),
+        JSON.stringify([
+          ['mylib', '1.0.0'],
+          ['otherlib', '0.0.0'],
+        ])
+      );
       const v2Hash = hashStrings(
-          tachometerVersion,
-          path.join(testData, 'mylib', 'package.json'),
-          JSON.stringify([['mylib', '2.0.0'], ['otherlib', '0.0.0']]));
+        tachometerVersion,
+        path.join(testData, 'mylib', 'package.json'),
+        JSON.stringify([
+          ['mylib', '2.0.0'],
+          ['otherlib', '0.0.0'],
+        ])
+      );
 
       const expectedPlans: ServerPlan[] = [
         {
@@ -142,16 +164,18 @@ suite('versions', () => {
 
         {
           specs: [specs[0]],
-          npmInstalls: [{
-            installDir: path.join(tempDir, v1Hash),
-            packageJson: {
-              private: true,
-              dependencies: {
-                mylib: '1.0.0',
-                otherlib: '0.0.0',
+          npmInstalls: [
+            {
+              installDir: path.join(tempDir, v1Hash),
+              packageJson: {
+                private: true,
+                dependencies: {
+                  mylib: '1.0.0',
+                  otherlib: '0.0.0',
+                },
               },
             },
-          }],
+          ],
           mountPoints: [
             {
               diskPath: path.join(tempDir, v1Hash, 'node_modules'),
@@ -166,16 +190,18 @@ suite('versions', () => {
 
         {
           specs: [specs[1]],
-          npmInstalls: [{
-            installDir: path.join(tempDir, v2Hash),
-            packageJson: {
-              private: true,
-              dependencies: {
-                mylib: '2.0.0',
-                otherlib: '0.0.0',
+          npmInstalls: [
+            {
+              installDir: path.join(tempDir, v2Hash),
+              packageJson: {
+                private: true,
+                dependencies: {
+                  mylib: '2.0.0',
+                  otherlib: '0.0.0',
+                },
               },
             },
-          }],
+          ],
           mountPoints: [
             {
               diskPath: path.join(tempDir, v2Hash, 'node_modules'),
@@ -211,35 +237,43 @@ suite('versions', () => {
             },
             queryString: '',
           },
-          measurement: [{
-            mode: 'performance',
-            entryName: 'first-contentful-paint',
-          }],
+          measurement: [
+            {
+              mode: 'performance',
+              entryName: 'first-contentful-paint',
+            },
+          ],
           browser: defaultBrowser,
         },
       ];
 
       const tempDir = '/tmp';
       const {plans: actualPlans, gitInstalls: actualGitInstalls} =
-          await makeServerPlans(path.join(testData, 'mylib'), tempDir, specs);
+        await makeServerPlans(path.join(testData, 'mylib'), tempDir, specs);
 
       const v1Hash = hashStrings(
-          tachometerVersion,
-          path.join(testData, 'mylib', 'package.json'),
-          JSON.stringify([['mylib', '1.0.0'], ['otherlib', '0.0.0']]));
+        tachometerVersion,
+        path.join(testData, 'mylib', 'package.json'),
+        JSON.stringify([
+          ['mylib', '1.0.0'],
+          ['otherlib', '0.0.0'],
+        ])
+      );
       const expectedPlans: ServerPlan[] = [
         {
           specs: [specs[0]],
-          npmInstalls: [{
-            installDir: path.join(tempDir, v1Hash),
-            packageJson: {
-              private: true,
-              dependencies: {
-                mylib: '1.0.0',
-                otherlib: '0.0.0',
+          npmInstalls: [
+            {
+              installDir: path.join(tempDir, v1Hash),
+              packageJson: {
+                private: true,
+                dependencies: {
+                  mylib: '1.0.0',
+                  otherlib: '0.0.0',
+                },
               },
             },
-          }],
+          ],
           mountPoints: [
             {
               diskPath: path.join(tempDir, v1Hash, 'node_modules'),

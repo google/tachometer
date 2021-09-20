@@ -21,7 +21,10 @@ import {fakeResults} from './test_helpers';
  * columns visually, but then remove that padding before comparison.
  */
 const removePadding = (readable: string): string =>
-    readable.replace(/ *, */g, ',').replace(/ *\n */gm, '\n').trim() + '\n';
+  readable
+    .replace(/ *, */g, ',')
+    .replace(/ *\n */gm, '\n')
+    .trim() + '\n';
 
 suite('csv', () => {
   test('stats: 2x2 matrix with quoting', async () => {

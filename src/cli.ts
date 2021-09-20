@@ -9,29 +9,36 @@
  * rights grant found at http://polymer.github.io/PATENTS.txt
  */
 
-require('source-map-support').install();
+import sourceMapSupport from 'source-map-support';
+sourceMapSupport.install();
 
 import * as path from 'path';
-import ansi = require('ansi-escape-sequences');
+import ansi from 'ansi-escape-sequences';
 import * as semver from 'semver';
 
-import commandLineUsage = require('command-line-usage');
+import commandLineUsage from 'command-line-usage';
 
 import {optDefs, parseFlags} from './flags';
 import {BenchmarkSpec} from './types';
 import {makeConfig} from './config';
 import {Server} from './server';
 import {ResultStatsWithDifferences} from './stats';
-import {prepareVersionDirectory, makeServerPlans, installGitDependency} from './versions';
+import {
+  prepareVersionDirectory,
+  makeServerPlans,
+  installGitDependency,
+} from './versions';
 import {manualMode} from './manual';
 import {Runner} from './runner';
 import {runNpm} from './util';
 
 const installedVersion = (): string =>
-    require(path.join('..', 'package.json')).version;
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  require(path.join('..', 'package.json')).version;
 
-export async function main(argv: string[]):
-    Promise<Array<ResultStatsWithDifferences>|undefined> {
+export async function main(
+  argv: string[]
+): Promise<Array<ResultStatsWithDifferences> | undefined> {
   // Don't block anything on a network query to NPM.
   const latestVersionPromise = latestVersionFromNpm();
   let results;
@@ -62,28 +69,31 @@ async function latestVersionFromNpm(): Promise<string> {
 function notifyIfOutdated(latestVersion: string) {
   const iv = installedVersion();
   if (semver.lt(iv, latestVersion)) {
-    console.log(ansi.format(`
+    console.log(
+      ansi.format(`
 [bold magenta]{Update available!}
 The latest version of tachometer is [green]{${latestVersion}}
 You are running version [yellow]{${iv}}
-See what's new at [cyan]{https://github.com/Polymer/tachometer/blob/master/CHANGELOG.md}`));
+See what's new at [cyan]{https://github.com/Polymer/tachometer/blob/master/CHANGELOG.md}`)
+    );
   }
 }
 
-async function realMain(argv: string[]):
-    Promise<Array<ResultStatsWithDifferences>|undefined> {
+async function realMain(
+  argv: string[]
+): Promise<Array<ResultStatsWithDifferences> | undefined> {
   const opts = parseFlags(argv);
 
   if (opts.help) {
-    console.log(commandLineUsage([
-      {
-        header: 'tach',
-        content:
-            `v${installedVersion()}\nhttps://github.com/PolymerLabs/tachometer`,
-      },
-      {
-        header: 'Usage',
-        content: `
+    console.log(
+      commandLineUsage([
+        {
+          header: 'tach',
+          content: `v${installedVersion()}\nhttps://github.com/PolymerLabs/tachometer`,
+        },
+        {
+          header: 'Usage',
+          content: `
 Run a benchmark from a local file:
 $ tach foo.html
 
@@ -96,12 +106,13 @@ $ tach foo/bar
 Benchmark a remote URL's First Contentful Paint time:
 $ tach http://example.com
 `,
-      },
-      {
-        header: 'Options',
-        optionList: optDefs,
-      },
-    ]));
+        },
+        {
+          header: 'Options',
+          optionList: optDefs,
+        },
+      ])
+    );
     return;
   }
 
@@ -114,45 +125,52 @@ $ tach http://example.com
 
   if (config.legacyJsonFile) {
     console.log(
-        `Please use --json-file instead of --save. ` +
-        `--save will be removed in the next major version.`);
+      `Please use --json-file instead of --save. ` +
+        `--save will be removed in the next major version.`
+    );
   }
 
   const {plans, gitInstalls} = await makeServerPlans(
-      config.root, opts['npm-install-dir'], config.benchmarks);
+    config.root,
+    opts['npm-install-dir'],
+    config.benchmarks
+  );
 
-  await Promise.all(gitInstalls.map(
-      (gitInstall) =>
-          installGitDependency(gitInstall, config.forceCleanNpmInstall)));
+  await Promise.all(
+    gitInstalls.map((gitInstall) =>
+      installGitDependency(gitInstall, config.forceCleanNpmInstall)
+    )
+  );
 
   const servers = new Map<BenchmarkSpec, Server>();
   const promises = [];
   for (const {npmInstalls, mountPoints, specs} of plans) {
-    promises.push(...npmInstalls.map(
-        (install) => prepareVersionDirectory(
-            install,
-            config.forceCleanNpmInstall,
-            )));
-    promises.push((async () => {
-      const server = await Server.start({
-        host: opts.host,
-        ports: opts.port,
-        root: config.root,
-        npmInstalls,
-        mountPoints,
-        resolveBareModules: config.resolveBareModules,
-        cache: config.mode !== 'manual',
-      });
-      for (const spec of specs) {
-        servers.set(spec, server);
-      }
-    })());
+    promises.push(
+      ...npmInstalls.map((install) =>
+        prepareVersionDirectory(install, config.forceCleanNpmInstall)
+      )
+    );
+    promises.push(
+      (async () => {
+        const server = await Server.start({
+          host: opts.host,
+          ports: opts.port,
+          root: config.root,
+          npmInstalls,
+          mountPoints,
+          resolveBareModules: config.resolveBareModules,
+          cache: config.mode !== 'manual',
+        });
+        for (const spec of specs) {
+          servers.set(spec, server);
+        }
+      })()
+    );
   }
   await Promise.all(promises);
 
   if (config.mode === 'manual') {
     await manualMode(config, servers);
-
   } else {
     const runner = new Runner(config, servers);
     try {

@@ -39,7 +39,7 @@ function roundPlacesAll(val: unknown, places: number): unknown {
 }
 
 function roundPlaces(num: number, places: number): number {
-  return Math.round(num * (10 ** places)) / (10 ** places);
+  return Math.round(num * 10 ** places) / 10 ** places;
 }
 
 suite('jsonOutput', () => {
@@ -74,12 +74,9 @@ suite('jsonOutput', () => {
             headless: false,
             windowSize: {width: 1024, height: 768},
             userAgent:
-                'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36',
+              'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36',
           },
-          samples: [
-            ...new Array(25).fill(5),
-            ...new Array(25).fill(15),
-          ],
+          samples: [...new Array(25).fill(5), ...new Array(25).fill(15)],
           mean: {
             low: 8.56459,
             high: 11.43541,
@@ -112,12 +109,9 @@ suite('jsonOutput', () => {
             headless: false,
             windowSize: {width: 1024, height: 768},
             userAgent:
-                'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36',
+              'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36',
           },
-          samples: [
-            ...new Array(25).fill(15),
-            ...new Array(25).fill(25),
-          ],
+          samples: [...new Array(25).fill(15), ...new Array(25).fill(25)],
           mean: {
             low: 18.56459,
             high: 21.43541,
@@ -149,16 +143,16 @@ suite('jsonOutput', () => {
           url: 'http://example.com?foo',
           measurement: [
             {name: 'Metric 1', mode: 'performance', entryName: 'metric1'},
-            {name: 'Metric 2', mode: 'performance', entryName: 'metric2'}
-          ]
+            {name: 'Metric 2', mode: 'performance', entryName: 'metric2'},
+          ],
         },
         {
           name: 'bar',
           url: 'http://example.com?bar',
           measurement: [
             {name: 'Metric 1', mode: 'performance', entryName: 'metric1'},
-            {name: 'Metric 2', mode: 'performance', entryName: 'metric2'}
-          ]
+            {name: 'Metric 2', mode: 'performance', entryName: 'metric2'},
+          ],
         },
       ],
     };
@@ -180,18 +174,15 @@ suite('jsonOutput', () => {
             headless: false,
             windowSize: {width: 1024, height: 768},
             userAgent:
-                'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36',
+              'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36',
           },
-          samples: [
-            ...new Array(25).fill(5),
-            ...new Array(25).fill(15),
-          ],
+          samples: [...new Array(25).fill(5), ...new Array(25).fill(15)],
           mean: {low: 8.56459, high: 11.43541},
           differences: [
             null,
             {
               absolute: {high: 2.02998, low: -2.02998},
-              percentChange: {high: 20.29978, low: -20.29978}
+              percentChange: {high: 20.29978, low: -20.29978},
             },
             {
               absolute: {low: -12.02998, high: -7.97002},
@@ -199,8 +190,8 @@ suite('jsonOutput', () => {
             },
             {
               absolute: {high: -7.97002, low: -12.02998},
-              percentChange: {high: -41.97581, low: -58.02419}
-            }
+              percentChange: {high: -41.97581, low: -58.02419},
+            },
           ],
         },
         {
@@ -217,19 +208,19 @@ suite('jsonOutput', () => {
             headless: false,
             windowSize: {width: 1024, height: 768},
             userAgent:
-                'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36',
+              'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36',
           },
           samples: [...new Array(25).fill(5), ...new Array(25).fill(15)],
           mean: {high: 11.43541, low: 8.56459},
           differences: [
             {
               absolute: {high: 2.02998, low: -2.02998},
-              percentChange: {high: 20.29978, low: -20.29978}
+              percentChange: {high: 20.29978, low: -20.29978},
             },
             null,
             {
               absolute: {high: -7.97002, low: -12.02998},
-              percentChange: {high: -41.97581, low: -58.02419}
+              percentChange: {high: -41.97581, low: -58.02419},
             },
             {
               absolute: {high: -7.97002, low: -12.02998},
@@ -251,12 +242,9 @@ suite('jsonOutput', () => {
             headless: false,
             windowSize: {width: 1024, height: 768},
             userAgent:
-                'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36',
+              'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36',
           },
-          samples: [
-            ...new Array(25).fill(15),
-            ...new Array(25).fill(25),
-          ],
+          samples: [...new Array(25).fill(15), ...new Array(25).fill(25)],
           mean: {low: 18.56459, high: 21.43541},
           differences: [
             {
@@ -265,13 +253,13 @@ suite('jsonOutput', () => {
             },
             {
               absolute: {high: 12.02998, low: 7.97002},
-              percentChange: {high: 132.09676, low: 67.90324}
+              percentChange: {high: 132.09676, low: 67.90324},
             },
             null,
             {
               absolute: {high: 2.02998, low: -2.02998},
-              percentChange: {high: 10.14989, low: -10.14989}
-            }
+              percentChange: {high: 10.14989, low: -10.14989},
+            },
           ],
         },
         {
@@ -288,25 +276,22 @@ suite('jsonOutput', () => {
             headless: false,
             windowSize: {width: 1024, height: 768},
             userAgent:
-                'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36',
+              'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36',
           },
-          samples: [
-            ...new Array(25).fill(15),
-            ...new Array(25).fill(25),
-          ],
+          samples: [...new Array(25).fill(15), ...new Array(25).fill(25)],
           mean: {low: 18.56459, high: 21.43541},
           differences: [
             {
               absolute: {high: 12.02998, low: 7.97002},
-              percentChange: {high: 132.09676, low: 67.90324}
+              percentChange: {high: 132.09676, low: 67.90324},
             },
             {
               absolute: {high: 12.02998, low: 7.97002},
-              percentChange: {high: 132.09676, low: 67.90324}
+              percentChange: {high: 132.09676, low: 67.90324},
             },
             {
               absolute: {high: 2.02998, low: -2.02998},
-              percentChange: {high: 10.14989, low: -10.14989}
+              percentChange: {high: 10.14989, low: -10.14989},
             },
             null,
           ],

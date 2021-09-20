@@ -446,8 +446,8 @@ suite('config', () => {
           },
           {
             url: 'http://example.com?test=1',
-            browser: {name: 'chrome', trace: true}
-          }
+            browser: {name: 'chrome', trace: true},
+          },
         ],
       };
       const expected: Partial<Config> = {
@@ -478,8 +478,8 @@ suite('config', () => {
               },
               trace: {
                 categories: defaults.traceCategories,
-                logDir: path.join(defaults.traceLogDir, 'example.comfoo=bar')
-              }
+                logDir: path.join(defaults.traceLogDir, 'example.comfoo=bar'),
+              },
             },
           },
           {
@@ -503,8 +503,8 @@ suite('config', () => {
               },
               trace: {
                 categories: defaults.traceCategories,
-                logDir: path.join(defaults.traceLogDir, 'example.comtest=1')
-              }
+                logDir: path.join(defaults.traceLogDir, 'example.comtest=1'),
+              },
             },
           },
         ],
@@ -520,16 +520,20 @@ suite('config', () => {
             name: 'benchmark',
             url: 'mybench/index.html',
             packageVersions: {label: 'version1', dependencies: {}},
-            browser:
-                {name: 'chrome', trace: {categories: ['test'], logDir: 'test'}},
+            browser: {
+              name: 'chrome',
+              trace: {categories: ['test'], logDir: 'test'},
+            },
           },
           {
             name: 'benchmark',
             url: 'mybench/index.html',
             packageVersions: {label: 'version2', dependencies: {}},
-            browser:
-                {name: 'chrome', trace: {categories: ['test'], logDir: 'test'}},
-          }
+            browser: {
+              name: 'chrome',
+              trace: {categories: ['test'], logDir: 'test'},
+            },
+          },
         ],
       };
       const expected: Partial<Config> = {
@@ -545,7 +549,7 @@ suite('config', () => {
               kind: 'local',
               queryString: '',
               urlPath: '/mybench/index.html',
-              version: {label: 'version1', dependencyOverrides: {}}
+              version: {label: 'version1', dependencyOverrides: {}},
             },
             measurement: [
               {
@@ -561,8 +565,8 @@ suite('config', () => {
               },
               trace: {
                 categories: ['test'],
-                logDir: path.join(process.cwd(), 'test', 'version1')
-              }
+                logDir: path.join(process.cwd(), 'test', 'version1'),
+              },
             },
           },
           {
@@ -571,7 +575,7 @@ suite('config', () => {
               kind: 'local',
               queryString: '',
               urlPath: '/mybench/index.html',
-              version: {label: 'version2', dependencyOverrides: {}}
+              version: {label: 'version2', dependencyOverrides: {}},
             },
             measurement: [
               {
@@ -587,8 +591,8 @@ suite('config', () => {
               },
               trace: {
                 categories: ['test'],
-                logDir: path.join(process.cwd(), 'test', 'version2')
-              }
+                logDir: path.join(process.cwd(), 'test', 'version2'),
+              },
             },
           },
         ],
@@ -601,7 +605,9 @@ suite('config', () => {
       test('invalid top-level type', async () => {
         const config = 42;
         await assert.isRejected(
-            parseConfigFile(config), 'config is not of a type(s) object');
+          parseConfigFile(config),
+          'config is not of a type(s) object'
+        );
       });
 
       test('invalid benchmarks array type', async () => {
@@ -609,8 +615,9 @@ suite('config', () => {
           benchmarks: 42,
         };
         await assert.isRejected(
-            parseConfigFile(config),
-            'config.benchmarks is not of a type(s) array');
+          parseConfigFile(config),
+          'config.benchmarks is not of a type(s) array'
+        );
       });
 
       test('invalid benchmark type', async () => {
@@ -618,8 +625,9 @@ suite('config', () => {
           benchmarks: [42],
         };
         await assert.isRejected(
-            parseConfigFile(config),
-            'config.benchmarks[0] is not of a type(s) object');
+          parseConfigFile(config),
+          'config.benchmarks[0] is not of a type(s) object'
+        );
       });
 
       test('empty benchmarks array', async () => {
@@ -627,8 +635,9 @@ suite('config', () => {
           benchmarks: [],
         };
         await assert.isRejected(
-            parseConfigFile(config),
-            'config.benchmarks does not meet minimum length of 1');
+          parseConfigFile(config),
+          'config.benchmarks does not meet minimum length of 1'
+        );
       });
 
       test('invalid expand type', async () => {
@@ -636,8 +645,9 @@ suite('config', () => {
           benchmarks: [{expand: 42}],
         };
         await assert.isRejected(
-            parseConfigFile(config),
-            'config.benchmarks[0].expand is not of a type(s) array');
+          parseConfigFile(config),
+          'config.benchmarks[0].expand is not of a type(s) array'
+        );
       });
 
       test('unknown top-level property', async () => {
@@ -650,7 +660,9 @@ suite('config', () => {
           ],
         };
         await assert.isRejected(
-            parseConfigFile(config), 'config is not allowed to have the additional property "nonsense"');
+          parseConfigFile(config),
+          'config is not allowed to have the additional property "nonsense"'
+        );
       });
 
       test('unknown benchmark property', async () => {
@@ -663,8 +675,9 @@ suite('config', () => {
           ],
         };
         await assert.isRejected(
-            parseConfigFile(config),
-            'config.benchmarks[0] is not allowed to have the additional property "nonsense"');
+          parseConfigFile(config),
+          'config.benchmarks[0] is not allowed to have the additional property "nonsense"'
+        );
       });
 
       test('missing url', async () => {
@@ -692,7 +705,9 @@ suite('config', () => {
           ],
         };
         await assert.isRejected(
-            parseConfigFile(config), 'Browser potato is not supported');
+          parseConfigFile(config),
+          'Browser potato is not supported'
+        );
       });
 
       test('invalid measurement', async () => {
@@ -705,8 +720,9 @@ suite('config', () => {
           ],
         };
         await assert.isRejected(
-            parseConfigFile(config),
-            'config.benchmarks[0].measurement is not any of: callback, fcp');
+          parseConfigFile(config),
+          'config.benchmarks[0].measurement is not any of: callback, fcp'
+        );
       });
 
       test('sampleSize too small', async () => {
@@ -719,8 +735,9 @@ suite('config', () => {
           ],
         };
         await assert.isRejected(
-            parseConfigFile(config),
-            'config.sampleSize must be greater than or equal to 2');
+          parseConfigFile(config),
+          'config.sampleSize must be greater than or equal to 2'
+        );
       });
 
       test('non-integer sampleSize', async () => {
@@ -733,8 +750,9 @@ suite('config', () => {
           ],
         };
         await assert.isRejected(
-            parseConfigFile(config),
-            'config.sampleSize is not of a type(s) integer');
+          parseConfigFile(config),
+          'config.sampleSize is not of a type(s) integer'
+        );
       });
 
       test('missing package version label', async () => {
@@ -751,8 +769,9 @@ suite('config', () => {
           ],
         };
         await assert.isRejected(
-            parseConfigFile(config),
-            'config.benchmarks[0].packageVersions requires property "label"');
+          parseConfigFile(config),
+          'config.benchmarks[0].packageVersions requires property "label"'
+        );
       });
     });
   });

@@ -31,7 +31,7 @@ interface Benchmark {
   measurement: Measurement;
   browser?: BrowserConfigResult;
   mean: ConfidenceInterval;
-  differences: Array<Difference|null>;
+  differences: Array<Difference | null>;
   samples: number[];
 }
 
@@ -45,11 +45,12 @@ interface ConfidenceInterval {
   high: number;
 }
 
-export function jsonOutput(results: ResultStatsWithDifferences[]):
-    JsonOutputFile {
+export function jsonOutput(
+  results: ResultStatsWithDifferences[]
+): JsonOutputFile {
   const benchmarks: Benchmark[] = [];
   for (const result of results) {
-    const differences: Array<Difference|null> = [];
+    const differences: Array<Difference | null> = [];
     for (const difference of result.differences) {
       if (difference === null) {
         differences.push(null);
@@ -72,7 +73,7 @@ export function jsonOutput(results: ResultStatsWithDifferences[]):
       version: result.result.version ? result.result.version : undefined,
       measurement: {
         name: measurementName(result.result.measurement),
-        ...result.result.measurement
+        ...result.result.measurement,
       },
       browser: {
         ...result.result.browser,
@@ -92,36 +93,37 @@ export function jsonOutput(results: ResultStatsWithDifferences[]):
 // TODO(aomarks) Remove this in next major version.
 export interface LegacyJsonOutputFormat {
   benchmarks: BenchmarkResult[];
-  datetime: string;  // YYYY-MM-DDTHH:mm:ss.sssZ
+  datetime: string; // YYYY-MM-DDTHH:mm:ss.sssZ
   system: {
     cpu: {
-      manufacturer: string,
-      model: string,
-      family: string,
-      speed: string,
-      cores: number,
+      manufacturer: string;
+      model: string;
+      family: string;
+      speed: string;
+      cores: number;
     };
     load: {
-      average: number,
-      current: number,
+      average: number;
+      current: number;
     };
     battery: {
-      hasBattery: boolean,
-      connected: boolean,
+      hasBattery: boolean;
+      connected: boolean;
     };
     memory: {
-      total: number,
-      free: number,
-      used: number,
-      active: number,
-      available: number,
+      total: number;
+      free: number;
+      used: number;
+      active: number;
+      available: number;
     };
   };
 }
 
 // TODO(aomarks) Remove this in next major version.
-export async function legacyJsonOutput(results: BenchmarkResult[]):
-    Promise<LegacyJsonOutputFormat> {
+export async function legacyJsonOutput(
+  results: BenchmarkResult[]
+): Promise<LegacyJsonOutputFormat> {
   // TODO Add git info.
   const battery = await systeminformation.battery();
   const cpu = await systeminformation.cpu();

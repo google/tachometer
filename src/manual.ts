@@ -21,9 +21,15 @@ import {BenchmarkSpec} from './types';
  * the user sends a termination signal.
  */
 export async function manualMode(
-    config: Config, servers: Map<BenchmarkSpec, Server>) {
-  if (config.csvFileStats || config.csvFileRaw || config.jsonFile ||
-      config.legacyJsonFile) {
+  config: Config,
+  servers: Map<BenchmarkSpec, Server>
+) {
+  if (
+    config.csvFileStats ||
+    config.csvFileRaw ||
+    config.jsonFile ||
+    config.legacyJsonFile
+  ) {
     throw new Error(`Can't save results in manual mode`);
   }
 
@@ -33,15 +39,17 @@ export async function manualMode(
     console.log();
     if (spec.url.kind === 'local') {
       console.log(
-          `${spec.name}${spec.url.queryString}` +
-          (spec.url.version !== undefined ? ` [@${spec.url.version.label}]` :
-                                            ''));
+        `${spec.name}${spec.url.queryString}` +
+          (spec.url.version !== undefined
+            ? ` [@${spec.url.version.label}]`
+            : '')
+      );
     }
     console.log(ansi.format(`[yellow]{${specUrl(spec, servers, config)}}`));
   }
 
   for (const server of [...allServers]) {
-    (async function() {
+    (async function () {
       while (true) {
         const result = await server.nextResults();
         server.endSession();

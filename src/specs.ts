@@ -11,12 +11,23 @@
 
 import * as path from 'path';
 
-import {parseBrowserConfigString, TraceConfig, validateBrowserConfig, WindowSize} from './browser';
+import {
+  parseBrowserConfigString,
+  TraceConfig,
+  validateBrowserConfig,
+  WindowSize,
+} from './browser';
 import {Config, urlFromLocalPath} from './config';
 import * as defaults from './defaults';
 import {Opts} from './flags';
 import {Server} from './server';
-import {BenchmarkSpec, LocalUrl, Measurement, PackageVersion, RemoteUrl} from './types';
+import {
+  BenchmarkSpec,
+  LocalUrl,
+  Measurement,
+  PackageVersion,
+  RemoteUrl,
+} from './types';
 import {isHttpUrl, throwUnreachable} from './util';
 import {parsePackageVersions} from './versions';
 
@@ -31,8 +42,9 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
     const match = opts['window-size'].match(/^(\d+),(\d+)$/);
     if (match === null) {
       throw new Error(
-          `Invalid --window-size flag, must match "width,height, " ` +
-          `but was "${opts['window-size']}"`);
+        `Invalid --window-size flag, must match "width,height, " ` +
+          `but was "${opts['window-size']}"`
+      );
     }
     windowSize = {
       width: Number(match[1]),
@@ -45,20 +57,23 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
     };
   }
 
-  let trace: TraceConfig|undefined;
+  let trace: TraceConfig | undefined;
   if (opts['trace']) {
     const rawLogDir = opts['trace-log-dir'];
     trace = {
       categories: opts['trace-cat'].split(','),
-      logDir: path.isAbsolute(rawLogDir) ? rawLogDir :
-                                           path.join(process.cwd(), rawLogDir)
+      logDir: path.isAbsolute(rawLogDir)
+        ? rawLogDir
+        : path.join(process.cwd(), rawLogDir),
     };
   }
 
-  const browserStrings = new Set((opts.browser || defaults.browserName)
-                                     .replace(/\s+/, '')
-                                     .split(',')
-                                     .filter((b) => b !== ''));
+  const browserStrings = new Set(
+    (opts.browser || defaults.browserName)
+      .replace(/\s+/, '')
+      .split(',')
+      .filter((b) => b !== '')
+  );
   if (browserStrings.size === 0) {
     throw new Error('At least one --browser must be specified');
   }
@@ -76,13 +91,14 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
 
   const specs: BenchmarkSpec[] = [];
 
-  const versions: Array<PackageVersion|undefined> =
-      parsePackageVersions(opts['package-version']);
+  const versions: Array<PackageVersion | undefined> = parsePackageVersions(
+    opts['package-version']
+  );
   if (versions.length === 0) {
     versions.push(undefined);
   }
 
-  let measurement: Measurement|undefined;
+  let measurement: Measurement | undefined;
   if (opts.measure === 'callback') {
     measurement = {
       mode: 'callback',
@@ -96,12 +112,13 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
     measurement = {
       mode: 'expression',
       expression:
-          opts['measurement-expression'] || defaults.measurementExpression,
+        opts['measurement-expression'] || defaults.measurementExpression,
     };
   } else if (opts.measure !== undefined) {
     throwUnreachable(
-        opts.measure,
-        `Internal error: unknown measure ${JSON.stringify(opts.measure)}`);
+      opts.measure,
+      `Internal error: unknown measure ${JSON.stringify(opts.measure)}`
+    );
   }
 
   // Benchmark paths/URLs are the bare arguments not associated with a flag, so
@@ -119,14 +136,13 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
         const spec: BenchmarkSpec = {
           name: arg.alias || arg.url,
           browser,
-          measurement:
-              [measurement === undefined ? defaults.measurement(url) :
-                                           measurement],
+          measurement: [
+            measurement === undefined ? defaults.measurement(url) : measurement,
+          ],
           url,
         };
         specs.push(spec);
       }
-
     } else {
       const root = opts.root || defaults.root;
       const urlPath = await urlFromLocalPath(root, arg.diskPath);
@@ -146,9 +162,11 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
           const spec: BenchmarkSpec = {
             name,
             browser,
-            measurement:
-                [measurement === undefined ? defaults.measurement(url) :
-                                             measurement],
+            measurement: [
+              measurement === undefined
+                ? defaults.measurement(url)
+                : measurement,
+            ],
             url,
           };
           specs.push(spec);
@@ -160,9 +178,11 @@ export async function specsFromOpts(opts: Opts): Promise<BenchmarkSpec[]> {
   return specs;
 }
 
-function parseBenchmarkArgument(str: string):
-    {kind: 'remote', url: string, alias?: string}|
-    {kind: 'local', diskPath: string, queryString: string, alias?: string} {
+function parseBenchmarkArgument(
+  str: string
+):
+  | {kind: 'remote'; url: string; alias?: string}
+  | {kind: 'local'; diskPath: string; queryString: string; alias?: string} {
   if (isHttpUrl(str)) {
     // http://example.com
     return {
@@ -215,8 +235,10 @@ function parseBenchmarkArgument(str: string):
 }
 
 export function specUrl(
-    spec: BenchmarkSpec, servers: Map<BenchmarkSpec, Server>, config: Config):
-    string {
+  spec: BenchmarkSpec,
+  servers: Map<BenchmarkSpec, Server>,
+  config: Config
+): string {
   if (spec.url.kind === 'remote') {
     return spec.url.url;
   }
@@ -224,10 +246,18 @@ export function specUrl(
   if (server === undefined) {
     throw new Error('Internal error: no server for spec');
   }
-  if (config.remoteAccessibleHost !== '' &&
-      spec.browser.remoteUrl !== undefined) {
-    return 'http://' + config.remoteAccessibleHost + ':' + server.port +
-        spec.url.urlPath + spec.url.queryString;
+  if (
+    config.remoteAccessibleHost !== '' &&
+    spec.browser.remoteUrl !== undefined
+  ) {
+    return (
+      'http://' +
+      config.remoteAccessibleHost +
+      ':' +
+      server.port +
+      spec.url.urlPath +
+      spec.url.queryString
+    );
   }
   return server.url + spec.url.urlPath + spec.url.queryString;
 }
