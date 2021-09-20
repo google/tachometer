@@ -44,7 +44,7 @@
                     "type": "boolean"
                 },
                 "name": {
-                    "description": "Name of the browser:\n\nOptions:\n   - chrome\n   - firefox\n   - safari\n   - edge\n   - ie",
+                    "description": "Name of the browser:\n\nOptions:\n  - chrome\n  - firefox\n  - safari\n  - edge\n  - ie",
                     "enum": [
                         "chrome"
                     ],
@@ -110,7 +110,7 @@
                             "type": "string"
                         }
                     ],
-                    "description": "Which browser to run the benchmark in.\n\nOptions:\n   - chrome (default)\n   - chrome-headless\n   - firefox\n   - firefox-headless\n   - safari\n   - edge\n   - ie"
+                    "description": "Which browser to run the benchmark in.\n\nOptions:\n  - chrome (default)\n  - chrome-headless\n  - firefox\n  - firefox-headless\n  - safari\n  - edge\n  - ie"
                 },
                 "expand": {
                     "description": "Recursively expand this benchmark configuration with any number of\nvariations. Useful for testing the same base configuration with e.g.\nmultiple browers or package versions.",
@@ -142,7 +142,8 @@
                                     {
                                         "$ref": "#/definitions/ExpressionMeasurement"
                                     }
-                                ]
+                                ],
+                                "description": "The kinds of intervals we can measure."
                             },
                             "type": "array"
                         },
@@ -155,7 +156,7 @@
                             "type": "string"
                         }
                     ],
-                    "description": "Which time interval to measure.\n\nOptions:\n   - callback: bench.start() to bench.stop() (default for local paths)\n   - fcp: first contentful paint (default for fully qualified URLs)\n   - global: result returned from window.tachometerResult (or custom\n       expression set via measurementExpression)\n   - {\n       performanceEntry: {\n         //\nhttps://developer.mozilla.org/en-US/docs/Web/API/PerformanceEntry/name\n         name: string;\n       }\n     }"
+                    "description": "Which time interval to measure.\n\nOptions:\n  - callback: bench.start() to bench.stop() (default for local paths)\n  - fcp: first contentful paint (default for fully qualified URLs)\n  - global: result returned from window.tachometerResult (or custom\n      expression set via measurementExpression)\n  - {\n      performanceEntry: {\n        //\nhttps://developer.mozilla.org/en-US/docs/Web/API/PerformanceEntry/name\n        name: string;\n      }\n    }"
                 },
                 "measurementExpression": {
                     "description": "Expression to use to retrieve global result.  Defaults to\n`window.tachometerResult`.",
@@ -198,7 +199,7 @@
             "additionalProperties": false,
             "properties": {
                 "name": {
-                    "description": "Name of the browser:\n\nOptions:\n   - chrome\n   - firefox\n   - safari\n   - edge\n   - ie",
+                    "description": "Name of the browser:\n\nOptions:\n  - chrome\n  - firefox\n  - safari\n  - edge\n  - ie",
                     "enum": [
                         "edge"
                     ],
@@ -273,7 +274,7 @@
                     "type": "boolean"
                 },
                 "name": {
-                    "description": "Name of the browser:\n\nOptions:\n   - chrome\n   - firefox\n   - safari\n   - edge\n   - ie",
+                    "description": "Name of the browser:\n\nOptions:\n  - chrome\n  - firefox\n  - safari\n  - edge\n  - ie",
                     "enum": [
                         "firefox"
                     ],
@@ -341,7 +342,7 @@
             "additionalProperties": false,
             "properties": {
                 "name": {
-                    "description": "Name of the browser:\n\nOptions:\n   - chrome\n   - firefox\n   - safari\n   - edge\n   - ie",
+                    "description": "Name of the browser:\n\nOptions:\n  - chrome\n  - firefox\n  - safari\n  - edge\n  - ie",
                     "enum": [
                         "ie"
                     ],
@@ -387,7 +388,7 @@
             "additionalProperties": false,
             "properties": {
                 "name": {
-                    "description": "Name of the browser:\n\nOptions:\n   - chrome\n   - firefox\n   - safari\n   - edge\n   - ie",
+                    "description": "Name of the browser:\n\nOptions:\n  - chrome\n  - firefox\n  - safari\n  - edge\n  - ie",
                     "enum": [
                         "safari"
                     ],

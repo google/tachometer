@@ -302,7 +302,7 @@ export async function parseConfigFile(parsedJson: unknown):
     Promise<Partial<Config>> {
   const schema = require('../config.schema.json');
   const result =
-      jsonschema.validate(parsedJson, schema, {propertyName: 'config'});
+      jsonschema.validate(parsedJson, schema);
   if (result.errors.length > 0) {
     throw new Error(
         [...new Set(result.errors.map(customizeJsonSchemaError))].join('\n'));
@@ -343,11 +343,14 @@ export async function parseConfigFile(parsedJson: unknown):
  * [schema2]" etc.
  */
 function customizeJsonSchemaError(error: jsonschema.ValidationError): string {
-  if (error.property.match(/^config\.benchmarks\[\d+\]\.measurement$/)) {
-    return `${error.property} is not one of: ${[...measurements].join(', ')}` +
+  let str;
+  if (error.property.match(/^instance\.benchmarks\[\d+\]\.measurement$/)) {
+    str = `${error.property} is not any of: ${[...measurements].join(', ')}` +
         ' or an object like `performanceEntry: string`';
+  } else {
+    str = error.toString();
   }
-  return error.toString();
+  return str.replace(/^instance/, 'config');
 }
 
 async function parseBenchmark(benchmark: ConfigFileBenchmark, root: string):
