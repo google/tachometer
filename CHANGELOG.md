@@ -7,6 +7,10 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+- Copyright notice owner changed from "The Polymer Project Authors" to "Google
+  LLC". Trivial reformatting for `LICENSE` file to match spdx.org version.
+  Source license headers replaced with concise SPDX-style.
+
 - Fix bug where log files would be created with '\' backslash names instead of
   nested directories.
 
