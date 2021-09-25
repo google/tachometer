@@ -1,4 +1,4 @@
-# tachometer [![Build Status](https://github.com/Polymer/tachometer/actions/workflows/tests.yml/badge.svg)](https://github.com/Polymer/tachometer/actions/workflows/tests.yml) [![NPM  package](https://img.shields.io/npm/v/tachometer.svg)](https://npmjs.org/package/tachometer)
+# tachometer [![Build Status](https://github.com/Polymer/tachometer/actions/workflows/tests.yaml/badge.svg?branch=main)](https://github.com/Polymer/tachometer/actions/workflows/tests.yaml?query=branch%3Amain) [![NPM  package](https://img.shields.io/npm/v/tachometer.svg)](https://npmjs.org/package/tachometer)
 
 > tachometer is a tool for running benchmarks in web browsers. It uses repeated
 > sampling and statistics to reliably identify even the smallest differences in
