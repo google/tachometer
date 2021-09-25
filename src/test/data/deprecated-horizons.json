@@ -1,0 +1,9 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Polymer/tachometer/master/config.schema.json",
+  "benchmarks": [
+    {
+      "url": "random-global.html"
+    }
+  ],
+  "horizons": ["0%", "10%"]
+}

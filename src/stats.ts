@@ -91,16 +91,16 @@ export function intervalContains(
   return value >= interval.low && value <= interval.high;
 }
 
-export interface Horizons {
+export interface AutoSampleConditions {
   absolute: number[];
   relative: number[];
 }
 
 /**
  * Return whether all difference confidence intervals are unambiguously located
- * on one side or the other of all given horizon values.
+ * on one side or the other of all given auto sample conditions.
  *
- * For example, given the horizons 0 and 1:
+ * For example, given the conditions 0 and 1:
  *
  *    <--->                   true
  *        <--->               false
@@ -112,28 +112,28 @@ export interface Horizons {
  *  |-------|-------|-------| ms difference
  * -1       0       1       2
  */
-export function horizonsResolved(
+export function autoSampleConditionsResolved(
   resultStats: ResultStatsWithDifferences[],
-  horizons: Horizons
+  conditions: AutoSampleConditions
 ): boolean {
   for (const {differences} of resultStats) {
     if (differences === undefined) {
       continue;
     }
     // TODO We may want to offer more control over which particular set of
-    // differences we care about resolving. For the moment, a horizon of 1%
+    // differences we care about resolving. For the moment, a condition of 1%
     // means we'll try to resolve a 1% difference pairwise in both directions.
     for (const diff of differences) {
       if (diff === null) {
         continue;
       }
-      for (const horizon of horizons.absolute) {
-        if (intervalContains(diff.absolute, horizon)) {
+      for (const condition of conditions.absolute) {
+        if (intervalContains(diff.absolute, condition)) {
           return false;
         }
       }
-      for (const horizon of horizons.relative) {
-        if (intervalContains(diff.relative, horizon)) {
+      for (const condition of conditions.relative) {
+        if (intervalContains(diff.relative, condition)) {
           return false;
         }
       }

@@ -170,11 +170,16 @@ export const optDefs: commandLineUsage.OptionDefinition[] = [
     defaultValue: defaults.measurementExpression,
   },
   {
-    name: 'horizon',
+    name: 'auto-sample-conditions',
     description:
       'The degrees of difference to try and resolve when auto-sampling ' +
       '(milliseconds, comma-delimited, optionally signed, ' +
-      `default ${defaults.horizons.join(',')})`,
+      `default ${defaults.autoSampleConditions.join(',')})`,
+    type: String,
+  },
+  {
+    name: 'horizon',
+    description: 'Deprecated alias for --auto-sample-conditions',
     type: String,
   },
   {
@@ -241,7 +246,7 @@ export interface Opts {
   save: string;
   measure: CommandLineMeasurements | undefined;
   'measurement-expression': string | undefined;
-  horizon: string | undefined;
+  'auto-sample-conditions': string | undefined;
   timeout: number | undefined;
   'github-check': string;
   'resolve-bare-modules': boolean | undefined;
@@ -265,6 +270,10 @@ export interface Opts {
   _unknown?: string[];
 }
 
+interface OptsWithDeprecated extends Opts {
+  horizon: string | undefined;
+}
+
 /**
  * Boolean flags that default to true are not supported
  * (https://github.com/75lb/command-line-args/issues/71).
@@ -286,7 +295,10 @@ function booleanString(flagName: string): (str: string) => boolean {
  * Parse the given CLI argument list.
  */
 export function parseFlags(argv: string[]): Opts {
-  const opts = commandLineArgs(optDefs, {partial: true, argv}) as Opts;
+  const opts = commandLineArgs(optDefs, {
+    partial: true,
+    argv,
+  }) as OptsWithDeprecated;
   // Note that when a flag is used but not set to a value (i.e. "tachometer
   // --resolve-bare-modules ..."), then the type function is not invoked, and
   // the value will be null. Since in default-false cases (which aren't
@@ -295,5 +307,18 @@ export function parseFlags(argv: string[]): Opts {
   if (opts['resolve-bare-modules'] === null) {
     opts['resolve-bare-modules'] = true;
   }
-  return opts;
+  if (opts['horizon']) {
+    if (opts['auto-sample-conditions']) {
+      throw new Error(
+        'Please use only --auto-sample-conditions and not --horizons.'
+      );
+    }
+    console.warn(
+      '\nNOTE: The --horizon flag has been renamed to --auto-sample-conditions.\n' +
+        'Please use --auto-sample-conditions going forward.\n'
+    );
+    opts['auto-sample-conditions'] = opts['horizon'];
+    delete opts['horizon'];
+  }
+  return opts as Opts;
 }

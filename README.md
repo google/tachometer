@@ -120,7 +120,7 @@ By default, a **minimum of 50 samples** are taken from **each** benchmark. You
 can change the minimum sample size with the `--sample-size` flag or the
 `sampleSize` JSON config option.
 
-### Auto sampling
+### Auto sample
 
 After the initial 50 samples, tachometer will continue taking samples until
 there is a clear statistically significant difference between all benchmarks,
@@ -130,33 +130,36 @@ You can change this duration with the `--timeout` flag or the `timeout` JSON
 config option, measured in minutes. Set `--timeout=0` to disable auto sampling
 entirely. Set `--timeout=60` to sample for up to an hour.
 
-### Horizons
+### Auto sample conditions
 
 You can also configure which statistical conditions tachometer should check for
-when deciding when to stop auto sampling by configuring _horizons_.
+when deciding when to stop auto sampling by configuring _auto sample
+conditions_.
 
-To set horizons from the command-line, use the `--horizon` flag with a
-comma-delimited list:
+To set auto sample conditions from the command-line, use the
+`--auto-sample-conditions` flag with a comma-delimited list:
 
 ```sh
---horizon=0%,10%
+--auto-sample-conditions=0%,10%
 ```
 
-To set horizons from a JSON config file, use the `horizons` property with an
-array of strings (including if there is only one condition):
+To set auto sample conditions from a JSON config file, use the
+`autoSampleConditions` property with an array of strings (including if there is
+only one condition):
 
 ```json
 {
-  "horizons": ["0%", "10%"]
+  "autoSampleConditions": ["0%", "10%"]
 }
 ```
 
-A horizon can be thought of as a point of interest on the number-line of either
-absolute milliseconds, or relative percent change. By setting a horizon, you are
-asking tachometer to try to shrink the confidence interval until it is
-unambiguously placed on one side or the other of that horizon.
+An auto sample condition can be thought of as a point of interest on the
+number-line of either absolute milliseconds, or relative percent change. By
+setting a condition, you are asking tachometer to try to shrink the confidence
+interval until it is unambiguously placed on one side or the other of that
+condition.
 
-| Example horizon     | Question                                                   |
+| Example condition   | Question                                                   |
 | ------------------- | ---------------------------------------------------------- |
 | `0%`                | Is A faster or slower than B _at all_? (The **default**)   |
 | `10%`               | Is A faster or slower than B by at least 10%?              |
@@ -166,24 +169,24 @@ unambiguously placed on one side or the other of that horizon.
 | `0%`, `10%`, `100%` | Is A at all, a little, or a lot slower or faster than B?   |
 | `0.5ms`             | Is A faster or slower than B by at least 0.5 milliseconds? |
 
-In the following example, we have set `--horizon=10%`, meaning we are interested
-in knowing whether A differs from B by at least 10% in either direction. The
-sample size automatically increases until the confidence interval is narrow
-enough to place the estimated difference squarely on one side or the other of
-both horizons.
+In the following example, we have set `--auto-sample-conditions=10%`, meaning we
+are interested in knowing whether A differs from B by at least 10% in either
+direction. The sample size automatically increases until the confidence interval
+is narrow enough to place the estimated difference squarely on one side or the
+other of both conditions.
 
 ```
-      <------------------------------->     n=50  ❌ -10% ❌ +10%
-                <------------------>        n=100 ✔️ -10% ❌ +10%
+      <------------------------------->     n=50  X -10% X +10%
+                <------------------>        n=100 ✔️ -10% X +10%
                     <----->                 n=200 ✔️ -10% ✔️ +10%
 
   |---------|---------|---------|---------| difference in runtime
 -20%      -10%        0       +10%      +20%
 
-n     = sample size
-<---> = confidence interval for percent difference of mean runtimes
-✔️    = resolved horizon
-❌    = unresolved horizon
+n    = sample size
+<--> = confidence interval for percent difference of mean runtimes
+✔️    = resolved condition
+X    = unresolved condition
 ```
 
 In this example, by `n=50` we are not sure whether A is faster or slower than B
@@ -192,10 +195,10 @@ than 10%, but we're still not sure if it's _slower_ by more than 10%. By `n=200`
 we have also ruled out that B is slower than A by more than 10%, so we stop
 sampling. Note that we still don't know which is _absolutely_ faster, we just
 know that whatever the difference is, it is neither faster nor slower than 10%
-(and if we did want to know, we could add `0` to our horizons).
+(and if we did want to know, we could add `0` to our conditions).
 
-Note that, if the _actual_ difference is very close to a horizon, then it is
-likely that the horizon will never be met, and the timeout will expire.
+Note that, if the _actual_ difference is very close to a condition, then it is
+likely that the condition will never be met, and the timeout will expire.
 
 ## Measurement modes
 
@@ -705,7 +708,7 @@ Defaults are the same as the corresponding command-line flags.
   "root": "./benchmarks",
   "sampleSize": 50,
   "timeout": 3,
-  "horizons": ["0%", "1%"],
+  "autoSampleConditions": ["0%", "1%"],
   "benchmarks": [
     {
       "name": "foo",
@@ -806,9 +809,9 @@ tach http://example.com
 | `--package-version` / `-p`  | _(none)_                                | Specify an NPM package version to swap in ([details](#swap-npm-dependencies))                                                                                      |
 | `--browser` / `-b`          | `chrome`                                | Which browsers to launch in automatic mode, comma-delimited (chrome, firefox, safari, edge, ie) ([details](#browsers))                                             |
 | `--window-size`             | `1024,768`                              | "width,height" in pixels of the browser windows that will be created                                                                                               |
-| `--sample-size` / `-n`      | `50`                                    | Minimum number of times to run each benchmark ([details](#sample-size)]                                                                                            |
-| `--horizon`                 | `0%`                                    | The degrees of difference to try and resolve when auto-sampling ("N%" or "Nms", comma-delimited) ([details](#auto-sampling))                                       |
-| `--timeout`                 | `3`                                     | The maximum number of minutes to spend auto-sampling ([details](#auto-sampling))                                                                                   |
+| `--sample-size` / `-n`      | `50`                                    | Minimum number of times to run each benchmark ([details](#sample-size))                                                                                            |
+| `--auto-sample-conditions`  | `0%`                                    | The degrees of difference to try and resolve when auto-sampling ("N%" or "Nms", comma-delimited) ([details](#auto-sample-conditions))                              |
+| `--timeout`                 | `3`                                     | The maximum number of minutes to spend auto-sampling ([details](#auto-sample))                                                                                     |
 | `--measure`                 | `callback`                              | Which time interval to measure (`callback`, `global`, `fcp`) ([details](#measurement-modes))                                                                       |
 | `--measurement-expression`  | `window.tachometerResult`               | JS expression to poll for on page to retrieve measurement result when `measure` setting is set to `global`                                                         |
 | `--remote-accessible-host`  | matches `--host`                        | When using a browser over a remote WebDriver connection, the URL that those browsers should use to access the local tachometer server ([details](#remote-control)) |

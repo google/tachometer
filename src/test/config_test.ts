@@ -7,7 +7,7 @@
 import {assert} from 'chai';
 import {suite, suiteSetup, suiteTeardown, test} from 'mocha';
 
-import {Config, makeConfig, parseHorizons} from '../config';
+import {Config, makeConfig, parseAutoSampleConditions} from '../config';
 import {parseFlags} from '../flags';
 
 import {testData} from './test_helpers';
@@ -38,7 +38,7 @@ suite('makeConfig', function () {
       root: '.',
       resolveBareModules: true,
       forceCleanNpmInstall: false,
-      horizons: {absolute: [], relative: [0]},
+      autoSampleConditions: {absolute: [], relative: [0]},
       remoteAccessibleHost: '',
       jsonFile: '',
       legacyJsonFile: '',
@@ -82,7 +82,7 @@ suite('makeConfig', function () {
       root: '.',
       resolveBareModules: true,
       forceCleanNpmInstall: false,
-      horizons: {absolute: [], relative: [0]},
+      autoSampleConditions: {absolute: [], relative: [0]},
       remoteAccessibleHost: '',
       jsonFile: '',
       legacyJsonFile: '',
@@ -128,7 +128,7 @@ suite('makeConfig', function () {
       root: '.',
       resolveBareModules: true,
       forceCleanNpmInstall: false,
-      horizons: {absolute: [], relative: [0]},
+      autoSampleConditions: {absolute: [], relative: [0]},
       remoteAccessibleHost: '',
       jsonFile: '',
       legacyJsonFile: '',
@@ -183,7 +183,53 @@ suite('makeConfig', function () {
       timeout: 3,
       root: '.',
       resolveBareModules: true,
-      horizons: {absolute: [], relative: [0]},
+      autoSampleConditions: {absolute: [], relative: [0]},
+      remoteAccessibleHost: '',
+      // TODO(aomarks) Be consistent about undefined vs unset.
+      githubCheck: undefined,
+      benchmarks: [
+        {
+          browser: {
+            headless: false,
+            name: 'chrome',
+            windowSize: {
+              height: 768,
+              width: 1024,
+            },
+          },
+          measurement: [
+            {
+              mode: 'callback',
+            },
+          ],
+          // TODO(aomarks) Why does this have a forward-slash?
+          name: '/random-global.html',
+          url: {
+            kind: 'local',
+            queryString: '',
+            urlPath: '/random-global.html',
+          },
+        },
+      ],
+    };
+    await checkConfig(argv, expected);
+  });
+
+  test('config file horizons is converted to autoSampleConditions', async () => {
+    const argv = ['--config=deprecated-horizons.json'];
+    const expected: Config = {
+      mode: 'automatic',
+      csvFileStats: '',
+      csvFileRaw: '',
+      jsonFile: '',
+      legacyJsonFile: '',
+      forceCleanNpmInstall: false,
+
+      sampleSize: 50,
+      timeout: 3,
+      root: '.',
+      resolveBareModules: true,
+      autoSampleConditions: {absolute: [], relative: [-0.1, 0, 0.1]},
       remoteAccessibleHost: '',
       // TODO(aomarks) Be consistent about undefined vs unset.
       githubCheck: undefined,
@@ -216,72 +262,72 @@ suite('makeConfig', function () {
   });
 });
 
-suite('parseHorizons', function () {
+suite('parseAutoSampleConditions', function () {
   test('0ms', () => {
-    assert.deepEqual(parseHorizons(['0ms']), {
+    assert.deepEqual(parseAutoSampleConditions(['0ms']), {
       absolute: [0],
       relative: [],
     });
   });
 
   test('0.1ms', () => {
-    assert.deepEqual(parseHorizons(['0.1ms']), {
+    assert.deepEqual(parseAutoSampleConditions(['0.1ms']), {
       absolute: [-0.1, 0.1],
       relative: [],
     });
   });
 
   test('+0.1ms', () => {
-    assert.deepEqual(parseHorizons(['+0.1ms']), {
+    assert.deepEqual(parseAutoSampleConditions(['+0.1ms']), {
       absolute: [0.1],
       relative: [],
     });
   });
 
   test('-0.1ms', () => {
-    assert.deepEqual(parseHorizons(['-0.1ms']), {
+    assert.deepEqual(parseAutoSampleConditions(['-0.1ms']), {
       absolute: [-0.1],
       relative: [],
     });
   });
 
   test('0ms,0.1,1ms', () => {
-    assert.deepEqual(parseHorizons(['0ms', '0.1ms', '1ms']), {
+    assert.deepEqual(parseAutoSampleConditions(['0ms', '0.1ms', '1ms']), {
       absolute: [-1, -0.1, 0, 0.1, 1],
       relative: [],
     });
   });
 
   test('0%', () => {
-    assert.deepEqual(parseHorizons(['0%']), {
+    assert.deepEqual(parseAutoSampleConditions(['0%']), {
       absolute: [],
       relative: [0],
     });
   });
 
   test('1%', () => {
-    assert.deepEqual(parseHorizons(['1%']), {
+    assert.deepEqual(parseAutoSampleConditions(['1%']), {
       absolute: [],
       relative: [-0.01, 0.01],
     });
   });
 
   test('+1%', () => {
-    assert.deepEqual(parseHorizons(['+1%']), {
+    assert.deepEqual(parseAutoSampleConditions(['+1%']), {
       absolute: [],
       relative: [0.01],
     });
   });
 
   test('-1%', () => {
-    assert.deepEqual(parseHorizons(['-1%']), {
+    assert.deepEqual(parseAutoSampleConditions(['-1%']), {
       absolute: [],
       relative: [-0.01],
     });
   });
 
   test('0%,1%,10%', () => {
-    assert.deepEqual(parseHorizons(['0%', '1%', '10%']), {
+    assert.deepEqual(parseAutoSampleConditions(['0%', '1%', '10%']), {
       absolute: [],
       relative: [-0.1, -0.01, 0, 0.01, 0.1],
     });
@@ -289,7 +335,7 @@ suite('parseHorizons', function () {
 
   test('0ms,0.1ms,1ms,0%,1%,10%', () => {
     assert.deepEqual(
-      parseHorizons(['0ms', '0.1ms', '1ms', '0%', '1%', '10%']),
+      parseAutoSampleConditions(['0ms', '0.1ms', '1ms', '0%', '1%', '10%']),
       {
         absolute: [-1, -0.1, 0, 0.1, 1],
         relative: [-0.1, -0.01, 0, 0.01, 0.1],
@@ -298,10 +344,10 @@ suite('parseHorizons', function () {
   });
 
   test('throws on nonsense', () => {
-    assert.throws(() => parseHorizons(['sailboat']));
+    assert.throws(() => parseAutoSampleConditions(['sailboat']));
   });
 
   test('throws on ambiguous unit', () => {
-    assert.throws(() => parseHorizons(['4']));
+    assert.throws(() => parseAutoSampleConditions(['4']));
   });
 });
