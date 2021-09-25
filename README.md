@@ -708,7 +708,7 @@ Defaults are the same as the corresponding command-line flags.
   "root": "./benchmarks",
   "sampleSize": 50,
   "timeout": 3,
-  "autoSampleConditions": ["0%", "1%"],
+  "horizons": ["0%", "1%"],
   "benchmarks": [
     {
       "name": "foo",
