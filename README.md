@@ -1,60 +1,92 @@
 # tachometer [![Build Status](https://github.com/Polymer/tachometer/actions/workflows/tests.yaml/badge.svg?branch=main)](https://github.com/Polymer/tachometer/actions/workflows/tests.yaml?query=branch%3Amain) [![NPM  package](https://img.shields.io/npm/v/tachometer.svg)](https://npmjs.org/package/tachometer)
 
 > tachometer is a tool for running benchmarks in web browsers. It uses repeated
-> sampling and statistics to reliably identify even the smallest differences in
-> timing.
+> sampling and statistics to reliably identify even tiny differences in runtime.
+
+## Install
+
+```sh
+npm i tachometer
+```
 
 ## Why?
 
-Benchmarking is _hard_. Even if you run the exact same JavaScript, on the same
-browser, on the same machine, on the same day, you will likely get a
-significantly different result every time you measure. For this reason, at first
-pass, it is often very difficult to say anything meaningful about the
-performance of a script.
+Even if you run the same JavaScript, on the same browser, on the same machine,
+on the same day, you'll still get a different result every time. But if you take
+enough _repeated samples_ and apply the right statistics, you can reliably
+identify even tiny differences in runtime.
 
-But there is signal in the noise. Scripts do have true underlying performance
-characteristics on average. By taking enough _repeated samples_ and applying the
-right statistics, we can reliably identify small differences and quantify our
-confidence in them.
+## Usage
 
-## Quick Start
+```sh
+npx tachometer bench1.html [bench2.html ...]
+```
 
-1. Install tachometer from NPM.
+## Example
 
-   ```sh
-   $ npm i tachometer
-   ```
+Let's test two approaches for adding elements to a page. First ceate two HTML
+files:
 
-2. Create a simple `forloop.html` micro benchmark that times a `for` loop.
-   tachometer benchmarks are HTML files that import and call `bench.start()` and
-   `bench.stop()`. Note that when you are measuring [first contentful
-   paint](#first-contentful-paint-fcp), you don't need to call these functions.
+`inner.html`
 
-   ```html
-   <html>
-     <body>
-       <script type="module">
-         import * as bench from '/bench.js';
-         bench.start();
-         for (let i = 0; i < 1000; i++) {}
-         bench.stop();
-       </script>
-     </body>
-   </html>
-   ```
+```html
+<script type="module">
+  import * as bench from '/bench.js';
+  bench.start();
+  for (let i = 0; i < 100; i++) {
+    document.body.innerHTML += '<button></button>';
+  }
+  bench.stop();
+</script>
+```
 
-3. Launch tachometer, which will launch Chrome and execute the benchmark 50
-   times.
+`append.html`
 
-   ```sh
-   $ tach forloop.html
-   ```
+```html
+<script type="module">
+  import * as bench from '/bench.js';
+  bench.start();
+  for (let i = 0; i < 100; i++) {
+    document.body.append(document.createElement('button'));
+  }
+  bench.stop();
+</script>
+```
 
-   Along with some other information, tachometer will show you a range of
-   plausible values for how long this benchmark takes to run (more precisely, a
-   _95% confidence interval_, which is explained [below]()).
+Now run tachometer:
 
-   <img src="./images/screen1.png">
+```sh
+npx tachometer append.html inner.html
+```
+
+Tachometer opens Chrome and loads each HTML file, measuring the time between
+`bench.start()` and `bench.stop()`. It round-robins between the two files,
+running each at least 50 times.
+
+```
+[==============================================------------] 79/100 chrome append.html
+```
+
+After a few seconds, the results are ready:
+
+```
+┌─────────────┬─────────────────┬─────────────────┬─────────────────┐
+│ Benchmark   │        Avg time │   vs inner.html │  vs append.html │
+├─────────────┼─────────────────┼─────────────────┼─────────────────┤
+│ inner.html  │ 7.23ms - 8.54ms │                 │          slower │
+│             │                 │        -        │    851% - 1091% │
+│             │                 │                 │ 6.49ms - 7.80ms │
+├─────────────┼─────────────────┼─────────────────┼─────────────────┤
+│ append.html │ 0.68ms - 0.79ms │          faster │                 │
+│             │                 │       90% - 92% │        -        │
+│             │                 │ 6.49ms - 7.80ms │                 │
+└─────────────┴─────────────────┴─────────────────┴─────────────────┘
+```
+
+This tells us that using the `document.body.append` approach instead of the
+`innerHTML` approach would be between 90% and 92% faster on average. The ranges
+tachometer reports are 95% confidence intervals for the percent change from one
+benchmark to another.
 
 ## Features
 
@@ -789,3 +821,7 @@ tach http://example.com
 | `--trace`                   | `false`                                 | Enable performance tracing ([details](#performance-traces))                                                                                                        |
 | `--trace-log-dir`           | `${cwd}/logs`                           | The directory to put tracing log files. Defaults to `${cwd}/logs`.                                                                                                 |
 | `--trace-cat`               | [default categories](./src/defaults.ts) | The tracing categories to record. Should be a string of comma-separated category names                                                                             |
+
+```
+
+```
