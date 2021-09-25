@@ -3,7 +3,7 @@
 > tachometer is a tool for running benchmarks in web browsers. It uses repeated
 > sampling and statistics to reliably identify even tiny differences in runtime.
 
-###### [Install](#install) | [Usage](#usage) | [Why?](#why) | [Example](#example) | [Features](#features) | [Sample Size](#sample-size) | [Auto sampling](#auto-sampling) | [Measurement modes](#measurement-modes) | [Average Runtime](#average-runtime) | [Difference table](#difference-table) | [Swap NPM dependencies](#swap-npm-dependencies) | [Confidence intervals](#confidence-intervals) | [JavaScript module imports](#javascript-module-imports) | [Browsers](#browsers) | [Performance traces](#performance-traces) | [Remote control](#remote-control) | [Config file](#config-file) | [CLI usage](#cli-usage)
+###### [Install](#install) | [Usage](#usage) | [Why?](#why) | [Example](#example) | [Features](#features) | [Sampling](#sampling) | [Measurement modes](#measurement-modes) | [Average Runtime](#average-runtime) | [Difference table](#difference-table) | [Swap NPM dependencies](#swap-npm-dependencies) | [Confidence intervals](#confidence-intervals) | [JavaScript module imports](#javascript-module-imports) | [Browsers](#browsers) | [Performance traces](#performance-traces) | [Remote control](#remote-control) | [Config file](#config-file) | [CLI usage](#cli-usage)
 
 ## Install
 
@@ -111,45 +111,49 @@ benchmark to another.
 - [_Remote control_](#remote-control) browsers running on different machines
   using remote WebDriver.
 
-## Sample size
+## Sampling
 
-By default, a minimum of 50 samples are taken from each benchmark. The
-preliminary results from these samples may or may not be precise enough to allow
-you to to draw a statistically significant conclusion.
+### Minimum sample size
 
-> For example, if you are interested in knowing which of A and B are faster, but
-> you find that the confidence interval for the percent change between the mean
-> runtimes of A and B _includes zero_ (e.g. `[-3.08%, +2.97%]`), then it is
-> clearly not possible to draw a conclusion about whether A is faster than B or
-> vice-versa.
+By default, a **minimum of 50 samples** are taken from **each** benchmark. You
+can change the minimum sample size with the `--sample-size` flag or the
+`sampleSize` JSON config option.
 
-## Auto sampling
+### Auto sampling
 
-After the initial 50 samples, tachometer will continue drawing samples until
-either certain stopping conditions that you specify are met, or until a timeout
-expires (3 minutes by default).
+After the initial 50 samples, tachometer will continue taking samples until
+there is a clear statistically significant difference between all benchmarks,
+for **up to 3 minutes**.
 
-The stopping conditions for auto-sampling are specified in terms of
-**_horizons_**. A horizon can be thought of as a _point of interest_ on the
-number-line of either absolute or relative differences in runtime. By setting a
-horizon, you are asking tachometer to try to _shrink the confidence interval
-until it is unambiguously placed on one side or the other of that horizon_.
+You can change this duration with the `--timeout` flag or the `timeout` JSON
+config option, measured in minutes. Set `--timeout=0` to disable auto sampling
+entirely. Set `--timeout=60` to sample for up to an hour.
+
+### Stopping conditions
+
+You can also control which statistical conditions tachometer should check for
+when deciding when to stop auto-sampling by configuring **_horizons_**.
+
+A horizon can be thought of as a _point of interest_ on the number-line of
+either absolute milliseconds, or relative percent change. By setting a horizon,
+you are asking tachometer to try to _shrink the confidence interval until it is
+unambiguously placed on one side or the other of that horizon_.
 
 | Example horizon | Question                                                   |
 | --------------- | ---------------------------------------------------------- |
-| `0%`            | Is X faster or slower than Y _at all_?                     |
-| `10%`           | Is X faster or slower than Y by at least 10%?              |
-| `+10%`          | Is X slower than Y by at least 10%?                        |
-| `-10%`          | Is X faster than Y by at least 10%?                        |
+| `0%`            | Is A faster or slower than B _at all_? (The **default**)   |
+| `10%`           | Is A faster or slower than B by at least 10%?              |
+| `+10%`          | Is A slower than B by at least 10%?                        |
+| `-10%`          | Is A faster than B by at least 10%?                        |
 | `-10%,+10%`     | (Same as `10%`)                                            |
-| `0%,10%,100%`   | Is X at all, a little, or a lot slower or faster than Y?   |
-| `0.5ms`         | Is X faster or slower than Y by at least 0.5 milliseconds? |
+| `0%,10%,100%`   | Is A at all, a little, or a lot slower or faster than B?   |
+| `0.5ms`         | Is A faster or slower than B by at least 0.5 milliseconds? |
 
-In the following visual example, we have set `--horizon=10%` meaning that we are
-interested in knowing whether A differs from B by at least 10% in either
-direction. The sample size automatically increases until the confidence interval
-is narrow enough to place the estimated difference squarely on one side or the
-other of both horizons.
+In the following example, we have set `--horizon=10%`, meaning we are interested
+in knowing whether A differs from B by at least 10% in either direction. The
+sample size automatically increases until the confidence interval is narrow
+enough to place the estimated difference squarely on one side or the other of
+both horizons.
 
 ```
       <------------------------------->     n=50  ❌ -10% ❌ +10%
@@ -165,7 +169,7 @@ n     = sample size
 ❌    = unresolved horizon
 ```
 
-In the example, by `n=50` we are not sure whether A is faster or slower than B
+In this example, by `n=50` we are not sure whether A is faster or slower than B
 by more than 10%. By `n=100` we have ruled out that B is _faster_ than A by more
 than 10%, but we're still not sure if it's _slower_ by more than 10%. By `n=200`
 we have also ruled out that B is slower than A by more than 10%, so we stop
@@ -173,9 +177,9 @@ sampling. Note that we still don't know which is _absolutely_ faster, we just
 know that whatever the difference is, it is neither faster nor slower than 10%
 (and if we did want to know, we could add `0` to our horizons).
 
-Note that, if the actual difference is very close to a horizon, then it is
-likely that the precision stopping condition will never be met, and the timeout
-will expire.
+Note that, if the _actual_ difference is very close to a horizon, then it is
+likely that the stopping condition will never be met, and the timeout will
+expire.
 
 ## Measurement modes
 
@@ -809,7 +813,7 @@ tach http://example.com
 | `--browser` / `-b`          | `chrome`                                | Which browsers to launch in automatic mode, comma-delimited (chrome, firefox, safari, edge, ie) ([details](#browsers))                                             |
 | `--window-size`             | `1024,768`                              | "width,height" in pixels of the browser windows that will be created                                                                                               |
 | `--sample-size` / `-n`      | `50`                                    | Minimum number of times to run each benchmark ([details](#sample-size)]                                                                                            |
-| `--horizon`                 | `10%`                                   | The degrees of difference to try and resolve when auto-sampling ("N%" or "Nms", comma-delimited) ([details](#auto-sampling))                                       |
+| `--horizon`                 | `0%`                                    | The degrees of difference to try and resolve when auto-sampling ("N%" or "Nms", comma-delimited) ([details](#auto-sampling))                                       |
 | `--timeout`                 | `3`                                     | The maximum number of minutes to spend auto-sampling ([details](#auto-sampling))                                                                                   |
 | `--measure`                 | `callback`                              | Which time interval to measure (`callback`, `global`, `fcp`) ([details](#measurement-modes))                                                                       |
 | `--measurement-expression`  | `window.tachometerResult`               | JS expression to poll for on page to retrieve measurement result when `measure` setting is set to `global`                                                         |
