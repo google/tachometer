@@ -3,7 +3,7 @@
 > tachometer is a tool for running benchmarks in web browsers. It uses repeated
 > sampling and statistics to reliably identify even tiny differences in runtime.
 
-###### [Install](#install) | [Usage](#usage) | [Why?](#why) | [Example](#example) | [Features](#features) | [Sampling](#sampling) | [Measurement modes](#measurement-modes) | [Average Runtime](#average-runtime) | [Difference table](#difference-table) | [Swap NPM dependencies](#swap-npm-dependencies) | [Confidence intervals](#confidence-intervals) | [JavaScript module imports](#javascript-module-imports) | [Browsers](#browsers) | [Performance traces](#performance-traces) | [Remote control](#remote-control) | [Config file](#config-file) | [CLI usage](#cli-usage)
+###### [Install](#install) | [Usage](#usage) | [Why?](#why) | [Example](#example) | [Features](#features) | [Sampling](#sampling) | [Measurement modes](#measurement-modes) | [Interpreting results](#interpreting=results) | [Swap NPM dependencies](#swap-npm-dependencies) | [JavaScript module imports](#javascript-module-imports) | [Browsers](#browsers) | [Performance traces](#performance-traces) | [Remote control](#remote-control) | [Config file](#config-file) | [CLI usage](#cli-usage)
 
 ## Install
 
@@ -88,7 +88,8 @@ After a few seconds, the results are ready:
 This tells us that using the `document.body.append` approach instead of the
 `innerHTML` approach would be between 90% and 92% faster on average. The ranges
 tachometer reports are 95% confidence intervals for the percent change from one
-benchmark to another.
+benchmark to another. See _[Interpreting results](#interpreting-results)_ for more
+information.
 
 ## Features
 
@@ -277,20 +278,21 @@ renders any DOM content. Currently, only Chrome supports the
 performance timeline entry. In this mode, calling the `start()` and `stop()`
 functions is not required, and has no effect.
 
-## Average runtime
+## Interpreting results
 
-When you execute just one benchmark, you'll get a single result: the **_average
-runtime_** of the benchmark, presented as a _95% confidence interval_ (see
-[below](#confidence-intervals) for interpretation) for the number of
-milliseconds that elapsed between `bench.start()` and `bench.stop()`.
+### Average runtime
+
+The first column of output is the **_average runtime_** of the benchmark. This
+is a _95% confidence interval_ for the number of milliseconds that elapsed
+during the benchmark. When you run only one benchmark, this is the only output.
 
 <img src="./images/screen1.png"></img>
 
-## Difference table
+### Difference table
 
-When you run multiple benchmarks together in the same session, you'll get an NxN
-table summarizing all of the _differences_ in runtimes, both in _absolute_ and
-_relative_ terms (percent-change).
+When you run multiple benchmarks together, you'll get an NxN table summarizing
+all of the _differences_ in runtimes, both in _absolute_ and _relative_ terms
+(percent-change).
 
 In this example screenshot we're comparing `for` loops, each running with a
 different number of iterations (1, 1000, 1001, and 3000):
@@ -309,6 +311,51 @@ This table tells us:
 - The difference between 1000 and 1001 iterations was ambiguous. We can't tell
   which is faster, because the difference was too small. 1000 iterations could
   be as much as 13% faster, or as much as 21% slower, than 1001 iterations.
+
+## Confidence intervals
+
+Loosely speaking, a confidence interval is a range of plausible values for a
+parameter like runtime, and the _confidence level_ (which tachometer always
+fixes to _95%_) corresponds to the degree of confidence we have that interval
+contains the _true value_ of that parameter.
+
+More precisely speaking, the 95% confidence level describes the _long-run
+proportion of confidence intervals that will contain the true value_.
+Hypothetically, if you run tachometer over and over again in the same
+configuration, then while you'll get a slightly different confidence interval
+every time, it should be the case that _95% of those confidence intervals will
+contain the true value_. See
+[Wikipedia](https://en.wikipedia.org/wiki/onfidence_interval#Meaning_and_interpretation)
+for more information.
+
+```
+    <------------->   Wider confidence interval
+                      High variance and/or low sample size
+
+         <--->   Narrower confidence interval
+                 Low variance and/or high sample size
+
+ |---------|---------|---------|---------|
+-1%      -0.5%       0%      +0.5%      +1%
+```
+
+In general, we want narrower confidence intervals. Three knobs can do this:
+
+1. Dropping the chosen confidence level. _This is not a good idea!_ We want our
+   results to be _consistently reported with high confidence_, so we always use
+   95% confidence intervals.
+
+2. Decreasing the variation in the benchmark timing measurements. _This is hard
+   to do_. Many factors lead to variation in timing measurements, most of which
+   are very difficult to control, including some that are [intentionally built
+   in](https://developers.google.com/web/updates/2018/02/meltdown-spectre#high-resolution_timers)!
+
+3. Increasing the sample size. The [central limit
+   theorem](https://en.wikipedia.org/wiki/Central_limit_theorem) means that,
+   even when we have high variance data, and even when that data is not normally
+   distributed, as we take more and more samples, we'll be able to calculate a
+   more and more precise estimate of the true mean of the data. **Increasing the
+   sample size is the main knob we have.**
 
 ## Swap NPM dependencies
 
@@ -398,56 +445,6 @@ When you specify a dependency to swap, the following happens:
 > dependencies you specified haven't changed, and the version of tachometer used
 > to install it is the same. To _always_ do a fresh `npm install`, set the
 > `--force-clean-npm-install` flag.
-
-## Confidence intervals
-
-The most important concept needed to interpret results from tachometer is the
-**_confidence interval_**. Loosely speaking, a confidence interval is a range of
-_plausible values_ for a parameter (e.g. runtime), and the _confidence level_
-(which we fix at _95%_) corresponds to the degree of confidence we have that
-interval contains the _true value_ of that parameter.
-
-> More precisely, the 95% confidence level describes the _long-run proportion of
-> confidence intervals that will contain the true value_. Hypothetically, if you
-> run tachometer over and over again in the same configuration, then while you'll
-> get a slightly different confidence interval every time, it should be the case
-> that _95% of those confidence intervals will contain the true value_. See
-> [Wikipedia](https://en.wikipedia.org/wiki/Confidence_interval#Meaning_and_interpretation)
-> for more information on interpreting confidence intervals.
-
-The _width_ of a confidence interval determines the range of values it includes.
-Narrower confidence intervals give you a more precise estimate of what the true
-value might be. In general, we want narrower confidence intervals.
-
-```
-    <------------->   Wider confidence interval
-                      High variance and/or low sample size
-
-         <--->   Narrower confidence interval
-                 Low variance and/or high sample size
-
- |---------|---------|---------|---------|
--1%      -0.5%       0%      +0.5%      +1%
-```
-
-Three knobs can shrink our confidence intervals:
-
-1. Dropping the chosen confidence level. _This is not a good idea!_ We want our
-   results to be _consistently reported with high confidence_, so we always use
-   95% confidence intervals.
-
-2. Decreasing the variation in the benchmark timing measurements. _This is hard
-   to do_. A great many factors lead to variation in timing measurements, most
-   of which are very difficult to control, including some that are
-   [intentionally built
-   in](https://developers.google.com/web/updates/2018/02/meltdown-spectre#high-resolution_timers)!
-
-3. Increasing the sample size. The [central limit
-   theorem](https://en.wikipedia.org/wiki/Central_limit_theorem) means that,
-   even when we have high variance data, and even when that data is not normally
-   distributed, as we take more and more samples, we'll be able to calculate a
-   more and more precise estimate of the true mean of the data. _Increasing the
-   sample size is the main knob we have._
 
 ## JavaScript module imports
 
@@ -827,7 +824,3 @@ tach http://example.com
 | `--trace`                   | `false`                                 | Enable performance tracing ([details](#performance-traces))                                                                                                        |
 | `--trace-log-dir`           | `${cwd}/logs`                           | The directory to put tracing log files. Defaults to `${cwd}/logs`.                                                                                                 |
 | `--trace-cat`               | [default categories](./src/defaults.ts) | The tracing categories to record. Should be a string of comma-separated category names                                                                             |
-
-```
-
-```
