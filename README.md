@@ -109,6 +109,72 @@ benchmark to another.
 - [_Remote control_](#remote-control) browsers running on different machines
   using remote WebDriver.
 
+## Sample size
+
+By default, a minimum of 50 samples are taken from each benchmark. The
+preliminary results from these samples may or may not be precise enough to allow
+you to to draw a statistically significant conclusion.
+
+> For example, if you are interested in knowing which of A and B are faster, but
+> you find that the confidence interval for the percent change between the mean
+> runtimes of A and B _includes zero_ (e.g. `[-3.08%, +2.97%]`), then it is
+> clearly not possible to draw a conclusion about whether A is faster than B or
+> vice-versa.
+
+## Auto sampling
+
+After the initial 50 samples, tachometer will continue drawing samples until
+either certain stopping conditions that you specify are met, or until a timeout
+expires (3 minutes by default).
+
+The stopping conditions for auto-sampling are specified in terms of
+**_horizons_**. A horizon can be thought of as a _point of interest_ on the
+number-line of either absolute or relative differences in runtime. By setting a
+horizon, you are asking tachometer to try to _shrink the confidence interval
+until it is unambiguously placed on one side or the other of that horizon_.
+
+| Example horizon | Question                                                   |
+| --------------- | ---------------------------------------------------------- |
+| `0%`            | Is X faster or slower than Y _at all_?                     |
+| `10%`           | Is X faster or slower than Y by at least 10%?              |
+| `+10%`          | Is X slower than Y by at least 10%?                        |
+| `-10%`          | Is X faster than Y by at least 10%?                        |
+| `-10%,+10%`     | (Same as `10%`)                                            |
+| `0%,10%,100%`   | Is X at all, a little, or a lot slower or faster than Y?   |
+| `0.5ms`         | Is X faster or slower than Y by at least 0.5 milliseconds? |
+
+In the following visual example, we have set `--horizon=10%` meaning that we are
+interested in knowing whether A differs from B by at least 10% in either
+direction. The sample size automatically increases until the confidence interval
+is narrow enough to place the estimated difference squarely on one side or the
+other of both horizons.
+
+```
+      <------------------------------->     n=50  ❌ -10% ❌ +10%
+                <------------------>        n=100 ✔️ -10% ❌ +10%
+                    <----->                 n=200 ✔️ -10% ✔️ +10%
+
+  |---------|---------|---------|---------| difference in runtime
+-20%      -10%        0       +10%      +20%
+
+n     = sample size
+<---> = confidence interval for percent difference of mean runtimes
+✔️    = resolved horizon
+❌    = unresolved horizon
+```
+
+In the example, by `n=50` we are not sure whether A is faster or slower than B
+by more than 10%. By `n=100` we have ruled out that B is _faster_ than A by more
+than 10%, but we're still not sure if it's _slower_ by more than 10%. By `n=200`
+we have also ruled out that B is slower than A by more than 10%, so we stop
+sampling. Note that we still don't know which is _absolutely_ faster, we just
+know that whatever the difference is, it is neither faster nor slower than 10%
+(and if we did want to know, we could add `0` to our horizons).
+
+Note that, if the actual difference is very close to a horizon, then it is
+likely that the precision stopping condition will never be met, and the timeout
+will expire.
+
 ## Measurement modes
 
 Tachometer supports four modes of time interval measurements, controlled with
@@ -376,72 +442,6 @@ Three knobs can shrink our confidence intervals:
    distributed, as we take more and more samples, we'll be able to calculate a
    more and more precise estimate of the true mean of the data. _Increasing the
    sample size is the main knob we have._
-
-## Sample size
-
-By default, a minimum of 50 samples are taken from each benchmark. The
-preliminary results from these samples may or may not be precise enough to allow
-you to to draw a statistically significant conclusion.
-
-> For example, if you are interested in knowing which of A and B are faster, but
-> you find that the confidence interval for the percent change between the mean
-> runtimes of A and B _includes zero_ (e.g. `[-3.08%, +2.97%]`), then it is
-> clearly not possible to draw a conclusion about whether A is faster than B or
-> vice-versa.
-
-## Auto sampling
-
-After the initial 50 samples, tachometer will continue drawing samples until
-either certain stopping conditions that you specify are met, or until a timeout
-expires (3 minutes by default).
-
-The stopping conditions for auto-sampling are specified in terms of
-**_horizons_**. A horizon can be thought of as a _point of interest_ on the
-number-line of either absolute or relative differences in runtime. By setting a
-horizon, you are asking tachometer to try to _shrink the confidence interval
-until it is unambiguously placed on one side or the other of that horizon_.
-
-| Example horizon | Question                                                   |
-| --------------- | ---------------------------------------------------------- |
-| `0%`            | Is X faster or slower than Y _at all_?                     |
-| `10%`           | Is X faster or slower than Y by at least 10%?              |
-| `+10%`          | Is X slower than Y by at least 10%?                        |
-| `-10%`          | Is X faster than Y by at least 10%?                        |
-| `-10%,+10%`     | (Same as `10%`)                                            |
-| `0%,10%,100%`   | Is X at all, a little, or a lot slower or faster than Y?   |
-| `0.5ms`         | Is X faster or slower than Y by at least 0.5 milliseconds? |
-
-In the following visual example, we have set `--horizon=10%` meaning that we are
-interested in knowing whether A differs from B by at least 10% in either
-direction. The sample size automatically increases until the confidence interval
-is narrow enough to place the estimated difference squarely on one side or the
-other of both horizons.
-
-```
-      <------------------------------->     n=50  ❌ -10% ❌ +10%
-                <------------------>        n=100 ✔️ -10% ❌ +10%
-                    <----->                 n=200 ✔️ -10% ✔️ +10%
-
-  |---------|---------|---------|---------| difference in runtime
--20%      -10%        0       +10%      +20%
-
-n     = sample size
-<---> = confidence interval for percent difference of mean runtimes
-✔️    = resolved horizon
-❌    = unresolved horizon
-```
-
-In the example, by `n=50` we are not sure whether A is faster or slower than B
-by more than 10%. By `n=100` we have ruled out that B is _faster_ than A by more
-than 10%, but we're still not sure if it's _slower_ by more than 10%. By `n=200`
-we have also ruled out that B is slower than A by more than 10%, so we stop
-sampling. Note that we still don't know which is _absolutely_ faster, we just
-know that whatever the difference is, it is neither faster nor slower than 10%
-(and if we did want to know, we could add `0` to our horizons).
-
-Note that, if the actual difference is very close to a horizon, then it is
-likely that the precision stopping condition will never be met, and the timeout
-will expire.
 
 ## JavaScript module imports
 
