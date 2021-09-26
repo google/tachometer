@@ -241,6 +241,12 @@ interface ChromeConfig extends BrowserConfigBase {
    * Optional config to turn on performance tracing.
    */
   trace?: TraceConfig | true;
+
+  /**
+   * Path to a profile directory to use instead of the default temporary fresh
+   * one.
+   */
+  profile?: string;
 }
 
 /**
@@ -285,6 +291,12 @@ interface FirefoxConfig extends BrowserConfigBase {
    * https://support.mozilla.org/en-US/kb/about-config-editor-firefox).
    */
   preferences?: {[name: string]: string | number | boolean};
+
+  /**
+   * Path to a profile directory to use instead of the default temporary fresh
+   * one.
+   */
+  profile?: string;
 }
 
 interface SafariConfig extends BrowserConfigBase {
@@ -525,6 +537,9 @@ function parseBrowserObject(config: BrowserConfigs): BrowserConfig {
             : path.join(process.cwd(), config.trace.logDir),
       };
     }
+  }
+  if ('profile' in config && config.profile !== undefined) {
+    parsed.profile = config.profile;
   }
   return parsed;
 }

@@ -538,26 +538,65 @@ However, in some cases it may be useful to use an existing browser profile, for
 example if the webpage you are benchmarking requires being signed into an
 account.
 
-In Chrome, you can use the `user-data-dir` flag to launch the browser using an
-existing profile directory. You may also need to remove the `use-mock-keychain`
-default argument if you encounter authentication problems. You can find out the
-current binary path, profile location, and arguments of a running Chrome session
-by visiting the `chrome://version` URL.
+In Chrome and Firefox, use the `profile` JSON config option to specify an
+existing profile to use. Other browsers do not yet support this option.
 
-NOTE: If there is an existing Chrome process using the profile, you must
-first terminate it. You also need to close all open tabs, or disable the
-"Continue where you left off" startup setting, because tachometer does not
-expect to find any existing tabs.
+#### Chrome
+
+To find your current profile location in Chrome, visit `chrome://version` and
+look for "Profile Path".
+
+If there is an existing Chrome process using this profile, you must first
+terminate it. You also need to close all open tabs, or sable the "Continue where
+you left off" startup setting, because tachometer does not expect to find any
+existing tabs.
+
+You may also need to remove the `use-mock-keychain` default argument if you
+encounter authentication problems.
 
 For example, using the standard location of the default user profile on macOS:
 
 ```json
 {
-  "name": "chrome",
-  "addArguments": [
-    "user-data-dir=/Users/<username>/Library/Application Support/Google/Chrome"
-  ],
-  "removeArguments": ["use-mock-keychain"]
+  "benchmarks": [
+    {
+      "url": "mybench.html",
+      "browser": {
+        "name": "chrome",
+        "profile": "/Users/<username>/Library/Application Support/Google/Chrome",
+        "removeArguments": ["use-mock-keychain"]
+      }
+    }
+  ]
+}
+```
+
+#### Firefox
+
+To find your current profile location in Firefox, visit `about:support` and look
+for "Profile Directory".
+
+Note when using the `profile` option in Firefox, the profile directory is copied
+to a temporary location.
+
+<!-- TODO(aomarks) Send a PR to selenium-webdriver to fix this stat error. -->
+
+You may encounter a `no such file or directory, stat '.../lock'` error, due to a
+bug in `selenium-webdriver`. Deleting this `lock` file should resolve the error.
+
+For example, using the standard location of user profiles on macOS:
+
+```json
+{
+  "benchmarks": [
+    {
+      "url": "mybench.html",
+      "browser": {
+        "name": "firefox",
+        "profile": "/Users/<username>/Library/Application Support/Firefox/Profiles/<profile-name>"
+      }
+    }
+  ]
 }
 ```
 
