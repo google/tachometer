@@ -19,6 +19,9 @@ project adheres to [Semantic Versioning](http://semver.org/).
 - Fix bug where log files would be created with '\' backslash names instead of
   nested directories.
 
+- Fix bug where `browser.addArguments` JSON config setting did not work for
+  Firefox.
+
 - Upgrade dependencies.
 
 ## [0.5.9] 2021-04-22

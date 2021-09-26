@@ -262,6 +262,9 @@ function firefoxOpts(config: BrowserConfig): firefox.Options {
   const {width, height} = config.windowSize;
   opts.addArguments(`-width=${width}`);
   opts.addArguments(`-height=${height}`);
+  if (config.addArguments) {
+    opts.addArguments(...config.addArguments);
+  }
   return opts;
 }
 
