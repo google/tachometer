@@ -547,9 +547,9 @@ To find your current profile location in Chrome, visit `chrome://version` and
 look for "Profile Path".
 
 If there is an existing Chrome process using this profile, you must first
-terminate it. You also need to close all open tabs, or sable the "Continue where
-you left off" startup setting, because tachometer does not expect to find any
-existing tabs.
+terminate it. You also need to close all open tabs, or disable the "Continue
+where you left off" startup setting, because tachometer does not expect to find
+any existing tabs.
 
 You may also need to remove the `use-mock-keychain` default argument if you
 encounter authentication problems.
@@ -574,7 +574,7 @@ For example, using the standard location of the default user profile on macOS:
 #### Firefox
 
 To find your current profile location in Firefox, visit `about:support` and look
-for "Profile Directory".
+for "Profile Folder" or "Profile Directory".
 
 Note when using the `profile` option in Firefox, the profile directory is copied
 to a temporary location.
