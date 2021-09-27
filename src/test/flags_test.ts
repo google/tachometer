@@ -39,6 +39,20 @@ suite('flags', () => {
         const argv = ['--resolve-bare-modules=potato'];
         assert.throw(() => parseFlags(argv), /invalid --resolve-bare-modules/i);
       });
+
+      test('--horizon is converted to --auto-sample-conditions', () => {
+        const argv = ['--horizon=0,10%'];
+        const actual = parseFlags(argv);
+        assert.equal(actual['auto-sample-conditions'], '0,10%');
+      });
+
+      test('Error to use both --horizon and --auto-sample-conditions', () => {
+        const argv = ['--horizon=0,10%', '--auto-sample-conditions=0,10%'];
+        assert.throw(
+          () => parseFlags(argv),
+          'Please use only --auto-sample-conditions and not --horizons'
+        );
+      });
     });
   });
 });

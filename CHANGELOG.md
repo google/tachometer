@@ -7,6 +7,11 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+- `--horizons` flag and `horizon` config setting has been replaced with the
+  `--auto-sample-conditions` and `autoSampleConditions`. `--horizon` will
+  continue to work for backwards compatibility, but please do update to the new
+  name.
+
 - Copyright notice owner changed from "The Polymer Project Authors" to "Google
   LLC". Trivial reformatting for `LICENSE` file to match spdx.org version.
   Source license headers replaced with concise SPDX-style.

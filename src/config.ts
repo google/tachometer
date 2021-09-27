@@ -13,7 +13,7 @@ import * as defaults from './defaults';
 import {Opts} from './flags';
 import {CheckConfig, parseGithubCheckFlag} from './github';
 import {specsFromOpts} from './specs';
-import {Horizons} from './stats';
+import {AutoSampleConditions} from './stats';
 import {BenchmarkSpec} from './types';
 import {fileKind} from './util';
 
@@ -25,7 +25,7 @@ export interface Config {
   sampleSize: number;
   timeout: number;
   benchmarks: BenchmarkSpec[];
-  horizons: Horizons;
+  autoSampleConditions: AutoSampleConditions;
   mode: 'automatic' | 'manual';
   jsonFile: string;
   // TODO(aomarks) Remove this in next major version.
@@ -69,8 +69,10 @@ export async function makeConfig(opts: Opts): Promise<Config> {
     if (opts.timeout !== undefined) {
       throw new Error('--timeout cannot be specified when using --config');
     }
-    if (opts.horizon !== undefined) {
-      throw new Error('--horizon cannot be specified when using --config');
+    if (opts['auto-sample-conditions'] !== undefined) {
+      throw new Error(
+        '--auto-sample-conditions cannot be specified when using --config'
+      );
     }
     if (opts.measure !== undefined) {
       throw new Error('--measure cannot be specified when using --config');
@@ -98,9 +100,9 @@ export async function makeConfig(opts: Opts): Promise<Config> {
       root: opts.root,
       sampleSize: opts['sample-size'],
       timeout: opts.timeout,
-      horizons:
-        opts.horizon !== undefined
-          ? parseHorizons(opts.horizon.split(','))
+      autoSampleConditions:
+        opts['auto-sample-conditions'] !== undefined
+          ? parseAutoSampleConditions(opts['auto-sample-conditions'].split(','))
           : undefined,
       benchmarks: await specsFromOpts(opts),
       resolveBareModules: opts['resolve-bare-modules'],
@@ -148,10 +150,10 @@ export function applyDefaults(partial: Partial<Config>): Config {
         ? partial.forceCleanNpmInstall
         : defaults.forceCleanNpmInstall,
     githubCheck: partial.githubCheck,
-    horizons:
-      partial.horizons !== undefined
-        ? partial.horizons
-        : parseHorizons([...defaults.horizons]),
+    autoSampleConditions:
+      partial.autoSampleConditions !== undefined
+        ? partial.autoSampleConditions
+        : parseAutoSampleConditions([...defaults.autoSampleConditions]),
     jsonFile: partial.jsonFile !== undefined ? partial.jsonFile : '',
     legacyJsonFile:
       partial.legacyJsonFile !== undefined ? partial.legacyJsonFile : '',
@@ -209,13 +211,17 @@ export async function urlFromLocalPath(
   return urlPath;
 }
 
-/** Parse horizon flags into signed horizon values. */
-export function parseHorizons(strs: string[]): Horizons {
+/**
+ * Parse auto sample condition strings.
+ */
+export function parseAutoSampleConditions(
+  strs: string[]
+): AutoSampleConditions {
   const absolute = new Set<number>();
   const relative = new Set<number>();
   for (const str of strs) {
     if (!str.match(/^[-+]?(\d*\.)?\d+(ms|%)$/)) {
-      throw new Error(`Invalid horizon ${str}`);
+      throw new Error(`Invalid auto sample condition ${str}`);
     }
 
     let num;
@@ -232,10 +238,10 @@ export function parseHorizons(strs: string[]): Horizons {
 
     if (str.startsWith('+') || str.startsWith('-') || num === 0) {
       // If the sign was explicit (e.g. "+0.1", "-0.1") then we're only
-      // interested in that signed horizon.
+      // interested in that signed condition.
       absOrRel.add(num);
     } else {
-      // Otherwise (e.g. "0.1") we're interested in the horizon as a
+      // Otherwise (e.g. "0.1") we're interested in the condition as a
       // difference in either direction.
       absOrRel.add(-num);
       absOrRel.add(num);

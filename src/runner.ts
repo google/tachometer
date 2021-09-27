@@ -17,7 +17,7 @@ import {BenchmarkResult, BenchmarkSpec} from './types';
 import {formatCsvStats, formatCsvRaw} from './csv';
 import {
   ResultStatsWithDifferences,
-  horizonsResolved,
+  autoSampleConditionsResolved,
   summaryStats,
   computeDifferences,
 } from './stats';
@@ -213,7 +213,12 @@ export class Runner {
     let sample = 0;
     let elapsed = 0;
     while (true) {
-      if (horizonsResolved(this.makeResults(), config.horizons)) {
+      if (
+        autoSampleConditionsResolved(
+          this.makeResults(),
+          config.autoSampleConditions
+        )
+      ) {
         console.log();
         break;
       }
@@ -417,10 +422,12 @@ export class Runner {
       console.log(
         ansi.format(
           `[bold red]{NOTE} Hit ${config.timeout} minute auto-sample timeout` +
-            ` trying to resolve horizon(s)`
+            ` trying to resolve condition(s)`
         )
       );
-      console.log('Consider a longer --timeout or different --horizon');
+      console.log(
+        'Consider a longer --timeout or different --auto-sample-conditions'
+      );
     }
 
     if (config.jsonFile) {

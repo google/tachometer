@@ -43,7 +43,7 @@ suite('config', () => {
         root: '.',
         sampleSize: 52,
         timeout: 7,
-        horizons: ['0ms', '1ms', '2%', '+3%'],
+        autoSampleConditions: ['0ms', '1ms', '2%', '+3%'],
         resolveBareModules: false,
         benchmarks: [
           {
@@ -93,7 +93,7 @@ suite('config', () => {
         root: '.',
         sampleSize: 52,
         timeout: 7,
-        horizons: {
+        autoSampleConditions: {
           absolute: [-1, 0, 1],
           relative: [-0.02, 0.02, 0.03],
         },
@@ -179,7 +179,7 @@ suite('config', () => {
         root: '.',
         sampleSize: undefined,
         timeout: undefined,
-        horizons: undefined,
+        autoSampleConditions: undefined,
         resolveBareModules: undefined,
         benchmarks: [
           {
@@ -245,7 +245,7 @@ suite('config', () => {
         root: '.',
         sampleSize: undefined,
         timeout: undefined,
-        horizons: undefined,
+        autoSampleConditions: undefined,
         resolveBareModules: undefined,
         benchmarks: [
           {
@@ -324,7 +324,7 @@ suite('config', () => {
         root: '.',
         sampleSize: undefined,
         timeout: undefined,
-        horizons: undefined,
+        autoSampleConditions: undefined,
         resolveBareModules: undefined,
         benchmarks: [
           {
@@ -399,7 +399,7 @@ suite('config', () => {
         root: '.',
         sampleSize: undefined,
         timeout: undefined,
-        horizons: undefined,
+        autoSampleConditions: undefined,
         resolveBareModules: undefined,
         benchmarks: [
           {
@@ -449,7 +449,7 @@ suite('config', () => {
         root: '.',
         sampleSize: undefined,
         timeout: undefined,
-        horizons: undefined,
+        autoSampleConditions: undefined,
         resolveBareModules: undefined,
         benchmarks: [
           {
@@ -535,7 +535,7 @@ suite('config', () => {
         root: '.',
         sampleSize: undefined,
         timeout: undefined,
-        horizons: undefined,
+        autoSampleConditions: undefined,
         resolveBareModules: undefined,
         benchmarks: [
           {
@@ -766,6 +766,22 @@ suite('config', () => {
         await assert.isRejected(
           parseConfigFile(config),
           'config.benchmarks[0].packageVersions requires property "label"'
+        );
+      });
+
+      test('Error to use both horizons and autoSampleConditions', async () => {
+        const config = {
+          autoSampleConditions: ['0'],
+          horizons: ['0'],
+          benchmarks: [
+            {
+              url: 'https://example.com/',
+            },
+          ],
+        };
+        await assert.isRejected(
+          parseConfigFile(config),
+          'Please use only "autoSampleConditions" and not "horizons".'
         );
       });
     });

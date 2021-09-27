@@ -453,6 +453,13 @@
             "description": "An optional reference to the JSON Schema for this file.\n\nIf none is given, and the file is a valid tachometer config file,\ntachometer will write back to the config file to give this a value.",
             "type": "string"
         },
+        "autoSampleConditions": {
+            "description": "The degrees of difference to try and resolve when auto-sampling\n(e.g. 0ms, +1ms, -1ms, 0%, +1%, -1%, default 0%).",
+            "items": {
+                "type": "string"
+            },
+            "type": "array"
+        },
         "benchmarks": {
             "description": "Benchmarks to run.",
             "items": {
@@ -462,7 +469,7 @@
             "type": "array"
         },
         "horizons": {
-            "description": "The degrees of difference to try and resolve when auto-sampling\n(e.g. 0ms, +1ms, -1ms, 0%, +1%, -1%, default 0%).",
+            "description": "Deprecated alias for autoSampleConditions.",
             "items": {
                 "type": "string"
             },

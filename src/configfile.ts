@@ -15,7 +15,7 @@ import {
   parseBrowserConfigString,
   validateBrowserConfig,
 } from './browser';
-import {Config, parseHorizons, urlFromLocalPath} from './config';
+import {Config, parseAutoSampleConditions, urlFromLocalPath} from './config';
 import * as defaults from './defaults';
 import {makeUniqueSpecLabelFn} from './format';
 import {
@@ -52,6 +52,11 @@ export interface ConfigFile {
   /**
    * The degrees of difference to try and resolve when auto-sampling
    * (e.g. 0ms, +1ms, -1ms, 0%, +1%, -1%, default 0%).
+   */
+  autoSampleConditions?: string[];
+
+  /**
+   * Deprecated alias for autoSampleConditions.
    */
   horizons?: string[];
 
@@ -342,13 +347,26 @@ export async function parseConfigFile(
     }
   }
 
+  if (validated.horizons !== undefined) {
+    if (validated.autoSampleConditions !== undefined) {
+      throw new Error(
+        'Please use only "autoSampleConditions" and not "horizons".'
+      );
+    }
+    console.warn(
+      '\nNOTE: The "horizons" setting has been renamed to "autoSampleConditions".\n' +
+        'Please rename it.\n'
+    );
+    validated.autoSampleConditions = validated.horizons;
+  }
+
   return {
     root,
     sampleSize: validated.sampleSize,
     timeout: validated.timeout,
-    horizons:
-      validated.horizons !== undefined
-        ? parseHorizons(validated.horizons)
+    autoSampleConditions:
+      validated.autoSampleConditions !== undefined
+        ? parseAutoSampleConditions(validated.autoSampleConditions)
         : undefined,
     benchmarks,
     resolveBareModules: validated.resolveBareModules,
