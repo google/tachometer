@@ -332,16 +332,9 @@ This table tells us:
 Loosely speaking, a confidence interval is a range of plausible values for a
 parameter like runtime, and the _confidence level_ (which tachometer always
 fixes to _95%_) corresponds to the degree of confidence we have that interval
-contains the _true value_ of that parameter.
-
-More precisely speaking, the 95% confidence level describes the _long-run
-proportion of confidence intervals that will contain the true value_.
-Hypothetically, if you run tachometer over and over again in the same
-configuration, then while you'll get a slightly different confidence interval
-every time, it should be the case that _95% of those confidence intervals will
-contain the true value_. See
-[Wikipedia](https://en.wikipedia.org/wiki/onfidence_interval#Meaning_and_interpretation)
-for more information.
+contains the _true value_ of that parameter. See
+[Wikipedia](https://en.wikipedia.org/wiki/Confidence_interval#Meaning_and_interpretation)
+for more information about confidence intervals.
 
 ```
     <------------->   Wider confidence interval
@@ -354,23 +347,12 @@ for more information.
 -1%      -0.5%       0%      +0.5%      +1%
 ```
 
-In general, we want narrower confidence intervals. Three knobs can do this:
-
-1. Dropping the chosen confidence level. _This is not a good idea!_ We want our
-   results to be _consistently reported with high confidence_, so we always use
-   95% confidence intervals.
-
-2. Decreasing the variation in the benchmark timing measurements. _This is hard
-   to do_. Many factors lead to variation in timing measurements, most of which
-   are very difficult to control, including some that are [intentionally built
-   in](https://developers.google.com/web/updates/2018/02/meltdown-spectre#high-resolution_timers)!
-
-3. Increasing the sample size. The [central limit
-   theorem](https://en.wikipedia.org/wiki/Central_limit_theorem) means that,
-   even when we have high variance data, and even when that data is not normally
-   distributed, as we take more and more samples, we'll be able to calculate a
-   more and more precise estimate of the true mean of the data. **Increasing the
-   sample size is the main knob we have.**
+The way tachometer shrinks confidence intervals is by **increasing the sample
+size**. The [central limit
+theorem](https://en.wikipedia.org/wiki/Central_limit_theorem) means that, even
+when we have high variance data, and even when that data is not normally
+distributed, as we take more and more samples, we'll be able to calculate a more
+and more precise estimate of the true mean of the data.
 
 ## Swap NPM dependencies
 
