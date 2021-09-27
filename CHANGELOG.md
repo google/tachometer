@@ -9,7 +9,7 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [0.5.10] 2021-09-27
 
-- The `--horizons` flag and `horizon` config setting has been replaced with the
+- The `--horizons` flag and `horizon` config setting has been replaced with
   `--auto-sample-conditions` and `autoSampleConditions`. `--horizon` will
   continue to work for backwards compatibility, but please do update to the new
   name.
