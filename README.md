@@ -130,25 +130,41 @@ You can change this duration with the `--timeout` flag or the `timeout` JSON
 config option, measured in minutes. Set `--timeout=0` to disable auto sampling
 entirely. Set `--timeout=60` to sample for up to an hour.
 
-### Stopping conditions
+### Horizons
 
-You can also control which statistical conditions tachometer should check for
-when deciding when to stop auto-sampling by configuring **_horizons_**.
+You can also configure which statistical conditions tachometer should check for
+when deciding when to stop auto sampling by configuring _horizons_.
 
-A horizon can be thought of as a _point of interest_ on the number-line of
-either absolute milliseconds, or relative percent change. By setting a horizon,
-you are asking tachometer to try to _shrink the confidence interval until it is
-unambiguously placed on one side or the other of that horizon_.
+To set horizons from the command-line, use the `--horizon` flag with a
+comma-delimited list:
 
-| Example horizon | Question                                                   |
-| --------------- | ---------------------------------------------------------- |
-| `0%`            | Is A faster or slower than B _at all_? (The **default**)   |
-| `10%`           | Is A faster or slower than B by at least 10%?              |
-| `+10%`          | Is A slower than B by at least 10%?                        |
-| `-10%`          | Is A faster than B by at least 10%?                        |
-| `-10%,+10%`     | (Same as `10%`)                                            |
-| `0%,10%,100%`   | Is A at all, a little, or a lot slower or faster than B?   |
-| `0.5ms`         | Is A faster or slower than B by at least 0.5 milliseconds? |
+```sh
+--horizon=0%,10%
+```
+
+To set horizons from a JSON config file, use the `horizons` property with an
+array of strings (including if there is only one condition):
+
+```json
+{
+  "horizons": ["0%", "10%"]
+}
+```
+
+A horizon can be thought of as a point of interest on the number-line of either
+absolute milliseconds, or relative percent change. By setting a horizon, you are
+asking tachometer to try to shrink the confidence interval until it is
+unambiguously placed on one side or the other of that horizon.
+
+| Example horizon     | Question                                                   |
+| ------------------- | ---------------------------------------------------------- |
+| `0%`                | Is A faster or slower than B _at all_? (The **default**)   |
+| `10%`               | Is A faster or slower than B by at least 10%?              |
+| `+10%`              | Is A slower than B by at least 10%?                        |
+| `-10%`              | Is A faster than B by at least 10%?                        |
+| `-10%`, `+10%`      | (Same as `10%`)                                            |
+| `0%`, `10%`, `100%` | Is A at all, a little, or a lot slower or faster than B?   |
+| `0.5ms`             | Is A faster or slower than B by at least 0.5 milliseconds? |
 
 In the following example, we have set `--horizon=10%`, meaning we are interested
 in knowing whether A differs from B by at least 10% in either direction. The
@@ -179,8 +195,7 @@ know that whatever the difference is, it is neither faster nor slower than 10%
 (and if we did want to know, we could add `0` to our horizons).
 
 Note that, if the _actual_ difference is very close to a horizon, then it is
-likely that the stopping condition will never be met, and the timeout will
-expire.
+likely that the horizon will never be met, and the timeout will expire.
 
 ## Measurement modes
 
