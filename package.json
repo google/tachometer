@@ -17,7 +17,9 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "npm run build && mocha 'lib/test/**/*.js'"
+    "test": "npm run test:unit && npm run test:e2e",
+    "test:unit": "mocha \"lib/test/**/*_test.js\" --grep \".*e2e.*\" --invert",
+    "test:e2e": "mocha \"lib/test/**/*_test.js\" --grep \".*e2e.*\""
   },
   "repository": {
     "type": "git",

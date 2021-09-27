@@ -1,60 +1,95 @@
-# tachometer [![Build Status](https://github.com/Polymer/tachometer/actions/workflows/tests.yml/badge.svg)](https://github.com/Polymer/tachometer/actions/workflows/tests.yml) [![NPM  package](https://img.shields.io/npm/v/tachometer.svg)](https://npmjs.org/package/tachometer)
+# tachometer [![Build Status](https://github.com/Polymer/tachometer/actions/workflows/tests.yaml/badge.svg?branch=main)](https://github.com/Polymer/tachometer/actions/workflows/tests.yaml?query=branch%3Amain) [![NPM  package](https://img.shields.io/npm/v/tachometer.svg)](https://npmjs.org/package/tachometer)
 
 > tachometer is a tool for running benchmarks in web browsers. It uses repeated
-> sampling and statistics to reliably identify even the smallest differences in
-> timing.
+> sampling and statistics to reliably identify even tiny differences in runtime.
+
+###### [Install](#install) | [Usage](#usage) | [Why?](#why) | [Example](#example) | [Features](#features) | [Sampling](#sampling) | [Measurement modes](#measurement-modes) | [Interpreting results](#interpreting=results) | [Swap NPM dependencies](#swap-npm-dependencies) | [JavaScript module imports](#javascript-module-imports) | [Browsers](#browsers) | [Performance traces](#performance-traces) | [Remote control](#remote-control) | [Config file](#config-file) | [CLI usage](#cli-usage)
+
+## Install
+
+```sh
+npm i tachometer
+```
+
+## Usage
+
+```sh
+npx tachometer bench1.html [bench2.html ...]
+```
 
 ## Why?
 
-Benchmarking is _hard_. Even if you run the exact same JavaScript, on the same
-browser, on the same machine, on the same day, you will likely get a
-significantly different result every time you measure. For this reason, at first
-pass, it is often very difficult to say anything meaningful about the
-performance of a script.
+Even if you run the same JavaScript, on the same browser, on the same machine,
+on the same day, you'll still get a different result every time. But if you take
+enough _repeated samples_ and apply the right statistics, you can reliably
+identify even tiny differences in runtime.
 
-But there is signal in the noise. Scripts do have true underlying performance
-characteristics on average. By taking enough _repeated samples_ and applying the
-right statistics, we can reliably identify small differences and quantify our
-confidence in them.
+## Example
 
-## Quick Start
+Let's test two approaches for adding elements to a page. First ceate two HTML
+files:
 
-1. Install tachometer from NPM.
+`inner.html`
 
-   ```sh
-   $ npm i tachometer
-   ```
+```html
+<script type="module">
+  import * as bench from '/bench.js';
+  bench.start();
+  for (let i = 0; i < 100; i++) {
+    document.body.innerHTML += '<button></button>';
+  }
+  bench.stop();
+</script>
+```
 
-2. Create a simple `forloop.html` micro benchmark that times a `for` loop.
-   tachometer benchmarks are HTML files that import and call `bench.start()` and
-   `bench.stop()`. Note that when you are measuring [first contentful
-   paint](#first-contentful-paint-fcp), you don't need to call these functions.
+`append.html`
 
-   ```html
-   <html>
-     <body>
-       <script type="module">
-         import * as bench from '/bench.js';
-         bench.start();
-         for (let i = 0; i < 1000; i++) {}
-         bench.stop();
-       </script>
-     </body>
-   </html>
-   ```
+```html
+<script type="module">
+  import * as bench from '/bench.js';
+  bench.start();
+  for (let i = 0; i < 100; i++) {
+    document.body.append(document.createElement('button'));
+  }
+  bench.stop();
+</script>
+```
 
-3. Launch tachometer, which will launch Chrome and execute the benchmark 50
-   times.
+Now run tachometer:
 
-   ```sh
-   $ tach forloop.html
-   ```
+```sh
+npx tachometer append.html inner.html
+```
 
-   Along with some other information, tachometer will show you a range of
-   plausible values for how long this benchmark takes to run (more precisely, a
-   _95% confidence interval_, which is explained [below]()).
+Tachometer opens Chrome and loads each HTML file, measuring the time between
+`bench.start()` and `bench.stop()`. It round-robins between the two files,
+running each at least 50 times.
 
-   <img src="./images/screen1.png">
+```
+[==============================================------------] 79/100 chrome append.html
+```
+
+After a few seconds, the results are ready:
+
+```
+┌─────────────┬─────────────────┬─────────────────┬─────────────────┐
+│ Benchmark   │        Avg time │   vs inner.html │  vs append.html │
+├─────────────┼─────────────────┼─────────────────┼─────────────────┤
+│ inner.html  │ 7.23ms - 8.54ms │                 │          slower │
+│             │                 │        -        │    851% - 1091% │
+│             │                 │                 │ 6.49ms - 7.80ms │
+├─────────────┼─────────────────┼─────────────────┼─────────────────┤
+│ append.html │ 0.68ms - 0.79ms │          faster │                 │
+│             │                 │       90% - 92% │        -        │
+│             │                 │ 6.49ms - 7.80ms │                 │
+└─────────────┴─────────────────┴─────────────────┴─────────────────┘
+```
+
+This tells us that using the `document.body.append` approach instead of the
+`innerHTML` approach would be between 90% and 92% faster on average. The ranges
+tachometer reports are 95% confidence intervals for the percent change from one
+benchmark to another. See _[Interpreting results](#interpreting-results)_ for more
+information.
 
 ## Features
 
@@ -76,6 +111,91 @@ confidence in them.
 
 - [_Remote control_](#remote-control) browsers running on different machines
   using remote WebDriver.
+
+## Sampling
+
+### Minimum sample size
+
+By default, a **minimum of 50 samples** are taken from **each** benchmark. You
+can change the minimum sample size with the `--sample-size` flag or the
+`sampleSize` JSON config option.
+
+### Auto sampling
+
+After the initial 50 samples, tachometer will continue taking samples until
+there is a clear statistically significant difference between all benchmarks,
+for **up to 3 minutes**.
+
+You can change this duration with the `--timeout` flag or the `timeout` JSON
+config option, measured in minutes. Set `--timeout=0` to disable auto sampling
+entirely. Set `--timeout=60` to sample for up to an hour.
+
+### Horizons
+
+You can also configure which statistical conditions tachometer should check for
+when deciding when to stop auto sampling by configuring _horizons_.
+
+To set horizons from the command-line, use the `--horizon` flag with a
+comma-delimited list:
+
+```sh
+--horizon=0%,10%
+```
+
+To set horizons from a JSON config file, use the `horizons` property with an
+array of strings (including if there is only one condition):
+
+```json
+{
+  "horizons": ["0%", "10%"]
+}
+```
+
+A horizon can be thought of as a point of interest on the number-line of either
+absolute milliseconds, or relative percent change. By setting a horizon, you are
+asking tachometer to try to shrink the confidence interval until it is
+unambiguously placed on one side or the other of that horizon.
+
+| Example horizon     | Question                                                   |
+| ------------------- | ---------------------------------------------------------- |
+| `0%`                | Is A faster or slower than B _at all_? (The **default**)   |
+| `10%`               | Is A faster or slower than B by at least 10%?              |
+| `+10%`              | Is A slower than B by at least 10%?                        |
+| `-10%`              | Is A faster than B by at least 10%?                        |
+| `-10%`, `+10%`      | (Same as `10%`)                                            |
+| `0%`, `10%`, `100%` | Is A at all, a little, or a lot slower or faster than B?   |
+| `0.5ms`             | Is A faster or slower than B by at least 0.5 milliseconds? |
+
+In the following example, we have set `--horizon=10%`, meaning we are interested
+in knowing whether A differs from B by at least 10% in either direction. The
+sample size automatically increases until the confidence interval is narrow
+enough to place the estimated difference squarely on one side or the other of
+both horizons.
+
+```
+      <------------------------------->     n=50  ❌ -10% ❌ +10%
+                <------------------>        n=100 ✔️ -10% ❌ +10%
+                    <----->                 n=200 ✔️ -10% ✔️ +10%
+
+  |---------|---------|---------|---------| difference in runtime
+-20%      -10%        0       +10%      +20%
+
+n     = sample size
+<---> = confidence interval for percent difference of mean runtimes
+✔️    = resolved horizon
+❌    = unresolved horizon
+```
+
+In this example, by `n=50` we are not sure whether A is faster or slower than B
+by more than 10%. By `n=100` we have ruled out that B is _faster_ than A by more
+than 10%, but we're still not sure if it's _slower_ by more than 10%. By `n=200`
+we have also ruled out that B is slower than A by more than 10%, so we stop
+sampling. Note that we still don't know which is _absolutely_ faster, we just
+know that whatever the difference is, it is neither faster nor slower than 10%
+(and if we did want to know, we could add `0` to our horizons).
+
+Note that, if the _actual_ difference is very close to a horizon, then it is
+likely that the horizon will never be met, and the timeout will expire.
 
 ## Measurement modes
 
@@ -173,20 +293,21 @@ renders any DOM content. Currently, only Chrome supports the
 performance timeline entry. In this mode, calling the `start()` and `stop()`
 functions is not required, and has no effect.
 
-## Average runtime
+## Interpreting results
 
-When you execute just one benchmark, you'll get a single result: the **_average
-runtime_** of the benchmark, presented as a _95% confidence interval_ (see
-[below](#confidence-intervals) for interpretation) for the number of
-milliseconds that elapsed between `bench.start()` and `bench.stop()`.
+### Average runtime
+
+The first column of output is the **_average runtime_** of the benchmark. This
+is a _95% confidence interval_ for the number of milliseconds that elapsed
+during the benchmark. When you run only one benchmark, this is the only output.
 
 <img src="./images/screen1.png"></img>
 
-## Difference table
+### Difference table
 
-When you run multiple benchmarks together in the same session, you'll get an NxN
-table summarizing all of the _differences_ in runtimes, both in _absolute_ and
-_relative_ terms (percent-change).
+When you run multiple benchmarks together, you'll get an NxN table summarizing
+all of the _differences_ in runtimes, both in _absolute_ and _relative_ terms
+(percent-change).
 
 In this example screenshot we're comparing `for` loops, each running with a
 different number of iterations (1, 1000, 1001, and 3000):
@@ -205,6 +326,33 @@ This table tells us:
 - The difference between 1000 and 1001 iterations was ambiguous. We can't tell
   which is faster, because the difference was too small. 1000 iterations could
   be as much as 13% faster, or as much as 21% slower, than 1001 iterations.
+
+## Confidence intervals
+
+Loosely speaking, a confidence interval is a range of plausible values for a
+parameter like runtime, and the _confidence level_ (which tachometer always
+fixes to _95%_) corresponds to the degree of confidence we have that interval
+contains the _true value_ of that parameter. See
+[Wikipedia](https://en.wikipedia.org/wiki/Confidence_interval#Meaning_and_interpretation)
+for more information about confidence intervals.
+
+```
+    <------------->   Wider confidence interval
+                      High variance and/or low sample size
+
+         <--->   Narrower confidence interval
+                 Low variance and/or high sample size
+
+ |---------|---------|---------|---------|
+-1%      -0.5%       0%      +0.5%      +1%
+```
+
+The way tachometer shrinks confidence intervals is by **increasing the sample
+size**. The [central limit
+theorem](https://en.wikipedia.org/wiki/Central_limit_theorem) means that, even
+when we have high variance data, and even when that data is not normally
+distributed, as we take more and more samples, we'll be able to calculate a more
+and more precise estimate of the true mean of the data.
 
 ## Swap NPM dependencies
 
@@ -294,122 +442,6 @@ When you specify a dependency to swap, the following happens:
 > dependencies you specified haven't changed, and the version of tachometer used
 > to install it is the same. To _always_ do a fresh `npm install`, set the
 > `--force-clean-npm-install` flag.
-
-## Confidence intervals
-
-The most important concept needed to interpret results from tachometer is the
-**_confidence interval_**. Loosely speaking, a confidence interval is a range of
-_plausible values_ for a parameter (e.g. runtime), and the _confidence level_
-(which we fix at _95%_) corresponds to the degree of confidence we have that
-interval contains the _true value_ of that parameter.
-
-> More precisely, the 95% confidence level describes the _long-run proportion of
-> confidence intervals that will contain the true value_. Hypothetically, if you
-> run tachometer over and over again in the same configuration, then while you'll
-> get a slightly different confidence interval every time, it should be the case
-> that _95% of those confidence intervals will contain the true value_. See
-> [Wikipedia](https://en.wikipedia.org/wiki/Confidence_interval#Meaning_and_interpretation)
-> for more information on interpreting confidence intervals.
-
-The _width_ of a confidence interval determines the range of values it includes.
-Narrower confidence intervals give you a more precise estimate of what the true
-value might be. In general, we want narrower confidence intervals.
-
-```
-    <------------->   Wider confidence interval
-                      High variance and/or low sample size
-
-         <--->   Narrower confidence interval
-                 Low variance and/or high sample size
-
- |---------|---------|---------|---------|
--1%      -0.5%       0%      +0.5%      +1%
-```
-
-Three knobs can shrink our confidence intervals:
-
-1. Dropping the chosen confidence level. _This is not a good idea!_ We want our
-   results to be _consistently reported with high confidence_, so we always use
-   95% confidence intervals.
-
-2. Decreasing the variation in the benchmark timing measurements. _This is hard
-   to do_. A great many factors lead to variation in timing measurements, most
-   of which are very difficult to control, including some that are
-   [intentionally built
-   in](https://developers.google.com/web/updates/2018/02/meltdown-spectre#high-resolution_timers)!
-
-3. Increasing the sample size. The [central limit
-   theorem](https://en.wikipedia.org/wiki/Central_limit_theorem) means that,
-   even when we have high variance data, and even when that data is not normally
-   distributed, as we take more and more samples, we'll be able to calculate a
-   more and more precise estimate of the true mean of the data. _Increasing the
-   sample size is the main knob we have._
-
-## Sample size
-
-By default, a minimum of 50 samples are taken from each benchmark. The
-preliminary results from these samples may or may not be precise enough to allow
-you to to draw a statistically significant conclusion.
-
-> For example, if you are interested in knowing which of A and B are faster, but
-> you find that the confidence interval for the percent change between the mean
-> runtimes of A and B _includes zero_ (e.g. `[-3.08%, +2.97%]`), then it is
-> clearly not possible to draw a conclusion about whether A is faster than B or
-> vice-versa.
-
-## Auto sampling
-
-After the initial 50 samples, tachometer will continue drawing samples until
-either certain stopping conditions that you specify are met, or until a timeout
-expires (3 minutes by default).
-
-The stopping conditions for auto-sampling are specified in terms of
-**_horizons_**. A horizon can be thought of as a _point of interest_ on the
-number-line of either absolute or relative differences in runtime. By setting a
-horizon, you are asking tachometer to try to _shrink the confidence interval
-until it is unambiguously placed on one side or the other of that horizon_.
-
-| Example horizon | Question                                                   |
-| --------------- | ---------------------------------------------------------- |
-| `0%`            | Is X faster or slower than Y _at all_?                     |
-| `10%`           | Is X faster or slower than Y by at least 10%?              |
-| `+10%`          | Is X slower than Y by at least 10%?                        |
-| `-10%`          | Is X faster than Y by at least 10%?                        |
-| `-10%,+10%`     | (Same as `10%`)                                            |
-| `0%,10%,100%`   | Is X at all, a little, or a lot slower or faster than Y?   |
-| `0.5ms`         | Is X faster or slower than Y by at least 0.5 milliseconds? |
-
-In the following visual example, we have set `--horizon=10%` meaning that we are
-interested in knowing whether A differs from B by at least 10% in either
-direction. The sample size automatically increases until the confidence interval
-is narrow enough to place the estimated difference squarely on one side or the
-other of both horizons.
-
-```
-      <------------------------------->     n=50  ❌ -10% ❌ +10%
-                <------------------>        n=100 ✔️ -10% ❌ +10%
-                    <----->                 n=200 ✔️ -10% ✔️ +10%
-
-  |---------|---------|---------|---------| difference in runtime
--20%      -10%        0       +10%      +20%
-
-n     = sample size
-<---> = confidence interval for percent difference of mean runtimes
-✔️    = resolved horizon
-❌    = unresolved horizon
-```
-
-In the example, by `n=50` we are not sure whether A is faster or slower than B
-by more than 10%. By `n=100` we have ruled out that B is _faster_ than A by more
-than 10%, but we're still not sure if it's _slower_ by more than 10%. By `n=200`
-we have also ruled out that B is slower than A by more than 10%, so we stop
-sampling. Note that we still don't know which is _absolutely_ faster, we just
-know that whatever the difference is, it is neither faster nor slower than 10%
-(and if we did want to know, we could add `0` to our horizons).
-
-Note that, if the actual difference is very close to a horizon, then it is
-likely that the precision stopping condition will never be met, and the timeout
-will expire.
 
 ## JavaScript module imports
 
@@ -526,7 +558,7 @@ For example, using the standard location of the default user profile on macOS:
 }
 ```
 
-### Performance traces
+## Performance traces
 
 Once you determine that something is slower or faster in comparison to something
 else, investigating why is natural next step. To assist in determining why,
@@ -673,7 +705,7 @@ Defaults are the same as the corresponding command-line flags.
   "root": "./benchmarks",
   "sampleSize": 50,
   "timeout": 3,
-  "autoSampleConditions": ["0%", "1%"],
+  "horizons": ["0%", "1%"],
   "benchmarks": [
     {
       "name": "foo",
@@ -738,7 +770,7 @@ Which is equivalent to:
 }
 ```
 
-## Usage
+## CLI usage
 
 Run a benchmark from a local file:
 
@@ -775,7 +807,7 @@ tach http://example.com
 | `--browser` / `-b`          | `chrome`                                | Which browsers to launch in automatic mode, comma-delimited (chrome, firefox, safari, edge, ie) ([details](#browsers))                                             |
 | `--window-size`             | `1024,768`                              | "width,height" in pixels of the browser windows that will be created                                                                                               |
 | `--sample-size` / `-n`      | `50`                                    | Minimum number of times to run each benchmark ([details](#sample-size)]                                                                                            |
-| `--horizon`                 | `10%`                                   | The degrees of difference to try and resolve when auto-sampling ("N%" or "Nms", comma-delimited) ([details](#auto-sampling))                                       |
+| `--horizon`                 | `0%`                                    | The degrees of difference to try and resolve when auto-sampling ("N%" or "Nms", comma-delimited) ([details](#auto-sampling))                                       |
 | `--timeout`                 | `3`                                     | The maximum number of minutes to spend auto-sampling ([details](#auto-sampling))                                                                                   |
 | `--measure`                 | `callback`                              | Which time interval to measure (`callback`, `global`, `fcp`) ([details](#measurement-modes))                                                                       |
 | `--measurement-expression`  | `window.tachometerResult`               | JS expression to poll for on page to retrieve measurement result when `measure` setting is set to `global`                                                         |
