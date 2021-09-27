@@ -50,6 +50,10 @@
                     ],
                     "type": "string"
                 },
+                "profile": {
+                    "description": "Path to a profile directory to use instead of the default temporary fresh\none.",
+                    "type": "string"
+                },
                 "remoteUrl": {
                     "description": "A remote WebDriver server HTTP address to launch the browser from.",
                     "type": "string"
@@ -290,6 +294,10 @@
                     },
                     "description": "Advanced preferences that are usually set from the about:config page\nin Firefox (see\nhttps://support.mozilla.org/en-US/kb/about-config-editor-firefox).",
                     "type": "object"
+                },
+                "profile": {
+                    "description": "Path to a profile directory to use instead of the default temporary fresh\none.",
+                    "type": "string"
                 },
                 "remoteUrl": {
                     "description": "A remote WebDriver server HTTP address to launch the browser from.",

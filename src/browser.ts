@@ -68,6 +68,8 @@ export interface BrowserConfig {
   preferences?: {[name: string]: string | number | boolean};
   /** Trace browser performance logs configuration */
   trace?: TraceConfig;
+  /** Path to profile directory to use instead of the default fresh one. */
+  profile?: string;
 }
 
 /**
@@ -105,6 +107,7 @@ export function browserSignature(config: BrowserConfig): string {
     config.removeArguments ?? [],
     config.cpuThrottlingRate ?? 1,
     config.preferences ?? {},
+    config.profile ?? '',
   ]);
 }
 
@@ -243,6 +246,9 @@ function chromeOpts(config: BrowserConfig): chrome.Options {
   }
   const {width, height} = config.windowSize;
   opts.addArguments(`--window-size=${width},${height}`);
+  if (config.profile) {
+    opts.addArguments(`user-data-dir=${config.profile}`);
+  }
   return opts;
 }
 
@@ -262,6 +268,16 @@ function firefoxOpts(config: BrowserConfig): firefox.Options {
   const {width, height} = config.windowSize;
   opts.addArguments(`-width=${width}`);
   opts.addArguments(`-height=${height}`);
+  if (config.addArguments) {
+    opts.addArguments(...config.addArguments);
+  }
+  if (config.profile) {
+    // Note there is also a `-profile` flag for Firefox that could be set with
+    // `addArguments`, but using that causes Selenium to timeout trying to
+    // connect to the browser process. This `setProfile` method creates a
+    // temporary copy of the profile.
+    opts.setProfile(config.profile);
+  }
   return opts;
 }
 
