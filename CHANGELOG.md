@@ -5,9 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](http://semver.org/).
 
-## Unreleased
+<!-- ## Unreleased -->
 
-- `--horizons` flag and `horizon` config setting has been replaced with the
+## [0.5.10] 2021-09-27
+
+- The `--horizons` flag and `horizon` config setting has been replaced with
   `--auto-sample-conditions` and `autoSampleConditions`. `--horizon` will
   continue to work for backwards compatibility, but please do update to the new
   name.
