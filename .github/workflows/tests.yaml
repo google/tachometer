@@ -28,6 +28,10 @@ jobs:
           cache: npm
 
       - run: npm ci
+      # TODO(aomarks) The latest chromedriver has updated to 94, but GitHub
+      # Actions hasn't updated yet. Pin to the earlier verison of chromedriver
+      # until GitHub Actions updated.
+      - run: npm install chromedriver@^93.0.0
       - run: npm run build
 
       - run: npm test
