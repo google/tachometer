@@ -26,7 +26,7 @@ identify even tiny differences in runtime.
 
 ## Example
 
-Let's test two approaches for adding elements to a page. First ceate two HTML
+Let's test two approaches for adding elements to a page. First create two HTML
 files:
 
 `inner.html`
@@ -334,7 +334,7 @@ This table tells us:
 
 Loosely speaking, a confidence interval is a range of plausible values for a
 parameter like runtime, and the _confidence level_ (which tachometer always
-fixes to _95%_) corresponds to the degree of confidence we have that interval
+fixes to _95%_) corresponds to the degree of confidence we have that the interval
 contains the _true value_ of that parameter. See
 [Wikipedia](https://en.wikipedia.org/wiki/Confidence_interval#Meaning_and_interpretation)
 for more information about confidence intervals.
@@ -421,7 +421,7 @@ The version for a dependency can be any of the following:
 
 You can also use the `--package-version` flag to specify a version to swap in
 from the command-line, with format `[label=]package@version`. Note that the
-advanced git install configuration is not supported from the commandline:
+advanced git install configuration is not supported from the command line:
 
 ```
 tach mybench.html \
@@ -483,7 +483,7 @@ security zones appears to resolve `NoSuchSessionError` errors.
 
 Tachometer will install WebDriver plugins for Chrome, Firefox and IE on-demand.
 The first time that Tachometer runs a benchmark in any of these browsers, it
-will install the appropriate plug-in from via NPM or Yarn if it is not already
+will install the appropriate plug-in via NPM or Yarn if it is not already
 installed.
 
 If you wish to avoid on-demand installations like this, you can install the
@@ -603,9 +603,9 @@ For example, using the standard location of user profiles on macOS:
 ## Performance traces
 
 Once you determine that something is slower or faster in comparison to something
-else, investigating why is natural next step. To assist in determining why,
+else, investigating why is the natural next step. To assist in determining why,
 consider collecting performance traces. These traces can be used to determine
-what the browser is doing differently between two version of code.
+what the browser is doing differently between two versions of code.
 
 When the `trace` option is turned on in Chromium-based browsers, each tachometer
 sample will produce a JSON file that can be viewed in Chromium's `about:tracing`
