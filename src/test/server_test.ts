@@ -135,4 +135,14 @@ suite('server', () => {
     session = server.endSession();
     assert.equal(session.bytesSent, 0);
   });
+
+  test('enables cross-origin isolation', async () => {
+    const res = await fetch(`${server.url}/import-bare-module.html`);
+
+    assert.equal(res.headers.get('Cross-Origin-Opener-Policy'), 'same-origin');
+    assert.equal(
+      res.headers.get('Cross-Origin-Embedder-Policy'),
+      'require-corp'
+    );
+  });
 });
