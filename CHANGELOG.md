@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](http://semver.org/).
 
-## Unreleased
+<!-- ## Unreleased -->
+
+## [0.6.0] 2022-07-01
 
 - [**BREAKING**] Benchmark and `root` paths are now interpreted relative to the
   location of the config file, instead of the current working directory.
