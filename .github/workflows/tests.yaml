@@ -13,9 +13,7 @@ jobs:
             browsers: chrome-headless, firefox-headless
 
           - job: macos
-            # Note macos-11 is currently more recent than macos-latest
-            # https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#github-hosted-runners
-            os: macos-11
+            os: macos-12
             browsers: safari
 
     runs-on: ${{ matrix.os }}
