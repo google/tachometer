@@ -1,6 +1,6 @@
 {
   "name": "tachometer",
-  "version": "0.5.10",
+  "version": "0.6.0",
   "description": "Web benchmark runner",
   "main": "lib/cli.js",
   "directories": {
