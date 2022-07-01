@@ -219,6 +219,42 @@ suite('config', () => {
       assert.deepEqual(actual, expected);
     });
 
+    test('paths are relative to config file path', async () => {
+      const config = {
+        root: '..',
+        benchmarks: [
+          {
+            url: 'mybench/index.html',
+          },
+        ],
+      };
+      const expected: Partial<Config> = {
+        root: path.dirname(configFileDir),
+        sampleSize: undefined,
+        timeout: undefined,
+        autoSampleConditions: undefined,
+        resolveBareModules: undefined,
+        benchmarks: [
+          {
+            name: '/mylib/mybench/index.html',
+            url: {
+              kind: 'local',
+              urlPath: '/mylib/mybench/index.html',
+              queryString: '',
+            },
+            measurement: [
+              {
+                mode: 'callback',
+              },
+            ],
+            browser: defaultBrowser,
+          },
+        ],
+      };
+      const actual = await parseConfigFile(config, configFilePath);
+      assert.deepEqual(actual, expected);
+    });
+
     test('object-style measurement specifications', async () => {
       const config = {
         benchmarks: [
