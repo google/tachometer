@@ -79,7 +79,7 @@ suite('makeConfig', function () {
       mode: 'automatic',
       sampleSize: 50,
       timeout: 3,
-      root: '.',
+      root: testData,
       resolveBareModules: true,
       forceCleanNpmInstall: false,
       autoSampleConditions: {absolute: [], relative: [0]},
@@ -125,7 +125,7 @@ suite('makeConfig', function () {
 
       sampleSize: 50,
       timeout: 3,
-      root: '.',
+      root: testData,
       resolveBareModules: true,
       forceCleanNpmInstall: false,
       autoSampleConditions: {absolute: [], relative: [0]},
@@ -181,7 +181,7 @@ suite('makeConfig', function () {
 
       sampleSize: 50,
       timeout: 3,
-      root: '.',
+      root: testData,
       resolveBareModules: true,
       autoSampleConditions: {absolute: [], relative: [0]},
       remoteAccessibleHost: '',
@@ -227,7 +227,7 @@ suite('makeConfig', function () {
 
       sampleSize: 50,
       timeout: 3,
-      root: '.',
+      root: testData,
       resolveBareModules: true,
       autoSampleConditions: {absolute: [], relative: [-0.1, 0, 0.1]},
       remoteAccessibleHost: '',

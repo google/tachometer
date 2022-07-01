@@ -27,13 +27,14 @@ const defaultBrowser = {
 };
 
 const configFilePath = path.join(testData, 'mylib', 'tachometer.json');
+const configFileDir = path.dirname(configFilePath);
 
 suite('config', () => {
   suite('parseConfigFile', () => {
     let prevCwd: string;
     suiteSetup(() => {
       prevCwd = process.cwd();
-      process.chdir(path.dirname(configFilePath));
+      process.chdir(configFileDir);
     });
 
     suiteTeardown(() => {
@@ -42,7 +43,7 @@ suite('config', () => {
 
     test('fully specified', async () => {
       const config = {
-        root: '.',
+        root: configFileDir,
         sampleSize: 52,
         timeout: 7,
         autoSampleConditions: ['0ms', '1ms', '2%', '+3%'],
@@ -92,7 +93,7 @@ suite('config', () => {
         ],
       };
       const expected: Partial<Config> = {
-        root: '.',
+        root: configFileDir,
         sampleSize: 52,
         timeout: 7,
         autoSampleConditions: {
@@ -178,7 +179,7 @@ suite('config', () => {
         ],
       };
       const expected: Partial<Config> = {
-        root: '.',
+        root: configFileDir,
         sampleSize: undefined,
         timeout: undefined,
         autoSampleConditions: undefined,
@@ -244,7 +245,7 @@ suite('config', () => {
         ],
       };
       const expected: Partial<Config> = {
-        root: '.',
+        root: configFileDir,
         sampleSize: undefined,
         timeout: undefined,
         autoSampleConditions: undefined,
@@ -302,7 +303,7 @@ suite('config', () => {
 
     test('expanded twice deep', async () => {
       const config = {
-        root: '.',
+        root: configFileDir,
         benchmarks: [
           {
             url: 'http://example.com',
@@ -323,7 +324,7 @@ suite('config', () => {
         ],
       };
       const expected: Partial<Config> = {
-        root: '.',
+        root: configFileDir,
         sampleSize: undefined,
         timeout: undefined,
         autoSampleConditions: undefined,
@@ -398,7 +399,7 @@ suite('config', () => {
         ],
       };
       const expected: Partial<Config> = {
-        root: '.',
+        root: configFileDir,
         sampleSize: undefined,
         timeout: undefined,
         autoSampleConditions: undefined,
@@ -448,7 +449,7 @@ suite('config', () => {
         ],
       };
       const expected: Partial<Config> = {
-        root: '.',
+        root: configFileDir,
         sampleSize: undefined,
         timeout: undefined,
         autoSampleConditions: undefined,
@@ -534,7 +535,7 @@ suite('config', () => {
         ],
       };
       const expected: Partial<Config> = {
-        root: '.',
+        root: configFileDir,
         sampleSize: undefined,
         timeout: undefined,
         autoSampleConditions: undefined,

@@ -341,7 +341,10 @@ export async function parseConfigFile(
     );
   }
   const validated = parsedJson as ConfigFile;
-  const root = validated.root || '.';
+  const root = path.resolve(
+    path.dirname(configFilePath),
+    validated.root || '.'
+  );
   const benchmarks: BenchmarkSpec[] = [];
   for (const benchmark of validated.benchmarks) {
     for (const expanded of applyExpansions(benchmark)) {
