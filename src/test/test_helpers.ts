@@ -45,7 +45,9 @@ const userAgents = new Map([
 export async function fakeResults(
   configFile: ConfigFile
 ): Promise<ResultStatsWithDifferences[]> {
-  const config = applyDefaults(await parseConfigFile(configFile));
+  const config = applyDefaults(
+    await parseConfigFile(configFile, 'tachometer.json')
+  );
   const results = [];
   for (let i = 0; i < config.benchmarks.length; i++) {
     const {name, url, browser, measurement} = config.benchmarks[i];

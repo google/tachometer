@@ -26,12 +26,15 @@ const defaultBrowser = {
   },
 };
 
+const configFilePath = path.join(testData, 'mylib', 'tachometer.json');
+const configFileDir = path.dirname(configFilePath);
+
 suite('config', () => {
   suite('parseConfigFile', () => {
     let prevCwd: string;
     suiteSetup(() => {
       prevCwd = process.cwd();
-      process.chdir(path.join(testData, 'mylib'));
+      process.chdir(configFileDir);
     });
 
     suiteTeardown(() => {
@@ -40,7 +43,7 @@ suite('config', () => {
 
     test('fully specified', async () => {
       const config = {
-        root: '.',
+        root: configFileDir,
         sampleSize: 52,
         timeout: 7,
         autoSampleConditions: ['0ms', '1ms', '2%', '+3%'],
@@ -90,7 +93,7 @@ suite('config', () => {
         ],
       };
       const expected: Partial<Config> = {
-        root: '.',
+        root: configFileDir,
         sampleSize: 52,
         timeout: 7,
         autoSampleConditions: {
@@ -160,7 +163,7 @@ suite('config', () => {
           },
         ],
       };
-      const actual = await parseConfigFile(config);
+      const actual = await parseConfigFile(config, configFilePath);
       assert.deepEqual(actual, expected);
     });
 
@@ -176,7 +179,7 @@ suite('config', () => {
         ],
       };
       const expected: Partial<Config> = {
-        root: '.',
+        root: configFileDir,
         sampleSize: undefined,
         timeout: undefined,
         autoSampleConditions: undefined,
@@ -212,7 +215,43 @@ suite('config', () => {
           },
         ],
       };
-      const actual = await parseConfigFile(config);
+      const actual = await parseConfigFile(config, configFilePath);
+      assert.deepEqual(actual, expected);
+    });
+
+    test('paths are relative to config file path', async () => {
+      const config = {
+        root: '..',
+        benchmarks: [
+          {
+            url: 'mybench/index.html',
+          },
+        ],
+      };
+      const expected: Partial<Config> = {
+        root: path.dirname(configFileDir),
+        sampleSize: undefined,
+        timeout: undefined,
+        autoSampleConditions: undefined,
+        resolveBareModules: undefined,
+        benchmarks: [
+          {
+            name: '/mylib/mybench/index.html',
+            url: {
+              kind: 'local',
+              urlPath: '/mylib/mybench/index.html',
+              queryString: '',
+            },
+            measurement: [
+              {
+                mode: 'callback',
+              },
+            ],
+            browser: defaultBrowser,
+          },
+        ],
+      };
+      const actual = await parseConfigFile(config, configFilePath);
       assert.deepEqual(actual, expected);
     });
 
@@ -242,7 +281,7 @@ suite('config', () => {
         ],
       };
       const expected: Partial<Config> = {
-        root: '.',
+        root: configFileDir,
         sampleSize: undefined,
         timeout: undefined,
         autoSampleConditions: undefined,
@@ -294,13 +333,13 @@ suite('config', () => {
           },
         ],
       };
-      const actual = await parseConfigFile(config);
+      const actual = await parseConfigFile(config, configFilePath);
       assert.deepEqual(actual, expected);
     });
 
     test('expanded twice deep', async () => {
       const config = {
-        root: '.',
+        root: configFileDir,
         benchmarks: [
           {
             url: 'http://example.com',
@@ -321,7 +360,7 @@ suite('config', () => {
         ],
       };
       const expected: Partial<Config> = {
-        root: '.',
+        root: configFileDir,
         sampleSize: undefined,
         timeout: undefined,
         autoSampleConditions: undefined,
@@ -377,7 +416,7 @@ suite('config', () => {
           },
         ],
       };
-      const actual = await parseConfigFile(config);
+      const actual = await parseConfigFile(config, configFilePath);
       assert.deepEqual(actual, expected);
     });
 
@@ -396,7 +435,7 @@ suite('config', () => {
         ],
       };
       const expected: Partial<Config> = {
-        root: '.',
+        root: configFileDir,
         sampleSize: undefined,
         timeout: undefined,
         autoSampleConditions: undefined,
@@ -428,7 +467,7 @@ suite('config', () => {
           },
         ],
       };
-      const actual = await parseConfigFile(config);
+      const actual = await parseConfigFile(config, configFilePath);
       assert.deepEqual(actual, expected);
     });
 
@@ -446,7 +485,7 @@ suite('config', () => {
         ],
       };
       const expected: Partial<Config> = {
-        root: '.',
+        root: configFileDir,
         sampleSize: undefined,
         timeout: undefined,
         autoSampleConditions: undefined,
@@ -504,7 +543,7 @@ suite('config', () => {
           },
         ],
       };
-      const actual = await parseConfigFile(config);
+      const actual = await parseConfigFile(config, configFilePath);
       assert.deepEqual(actual, expected);
     });
 
@@ -532,7 +571,7 @@ suite('config', () => {
         ],
       };
       const expected: Partial<Config> = {
-        root: '.',
+        root: configFileDir,
         sampleSize: undefined,
         timeout: undefined,
         autoSampleConditions: undefined,
@@ -592,7 +631,7 @@ suite('config', () => {
           },
         ],
       };
-      const actual = await parseConfigFile(config);
+      const actual = await parseConfigFile(config, configFilePath);
       assert.deepEqual(actual, expected);
     });
 
@@ -600,7 +639,7 @@ suite('config', () => {
       test('invalid top-level type', async () => {
         const config = 42;
         await assert.isRejected(
-          parseConfigFile(config),
+          parseConfigFile(config, configFilePath),
           'config is not of a type(s) object'
         );
       });
@@ -610,7 +649,7 @@ suite('config', () => {
           benchmarks: 42,
         };
         await assert.isRejected(
-          parseConfigFile(config),
+          parseConfigFile(config, configFilePath),
           'config.benchmarks is not of a type(s) array'
         );
       });
@@ -620,7 +659,7 @@ suite('config', () => {
           benchmarks: [42],
         };
         await assert.isRejected(
-          parseConfigFile(config),
+          parseConfigFile(config, configFilePath),
           'config.benchmarks[0] is not of a type(s) object'
         );
       });
@@ -630,7 +669,7 @@ suite('config', () => {
           benchmarks: [],
         };
         await assert.isRejected(
-          parseConfigFile(config),
+          parseConfigFile(config, configFilePath),
           'config.benchmarks does not meet minimum length of 1'
         );
       });
@@ -640,7 +679,7 @@ suite('config', () => {
           benchmarks: [{expand: 42}],
         };
         await assert.isRejected(
-          parseConfigFile(config),
+          parseConfigFile(config, configFilePath),
           'config.benchmarks[0].expand is not of a type(s) array'
         );
       });
@@ -655,7 +694,7 @@ suite('config', () => {
           ],
         };
         await assert.isRejected(
-          parseConfigFile(config),
+          parseConfigFile(config, configFilePath),
           'config is not allowed to have the additional property "nonsense"'
         );
       });
@@ -670,7 +709,7 @@ suite('config', () => {
           ],
         };
         await assert.isRejected(
-          parseConfigFile(config),
+          parseConfigFile(config, configFilePath),
           'config.benchmarks[0] is not allowed to have the additional property "nonsense"'
         );
       });
@@ -687,7 +726,10 @@ suite('config', () => {
             },
           ],
         };
-        await assert.isRejected(parseConfigFile(config), /no url specified/i);
+        await assert.isRejected(
+          parseConfigFile(config, configFilePath),
+          /no url specified/i
+        );
       });
 
       test('unsupported browser', async () => {
@@ -700,7 +742,7 @@ suite('config', () => {
           ],
         };
         await assert.isRejected(
-          parseConfigFile(config),
+          parseConfigFile(config, configFilePath),
           'Browser potato is not supported'
         );
       });
@@ -715,7 +757,7 @@ suite('config', () => {
           ],
         };
         await assert.isRejected(
-          parseConfigFile(config),
+          parseConfigFile(config, configFilePath),
           'config.benchmarks[0].measurement is not any of: callback, fcp'
         );
       });
@@ -730,7 +772,7 @@ suite('config', () => {
           ],
         };
         await assert.isRejected(
-          parseConfigFile(config),
+          parseConfigFile(config, configFilePath),
           'config.sampleSize must be greater than or equal to 2'
         );
       });
@@ -745,7 +787,7 @@ suite('config', () => {
           ],
         };
         await assert.isRejected(
-          parseConfigFile(config),
+          parseConfigFile(config, configFilePath),
           'config.sampleSize is not of a type(s) integer'
         );
       });
@@ -764,7 +806,7 @@ suite('config', () => {
           ],
         };
         await assert.isRejected(
-          parseConfigFile(config),
+          parseConfigFile(config, configFilePath),
           'config.benchmarks[0].packageVersions requires property "label"'
         );
       });
@@ -780,7 +822,7 @@ suite('config', () => {
           ],
         };
         await assert.isRejected(
-          parseConfigFile(config),
+          parseConfigFile(config, configFilePath),
           'Please use only "autoSampleConditions" and not "horizons".'
         );
       });

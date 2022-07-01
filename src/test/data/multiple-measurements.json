@@ -5,7 +5,7 @@
   "benchmarks": [
     {
       "name": "multi",
-      "url": "src/test/data/multiple-measurements.html?foo=20&bar=60",
+      "url": "multiple-measurements.html?foo=20&bar=60",
       "measurement": [
         {
           "mode": "performance",

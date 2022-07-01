@@ -86,7 +86,7 @@ export async function makeConfig(opts: Opts): Promise<Config> {
       throw new Error('--window-size cannot be specified when using --config');
     }
     const rawConfigObj = await fsExtra.readJson(opts.config);
-    const validatedConfigObj = await parseConfigFile(rawConfigObj);
+    const validatedConfigObj = await parseConfigFile(rawConfigObj, opts.config);
 
     await writeBackSchemaIfNeeded(rawConfigObj, opts.config);
 

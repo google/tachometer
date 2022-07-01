@@ -742,9 +742,18 @@ performance isolation.
 Use the `--config` flag to control tachometer with a JSON configuration file.
 Defaults are the same as the corresponding command-line flags.
 
+All paths in a config file are relative to the path of the config file itself.
+
+You will typically want to set `root` to the directory that contains your
+package's `node_modules/` folder, so that the web server will be able to resolve
+bare-module imports.
+
+For example, a file called `benchmarks/foo/tachometer.json` might look like
+this:
+
 ```json
 {
-  "root": "./benchmarks",
+  "root": "../..",
   "sampleSize": 50,
   "timeout": 3,
   "autoSampleConditions": ["0%", "1%"],

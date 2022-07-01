@@ -5,7 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](http://semver.org/).
 
-<!-- ## Unreleased -->
+## Unreleased
+
+- [**BREAKING**] Benchmark and `root` paths are now interpreted relative to the
+  location of the config file, instead of the current working directory.
+
+  For example, a config at path `<repo>/benchmarks/foo/tachometer.json` that
+  used to look as follows, and had to be run with `<repo>` as the cwd:
+
+  ```json
+  {
+    "root": ".",
+    "benchmarks": [
+      {
+        "url": "benchmarks/foo/index.html"
+      }
+    ]
+  }
+  ```
+
+  Should now look like this, and can be run from any cwd:
+
+  ```json
+  {
+    "root": "../..",
+    "benchmarks": [
+      {
+        "url": "foo.html"
+      }
+    ]
+  }
+  ```
 
 ## [0.5.10] 2021-09-27
 

@@ -5,7 +5,7 @@
   "benchmarks": [
     {
       "name": "20",
-      "url": "src/test/data/performance-measure.html?wait=20",
+      "url": "performance-measure.html?wait=20",
       "measurement": {
         "mode": "performance",
         "entryName": "foo"
@@ -17,7 +17,7 @@
     },
     {
       "name": "60",
-      "url": "src/test/data/performance-measure.html?wait=60",
+      "url": "performance-measure.html?wait=60",
       "measurement": {
         "mode": "performance",
         "entryName": "foo"

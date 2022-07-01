@@ -5,7 +5,7 @@
   "benchmarks": [
     {
       "name": "x1",
-      "url": "src/test/data/for-loop.html?n=1000",
+      "url": "for-loop.html?n=1000",
       "browser": {
         "name": "chrome",
         "headless": true,
@@ -14,7 +14,7 @@
     },
     {
       "name": "x2",
-      "url": "src/test/data/for-loop.html?n=1000",
+      "url": "for-loop.html?n=1000",
       "browser": {
         "name": "chrome",
         "headless": true,
@@ -23,7 +23,7 @@
     },
     {
       "name": "x4",
-      "url": "src/test/data/for-loop.html?n=1000",
+      "url": "for-loop.html?n=1000",
       "browser": {
         "name": "chrome",
         "headless": true,

@@ -5,7 +5,7 @@
   "benchmarks": [
     {
       "name": "bench1",
-      "url": "src/test/data/for-loop.html",
+      "url": "for-loop.html",
       "browser": {
         "name": "chrome",
         "headless": true,
@@ -16,7 +16,7 @@
     },
     {
       "name": "bench2",
-      "url": "src/test/data/for-loop.html",
+      "url": "for-loop.html",
       "browser": {
         "name": "chrome",
         "headless": true,

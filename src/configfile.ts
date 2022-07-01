@@ -329,7 +329,8 @@ interface ConfigFilePackageVersion {
  * a fully specified configuration.
  */
 export async function parseConfigFile(
-  parsedJson: unknown
+  parsedJson: unknown,
+  configFilePath: string
 ): Promise<Partial<Config>> {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const schema = require('../config.schema.json');
@@ -340,11 +341,16 @@ export async function parseConfigFile(
     );
   }
   const validated = parsedJson as ConfigFile;
-  const root = validated.root || '.';
+  const root = path.resolve(
+    path.dirname(configFilePath),
+    validated.root || '.'
+  );
   const benchmarks: BenchmarkSpec[] = [];
   for (const benchmark of validated.benchmarks) {
     for (const expanded of applyExpansions(benchmark)) {
-      benchmarks.push(applyDefaults(await parseBenchmark(expanded, root)));
+      benchmarks.push(
+        applyDefaults(await parseBenchmark(expanded, root, configFilePath))
+      );
     }
   }
 
@@ -404,7 +410,8 @@ function customizeJsonSchemaError(error: jsonschema.ValidationError): string {
 
 async function parseBenchmark(
   benchmark: ConfigFileBenchmark,
-  root: string
+  root: string,
+  configFilePath: string
 ): Promise<Partial<BenchmarkSpec>> {
   const spec: Partial<BenchmarkSpec> = {};
 
@@ -473,10 +480,12 @@ async function parseBenchmark(
         urlPath = url;
         queryString = '';
       }
-
       spec.url = {
         kind: 'local',
-        urlPath: await urlFromLocalPath(root, urlPath),
+        urlPath: await urlFromLocalPath(
+          root,
+          path.resolve(path.dirname(configFilePath), urlPath)
+        ),
         queryString,
       };
 
