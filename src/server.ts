@@ -19,6 +19,7 @@ import {nodeResolve} from 'koa-node-resolve';
 
 import {BenchmarkResponse, Deferred} from './types';
 import {NpmInstall} from './versions';
+import {crossOriginIsolation} from './cross-origin-isolation';
 
 export interface ServerOpts {
   host: string;
@@ -88,6 +89,7 @@ export class Server {
     this.server = server;
     const app = new Koa();
 
+    app.use(crossOriginIsolation());
     app.use(bodyParser());
     app.use(mount('/submitResults', this.submitResults.bind(this)));
     app.use(this.instrumentRequests.bind(this));
