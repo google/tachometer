@@ -37,9 +37,6 @@
     "chromedriver"
   ],
   "dependencies": {
-    "@types/command-line-usage": "^5.0.1",
-    "@types/selenium-webdriver": "^4.0.11",
-    "@types/table": "^6.0.0",
     "ansi-escape-sequences": "^6.0.1",
     "command-line-args": "^5.0.2",
     "command-line-usage": "^6.1.0",
@@ -74,6 +71,7 @@
     "@types/chai": "^4.2.4",
     "@types/chai-as-promised": "^7.1.2",
     "@types/command-line-args": "^5.0.0",
+    "@types/command-line-usage": "^5.0.1",
     "@types/csv-stringify": "^3.1.0",
     "@types/fs-extra": "^9.0.1",
     "@types/get-stream": "^3.0.2",
@@ -88,8 +86,10 @@
     "@types/node-fetch": "^2.5.3",
     "@types/progress": "^2.0.3",
     "@types/rimraf": "^3.0.0",
+    "@types/selenium-webdriver": "^4.0.11",
     "@types/semver": "^7.3.1",
     "@types/source-map-support": "^0.5.4",
+    "@types/table": "^6.0.0",
     "@types/ua-parser-js": "^0.7.32",
     "@typescript-eslint/eslint-plugin": "^4.31.1",
     "@typescript-eslint/parser": "^4.31.1",
