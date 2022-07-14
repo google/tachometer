@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-import csvStringify from 'csv-stringify/lib/sync';
+import {stringify as csvStringify} from 'csv-stringify/sync';
 
-import {ResultStatsWithDifferences} from './stats';
+import {ResultStatsWithDifferences} from './stats.js';
 
 const precision = 5;
 

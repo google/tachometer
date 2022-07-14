@@ -6,9 +6,9 @@
 
 import * as webdriver from 'selenium-webdriver';
 
-import {Server} from './server';
-import {Measurement, PerformanceEntryMeasurement} from './types';
-import {throwUnreachable} from './util';
+import {Server} from './server.js';
+import {Measurement, PerformanceEntryMeasurement} from './types.js';
+import {throwUnreachable} from './util.js';
 
 /**
  * Try to take a measurement in milliseconds from the given browser. Returns

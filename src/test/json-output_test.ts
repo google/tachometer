@@ -7,9 +7,9 @@
 import {assert} from 'chai';
 import {suite, test} from 'mocha';
 
-import {ConfigFile} from '../configfile';
-import {jsonOutput, JsonOutputFile} from '../json-output';
-import {fakeResults} from './test_helpers';
+import {ConfigFile} from '../configfile.js';
+import {jsonOutput, JsonOutputFile} from '../json-output.js';
+import {fakeResults} from './test_helpers.js';
 
 /**
  * We include the full precision statistics in the JSON output, but it's silly

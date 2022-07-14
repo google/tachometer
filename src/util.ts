@@ -5,7 +5,7 @@
  */
 
 import {execFile, ExecFileOptions} from 'child_process';
-import * as fsExtra from 'fs-extra';
+import fsExtra from 'fs-extra';
 import {URL} from 'url';
 import {promisify} from 'util';
 

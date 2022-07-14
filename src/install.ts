@@ -9,9 +9,12 @@ import {promisify} from 'util';
 import {promises as fs} from 'fs';
 import path from 'path';
 import {install} from 'pkg-install';
-import pkgUp from 'pkg-up';
+import {pkgUp} from 'pkg-up';
 
 const execPromise = promisify(exec);
+
+import * as url from 'url';
+const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
 export type OnDemandDependencies = Map<string, string>;
 
@@ -38,7 +41,7 @@ export interface ContainsOnDemandDependencies {
   installsOnDemand?: string[];
 }
 
-export const getPackageJSONPath = async (): Promise<string | null> => {
+export const getPackageJSONPath = async (): Promise<string | undefined> => {
   // NOTE: This used to search starting with module.path, but module.path was
   // not added until Node.js v11. In order to preserve Node.js v10 compatibility
   // we use __dirname instead, which should be mostly the same thing (docs are

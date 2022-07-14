@@ -4,19 +4,18 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-import stripAnsi = require('strip-ansi');
+import stripAnsi from 'strip-ansi';
 import * as table from 'table';
 import {UAParser} from 'ua-parser-js';
-
-import ansi = require('ansi-escape-sequences');
+import ansi from 'ansi-escape-sequences';
 
 import {
   Difference,
   ConfidenceInterval,
   ResultStats,
   ResultStatsWithDifferences,
-} from './stats';
-import {BenchmarkSpec, BenchmarkResult} from './types';
+} from './stats.js';
+import {BenchmarkSpec, BenchmarkResult} from './types.js';
 
 export const spinner = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'].map(
   (frame) => ansi.format(`[blue]{${frame}}`)

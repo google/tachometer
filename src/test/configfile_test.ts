@@ -12,10 +12,10 @@ import * as path from 'path';
 chai.use(chaiAsPromised);
 const {assert} = chai;
 
-import {Config} from '../config';
-import {parseConfigFile} from '../configfile';
-import * as defaults from '../defaults';
-import {testData} from './test_helpers';
+import {Config} from '../config.js';
+import {parseConfigFile} from '../configfile.js';
+import * as defaults from '../defaults.js';
+import {testData} from './test_helpers.js';
 
 const defaultBrowser = {
   name: defaults.browserName,

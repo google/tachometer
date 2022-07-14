@@ -6,22 +6,27 @@
 
 import * as childProcess from 'child_process';
 import * as crypto from 'crypto';
-import * as fsExtra from 'fs-extra';
+import fsExtra from 'fs-extra';
 import * as path from 'path';
 import * as util from 'util';
+import {createRequire} from 'module';
+const require = createRequire(import.meta.url);
 
 const execFilePromise = util.promisify(childProcess.execFile);
 const execPromise = util.promisify(childProcess.exec);
 
-import {MountPoint} from './server';
+import {MountPoint} from './server.js';
 import {
   BenchmarkSpec,
   GitDependency,
   NpmPackageJson,
   PackageDependencyMap,
   PackageVersion,
-} from './types';
-import {fileKind, runNpm, throwUnreachable} from './util';
+} from './types.js';
+import {fileKind, runNpm, throwUnreachable} from './util.js';
+
+import * as url from 'url';
+const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
 interface GitDependencyWithTempDir extends GitDependency {
   tempDir: string;

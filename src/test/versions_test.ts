@@ -8,15 +8,15 @@ import {assert} from 'chai';
 import {suite, test} from 'mocha';
 import * as path from 'path';
 
-import * as defaults from '../defaults';
-import {BenchmarkSpec} from '../types';
+import * as defaults from '../defaults.js';
+import {BenchmarkSpec} from '../types.js';
 import {
   hashStrings,
   makeServerPlans,
   ServerPlan,
   tachometerVersion,
-} from '../versions';
-import {testData} from './test_helpers';
+} from '../versions.js';
+import {testData} from './test_helpers.js';
 
 const defaultBrowser = {
   name: defaults.browserName,

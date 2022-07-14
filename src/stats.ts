@@ -4,10 +4,8 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-import {BenchmarkResult} from './types';
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const jstat = require('jstat'); // TODO Contribute typings.
+import {BenchmarkResult} from './types.js';
+import jstat from 'jstat';
 
 interface Distribution {
   mean: number;

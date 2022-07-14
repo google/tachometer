@@ -9,9 +9,9 @@ import {existsSync} from 'fs';
 import {suite, test} from 'mocha';
 import * as path from 'path';
 import rimraf from 'rimraf';
-import {main} from '../cli';
-import {ConfidenceInterval} from '../stats';
-import {testData} from './test_helpers';
+import {main} from '../cli.js';
+import {ConfidenceInterval} from '../stats.js';
+import {testData} from './test_helpers.js';
 
 // Set this environment variable to change the browsers under test.
 let browsers = (process.env.TACHOMETER_E2E_TEST_BROWSERS || '')

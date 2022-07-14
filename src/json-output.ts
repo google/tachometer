@@ -6,10 +6,10 @@
 
 import * as systeminformation from 'systeminformation';
 
-import {BrowserConfig} from './browser';
-import {measurementName} from './measure';
-import {ResultStatsWithDifferences} from './stats';
-import {BenchmarkResult, Measurement} from './types';
+import {BrowserConfig} from './browser.js';
+import {measurementName} from './measure.js';
+import {ResultStatsWithDifferences} from './stats.js';
+import {BenchmarkResult, Measurement} from './types.js';
 
 export interface JsonOutputFile {
   benchmarks: Benchmark[];

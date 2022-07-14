@@ -5,12 +5,12 @@
  */
 
 import * as webdriver from 'selenium-webdriver';
-import * as chrome from 'selenium-webdriver/chrome';
-import * as edge from 'selenium-webdriver/edge';
-import * as firefox from 'selenium-webdriver/firefox';
+import * as chrome from 'selenium-webdriver/chrome.js';
+import * as edge from 'selenium-webdriver/edge.js';
+import * as firefox from 'selenium-webdriver/firefox.js';
 
-import {installOnDemand} from './install';
-import {isHttpUrl} from './util';
+import {installOnDemand} from './install.js';
+import {isHttpUrl} from './util.js';
 
 /** Tachometer browser names. Often but not always equal to WebDriver's. */
 export type BrowserName = 'chrome' | 'firefox' | 'safari' | 'edge' | 'ie';
@@ -181,7 +181,7 @@ export async function makeDriver(
 
   if (webdriverModuleName != null) {
     await installOnDemand(webdriverModuleName);
-    require(webdriverModuleName);
+    await import(webdriverModuleName);
   }
 
   const builder = new webdriver.Builder();

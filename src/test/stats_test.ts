@@ -4,12 +4,10 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const jstat = require('jstat');
-
+import jstat from 'jstat';
 import {assert} from 'chai';
 import {suite, test} from 'mocha';
-import {summaryStats, computeDifference, intervalContains} from '../stats';
+import {summaryStats, computeDifference, intervalContains} from '../stats.js';
 
 suite('statistics', function () {
   test('confidence intervals', function () {
@@ -90,7 +88,7 @@ const randNormalValues = (
   // Note jstat.randn generates random numbers from the standard normal
   // distribution (which has mean 0 and standard deviation 1) hence we must
   // transform it to our distribution.
-  const [vals] = jstat.randn(1, size) as [number[]];
+  const [vals] = jstat.randn(1, size);
   return vals.map((v) => v * stdDev + mean);
 };
 

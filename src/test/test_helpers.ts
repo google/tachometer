@@ -6,13 +6,16 @@
 
 import * as path from 'path';
 
-import {applyDefaults} from '../config';
-import {ConfigFile, parseConfigFile} from '../configfile';
+import {applyDefaults} from '../config.js';
+import {ConfigFile, parseConfigFile} from '../configfile.js';
 import {
   computeDifferences,
   ResultStatsWithDifferences,
   summaryStats,
-} from '../stats';
+} from '../stats.js';
+
+import * as url from 'url';
+const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
 /**
  * Absolute location on disk of our test data directory.
