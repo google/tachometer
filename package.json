@@ -6,6 +6,7 @@
   "directories": {
     "lib": "lib"
   },
+  "type": "module",
   "bin": {
     "tach": "bin/tach.js",
     "tachometer": "bin/tach.js"
