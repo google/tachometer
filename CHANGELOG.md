@@ -5,7 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](http://semver.org/).
 
-<!-- ## Unreleased -->
+## Unreleased
+
+- [**BREAKING**] Tachometer is now an ES module binary, so it requires Node 12
+  or higher.
+- Upgraded dependencies and removed unnecessary ones.
 
 ## [0.6.0] 2022-07-01
 
