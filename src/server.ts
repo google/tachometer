@@ -9,16 +9,19 @@ import * as net from 'net';
 import * as path from 'path';
 import {Stream} from 'stream';
 
-import Koa = require('koa');
-import mount = require('koa-mount');
-import send = require('koa-send');
-import getStream = require('get-stream');
-import serve = require('koa-static');
-import bodyParser = require('koa-bodyparser');
+import Koa from 'koa';
+import mount from 'koa-mount';
+import send from 'koa-send';
+import getStream from 'get-stream';
+import serve from 'koa-static';
+import bodyParser from 'koa-bodyparser';
 import {nodeResolve} from 'koa-node-resolve';
 
-import {BenchmarkResponse, Deferred} from './types';
-import {NpmInstall} from './versions';
+import {BenchmarkResponse, Deferred} from './types.js';
+import {NpmInstall} from './versions.js';
+
+import * as url from 'url';
+const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
 export interface ServerOpts {
   host: string;

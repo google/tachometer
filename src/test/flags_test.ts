@@ -7,7 +7,7 @@
 import {assert} from 'chai';
 import {suite, test} from 'mocha';
 
-import {parseFlags} from '../flags';
+import {parseFlags} from '../flags.js';
 
 suite('flags', () => {
   suite('parseFlags', () => {

@@ -4,27 +4,29 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-import * as fsExtra from 'fs-extra';
+import fsExtra from 'fs-extra';
 import * as jsonschema from 'jsonschema';
 import * as path from 'path';
 import sanitizeFileName from 'sanitize-filename';
+import {createRequire} from 'module';
+const require = createRequire(import.meta.url);
 
 import {
   BrowserConfig,
   BrowserName,
   parseBrowserConfigString,
   validateBrowserConfig,
-} from './browser';
-import {Config, parseAutoSampleConditions, urlFromLocalPath} from './config';
-import * as defaults from './defaults';
-import {makeUniqueSpecLabelFn} from './format';
+} from './browser.js';
+import {Config, parseAutoSampleConditions, urlFromLocalPath} from './config.js';
+import * as defaults from './defaults.js';
+import {makeUniqueSpecLabelFn} from './format.js';
 import {
   BenchmarkSpec,
   ExtendedPackageDependencyMap,
   Measurement,
   measurements,
-} from './types';
-import {isHttpUrl} from './util';
+} from './types.js';
+import {isHttpUrl} from './util.js';
 
 /**
  * Expected format of the top-level JSON config file. Note this interface is

@@ -5,8 +5,8 @@
  */
 
 import * as path from 'path';
-import {BrowserName} from './browser';
-import {LocalUrl, Measurement, RemoteUrl} from './types';
+import {BrowserName} from './browser.js';
+import {LocalUrl, Measurement, RemoteUrl} from './types.js';
 
 export const windowWidth = 1024;
 export const windowHeight = 768;

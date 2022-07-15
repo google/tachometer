@@ -7,12 +7,12 @@
 import * as os from 'os';
 import * as path from 'path';
 
-import {supportedBrowsers} from './browser';
-import * as defaults from './defaults';
-import {CommandLineMeasurements, measurements} from './types';
+import {supportedBrowsers} from './browser.js';
+import * as defaults from './defaults.js';
+import {CommandLineMeasurements, measurements} from './types.js';
 
-import commandLineArgs = require('command-line-args');
-import commandLineUsage = require('command-line-usage');
+import commandLineArgs from 'command-line-args';
+import commandLineUsage from 'command-line-usage';
 
 export const defaultInstallDir = path.join(
   os.tmpdir(),

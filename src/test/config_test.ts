@@ -7,10 +7,10 @@
 import {assert} from 'chai';
 import {suite, suiteSetup, suiteTeardown, test} from 'mocha';
 
-import {Config, makeConfig, parseAutoSampleConditions} from '../config';
-import {parseFlags} from '../flags';
+import {Config, makeConfig, parseAutoSampleConditions} from '../config.js';
+import {parseFlags} from '../flags.js';
 
-import {testData} from './test_helpers';
+import {testData} from './test_helpers.js';
 
 suite('makeConfig', function () {
   let prevCwd: string;
