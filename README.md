@@ -3,7 +3,7 @@
 > tachometer is a tool for running benchmarks in web browsers. It uses repeated
 > sampling and statistics to reliably identify even tiny differences in runtime.
 
-###### [Install](#install) | [Usage](#usage) | [Why?](#why) | [Example](#example) | [Features](#features) | [Sampling](#sampling) | [Measurement modes](#measurement-modes) | [Interpreting results](#interpreting=results) | [Swap NPM dependencies](#swap-npm-dependencies) | [JavaScript module imports](#javascript-module-imports) | [Browsers](#browsers) | [Performance traces](#performance-traces) | [Remote control](#remote-control) | [Config file](#config-file) | [CLI usage](#cli-usage)
+###### [Install](#install) | [Usage](#usage) | [Why?](#why) | [Example](#example) | [Features](#features) | [Sampling](#sampling) | [Measurement modes](#measurement-modes) | [Interpreting results](#interpreting-results) | [Swap NPM dependencies](#swap-npm-dependencies) | [JavaScript module imports](#javascript-module-imports) | [Browsers](#browsers) | [Performance traces](#performance-traces) | [Remote control](#remote-control) | [Config file](#config-file) | [CLI usage](#cli-usage)
 
 ## Install
 
@@ -106,7 +106,7 @@ information.
   depend on, to compare published versions, remote GitHub branches, or local git
   repos.
 
-- [_Automatically sample_](#auto-sampling) until we have enough precision to
+- [_Automatically sample_](#auto-sample) until we have enough precision to
   answer the question you are asking.
 
 - [_Remote control_](#remote-control) browsers running on different machines
@@ -857,7 +857,7 @@ tach http://example.com
 | `--package-version` / `-p`  | _(none)_                                | Specify an NPM package version to swap in ([details](#swap-npm-dependencies))                                                                                      |
 | `--browser` / `-b`          | `chrome`                                | Which browsers to launch in automatic mode, comma-delimited (chrome, firefox, safari, edge, ie) ([details](#browsers))                                             |
 | `--window-size`             | `1024,768`                              | "width,height" in pixels of the browser windows that will be created                                                                                               |
-| `--sample-size` / `-n`      | `50`                                    | Minimum number of times to run each benchmark ([details](#sample-size))                                                                                            |
+| `--sample-size` / `-n`      | `50`                                    | Minimum number of times to run each benchmark ([details](#minimum-sample-size))                                                                                            |
 | `--auto-sample-conditions`  | `0%`                                    | The degrees of difference to try and resolve when auto-sampling ("N%" or "Nms", comma-delimited) ([details](#auto-sample-conditions))                              |
 | `--timeout`                 | `3`                                     | The maximum number of minutes to spend auto-sampling ([details](#auto-sample))                                                                                     |
 | `--measure`                 | `callback`                              | Which time interval to measure (`callback`, `global`, `fcp`) ([details](#measurement-modes))                                                                       |
