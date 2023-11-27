@@ -224,6 +224,7 @@ suite('makeConfig', function () {
     const expected: Config = {
       mode: 'automatic',
       csvFileStats: '',
+      collate: false,
       csvFileRaw: '',
       jsonFile: '',
       legacyJsonFile: '',

@@ -251,6 +251,15 @@ suite('format', () => {
 
     const actual = await fakeResultTable(config);
     const expected = `
+┌─────────────┬───────────────┐
+│     Version │ <none>        │
+├─────────────┼───────────────┤
+│     Browser │ chrome        │
+│             │ 75.0.3770.100 │
+├─────────────┼───────────────┤
+│ Sample size │ 50            │
+└─────────────┴───────────────┘
+
 ┌──────────────┬──────────┬───────────────────┬───────────────────┬───────────────────┬───────────────────┬───────────────────┐
 │ Benchmark    │ Bytes    │          Avg time │   vs foo [render] │   vs foo [update] │   vs bar [render] │   vs bar [update] │
 ├──────────────┼──────────┼───────────────────┼───────────────────┼───────────────────┼───────────────────┼───────────────────┤
@@ -274,7 +283,7 @@ suite('format', () => {
     assert.equal(actual, expected.trim() + '\n');
   });
 
-  test('multiple measurements, collate: false', async () => {
+  test('multiple measurements, collate: true', async () => {
     const config: ConfigFile = {
       benchmarks: [
         {

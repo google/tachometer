@@ -236,6 +236,7 @@ suite('config', () => {
         sampleSize: undefined,
         timeout: undefined,
         autoSampleConditions: undefined,
+        collate: undefined,
         resolveBareModules: undefined,
         benchmarks: [
           {
@@ -495,6 +496,7 @@ suite('config', () => {
         sampleSize: undefined,
         timeout: undefined,
         autoSampleConditions: undefined,
+        collate: undefined,
         resolveBareModules: undefined,
         benchmarks: [
           {
@@ -581,6 +583,7 @@ suite('config', () => {
         sampleSize: undefined,
         timeout: undefined,
         autoSampleConditions: undefined,
+        collate: undefined,
         resolveBareModules: undefined,
         benchmarks: [
           {
