@@ -1,0 +1,56 @@
+name: Tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        job: [linux, macos]
+        include:
+          - job: linux
+            os: ubuntu-latest
+            browsers: chrome-headless, firefox-headless
+
+          - job: macos
+            os: macos-12
+            browsers: safari
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
+
+      - run: npm test
+        env:
+          TACHOMETER_E2E_TEST_BROWSERS: ${{ matrix.browsers }}
+          TACHOMETER_E2E_TEST_SHOW_OUTPUT: true
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+
+  check-format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: npm
+      - run: npm ci
+      - run: npm run format:check

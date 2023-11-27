@@ -1,23 +1,18 @@
 /**
  * @license
- * Copyright (c) 2019 The Polymer Project Authors. All rights reserved.
- * This code may only be used under the BSD style license found at
- * http://polymer.github.io/LICENSE.txt The complete set of authors may be found
- * at http://polymer.github.io/AUTHORS.txt The complete set of contributors may
- * be found at http://polymer.github.io/CONTRIBUTORS.txt Code distributed by
- * Google as part of the polymer project is also subject to an additional IP
- * rights grant found at http://polymer.github.io/PATENTS.txt
+ * Copyright 2019 Google LLC
+ * SPDX-License-Identifier: BSD-3-Clause
  */
 
 import {assert} from 'chai';
-import {readJSONSync} from 'fs-extra';
+import fsExtra from 'fs-extra';
 import {setup, suite, teardown, test} from 'mocha';
 import fetch from 'node-fetch';
 import * as path from 'path';
 
-import {Server} from '../server';
+import {Server} from '../server.js';
 
-import {testData} from './test_helpers';
+import {testData} from './test_helpers.js';
 
 suite('server', () => {
   let server: Server;
@@ -25,14 +20,16 @@ suite('server', () => {
   setup(async () => {
     server = await Server.start({
       host: 'localhost',
-      ports: [0],  // random
+      ports: [0], // random
       root: testData,
       resolveBareModules: true,
       npmInstalls: [],
-      mountPoints: [{
-        diskPath: testData,
-        urlPath: '/',
-      }],
+      mountPoints: [
+        {
+          diskPath: testData,
+          urlPath: '/',
+        },
+      ],
       cache: true,
     });
   });
@@ -82,7 +79,9 @@ suite('server', () => {
   suite('bare modules with custom npm installs', async () => {
     setup(async () => {
       const installDir = path.join(testData, 'alt_npm_install_dir');
-      const packageJson = readJSONSync(path.join(installDir, 'package.json'));
+      const packageJson = fsExtra.readJSONSync(
+        path.join(installDir, 'package.json')
+      );
 
       // Close the base server and replace it with a custom server that is
       // configured with a custom npm install directory
@@ -90,14 +89,16 @@ suite('server', () => {
 
       server = await Server.start({
         host: 'localhost',
-        ports: [0],  // random
+        ports: [0], // random
         root: testData,
         resolveBareModules: true,
         npmInstalls: [{installDir, packageJson}],
-        mountPoints: [{
-          diskPath: testData,
-          urlPath: '/',
-        }],
+        mountPoints: [
+          {
+            diskPath: testData,
+            urlPath: '/',
+          },
+        ],
         cache: true,
       });
     });

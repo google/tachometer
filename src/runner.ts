@@ -1,32 +1,46 @@
 /**
  * @license
- * Copyright (c) 2019 The Polymer Project Authors. All rights reserved.
- * This code may only be used under the BSD style license found at
- * http://polymer.github.io/LICENSE.txt The complete set of authors may be found
- * at http://polymer.github.io/AUTHORS.txt The complete set of contributors may
- * be found at http://polymer.github.io/CONTRIBUTORS.txt Code distributed by
- * Google as part of the polymer project is also subject to an additional IP
- * rights grant found at http://polymer.github.io/PATENTS.txt
+ * Copyright 2019 Google LLC
+ * SPDX-License-Identifier: BSD-3-Clause
  */
 
-import * as fsExtra from 'fs-extra';
+import fsExtra from 'fs-extra';
 import * as webdriver from 'selenium-webdriver';
 
-import ProgressBar = require('progress');
-import ansi = require('ansi-escape-sequences');
+import ProgressBar from 'progress';
+import ansi from 'ansi-escape-sequences';
 
-import {jsonOutput, legacyJsonOutput} from './json-output';
-import {browserSignature, makeDriver, openAndSwitchToNewTab} from './browser';
-import {measure, measurementName} from './measure';
-import {BenchmarkResult, BenchmarkSpec} from './types';
-import {formatCsvStats, formatCsvRaw} from './csv';
-import {ResultStatsWithDifferences, horizonsResolved, summaryStats, computeDifferences} from './stats';
-import {verticalTermResultTable, horizontalTermResultTable, verticalHtmlResultTable, horizontalHtmlResultTable, automaticResultTable, spinner, benchmarkOneLiner, collatedResultTables} from './format';
-import {Config} from './config';
-import * as github from './github';
-import {Server, Session} from './server';
-import {specUrl} from './specs';
-import {wait} from './util';
+import {jsonOutput, legacyJsonOutput} from './json-output.js';
+import {
+  browserSignature,
+  makeDriver,
+  openAndSwitchToNewTab,
+} from './browser.js';
+import {measure, measurementName} from './measure.js';
+import {BenchmarkResult, BenchmarkSpec} from './types.js';
+import {formatCsvStats, formatCsvRaw} from './csv.js';
+import {
+  ResultStatsWithDifferences,
+  autoSampleConditionsResolved,
+  summaryStats,
+  computeDifferences,
+} from './stats.js';
+import {
+  verticalTermResultTable,
+  horizontalTermResultTable,
+  verticalHtmlResultTable,
+  horizontalHtmlResultTable,
+  automaticResultTable,
+  spinner,
+  benchmarkOneLiner,
+  collatedResultTables,
+} from './format.js';
+import {Config} from './config.js';
+import * as github from './github.js';
+import {Server, Session} from './server.js';
+import {specUrl} from './specs.js';
+import {wait} from './util.js';
+import * as pathlib from 'path';
 
 interface Browser {
   name: string;
@@ -72,11 +86,12 @@ export class Runner {
     });
   }
 
-  async run(): Promise<Array<ResultStatsWithDifferences>|undefined> {
+  async run(): Promise<Array<ResultStatsWithDifferences> | undefined> {
     await this.launchBrowsers();
     if (this.config.githubCheck !== undefined) {
-      this.completeGithubCheck =
-          await github.createCheck(this.config.githubCheck);
+      this.completeGithubCheck = await github.createCheck(
+        this.config.githubCheck
+      );
     }
     console.log('Running benchmarks\n');
     await this.warmup();
@@ -112,7 +127,8 @@ export class Runner {
   private async closeBrowsers() {
     // Close the browsers by closing each of their last remaining tabs.
     await Promise.all(
-        [...this.browsers.values()].map(({driver}) => driver.close()));
+      [...this.browsers.values()].map(({driver}) => driver.close())
+    );
   }
 
   /**
@@ -123,10 +139,14 @@ export class Runner {
     const {specs, bar} = this;
     for (let i = 0; i < specs.length; i++) {
       const spec = specs[i];
+      if (spec.browser.trace !== undefined) {
+        await fsExtra.mkdirp(spec.browser.trace.logDir);
+      }
+
       bar.tick(0, {
         status: `warmup ${i + 1}/${specs.length} ${benchmarkOneLiner(spec)}`,
       });
-      await this.takeSamples(spec);
+      await this.takeSamples(spec, 'warmup');
       bar.tick(1);
     }
   }
@@ -163,13 +183,18 @@ export class Runner {
     // Always collect our minimum number of samples.
     const {config, specs, bar} = this;
     const numRuns = specs.length * config.sampleSize;
+    const maxLength = config.sampleSize.toString().length;
     let run = 0;
     for (let sample = 0; sample < config.sampleSize; sample++) {
+      const sampleLabel = `sample-${sample
+        .toString()
+        .padStart(maxLength, '0')}`;
+
       for (const spec of specs) {
         bar.tick(0, {
           status: `${++run}/${numRuns} ${benchmarkOneLiner(spec)}`,
         });
-        this.recordSamples(spec, await this.takeSamples(spec));
+        this.recordSamples(spec, await this.takeSamples(spec, sampleLabel));
         if (bar.curr === bar.total - 1) {
           // Note if we tick with 0 after we've completed, the status is
           // rendered on the next line for some reason.
@@ -187,13 +212,18 @@ export class Runner {
       return;
     }
     console.log();
-    const timeoutMs = config.timeout * 60 * 1000;  // minutes -> millis
+    const timeoutMs = config.timeout * 60 * 1000; // minutes -> millis
     const startMs = Date.now();
     let run = 0;
     let sample = 0;
     let elapsed = 0;
     while (true) {
-      if (horizonsResolved(this.makeResults(), config.horizons)) {
+      if (
+        autoSampleConditionsResolved(
+          this.makeResults(),
+          config.autoSampleConditions
+        )
+      ) {
         console.log();
         break;
       }
@@ -208,20 +238,31 @@ export class Runner {
         for (const spec of specs) {
           run++;
           elapsed = Date.now() - startMs;
-          const remainingSecs =
-              Math.max(0, Math.round((timeoutMs - elapsed) / 1000));
+          const remainingSecs = Math.max(
+            0,
+            Math.round((timeoutMs - elapsed) / 1000)
+          );
           const mins = Math.floor(remainingSecs / 60);
           const secs = remainingSecs % 60;
           process.stdout.write(
-              `\r${spinner[run % spinner.length]} Auto-sample ${sample} ` +
-              `(timeout in ${mins}m${secs}s)` + ansi.erase.inLine(0));
-          this.recordSamples(spec, await this.takeSamples(spec));
+            `\r${spinner[run % spinner.length]} Auto-sample ${sample} ` +
+              `(timeout in ${mins}m${secs}s)` +
+              ansi.erase.inLine(0)
+          );
+
+          const sampleLabel = `auto-sample-${sample
+            .toString()
+            .padStart(2, '0')}`;
+          this.recordSamples(spec, await this.takeSamples(spec, sampleLabel));
         }
       }
     }
   }
 
-  private async takeSamples(spec: BenchmarkSpec): Promise<BenchmarkResult[]> {
+  private async takeSamples(
+    spec: BenchmarkSpec,
+    sampleLabel: string
+  ): Promise<BenchmarkResult[]> {
     const {servers, config, browsers} = this;
 
     let server;
@@ -233,8 +274,9 @@ export class Runner {
     }
 
     const url = specUrl(spec, servers, config);
-    const {driver, initialTabHandle} =
-        browsers.get(browserSignature(spec.browser))!;
+    const {driver, initialTabHandle} = browsers.get(
+      browserSignature(spec.browser)
+    )!;
 
     let session: Session;
     let pendingMeasurements;
@@ -245,20 +287,24 @@ export class Runner {
     // before collecting all measurements, we'll move onto the next attempt
     // where we reload the whole page and start from scratch. If we hit our max
     // attempts, we'll throw.
-    for (let pageAttempt = 1;; pageAttempt++) {
+    for (let pageAttempt = 1; ; pageAttempt++) {
       // New attempt. Reset all measurements and results.
       pendingMeasurements = new Set(spec.measurement);
       measurementResults = [];
       await openAndSwitchToNewTab(driver, spec.browser);
       await driver.get(url);
-      for (let waited = 0;
-           pendingMeasurements.size > 0 && waited <= this.attemptTimeout;
-           waited += this.pollTime) {
+      for (
+        let waited = 0;
+        pendingMeasurements.size > 0 && waited <= this.attemptTimeout;
+        waited += this.pollTime
+      ) {
         // TODO(aomarks) You don't have to wait in callback mode!
         await wait(this.pollTime);
-        for (let measurementIndex = 0;
-             measurementIndex < spec.measurement.length;
-             measurementIndex++) {
+        for (
+          let measurementIndex = 0;
+          measurementIndex < spec.measurement.length;
+          measurementIndex++
+        ) {
           if (measurementResults[measurementIndex] !== undefined) {
             // Already collected this measurement on this attempt.
             continue;
@@ -271,6 +317,8 @@ export class Runner {
           }
         }
       }
+
+      await this.capturePerfTraces(spec, driver, sampleLabel);
 
       // Close the active tab (but not the whole browser, since the
       // initial blank tab is still open).
@@ -286,45 +334,75 @@ export class Runner {
       }
 
       console.log(
-          `\n\nFailed ${pageAttempt}/${this.maxAttempts} times ` +
+        `\n\nFailed ${pageAttempt}/${this.maxAttempts} times ` +
           `to get measurement(s) ${spec.name}` +
-          (spec.measurement.length > 1 ? ` [${
-                                                 [...pendingMeasurements]
-                                                     .map(measurementName)
-                                                     .join(', ')}]` :
-                                         '') +
-          ` in ${spec.browser.name} from ${url}. Retrying.`);
+          (spec.measurement.length > 1
+            ? ` [${[...pendingMeasurements].map(measurementName).join(', ')}]`
+            : '') +
+          ` in ${spec.browser.name} from ${url}. Retrying.`
+      );
     }
 
     if (pendingMeasurements.size > 0) {
       console.log();
       throw new Error(
-          `\n\nFailed ${this.maxAttempts}/${this.maxAttempts} times ` +
+        `\n\nFailed ${this.maxAttempts}/${this.maxAttempts} times ` +
           `to get measurement(s) ${spec.name}` +
-          (spec.measurement.length > 1 ? ` [${
-                                                 [...pendingMeasurements]
-                                                     .map(measurementName)
-                                                     .join(', ')}]` :
-                                         '') +
-          ` in ${spec.browser.name} from ${url}`);
+          (spec.measurement.length > 1
+            ? ` [${[...pendingMeasurements].map(measurementName).join(', ')}]`
+            : '') +
+          ` in ${spec.browser.name} from ${url}`
+      );
     }
 
-    return spec.measurement.map(
-        (measurement, measurementIndex) => ({
-          name: spec.measurement.length === 1 ?
-              spec.name :
-              `${spec.name} [${measurementName(measurement)}]`,
-          measurement,
-          measurementIndex: measurementIndex,
-          queryString: spec.url.kind === 'local' ? spec.url.queryString : '',
-          version: spec.url.kind === 'local' && spec.url.version !== undefined ?
-              spec.url.version.label :
-              '',
-          millis: [measurementResults[measurementIndex]],
-          bytesSent: session ? session.bytesSent : 0,
-          browser: spec.browser,
-          userAgent: session ? session.userAgent : '',
-        }));
+    return spec.measurement.map((measurement, measurementIndex) => ({
+      name:
+        spec.measurement.length === 1
+          ? spec.name
+          : `${spec.name} [${measurementName(measurement)}]`,
+      measurement,
+      measurementIndex: measurementIndex,
+      queryString: spec.url.kind === 'local' ? spec.url.queryString : '',
+      version:
+        spec.url.kind === 'local' && spec.url.version !== undefined
+          ? spec.url.version.label
+          : '',
+      millis: [measurementResults[measurementIndex]],
+      bytesSent: session ? session.bytesSent : 0,
+      browser: spec.browser,
+      userAgent: session ? session.userAgent : '',
+    }));
+  }
+
+  async capturePerfTraces(
+    spec: BenchmarkSpec,
+    driver: webdriver.WebDriver,
+    sampleLabel: string
+  ) {
+    if (spec.browser.trace === undefined) {
+      return;
+    }
+
+    let perfEntries: webdriver.logging.Entry[] = [];
+    let newPerfEntries: webdriver.logging.Entry[];
+    do {
+      newPerfEntries = await driver.manage().logs().get('performance');
+      perfEntries = perfEntries.concat(newPerfEntries);
+    } while (newPerfEntries.length > 0);
+
+    const logDir = spec.browser.trace.logDir;
+    await fsExtra.writeFile(
+      pathlib.join(logDir, `log-${sampleLabel}.json`),
+      // Convert perf logs into a format about:tracing can parse
+      '[\n' +
+        perfEntries
+          .map((e) => JSON.parse(e.message).message)
+          .filter((log) => log.method === 'Tracing.dataCollected')
+          .map((log) => JSON.stringify(log.params))
+          .join(',\n') +
+        '\n]',
+      'utf8'
+    );
   }
 
   makeResults() {
@@ -352,10 +430,15 @@ export class Runner {
     }
 
     if (hitTimeout === true) {
-      console.log(ansi.format(
+      console.log(
+        ansi.format(
           `[bold red]{NOTE} Hit ${config.timeout} minute auto-sample timeout` +
-          ` trying to resolve horizon(s)`));
-      console.log('Consider a longer --timeout or different --horizon');
+            ` trying to resolve condition(s)`
+        )
+      );
+      console.log(
+        'Consider a longer --timeout or different --auto-sample-conditions'
+      );
     }
 
     if (config.jsonFile) {
@@ -371,15 +454,19 @@ export class Runner {
 
     if (config.csvFileStats) {
       await fsExtra.writeFile(
-          config.csvFileStats, formatCsvStats(withDifferences));
+        config.csvFileStats,
+        formatCsvStats(withDifferences)
+      );
     }
     if (config.csvFileRaw) {
       await fsExtra.writeFile(config.csvFileRaw, formatCsvRaw(withDifferences));
     }
 
     if (this.completeGithubCheck !== undefined) {
-      const markdown = horizontalHtmlResultTable(fixed) + '\n' +
-          verticalHtmlResultTable(unfixed);
+      const markdown =
+        horizontalHtmlResultTable(fixed) +
+        '\n' +
+        verticalHtmlResultTable(unfixed);
       await this.completeGithubCheck(markdown);
     }
   }

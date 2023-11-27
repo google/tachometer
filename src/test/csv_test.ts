@@ -1,27 +1,25 @@
 /**
  * @license
- * Copyright (c) 2019 The Polymer Project Authors. All rights reserved.
- * This code may only be used under the BSD style license found at
- * http://polymer.github.io/LICENSE.txt The complete set of authors may be found
- * at http://polymer.github.io/AUTHORS.txt The complete set of contributors may
- * be found at http://polymer.github.io/CONTRIBUTORS.txt Code distributed by
- * Google as part of the polymer project is also subject to an additional IP
- * rights grant found at http://polymer.github.io/PATENTS.txt
+ * Copyright 2019 Google LLC
+ * SPDX-License-Identifier: BSD-3-Clause
  */
 
 import {assert} from 'chai';
 import {suite, test} from 'mocha';
 
-import {ConfigFile} from '../configfile';
-import {formatCsvRaw, formatCsvStats} from '../csv';
-import {fakeResults} from './test_helpers';
+import {ConfigFile} from '../configfile.js';
+import {formatCsvRaw, formatCsvStats} from '../csv.js';
+import {fakeResults} from './test_helpers.js';
 
 /**
  * It's hard to visually verify raw CSV output, so this lets us align the
  * columns visually, but then remove that padding before comparison.
  */
 const removePadding = (readable: string): string =>
-    readable.replace(/ *, */g, ',').replace(/ *\n */gm, '\n').trim() + '\n';
+  readable
+    .replace(/ *, */g, ',')
+    .replace(/ *\n */gm, '\n')
+    .trim() + '\n';
 
 suite('csv', () => {
   test('stats: 2x2 matrix with quoting', async () => {

@@ -1,16 +1,11 @@
 /**
  * @license
- * Copyright (c) 2019 The Polymer Project Authors. All rights reserved.
- * This code may only be used under the BSD style license found at
- * http://polymer.github.io/LICENSE.txt The complete set of authors may be found
- * at http://polymer.github.io/AUTHORS.txt The complete set of contributors may
- * be found at http://polymer.github.io/CONTRIBUTORS.txt Code distributed by
- * Google as part of the polymer project is also subject to an additional IP
- * rights grant found at http://polymer.github.io/PATENTS.txt
+ * Copyright 2019 Google LLC
+ * SPDX-License-Identifier: BSD-3-Clause
  */
 
 import {execFile, ExecFileOptions} from 'child_process';
-import * as fsExtra from 'fs-extra';
+import fsExtra from 'fs-extra';
 import {URL} from 'url';
 import {promisify} from 'util';
 
@@ -26,7 +21,9 @@ export function isHttpUrl(str: string): boolean {
   }
 }
 
-export async function fileKind(path: string): Promise<'file'|'dir'|undefined> {
+export async function fileKind(
+  path: string
+): Promise<'file' | 'dir' | undefined> {
   try {
     const stat = await fsExtra.stat(path);
     if (stat.isDirectory()) {
@@ -36,7 +33,7 @@ export async function fileKind(path: string): Promise<'file'|'dir'|undefined> {
       return 'file';
     }
   } catch (e) {
-    if (e.code === 'ENOENT') {
+    if ((e as Error & {code?: string}).code === 'ENOENT') {
       return undefined;
     }
     throw e;
@@ -45,7 +42,9 @@ export async function fileKind(path: string): Promise<'file'|'dir'|undefined> {
 
 const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 export async function runNpm(
-    args: string[], options?: ExecFileOptions): Promise<string|Buffer> {
+  args: string[],
+  options?: ExecFileOptions
+): Promise<string | Buffer> {
   return promisify(execFile)(npmCmd, args, options).then(({stdout}) => stdout);
 }
 
@@ -53,7 +52,7 @@ export async function runNpm(
  * Promisified version of setTimeout.
  */
 export const wait = (ms: number) =>
-    new Promise((resolve) => setTimeout(resolve, ms));
+  new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
  * A function that should never be called. But if it somehow is anyway, throw an

@@ -44,10 +44,14 @@
                     "type": "boolean"
                 },
                 "name": {
-                    "description": "Name of the browser:\n\nOptions:\n   - chrome\n   - firefox\n   - safari\n   - edge\n   - ie",
+                    "description": "Name of the browser:\n\nOptions:\n  - chrome\n  - firefox\n  - safari\n  - edge\n  - ie",
                     "enum": [
                         "chrome"
                     ],
+                    "type": "string"
+                },
+                "profile": {
+                    "description": "Path to a profile directory to use instead of the default temporary fresh\none.",
                     "type": "string"
                 },
                 "remoteUrl": {
@@ -60,6 +64,20 @@
                         "type": "string"
                     },
                     "type": "array"
+                },
+                "trace": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/definitions/TraceConfig"
+                        },
+                        {
+                            "enum": [
+                                true
+                            ],
+                            "type": "boolean"
+                        }
+                    ],
+                    "description": "Optional config to turn on performance tracing."
                 },
                 "windowSize": {
                     "$ref": "#/definitions/WindowSize",
@@ -96,7 +114,7 @@
                             "type": "string"
                         }
                     ],
-                    "description": "Which browser to run the benchmark in.\n\nOptions:\n   - chrome (default)\n   - chrome-headless\n   - firefox\n   - firefox-headless\n   - safari\n   - edge\n   - ie"
+                    "description": "Which browser to run the benchmark in.\n\nOptions:\n  - chrome (default)\n  - chrome-headless\n  - firefox\n  - firefox-headless\n  - safari\n  - edge\n  - ie"
                 },
                 "expand": {
                     "description": "Recursively expand this benchmark configuration with any number of\nvariations. Useful for testing the same base configuration with e.g.\nmultiple browers or package versions.",
@@ -128,7 +146,8 @@
                                     {
                                         "$ref": "#/definitions/ExpressionMeasurement"
                                     }
-                                ]
+                                ],
+                                "description": "The kinds of intervals we can measure."
                             },
                             "type": "array"
                         },
@@ -141,7 +160,7 @@
                             "type": "string"
                         }
                     ],
-                    "description": "Which time interval to measure.\n\nOptions:\n   - callback: bench.start() to bench.stop() (default for local paths)\n   - fcp: first contentful paint (default for fully qualified URLs)\n   - global: result returned from window.tachometerResult (or custom\n       expression set via measurementExpression)\n   - {\n       performanceEntry: {\n         //\nhttps://developer.mozilla.org/en-US/docs/Web/API/PerformanceEntry/name\n         name: string;\n       }\n     }"
+                    "description": "Which time interval to measure.\n\nOptions:\n  - callback: bench.start() to bench.stop() (default for local paths)\n  - fcp: first contentful paint (default for fully qualified URLs)\n  - global: result returned from window.tachometerResult (or custom\n      expression set via measurementExpression)\n  - {\n      performanceEntry: {\n        //\nhttps://developer.mozilla.org/en-US/docs/Web/API/PerformanceEntry/name\n        name: string;\n      }\n    }"
                 },
                 "measurementExpression": {
                     "description": "Expression to use to retrieve global result.  Defaults to\n`window.tachometerResult`.",
@@ -184,7 +203,7 @@
             "additionalProperties": false,
             "properties": {
                 "name": {
-                    "description": "Name of the browser:\n\nOptions:\n   - chrome\n   - firefox\n   - safari\n   - edge\n   - ie",
+                    "description": "Name of the browser:\n\nOptions:\n  - chrome\n  - firefox\n  - safari\n  - edge\n  - ie",
                     "enum": [
                         "edge"
                     ],
@@ -259,7 +278,7 @@
                     "type": "boolean"
                 },
                 "name": {
-                    "description": "Name of the browser:\n\nOptions:\n   - chrome\n   - firefox\n   - safari\n   - edge\n   - ie",
+                    "description": "Name of the browser:\n\nOptions:\n  - chrome\n  - firefox\n  - safari\n  - edge\n  - ie",
                     "enum": [
                         "firefox"
                     ],
@@ -275,6 +294,10 @@
                     },
                     "description": "Advanced preferences that are usually set from the about:config page\nin Firefox (see\nhttps://support.mozilla.org/en-US/kb/about-config-editor-firefox).",
                     "type": "object"
+                },
+                "profile": {
+                    "description": "Path to a profile directory to use instead of the default temporary fresh\none.",
+                    "type": "string"
                 },
                 "remoteUrl": {
                     "description": "A remote WebDriver server HTTP address to launch the browser from.",
@@ -327,7 +350,7 @@
             "additionalProperties": false,
             "properties": {
                 "name": {
-                    "description": "Name of the browser:\n\nOptions:\n   - chrome\n   - firefox\n   - safari\n   - edge\n   - ie",
+                    "description": "Name of the browser:\n\nOptions:\n  - chrome\n  - firefox\n  - safari\n  - edge\n  - ie",
                     "enum": [
                         "ie"
                     ],
@@ -373,7 +396,7 @@
             "additionalProperties": false,
             "properties": {
                 "name": {
-                    "description": "Name of the browser:\n\nOptions:\n   - chrome\n   - firefox\n   - safari\n   - edge\n   - ie",
+                    "description": "Name of the browser:\n\nOptions:\n  - chrome\n  - firefox\n  - safari\n  - edge\n  - ie",
                     "enum": [
                         "safari"
                     ],
@@ -391,6 +414,24 @@
             "required": [
                 "name"
             ],
+            "type": "object"
+        },
+        "TraceConfig": {
+            "additionalProperties": false,
+            "description": "Configuration to turn on performance tracing",
+            "properties": {
+                "categories": {
+                    "description": "The tracing categories the browser should log. See Tachometer readme for a\ndescription of available categories. The source of the categories in\nChromium can be found here: https://chromium.googlesource.com/chromium/src/+/master/base/trace_event/builtin_categories.h",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "logDir": {
+                    "description": "The directory to log performance traces to",
+                    "type": "string"
+                }
+            },
             "type": "object"
         },
         "WindowSize": {
@@ -420,6 +461,13 @@
             "description": "An optional reference to the JSON Schema for this file.\n\nIf none is given, and the file is a valid tachometer config file,\ntachometer will write back to the config file to give this a value.",
             "type": "string"
         },
+        "autoSampleConditions": {
+            "description": "The degrees of difference to try and resolve when auto-sampling\n(e.g. 0ms, +1ms, -1ms, 0%, +1%, -1%, default 0%).",
+            "items": {
+                "type": "string"
+            },
+            "type": "array"
+        },
         "benchmarks": {
             "description": "Benchmarks to run.",
             "items": {
@@ -433,7 +481,7 @@
             "type": "boolean"
         },
         "horizons": {
-            "description": "The degrees of difference to try and resolve when auto-sampling\n(e.g. 0ms, +1ms, -1ms, 0%, +1%, -1%, default 0%).",
+            "description": "Deprecated alias for autoSampleConditions.",
             "items": {
                 "type": "string"
             },

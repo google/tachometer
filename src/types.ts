@@ -1,15 +1,10 @@
 /**
  * @license
- * Copyright (c) 2019 The Polymer Project Authors. All rights reserved.
- * This code may only be used under the BSD style license found at
- * http://polymer.github.io/LICENSE.txt The complete set of authors may be found
- * at http://polymer.github.io/AUTHORS.txt The complete set of contributors may
- * be found at http://polymer.github.io/CONTRIBUTORS.txt Code distributed by
- * Google as part of the polymer project is also subject to an additional IP
- * rights grant found at http://polymer.github.io/PATENTS.txt
+ * Copyright 2019 Google LLC
+ * SPDX-License-Identifier: BSD-3-Clause
  */
 
-import {BrowserConfig} from './browser';
+import {BrowserConfig} from './browser.js';
 
 export class Deferred<T> {
   readonly promise: Promise<T>;
@@ -37,7 +32,7 @@ export interface PackageDependencyMap {
  * more advanced configurations.
  */
 export interface ExtendedPackageDependencyMap {
-  [pkg: string]: string|GitDependency;
+  [pkg: string]: string | GitDependency;
 }
 
 /**
@@ -77,7 +72,9 @@ export interface NpmPackageJson {
 
 /** The kinds of intervals we can measure. */
 export type Measurement =
-    CallbackMeasurement|PerformanceEntryMeasurement|ExpressionMeasurement;
+  | CallbackMeasurement
+  | PerformanceEntryMeasurement
+  | ExpressionMeasurement;
 
 export interface MeasurementBase {
   name?: string;
@@ -97,13 +94,13 @@ export interface ExpressionMeasurement extends MeasurementBase {
   expression: string;
 }
 
-export type CommandLineMeasurements = 'callback'|'fcp'|'global';
+export type CommandLineMeasurements = 'callback' | 'fcp' | 'global';
 
 export const measurements = new Set<string>(['callback', 'fcp', 'global']);
 
 /** A specification of a benchmark to run. */
 export interface BenchmarkSpec {
-  url: LocalUrl|RemoteUrl;
+  url: LocalUrl | RemoteUrl;
   measurement: Measurement[];
   name: string;
   browser: BrowserConfig;

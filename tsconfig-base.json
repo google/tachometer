@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "es2017",
-    "module": "es2015",
+    "module": "es2020",
     "moduleResolution": "node",
     "esModuleInterop": true,
 
@@ -10,7 +10,7 @@
     "noUnusedParameters": true,
     "preserveConstEnums": true,
 
-    "lib": ["es2017", "esnext.asynciterable"],
+    "lib": ["esnext", "esnext.asynciterable"],
 
     "declaration": true,
     "sourceMap": true,

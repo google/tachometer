@@ -1,12 +1,7 @@
 /**
  * @license
- * Copyright (c) 2019 The Polymer Project Authors. All rights reserved.
- * This code may only be used under the BSD style license found at
- * http://polymer.github.io/LICENSE.txt The complete set of authors may be found
- * at http://polymer.github.io/AUTHORS.txt The complete set of contributors may
- * be found at http://polymer.github.io/CONTRIBUTORS.txt Code distributed by
- * Google as part of the polymer project is also subject to an additional IP
- * rights grant found at http://polymer.github.io/PATENTS.txt
+ * Copyright 2019 Google LLC
+ * SPDX-License-Identifier: BSD-3-Clause
  */
 
 import * as chai from 'chai';
@@ -17,10 +12,10 @@ import * as path from 'path';
 chai.use(chaiAsPromised);
 const {assert} = chai;
 
-import {Config} from '../config';
-import {parseConfigFile} from '../configfile';
-import * as defaults from '../defaults';
-import {testData} from './test_helpers';
+import {Config} from '../config.js';
+import {parseConfigFile} from '../configfile.js';
+import * as defaults from '../defaults.js';
+import {testData} from './test_helpers.js';
 
 const defaultBrowser = {
   name: defaults.browserName,
@@ -31,12 +26,15 @@ const defaultBrowser = {
   },
 };
 
+const configFilePath = path.join(testData, 'mylib', 'tachometer.json');
+const configFileDir = path.dirname(configFilePath);
+
 suite('config', () => {
   suite('parseConfigFile', () => {
     let prevCwd: string;
     suiteSetup(() => {
       prevCwd = process.cwd();
-      process.chdir(path.join(testData, 'mylib'));
+      process.chdir(configFileDir);
     });
 
     suiteTeardown(() => {
@@ -45,10 +43,10 @@ suite('config', () => {
 
     test('fully specified', async () => {
       const config = {
-        root: '.',
+        root: configFileDir,
         sampleSize: 52,
         timeout: 7,
-        horizons: ['0ms', '1ms', '2%', '+3%'],
+        autoSampleConditions: ['0ms', '1ms', '2%', '+3%'],
         resolveBareModules: false,
         collate: true,
         benchmarks: [
@@ -96,10 +94,10 @@ suite('config', () => {
         ],
       };
       const expected: Partial<Config> = {
-        root: '.',
+        root: configFileDir,
         sampleSize: 52,
         timeout: 7,
-        horizons: {
+        autoSampleConditions: {
           absolute: [-1, 0, 1],
           relative: [-0.02, 0.02, 0.03],
         },
@@ -167,7 +165,7 @@ suite('config', () => {
           },
         ],
       };
-      const actual = await parseConfigFile(config);
+      const actual = await parseConfigFile(config, configFilePath);
       assert.deepEqual(actual, expected);
     });
 
@@ -183,10 +181,10 @@ suite('config', () => {
         ],
       };
       const expected: Partial<Config> = {
-        root: '.',
+        root: configFileDir,
         sampleSize: undefined,
         timeout: undefined,
-        horizons: undefined,
+        autoSampleConditions: undefined,
         resolveBareModules: undefined,
         collate: undefined,
         benchmarks: [
@@ -220,7 +218,43 @@ suite('config', () => {
           },
         ],
       };
-      const actual = await parseConfigFile(config);
+      const actual = await parseConfigFile(config, configFilePath);
+      assert.deepEqual(actual, expected);
+    });
+
+    test('paths are relative to config file path', async () => {
+      const config = {
+        root: '..',
+        benchmarks: [
+          {
+            url: 'mybench/index.html',
+          },
+        ],
+      };
+      const expected: Partial<Config> = {
+        root: path.dirname(configFileDir),
+        sampleSize: undefined,
+        timeout: undefined,
+        autoSampleConditions: undefined,
+        resolveBareModules: undefined,
+        benchmarks: [
+          {
+            name: '/mylib/mybench/index.html',
+            url: {
+              kind: 'local',
+              urlPath: '/mylib/mybench/index.html',
+              queryString: '',
+            },
+            measurement: [
+              {
+                mode: 'callback',
+              },
+            ],
+            browser: defaultBrowser,
+          },
+        ],
+      };
+      const actual = await parseConfigFile(config, configFilePath);
       assert.deepEqual(actual, expected);
     });
 
@@ -250,10 +284,10 @@ suite('config', () => {
         ],
       };
       const expected: Partial<Config> = {
-        root: '.',
+        root: configFileDir,
         sampleSize: undefined,
         timeout: undefined,
-        horizons: undefined,
+        autoSampleConditions: undefined,
         resolveBareModules: undefined,
         collate: undefined,
         benchmarks: [
@@ -303,13 +337,13 @@ suite('config', () => {
           },
         ],
       };
-      const actual = await parseConfigFile(config);
+      const actual = await parseConfigFile(config, configFilePath);
       assert.deepEqual(actual, expected);
     });
 
     test('expanded twice deep', async () => {
       const config = {
-        root: '.',
+        root: configFileDir,
         benchmarks: [
           {
             url: 'http://example.com',
@@ -330,10 +364,10 @@ suite('config', () => {
         ],
       };
       const expected: Partial<Config> = {
-        root: '.',
+        root: configFileDir,
         sampleSize: undefined,
         timeout: undefined,
-        horizons: undefined,
+        autoSampleConditions: undefined,
         resolveBareModules: undefined,
         collate: undefined,
         benchmarks: [
@@ -387,7 +421,7 @@ suite('config', () => {
           },
         ],
       };
-      const actual = await parseConfigFile(config);
+      const actual = await parseConfigFile(config, configFilePath);
       assert.deepEqual(actual, expected);
     });
 
@@ -406,10 +440,10 @@ suite('config', () => {
         ],
       };
       const expected: Partial<Config> = {
-        root: '.',
+        root: configFileDir,
         sampleSize: undefined,
         timeout: undefined,
-        horizons: undefined,
+        autoSampleConditions: undefined,
         resolveBareModules: undefined,
         collate: undefined,
         benchmarks: [
@@ -439,7 +473,171 @@ suite('config', () => {
           },
         ],
       };
-      const actual = await parseConfigFile(config);
+      const actual = await parseConfigFile(config, configFilePath);
+      assert.deepEqual(actual, expected);
+    });
+
+    test('trace option - true', async () => {
+      const config = {
+        benchmarks: [
+          {
+            url: 'http://example.com?foo=bar',
+            browser: {name: 'chrome', trace: true},
+          },
+          {
+            url: 'http://example.com?test=1',
+            browser: {name: 'chrome', trace: true},
+          },
+        ],
+      };
+      const expected: Partial<Config> = {
+        root: configFileDir,
+        sampleSize: undefined,
+        timeout: undefined,
+        autoSampleConditions: undefined,
+        resolveBareModules: undefined,
+        benchmarks: [
+          {
+            name: 'http://example.com?foo=bar',
+            url: {
+              kind: 'remote',
+              url: 'http://example.com?foo=bar',
+            },
+            measurement: [
+              {
+                mode: 'performance',
+                entryName: 'first-contentful-paint',
+              },
+            ],
+            browser: {
+              name: 'chrome',
+              headless: false,
+              windowSize: {
+                width: defaults.windowWidth,
+                height: defaults.windowHeight,
+              },
+              trace: {
+                categories: defaults.traceCategories,
+                logDir: path.join(defaults.traceLogDir, 'example.comfoo=bar'),
+              },
+            },
+          },
+          {
+            name: 'http://example.com?test=1',
+            url: {
+              kind: 'remote',
+              url: 'http://example.com?test=1',
+            },
+            measurement: [
+              {
+                mode: 'performance',
+                entryName: 'first-contentful-paint',
+              },
+            ],
+            browser: {
+              name: 'chrome',
+              headless: false,
+              windowSize: {
+                width: defaults.windowWidth,
+                height: defaults.windowHeight,
+              },
+              trace: {
+                categories: defaults.traceCategories,
+                logDir: path.join(defaults.traceLogDir, 'example.comtest=1'),
+              },
+            },
+          },
+        ],
+      };
+      const actual = await parseConfigFile(config, configFilePath);
+      assert.deepEqual(actual, expected);
+    });
+
+    test('trace option - config object', async () => {
+      const config = {
+        benchmarks: [
+          {
+            name: 'benchmark',
+            url: 'mybench/index.html',
+            packageVersions: {label: 'version1', dependencies: {}},
+            browser: {
+              name: 'chrome',
+              trace: {categories: ['test'], logDir: 'test'},
+            },
+          },
+          {
+            name: 'benchmark',
+            url: 'mybench/index.html',
+            packageVersions: {label: 'version2', dependencies: {}},
+            browser: {
+              name: 'chrome',
+              trace: {categories: ['test'], logDir: 'test'},
+            },
+          },
+        ],
+      };
+      const expected: Partial<Config> = {
+        root: configFileDir,
+        sampleSize: undefined,
+        timeout: undefined,
+        autoSampleConditions: undefined,
+        resolveBareModules: undefined,
+        benchmarks: [
+          {
+            name: 'benchmark',
+            url: {
+              kind: 'local',
+              queryString: '',
+              urlPath: '/mybench/index.html',
+              version: {label: 'version1', dependencyOverrides: {}},
+            },
+            measurement: [
+              {
+                mode: 'callback',
+              },
+            ],
+            browser: {
+              name: 'chrome',
+              headless: false,
+              windowSize: {
+                width: defaults.windowWidth,
+                height: defaults.windowHeight,
+              },
+              trace: {
+                categories: ['test'],
+                logDir: path.join(process.cwd(), 'test', 'version1'),
+              },
+            },
+          },
+          {
+            name: 'benchmark',
+            url: {
+              kind: 'local',
+              queryString: '',
+              urlPath: '/mybench/index.html',
+              version: {label: 'version2', dependencyOverrides: {}},
+            },
+            measurement: [
+              {
+                mode: 'callback',
+              },
+            ],
+            browser: {
+              name: 'chrome',
+              headless: false,
+              windowSize: {
+                width: defaults.windowWidth,
+                height: defaults.windowHeight,
+              },
+              trace: {
+                categories: ['test'],
+                logDir: path.join(process.cwd(), 'test', 'version2'),
+              },
+            },
+          },
+        ],
+      };
+      const actual = await parseConfigFile(config, configFilePath);
       assert.deepEqual(actual, expected);
     });
 
@@ -447,7 +645,9 @@ suite('config', () => {
       test('invalid top-level type', async () => {
         const config = 42;
         await assert.isRejected(
-            parseConfigFile(config), 'config is not of a type(s) object');
+          parseConfigFile(config, configFilePath),
+          'config is not of a type(s) object'
+        );
       });
 
       test('invalid benchmarks array type', async () => {
@@ -455,8 +655,9 @@ suite('config', () => {
           benchmarks: 42,
         };
         await assert.isRejected(
-            parseConfigFile(config),
-            'config.benchmarks is not of a type(s) array');
+          parseConfigFile(config, configFilePath),
+          'config.benchmarks is not of a type(s) array'
+        );
       });
 
       test('invalid benchmark type', async () => {
@@ -464,8 +665,9 @@ suite('config', () => {
           benchmarks: [42],
         };
         await assert.isRejected(
-            parseConfigFile(config),
-            'config.benchmarks[0] is not of a type(s) object');
+          parseConfigFile(config, configFilePath),
+          'config.benchmarks[0] is not of a type(s) object'
+        );
       });
 
       test('empty benchmarks array', async () => {
@@ -473,8 +675,9 @@ suite('config', () => {
           benchmarks: [],
         };
         await assert.isRejected(
-            parseConfigFile(config),
-            'config.benchmarks does not meet minimum length of 1');
+          parseConfigFile(config, configFilePath),
+          'config.benchmarks does not meet minimum length of 1'
+        );
       });
 
       test('invalid expand type', async () => {
@@ -482,8 +685,9 @@ suite('config', () => {
           benchmarks: [{expand: 42}],
         };
         await assert.isRejected(
-            parseConfigFile(config),
-            'config.benchmarks[0].expand is not of a type(s) array');
+          parseConfigFile(config, configFilePath),
+          'config.benchmarks[0].expand is not of a type(s) array'
+        );
       });
 
       test('unknown top-level property', async () => {
@@ -496,7 +700,9 @@ suite('config', () => {
           ],
         };
         await assert.isRejected(
-            parseConfigFile(config), 'config additionalProperty "nonsense"');
+          parseConfigFile(config, configFilePath),
+          'config is not allowed to have the additional property "nonsense"'
+        );
       });
 
       test('unknown benchmark property', async () => {
@@ -509,8 +715,9 @@ suite('config', () => {
           ],
         };
         await assert.isRejected(
-            parseConfigFile(config),
-            'config.benchmarks[0] additionalProperty "nonsense"');
+          parseConfigFile(config, configFilePath),
+          'config.benchmarks[0] is not allowed to have the additional property "nonsense"'
+        );
       });
 
       test('missing url', async () => {
@@ -525,7 +732,10 @@ suite('config', () => {
             },
           ],
         };
-        await assert.isRejected(parseConfigFile(config), /no url specified/i);
+        await assert.isRejected(
+          parseConfigFile(config, configFilePath),
+          /no url specified/i
+        );
       });
 
       test('unsupported browser', async () => {
@@ -538,7 +748,9 @@ suite('config', () => {
           ],
         };
         await assert.isRejected(
-            parseConfigFile(config), 'Browser potato is not supported');
+          parseConfigFile(config, configFilePath),
+          'Browser potato is not supported'
+        );
       });
 
       test('invalid measurement', async () => {
@@ -551,8 +763,9 @@ suite('config', () => {
           ],
         };
         await assert.isRejected(
-            parseConfigFile(config),
-            'config.benchmarks[0].measurement is not one of: callback, fcp');
+          parseConfigFile(config, configFilePath),
+          'config.benchmarks[0].measurement is not any of: callback, fcp'
+        );
       });
 
       test('sampleSize too small', async () => {
@@ -565,8 +778,9 @@ suite('config', () => {
           ],
         };
         await assert.isRejected(
-            parseConfigFile(config),
-            'config.sampleSize must have a minimum value of 2');
+          parseConfigFile(config, configFilePath),
+          'config.sampleSize must be greater than or equal to 2'
+        );
       });
 
       test('non-integer sampleSize', async () => {
@@ -579,8 +793,9 @@ suite('config', () => {
           ],
         };
         await assert.isRejected(
-            parseConfigFile(config),
-            'config.sampleSize is not of a type(s) integer');
+          parseConfigFile(config, configFilePath),
+          'config.sampleSize is not of a type(s) integer'
+        );
       });
 
       test('missing package version label', async () => {
@@ -597,8 +812,25 @@ suite('config', () => {
           ],
         };
         await assert.isRejected(
-            parseConfigFile(config),
-            'config.benchmarks[0].packageVersions requires property "label"');
+          parseConfigFile(config, configFilePath),
+          'config.benchmarks[0].packageVersions requires property "label"'
+        );
+      });
+
+      test('Error to use both horizons and autoSampleConditions', async () => {
+        const config = {
+          autoSampleConditions: ['0'],
+          horizons: ['0'],
+          benchmarks: [
+            {
+              url: 'https://example.com/',
+            },
+          ],
+        };
+        await assert.isRejected(
+          parseConfigFile(config, configFilePath),
+          'Please use only "autoSampleConditions" and not "horizons".'
+        );
       });
     });
   });

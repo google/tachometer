@@ -1,24 +1,19 @@
 /**
  * @license
- * Copyright (c) 2019 The Polymer Project Authors. All rights reserved.
- * This code may only be used under the BSD style license found at
- * http://polymer.github.io/LICENSE.txt The complete set of authors may be found
- * at http://polymer.github.io/AUTHORS.txt The complete set of contributors may
- * be found at http://polymer.github.io/CONTRIBUTORS.txt Code distributed by
- * Google as part of the polymer project is also subject to an additional IP
- * rights grant found at http://polymer.github.io/PATENTS.txt
+ * Copyright 2019 Google LLC
+ * SPDX-License-Identifier: BSD-3-Clause
  */
 
 import * as webdriver from 'selenium-webdriver';
-import * as chrome from 'selenium-webdriver/chrome';
-import * as edge from 'selenium-webdriver/edge';
-import * as firefox from 'selenium-webdriver/firefox';
+import * as chrome from 'selenium-webdriver/chrome.js';
+import * as edge from 'selenium-webdriver/edge.js';
+import * as firefox from 'selenium-webdriver/firefox.js';
 
-import {installOnDemand} from './install';
-import {isHttpUrl} from './util';
+import {installOnDemand} from './install.js';
+import {isHttpUrl} from './util.js';
 
 /** Tachometer browser names. Often but not always equal to WebDriver's. */
-export type BrowserName = 'chrome'|'firefox'|'safari'|'edge'|'ie';
+export type BrowserName = 'chrome' | 'firefox' | 'safari' | 'edge' | 'ie';
 
 /** Browsers we can drive. */
 export const supportedBrowsers = new Set<BrowserName>([
@@ -29,7 +24,7 @@ export const supportedBrowsers = new Set<BrowserName>([
   'ie',
 ]);
 
-type WebdriverModuleName = 'chromedriver'|'geckodriver'|'iedriver';
+type WebdriverModuleName = 'chromedriver' | 'geckodriver' | 'iedriver';
 
 // Note that the edgedriver package doesn't work on recent versions of
 // Windows 10, so users must manually install following Microsoft's
@@ -70,7 +65,26 @@ export interface BrowserConfig {
   /** CPU Throttling rate. (1 is no throttle, 2 is 2x slowdown, etc). */
   cpuThrottlingRate?: number;
   /** Advanced preferences usually set from the about:config page. */
-  preferences?: {[name: string]: string|number|boolean};
+  preferences?: {[name: string]: string | number | boolean};
+  /** Trace browser performance logs configuration */
+  trace?: TraceConfig;
+  /** Path to profile directory to use instead of the default fresh one. */
+  profile?: string;
+}
+
+/**
+ * Configuration to turn on performance tracing
+ */
+export interface TraceConfig {
+  /**
+   * The tracing categories the browser should log
+   */
+  categories: string[];
+
+  /**
+   * The directory to log performance traces to
+   */
+  logDir: string;
 }
 
 export interface WindowSize {
@@ -93,11 +107,14 @@ export function browserSignature(config: BrowserConfig): string {
     config.removeArguments ?? [],
     config.cpuThrottlingRate ?? 1,
     config.preferences ?? {},
+    config.profile ?? '',
   ]);
 }
 
-type BrowserConfigWithoutWindowSize =
-    Pick<BrowserConfig, Exclude<keyof BrowserConfig, 'windowSize'>>;
+type BrowserConfigWithoutWindowSize = Pick<
+  BrowserConfig,
+  Exclude<keyof BrowserConfig, 'windowSize'>
+>;
 
 /**
  * Parse and validate a browser string specification. Examples:
@@ -106,8 +123,9 @@ type BrowserConfigWithoutWindowSize =
  *   chrome-headless
  *   chrome@<remote-selenium-server>
  */
-export function parseBrowserConfigString(str: string):
-    BrowserConfigWithoutWindowSize {
+export function parseBrowserConfigString(
+  str: string
+): BrowserConfigWithoutWindowSize {
   let remoteUrl;
   const at = str.indexOf('@');
   if (at !== -1) {
@@ -137,8 +155,9 @@ export function validateBrowserConfig({
 }: BrowserConfig) {
   if (!supportedBrowsers.has(name)) {
     throw new Error(
-        `Browser ${name} is not supported, ` +
-        `only ${[...supportedBrowsers].join(', ')} are currently supported.`);
+      `Browser ${name} is not supported, ` +
+        `only ${[...supportedBrowsers].join(', ')} are currently supported.`
+    );
   }
   if (headless === true && !headlessBrowsers.has(name)) {
     throw new Error(`Browser ${name} does not support headless mode.`);
@@ -154,14 +173,15 @@ export function validateBrowserConfig({
 /**
  * Configure a WebDriver suitable for benchmarking the given browser.
  */
-export async function makeDriver(config: BrowserConfig):
-    Promise<webdriver.WebDriver> {
+export async function makeDriver(
+  config: BrowserConfig
+): Promise<webdriver.WebDriver> {
   const browserName: BrowserName = config.name;
   const webdriverModuleName = browserWebdriverModules.get(browserName);
 
   if (webdriverModuleName != null) {
     await installOnDemand(webdriverModuleName);
-    require(webdriverModuleName);
+    await import(webdriverModuleName);
   }
 
   const builder = new webdriver.Builder();
@@ -176,18 +196,23 @@ export async function makeDriver(config: BrowserConfig):
     // find an Edge service and throws "Cannot read property 'start' of null"
     // so we need to start the service ourselves.
     // See https://stackoverflow.com/questions/48577924.
-    // tslint:disable-next-line:no-any TODO setEdgeService function is missing.
-    (builder as any).setEdgeService(new edge.ServiceBuilder());
+    builder.setEdgeService(new edge.ServiceBuilder());
   }
   const driver = await builder.build();
-  if (config.name === 'safari' || config.name === 'edge' ||
-      config.name === 'ie') {
+  if (
+    config.name === 'safari' ||
+    config.name === 'edge' ||
+    config.name === 'ie'
+  ) {
     // Safari, Edge, and IE don't have flags we can use to launch with a given
-    // window size, but webdriver can resize the window after we've started up.
-    // Some versions of Safari have a bug where it is required to also provide
-    // an x/y position (see https://github.com/SeleniumHQ/selenium/issues/3796).
-    const rect = config.name === 'safari' ? {...config.windowSize, x: 0, y: 0} :
-                                            config.windowSize;
+    // window size, but webdriver can resize the window after we've started
+    // up. Some versions of Safari have a bug where it is required to also
+    // provide an x/y position (see
+    // https://github.com/SeleniumHQ/selenium/issues/3796).
+    const rect =
+      config.name === 'safari'
+        ? {...config.windowSize, x: 0, y: 0}
+        : config.windowSize;
     await driver.manage().window().setRect(rect);
   }
   return driver;
@@ -207,8 +232,23 @@ function chromeOpts(config: BrowserConfig): chrome.Options {
   if (config.removeArguments) {
     opts.excludeSwitches(...config.removeArguments);
   }
+  if (config.trace) {
+    const loggingPrefs = new webdriver.logging.Preferences();
+    loggingPrefs.setLevel('browser', webdriver.logging.Level.ALL);
+    loggingPrefs.setLevel('performance', webdriver.logging.Level.ALL);
+    opts.setLoggingPrefs(loggingPrefs);
+
+    opts.setPerfLoggingPrefs({
+      enableNetwork: true,
+      enablePage: true,
+      traceCategories: config.trace.categories.join(','),
+    });
+  }
   const {width, height} = config.windowSize;
   opts.addArguments(`--window-size=${width},${height}`);
+  if (config.profile) {
+    opts.addArguments(`user-data-dir=${config.profile}`);
+  }
   return opts;
 }
 
@@ -223,14 +263,21 @@ function firefoxOpts(config: BrowserConfig): firefox.Options {
     opts.setBinary(config.binary);
   }
   if (config.headless === true) {
-    // tslint:disable-next-line:no-any TODO Incorrect types.
-    (opts as any).addArguments('-headless');
+    opts.addArguments('-headless');
   }
   const {width, height} = config.windowSize;
-  // tslint:disable-next-line:no-any TODO Incorrect types.
-  (opts as any).addArguments(`-width=${width}`);
-  // tslint:disable-next-line:no-any TODO Incorrect types.
-  (opts as any).addArguments(`-height=${height}`);
+  opts.addArguments(`-width=${width}`);
+  opts.addArguments(`-height=${height}`);
+  if (config.addArguments) {
+    opts.addArguments(...config.addArguments);
+  }
+  if (config.profile) {
+    // Note there is also a `-profile` flag for Firefox that could be set with
+    // `addArguments`, but using that causes Selenium to timeout trying to
+    // connect to the browser process. This `setProfile` method creates a
+    // temporary copy of the profile.
+    opts.setProfile(config.profile);
+  }
   return opts;
 }
 
@@ -240,7 +287,9 @@ function firefoxOpts(config: BrowserConfig): firefox.Options {
  * switch back to after running a benchmark).
  */
 export async function openAndSwitchToNewTab(
-    driver: webdriver.WebDriver, config: BrowserConfig): Promise<void> {
+  driver: webdriver.WebDriver,
+  config: BrowserConfig
+): Promise<void> {
   // Chrome and Firefox add new tabs to the end of the handle list, but Safari
   // adds them to the beginning. Just look for the new one instead of making
   // any assumptions about this order.
@@ -280,20 +329,25 @@ export async function openAndSwitchToNewTab(
   if (config.name === 'ie' || config.name === 'safari') {
     // For IE and Safari (with rel=noopener) we get a new window instead of a
     // new tab, so we need to resize every time.
-    const rect = config.name === 'safari' ? {...config.windowSize, x: 0, y: 0} :
-                                            config.windowSize;
+    const rect =
+      config.name === 'safari'
+        ? {...config.windowSize, x: 0, y: 0}
+        : config.windowSize;
     await driver.manage().window().setRect(rect);
   }
   type WithSendDevToolsCommand = {
-    sendDevToolsCommand?: (command: string, config: {}) => Promise<void>;
+    sendDevToolsCommand?: (command: string, config: unknown) => Promise<void>;
   };
 
-  const driverWithSendDevToolsCommand =
-      (driver as {}) as WithSendDevToolsCommand;
-  if (driverWithSendDevToolsCommand.sendDevToolsCommand &&
-      config.cpuThrottlingRate !== undefined) {
+  const driverWithSendDevToolsCommand = driver as WithSendDevToolsCommand;
+  if (
+    driverWithSendDevToolsCommand.sendDevToolsCommand &&
+    config.cpuThrottlingRate !== undefined
+  ) {
     // Enables CPU throttling to emulate slow CPUs.
     await driverWithSendDevToolsCommand.sendDevToolsCommand(
-        'Emulation.setCPUThrottlingRate', {rate: config.cpuThrottlingRate});
+      'Emulation.setCPUThrottlingRate',
+      {rate: config.cpuThrottlingRate}
+    );
   }
 }

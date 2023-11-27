@@ -1,12 +1,7 @@
 /**
  * @license
- * Copyright (c) 2019 The Polymer Project Authors. All rights reserved.
- * This code may only be used under the BSD style license found at
- * http://polymer.github.io/LICENSE.txt The complete set of authors may be found
- * at http://polymer.github.io/AUTHORS.txt The complete set of contributors may
- * be found at http://polymer.github.io/CONTRIBUTORS.txt Code distributed by
- * Google as part of the polymer project is also subject to an additional IP
- * rights grant found at http://polymer.github.io/PATENTS.txt
+ * Copyright 2019 Google LLC
+ * SPDX-License-Identifier: BSD-3-Clause
  */
 
 import * as http from 'http';
@@ -14,16 +9,19 @@ import * as net from 'net';
 import * as path from 'path';
 import {Stream} from 'stream';
 
-import Koa = require('koa');
-import mount = require('koa-mount');
-import send = require('koa-send');
-import getStream = require('get-stream');
-import serve = require('koa-static');
-import bodyParser = require('koa-bodyparser');
+import Koa from 'koa';
+import mount from 'koa-mount';
+import send from 'koa-send';
+import getStream from 'get-stream';
+import serve from 'koa-static';
+import bodyParser from 'koa-bodyparser';
 import {nodeResolve} from 'koa-node-resolve';
 
-import {BenchmarkResponse, Deferred} from './types';
-import {NpmInstall} from './versions';
+import {BenchmarkResponse, Deferred} from './types.js';
+import {NpmInstall} from './versions.js';
+
+import * as url from 'url';
+const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
 export interface ServerOpts {
   host: string;
@@ -53,11 +51,14 @@ export class Server {
   private readonly server: net.Server;
   private session: Session = {bytesSent: 0, userAgent: ''};
   private deferredResults = new Deferred<BenchmarkResponse>();
-  private readonly urlCache = new Map<string, {
-    status: number,
-    headers: {[key: string]: string},
-    body: string|null|undefined,
-  }>();
+  private readonly urlCache = new Map<
+    string,
+    {
+      status: number;
+      headers: {[key: string]: string};
+      body: string | null | undefined;
+    }
+  >();
 
   static start(opts: ServerOpts): Promise<Server> {
     const server = http.createServer();
@@ -99,24 +100,27 @@ export class Server {
     app.use(this.serveBenchLib.bind(this));
 
     if (opts.resolveBareModules === true) {
-      const npmRoot = opts.npmInstalls.length > 0 ?
-          opts.npmInstalls[0].installDir :
-          opts.root;
+      const npmRoot =
+        opts.npmInstalls.length > 0
+          ? opts.npmInstalls[0].installDir
+          : opts.root;
 
-      app.use(nodeResolve({
-        root: npmRoot,
-        // TODO Use default logging options after issues resolved:
-        // https://github.com/Polymer/koa-node-resolve/issues/16
-        // https://github.com/Polymer/koa-node-resolve/issues/17
-        logger: false,
-      }));
+      app.use(
+        nodeResolve({
+          root: npmRoot,
+          // TODO Use default logging options after issues resolved:
+          // https://github.com/Polymer/koa-node-resolve/issues/16
+          // https://github.com/Polymer/koa-node-resolve/issues/17
+          logger: false,
+        })
+      );
     }
     for (const {diskPath, urlPath} of opts.mountPoints) {
       app.use(mount(urlPath, serve(diskPath, {index: 'index.html'})));
     }
 
     this.server.on('request', app.callback());
-    const address = (this.server.address() as net.AddressInfo);
+    const address = this.server.address() as net.AddressInfo;
     let host = address.address;
     if (address.family === 'IPv6') {
       host = `[${host}]`;
@@ -141,7 +145,7 @@ export class Server {
   }
 
   async close() {
-    return new Promise((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
       this.server.close((error: unknown) => {
         if (error) {
           reject(error);
@@ -152,14 +156,16 @@ export class Server {
     });
   }
 
-  private async instrumentRequests(ctx: Koa.Context, next: () => Promise<void>):
-      Promise<void> {
+  private async instrumentRequests(
+    ctx: Koa.Context,
+    next: () => Promise<void>
+  ): Promise<void> {
     const session = this.session;
     if (session === undefined) {
       return next();
     }
 
-    session.userAgent = ctx.headers['user-agent'];
+    session.userAgent = ctx.headers['user-agent'] ?? '';
     // Note this assumes serial runs, as we guarantee in automatic mode.
     // If we ever wanted to support parallel requests, we would require
     // some kind of session tracking.
@@ -168,8 +174,9 @@ export class Server {
       session.bytesSent += ctx.response.length;
     } else if (ctx.status === 200) {
       console.log(
-          `No response length for 200 response for ${ctx.url}, ` +
-          `byte count may be inaccurate.`);
+        `No response length for 200 response for ${ctx.url}, ` +
+          `byte count may be inaccurate.`
+      );
     }
   }
 
@@ -192,8 +199,12 @@ export class Server {
     }
 
     await next();
-    const body =
-        ctx.response.body as string | Buffer | Stream | null | undefined;
+    const body = ctx.response.body as
+      | string
+      | Buffer
+      | Stream
+      | null
+      | undefined;
     let bodyString;
     if (typeof body === 'string') {
       bodyString = body;
@@ -214,7 +225,7 @@ export class Server {
     this.urlCache.set(ctx.url, {
       body: bodyString,
       status: ctx.response.status,
-      headers: ctx.response.headers,
+      headers: ctx.response.headers as {[key: string]: string},
     });
   }
 
@@ -233,6 +244,9 @@ export class Server {
 }
 
 function isStream(value: unknown): value is Stream {
-  return value !== null && typeof value === 'object' &&
-      typeof (value as {pipe: Function | undefined}).pipe === 'function';
+  return (
+    value !== null &&
+    typeof value === 'object' &&
+    typeof (value as {pipe: (() => unknown) | undefined}).pipe === 'function'
+  );
 }

@@ -1,10 +1,11 @@
 test/
 src/test/
 lib/test/
-.clang-format
-.travis.yml
+.prettierignore
+.prettierrc.json
 tsconfig-base.json
 tsconfig.json
-tslint.json
+.eslintignore
+.eslintrc.json
 *.tgz
 *.code-workspace

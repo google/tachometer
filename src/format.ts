@@ -1,26 +1,26 @@
 /**
  * @license
- * Copyright (c) 2019 The Polymer Project Authors. All rights reserved.
- * This code may only be used under the BSD style license found at
- * http://polymer.github.io/LICENSE.txt The complete set of authors may be found
- * at http://polymer.github.io/AUTHORS.txt The complete set of contributors may
- * be found at http://polymer.github.io/CONTRIBUTORS.txt Code distributed by
- * Google as part of the polymer project is also subject to an additional IP
- * rights grant found at http://polymer.github.io/PATENTS.txt
+ * Copyright 2019 Google LLC
+ * SPDX-License-Identifier: BSD-3-Clause
  */
 
-import stripAnsi = require('strip-ansi');
+import stripAnsi from 'strip-ansi';
 import * as table from 'table';
 import {UAParser} from 'ua-parser-js';
+import ansi from 'ansi-escape-sequences';
 
-import ansi = require('ansi-escape-sequences');
-
-import {Difference, ConfidenceInterval, ResultStats, ResultStatsWithDifferences} from './stats';
-import {BenchmarkSpec, BenchmarkResult} from './types';
+import {
+  Difference,
+  ConfidenceInterval,
+  ResultStats,
+  ResultStatsWithDifferences,
+} from './stats.js';
+import {BenchmarkSpec, BenchmarkResult} from './types.js';
 import {measurementName} from './measure';
 
 export const spinner = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'].map(
-    (frame) => ansi.format(`[blue]{${frame}}`));
+  (frame) => ansi.format(`[blue]{${frame}}`)
+);
 
 /**
  * An abstraction for the various dimensions of data we display.
@@ -28,7 +28,7 @@ export const spinner = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', 
 interface Dimension {
   label: string;
   format: (r: ResultStats) => string;
-  tableConfig?: table.TableColumns;
+  tableConfig?: table.ColumnUserConfig;
 }
 
 export interface ResultTable {
@@ -74,9 +74,7 @@ export function automaticResultTable(results: ResultStats[]): AutomaticResults {
 
   // These are the primary observed results, so they always go in the main
   // result table, even if they happen to be the same in one run.
-  unfixed.push(
-      runtimeConfidenceIntervalDimension,
-  );
+  unfixed.push(runtimeConfidenceIntervalDimension);
   if (results.length > 1) {
     // Create an NxN matrix comparing every result to every other result.
     const labelFn = makeUniqueLabelFn(results.map((result) => result.result));
@@ -86,7 +84,7 @@ export function automaticResultTable(results: ResultStats[]): AutomaticResults {
         tableConfig: {
           alignment: 'right',
         },
-        format: (r: ResultStats&Partial<ResultStatsWithDifferences>) => {
+        format: (r: ResultStats & Partial<ResultStatsWithDifferences>) => {
           if (r.differences === undefined) {
             return '';
           }
@@ -133,8 +131,10 @@ export function collatedResultTables(results: ResultStatsWithDifferences[]) {
  * | Value  | Value  |
  * +--------+--------+
  */
-export function verticalTermResultTable({dimensions, results}: ResultTable):
-    string {
+export function verticalTermResultTable({
+  dimensions,
+  results,
+}: ResultTable): string {
   const columns = dimensions.map((d) => d.tableConfig || {});
   const rows = [
     dimensions.map((d) => ansi.format(`[bold]{${d.label}}`)),
@@ -142,7 +142,9 @@ export function verticalTermResultTable({dimensions, results}: ResultTable):
   ];
   return table.table(rows, {
     border: table.getBorderCharacters('norc'),
-    columns,
+    // The table library only accepts an object with numeric keys, not an array.
+    // https://github.com/gajus/table/issues/134
+    columns: Object.fromEntries(Object.entries(columns)),
   });
 }
 
@@ -155,11 +157,13 @@ export function verticalTermResultTable({dimensions, results}: ResultTable):
  * | Header | Value | Value |
  * +--------+-------+-------+
  */
-export function horizontalTermResultTable({dimensions, results}: ResultTable):
-    string {
-  const columns: table.TableColumns[] = [
+export function horizontalTermResultTable({
+  dimensions,
+  results,
+}: ResultTable): string {
+  const columns: table.ColumnUserConfig[] = [
     {alignment: 'right'},
-    ...results.map((): table.TableColumns => ({alignment: 'left'})),
+    ...results.map((): table.ColumnUserConfig => ({alignment: 'left'})),
   ];
   const rows = dimensions.map((d) => {
     return [
@@ -169,7 +173,9 @@ export function horizontalTermResultTable({dimensions, results}: ResultTable):
   });
   return table.table(rows, {
     border: table.getBorderCharacters('norc'),
-    columns,
+    // The table library only accepts an object with numeric keys, not an array.
+    // https://github.com/gajus/table/issues/134
+    columns: Object.fromEntries(Object.entries(columns)),
   });
 }
 
@@ -182,13 +188,16 @@ export function horizontalTermResultTable({dimensions, results}: ResultTable):
  *   <tr> <td>Value</td> <td>Value</td> </tr>
  * </table>
  */
-export function verticalHtmlResultTable({dimensions, results}: ResultTable):
-    string {
+export function verticalHtmlResultTable({
+  dimensions,
+  results,
+}: ResultTable): string {
   const headers = dimensions.map((d) => `<th>${d.label}</th>`);
   const rows = [];
   for (const r of results) {
-    const cells =
-        dimensions.map((d) => `<td>${ansiCellToHtml(d.format(r))}</td>`);
+    const cells = dimensions.map(
+      (d) => `<td>${ansiCellToHtml(d.format(r))}</td>`
+    );
     rows.push(`<tr>${cells.join('')}</tr>`);
   }
   return `<table>
@@ -205,8 +214,10 @@ export function verticalHtmlResultTable({dimensions, results}: ResultTable):
  *   <tr> <th>Header</th> <td>Value</td> <td>Value</td> </tr>
  * </table>
  */
-export function horizontalHtmlResultTable({dimensions, results}: ResultTable):
-    string {
+export function horizontalHtmlResultTable({
+  dimensions,
+  results,
+}: ResultTable): string {
   const rows: string[] = [];
   for (const d of dimensions) {
     const cells = [
@@ -228,10 +239,12 @@ function ansiCellToHtml(ansi: string): string {
 /**
  * Format a confidence interval as "[low, high]".
  */
-const formatConfidenceInterval =
-    (ci: ConfidenceInterval, format: (n: number) => string) => {
-      return ansi.format(`${format(ci.low)} [gray]{-} ${format(ci.high)}`);
-    };
+const formatConfidenceInterval = (
+  ci: ConfidenceInterval,
+  format: (n: number) => string
+) => {
+  return ansi.format(`${format(ci.low)} [gray]{-} ${format(ci.high)}`);
+};
 
 /**
  * Prefix positive numbers with a red "+" and negative ones with a green "-".
@@ -302,12 +315,10 @@ function formatDifference({absolute, relative}: Difference): string {
     word = `[bold red]{slower}`;
     rel = formatConfidenceInterval(relative, percent);
     abs = formatConfidenceInterval(absolute, milli);
-
   } else if (absolute.high < 0 && relative.high < 0) {
     word = `[bold green]{faster}`;
     rel = formatConfidenceInterval(negate(relative), percent);
     abs = formatConfidenceInterval(negate(absolute), milli);
-
   } else {
     word = `[bold blue]{unsure}`;
     rel = formatConfidenceInterval(relative, (n) => colorizeSign(n, percent));
@@ -336,8 +347,9 @@ function negate(ci: ConfidenceInterval): ConfidenceInterval {
  * Create a function that will return the shortest unambiguous label for a
  * result, given the full array of results.
  */
-function makeUniqueLabelFn(results: BenchmarkResult[]):
-    (result: BenchmarkResult) => string {
+function makeUniqueLabelFn(
+  results: BenchmarkResult[]
+): (result: BenchmarkResult) => string {
   const names = new Set<string>();
   const versions = new Set<string>();
   const browsers = new Set<string>();
@@ -358,6 +370,49 @@ function makeUniqueLabelFn(results: BenchmarkResult[]):
       fields.push(result.browser.name);
     }
     return fields.join('\n');
+  };
+}
+
+/**
+ * Create a function that will return the shortest unambiguous label for a
+ * benchmark spec, given the full array of specs
+ */
+export function makeUniqueSpecLabelFn(
+  specs: BenchmarkSpec[]
+): (spec: BenchmarkSpec) => string {
+  const names = new Set<string>();
+  const versions = new Set<string>();
+  const browsers = new Set<string>();
+  for (const spec of specs) {
+    names.add(spec.name);
+    browsers.add(spec.browser.name);
+
+    if (spec.url.kind === 'local' && spec.url.version !== undefined) {
+      versions.add(spec.url.version.label);
+    }
+  }
+  return (spec: BenchmarkSpec) => {
+    const fields: string[] = [];
+    if (names.size > 1) {
+      if (spec.name.startsWith('http://')) {
+        fields.push(spec.name.slice(6));
+      } else if (spec.name.startsWith('https://')) {
+        fields.push(spec.name.slice(7));
+      } else {
+        fields.push(spec.name);
+      }
+    }
+    if (
+      versions.size > 1 &&
+      spec.url.kind === 'local' &&
+      spec.url.version !== undefined
+    ) {
+      fields.push(spec.url.version.label);
+    }
+    if (browsers.size > 1) {
+      fields.push(spec.browser.name);
+    }
+    return fields.join('-');
   };
 }
 

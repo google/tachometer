@@ -1,26 +1,21 @@
 /**
  * @license
- * Copyright (c) 2019 The Polymer Project Authors. All rights reserved.
- * This code may only be used under the BSD style license found at
- * http://polymer.github.io/LICENSE.txt The complete set of authors may be found
- * at http://polymer.github.io/AUTHORS.txt The complete set of contributors may
- * be found at http://polymer.github.io/CONTRIBUTORS.txt Code distributed by
- * Google as part of the polymer project is also subject to an additional IP
- * rights grant found at http://polymer.github.io/PATENTS.txt
+ * Copyright 2019 Google LLC
+ * SPDX-License-Identifier: BSD-3-Clause
  */
 
-import * as fsExtra from 'fs-extra';
+import fsExtra from 'fs-extra';
 import * as path from 'path';
 
-import {fcpBrowsers} from './browser';
-import {parseConfigFile, writeBackSchemaIfNeeded} from './configfile';
-import * as defaults from './defaults';
-import {Opts} from './flags';
-import {CheckConfig, parseGithubCheckFlag} from './github';
-import {specsFromOpts} from './specs';
-import {Horizons} from './stats';
-import {BenchmarkSpec} from './types';
-import {fileKind} from './util';
+import {fcpBrowsers} from './browser.js';
+import {parseConfigFile, writeBackSchemaIfNeeded} from './configfile.js';
+import * as defaults from './defaults.js';
+import {Opts} from './flags.js';
+import {CheckConfig, parseGithubCheckFlag} from './github.js';
+import {specsFromOpts} from './specs.js';
+import {AutoSampleConditions} from './stats.js';
+import {BenchmarkSpec} from './types.js';
+import {fileKind} from './util.js';
 
 /**
  * Validated and fully specified configuration.
@@ -30,8 +25,8 @@ export interface Config {
   sampleSize: number;
   timeout: number;
   benchmarks: BenchmarkSpec[];
-  horizons: Horizons;
-  mode: 'automatic'|'manual';
+  autoSampleConditions: AutoSampleConditions;
+  mode: 'automatic' | 'manual';
   jsonFile: string;
   // TODO(aomarks) Remove this in next major version.
   legacyJsonFile: string;
@@ -48,15 +43,16 @@ export async function makeConfig(opts: Opts): Promise<Config> {
   // These options are only controlled by flags.
   const baseConfig: Partial<Config> = {
     mode: (opts.manual === true ? 'manual' : 'automatic') as
-        ('manual' | 'automatic'),
+      | 'manual'
+      | 'automatic',
     jsonFile: opts['json-file'],
     legacyJsonFile: opts['save'],
     csvFileStats: opts['csv-file'],
     csvFileRaw: opts['csv-file-raw'],
     forceCleanNpmInstall: opts['force-clean-npm-install'],
-    githubCheck: opts['github-check'] ?
-        parseGithubCheckFlag(opts['github-check']) :
-        undefined,
+    githubCheck: opts['github-check']
+      ? parseGithubCheckFlag(opts['github-check'])
+      : undefined,
     remoteAccessibleHost: opts['remote-accessible-host'],
   };
 
@@ -74,15 +70,18 @@ export async function makeConfig(opts: Opts): Promise<Config> {
     if (opts.timeout !== undefined) {
       throw new Error('--timeout cannot be specified when using --config');
     }
-    if (opts.horizon !== undefined) {
-      throw new Error('--horizon cannot be specified when using --config');
+    if (opts['auto-sample-conditions'] !== undefined) {
+      throw new Error(
+        '--auto-sample-conditions cannot be specified when using --config'
+      );
     }
     if (opts.measure !== undefined) {
       throw new Error('--measure cannot be specified when using --config');
     }
     if (opts['resolve-bare-modules'] !== undefined) {
       throw new Error(
-          '--resolve-bare-modules cannot be specified when using --config');
+        '--resolve-bare-modules cannot be specified when using --config'
+      );
     }
     if (opts['window-size'] !== undefined) {
       throw new Error('--window-size cannot be specified when using --config');
@@ -91,7 +90,7 @@ export async function makeConfig(opts: Opts): Promise<Config> {
       throw new Error('--collate cannot be specified when using --config');
     }
     const rawConfigObj = await fsExtra.readJson(opts.config);
-    const validatedConfigObj = await parseConfigFile(rawConfigObj);
+    const validatedConfigObj = await parseConfigFile(rawConfigObj, opts.config);
 
     await writeBackSchemaIfNeeded(rawConfigObj, opts.config);
 
@@ -99,16 +98,16 @@ export async function makeConfig(opts: Opts): Promise<Config> {
       ...baseConfig,
       ...validatedConfigObj,
     });
-
   } else {
     config = applyDefaults({
       ...baseConfig,
       root: opts.root,
       sampleSize: opts['sample-size'],
       timeout: opts.timeout,
-      horizons: opts.horizon !== undefined ?
-          parseHorizons(opts.horizon.split(',')) :
-          undefined,
+      autoSampleConditions:
+        opts['auto-sample-conditions'] !== undefined
+          ? parseAutoSampleConditions(opts['auto-sample-conditions'].split(','))
+          : undefined,
       benchmarks: await specsFromOpts(opts),
       resolveBareModules: opts['resolve-bare-modules'],
     });
@@ -128,12 +127,15 @@ export async function makeConfig(opts: Opts): Promise<Config> {
 
   for (const spec of config.benchmarks) {
     for (const measurement of spec.measurement) {
-      if (measurement.mode === 'performance' &&
-          measurement.entryName === 'first-contentful-paint' &&
-          !fcpBrowsers.has(spec.browser.name)) {
+      if (
+        measurement.mode === 'performance' &&
+        measurement.entryName === 'first-contentful-paint' &&
+        !fcpBrowsers.has(spec.browser.name)
+      ) {
         throw new Error(
-            `Browser ${spec.browser.name} does not support the ` +
-            `first contentful paint (FCP) measurement`);
+          `Browser ${spec.browser.name} does not support the ` +
+            `first contentful paint (FCP) measurement`
+        );
       }
     }
   }
@@ -144,28 +146,34 @@ export async function makeConfig(opts: Opts): Promise<Config> {
 export function applyDefaults(partial: Partial<Config>): Config {
   return {
     benchmarks: partial.benchmarks !== undefined ? partial.benchmarks : [],
-    csvFileStats: partial.csvFileStats !== undefined ? partial.csvFileStats :
-                                                       '',
+    csvFileStats:
+      partial.csvFileStats !== undefined ? partial.csvFileStats : '',
     csvFileRaw: partial.csvFileRaw !== undefined ? partial.csvFileRaw : '',
-    forceCleanNpmInstall: partial.forceCleanNpmInstall !== undefined ?
-        partial.forceCleanNpmInstall :
-        defaults.forceCleanNpmInstall,
+    forceCleanNpmInstall:
+      partial.forceCleanNpmInstall !== undefined
+        ? partial.forceCleanNpmInstall
+        : defaults.forceCleanNpmInstall,
     githubCheck: partial.githubCheck,
-    horizons: partial.horizons !== undefined ?
-        partial.horizons :
-        parseHorizons([...defaults.horizons]),
+    autoSampleConditions:
+      partial.autoSampleConditions !== undefined
+        ? partial.autoSampleConditions
+        : parseAutoSampleConditions([...defaults.autoSampleConditions]),
     jsonFile: partial.jsonFile !== undefined ? partial.jsonFile : '',
     legacyJsonFile:
-        partial.legacyJsonFile !== undefined ? partial.legacyJsonFile : '',
-    sampleSize: partial.sampleSize !== undefined ? partial.sampleSize :
-                                                   defaults.sampleSize,
+      partial.legacyJsonFile !== undefined ? partial.legacyJsonFile : '',
+    sampleSize:
+      partial.sampleSize !== undefined
+        ? partial.sampleSize
+        : defaults.sampleSize,
     mode: partial.mode !== undefined ? partial.mode : defaults.mode,
-    remoteAccessibleHost: partial.remoteAccessibleHost !== undefined ?
-        partial.remoteAccessibleHost :
-        '',
-    resolveBareModules: partial.resolveBareModules !== undefined ?
-        partial.resolveBareModules :
-        defaults.resolveBareModules,
+    remoteAccessibleHost:
+      partial.remoteAccessibleHost !== undefined
+        ? partial.remoteAccessibleHost
+        : '',
+    resolveBareModules:
+      partial.resolveBareModules !== undefined
+        ? partial.resolveBareModules
+        : defaults.resolveBareModules,
     root: partial.root !== undefined ? partial.root : defaults.root,
     timeout: partial.timeout !== undefined ? partial.timeout : defaults.timeout,
     collate: partial.collate !== undefined ? partial.collate : defaults.collate,
@@ -178,11 +186,14 @@ export function applyDefaults(partial: Partial<Config>): Config {
  * it's a file that doesn't exist, or a directory without an index.html.
  */
 export async function urlFromLocalPath(
-    rootDir: string, diskPath: string): Promise<string> {
+  rootDir: string,
+  diskPath: string
+): Promise<string> {
   const serverRelativePath = path.relative(rootDir, diskPath);
   if (serverRelativePath.startsWith('..')) {
     throw new Error(
-        'File or directory is not accessible from server root: ' + diskPath);
+      'File or directory is not accessible from server root: ' + diskPath
+    );
   }
 
   const kind = await fileKind(diskPath);
@@ -192,7 +203,7 @@ export async function urlFromLocalPath(
 
   let urlPath = `/${serverRelativePath.replace(path.win32.sep, '/')}`;
   if (kind === 'dir') {
-    if (await fileKind(path.join(diskPath, 'index.html')) !== 'file') {
+    if ((await fileKind(path.join(diskPath, 'index.html'))) !== 'file') {
       throw new Error(`Directory did not contain an index.html: ${diskPath}`);
     }
     // We need a trailing slash when serving a directory. Our static server
@@ -205,13 +216,17 @@ export async function urlFromLocalPath(
   return urlPath;
 }
 
-/** Parse horizon flags into signed horizon values. */
-export function parseHorizons(strs: string[]): Horizons {
+/**
+ * Parse auto sample condition strings.
+ */
+export function parseAutoSampleConditions(
+  strs: string[]
+): AutoSampleConditions {
   const absolute = new Set<number>();
   const relative = new Set<number>();
   for (const str of strs) {
     if (!str.match(/^[-+]?(\d*\.)?\d+(ms|%)$/)) {
-      throw new Error(`Invalid horizon ${str}`);
+      throw new Error(`Invalid auto sample condition ${str}`);
     }
 
     let num;
@@ -222,16 +237,16 @@ export function parseHorizons(strs: string[]): Horizons {
       absOrRel = relative;
     } else {
       // Otherwise ends with "ms".
-      num = Number(str.slice(0, -2));  // Note that Number("+1") === 1
+      num = Number(str.slice(0, -2)); // Note that Number("+1") === 1
       absOrRel = absolute;
     }
 
     if (str.startsWith('+') || str.startsWith('-') || num === 0) {
       // If the sign was explicit (e.g. "+0.1", "-0.1") then we're only
-      // interested in that signed horizon.
+      // interested in that signed condition.
       absOrRel.add(num);
     } else {
-      // Otherwise (e.g. "0.1") we're interested in the horizon as a
+      // Otherwise (e.g. "0.1") we're interested in the condition as a
       // difference in either direction.
       absOrRel.add(-num);
       absOrRel.add(num);

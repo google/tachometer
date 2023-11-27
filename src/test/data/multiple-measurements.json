@@ -1,25 +1,25 @@
 {
-    "$schema": "https://raw.githubusercontent.com/Polymer/tachometer/master/config.schema.json",
-    "sampleSize": 10,
-    "timeout": 0,
-    "benchmarks": [
+  "$schema": "https://raw.githubusercontent.com/Polymer/tachometer/master/config.schema.json",
+  "sampleSize": 10,
+  "timeout": 0,
+  "benchmarks": [
+    {
+      "name": "multi",
+      "url": "multiple-measurements.html?foo=20&bar=60",
+      "measurement": [
         {
-            "name": "multi",
-            "url": "src/test/data/multiple-measurements.html?foo=20&bar=60",
-            "measurement": [
-                {
-                    "mode": "performance",
-                    "entryName": "foo"
-                },
-                {
-                    "mode": "performance",
-                    "entryName": "bar"
-                }
-            ],
-            "browser": {
-                "name": "chrome",
-                "headless": true
-            }
+          "mode": "performance",
+          "entryName": "foo"
+        },
+        {
+          "mode": "performance",
+          "entryName": "bar"
         }
-    ]
+      ],
+      "browser": {
+        "name": "chrome",
+        "headless": true
+      }
+    }
+  ]
 }

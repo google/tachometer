@@ -1,22 +1,32 @@
 /**
  * @license
- * Copyright (c) 2019 The Polymer Project Authors. All rights reserved.
- * This code may only be used under the BSD style license found at
- * http://polymer.github.io/LICENSE.txt The complete set of authors may be found
- * at http://polymer.github.io/AUTHORS.txt The complete set of contributors may
- * be found at http://polymer.github.io/CONTRIBUTORS.txt Code distributed by
- * Google as part of the polymer project is also subject to an additional IP
- * rights grant found at http://polymer.github.io/PATENTS.txt
+ * Copyright 2019 Google LLC
+ * SPDX-License-Identifier: BSD-3-Clause
  */
 
-import * as fsExtra from 'fs-extra';
+import fsExtra from 'fs-extra';
 import * as jsonschema from 'jsonschema';
+import * as path from 'path';
+import sanitizeFileName from 'sanitize-filename';
+import {createRequire} from 'module';
+const require = createRequire(import.meta.url);
 
-import {BrowserConfig, BrowserName, parseBrowserConfigString, validateBrowserConfig} from './browser';
-import {Config, parseHorizons, urlFromLocalPath} from './config';
-import * as defaults from './defaults';
-import {BenchmarkSpec, ExtendedPackageDependencyMap, Measurement, measurements} from './types';
-import {isHttpUrl} from './util';
+import {
+  BrowserConfig,
+  BrowserName,
+  parseBrowserConfigString,
+  validateBrowserConfig,
+} from './browser.js';
+import {Config, parseAutoSampleConditions, urlFromLocalPath} from './config.js';
+import * as defaults from './defaults.js';
+import {makeUniqueSpecLabelFn} from './format.js';
+import {
+  BenchmarkSpec,
+  ExtendedPackageDependencyMap,
+  Measurement,
+  measurements,
+} from './types.js';
+import {isHttpUrl} from './util.js';
 
 /**
  * Expected format of the top-level JSON config file. Note this interface is
@@ -44,6 +54,11 @@ export interface ConfigFile {
   /**
    * The degrees of difference to try and resolve when auto-sampling
    * (e.g. 0ms, +1ms, -1ms, 0%, +1%, -1%, default 0%).
+   */
+  autoSampleConditions?: string[];
+
+  /**
+   * Deprecated alias for autoSampleConditions.
    */
   horizons?: string[];
 
@@ -102,7 +117,7 @@ interface ConfigFileBenchmark {
    *   - edge
    *   - ie
    */
-  browser?: string|BrowserConfigs;
+  browser?: string | BrowserConfigs;
 
   /**
    * Which time interval to measure.
@@ -143,10 +158,18 @@ interface ConfigFileBenchmark {
 }
 
 type ConfigFileMeasurement =
-    'callback'|'fcp'|'global'|Measurement|Array<Measurement>;
+  | 'callback'
+  | 'fcp'
+  | 'global'
+  | Measurement
+  | Array<Measurement>;
 
 type BrowserConfigs =
-    ChromeConfig|FirefoxConfig|SafariConfig|EdgeConfig|IEConfig;
+  | ChromeConfig
+  | FirefoxConfig
+  | SafariConfig
+  | EdgeConfig
+  | IEConfig;
 
 interface BrowserConfigBase {
   /**
@@ -221,6 +244,34 @@ interface ChromeConfig extends BrowserConfigBase {
    * @TJS-minimum 1
    */
   cpuThrottlingRate?: number;
+
+  /**
+   * Optional config to turn on performance tracing.
+   */
+  trace?: TraceConfig | true;
+
+  /**
+   * Path to a profile directory to use instead of the default temporary fresh
+   * one.
+   */
+  profile?: string;
+}
+
+/**
+ * Configuration to turn on performance tracing
+ */
+interface TraceConfig {
+  /**
+   * The tracing categories the browser should log. See Tachometer readme for a
+   * description of available categories. The source of the categories in
+   * Chromium can be found here: https://chromium.googlesource.com/chromium/src/+/master/base/trace_event/builtin_categories.h
+   */
+  categories?: string[];
+
+  /**
+   * The directory to log performance traces to
+   */
+  logDir?: string;
 }
 
 interface FirefoxConfig extends BrowserConfigBase {
@@ -247,7 +298,13 @@ interface FirefoxConfig extends BrowserConfigBase {
    * in Firefox (see
    * https://support.mozilla.org/en-US/kb/about-config-editor-firefox).
    */
-  preferences?: {[name: string]: string|number|boolean};
+  preferences?: {[name: string]: string | number | boolean};
+
+  /**
+   * Path to a profile directory to use instead of the default temporary fresh
+   * one.
+   */
+  profile?: string;
 }
 
 interface SafariConfig extends BrowserConfigBase {
@@ -279,31 +336,64 @@ interface ConfigFilePackageVersion {
  * Validate the given JSON object parsed from a config file, and expand it into
  * a fully specified configuration.
  */
-export async function parseConfigFile(parsedJson: unknown):
-    Promise<Partial<Config>> {
+export async function parseConfigFile(
+  parsedJson: unknown,
+  configFilePath: string
+): Promise<Partial<Config>> {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const schema = require('../config.schema.json');
-  const result =
-      jsonschema.validate(parsedJson, schema, {propertyName: 'config'});
+  const result = jsonschema.validate(parsedJson, schema);
   if (result.errors.length > 0) {
     throw new Error(
-        [...new Set(result.errors.map(customizeJsonSchemaError))].join('\n'));
+      [...new Set(result.errors.map(customizeJsonSchemaError))].join('\n')
+    );
   }
   const validated = parsedJson as ConfigFile;
-  const root = validated.root || '.';
+  const root = path.resolve(
+    path.dirname(configFilePath),
+    validated.root || '.'
+  );
   const benchmarks: BenchmarkSpec[] = [];
   for (const benchmark of validated.benchmarks) {
     for (const expanded of applyExpansions(benchmark)) {
-      benchmarks.push(applyDefaults(await parseBenchmark(expanded, root)));
+      benchmarks.push(
+        applyDefaults(await parseBenchmark(expanded, root, configFilePath))
+      );
     }
+  }
+
+  // Update trace logDir with label per spec
+  const labelFn = makeUniqueSpecLabelFn(benchmarks);
+  for (const spec of benchmarks) {
+    if (spec.browser.trace !== undefined) {
+      spec.browser.trace.logDir = path.join(
+        spec.browser.trace.logDir,
+        sanitizeFileName(labelFn(spec))
+      );
+    }
+  }
+
+  if (validated.horizons !== undefined) {
+    if (validated.autoSampleConditions !== undefined) {
+      throw new Error(
+        'Please use only "autoSampleConditions" and not "horizons".'
+      );
+    }
+    console.warn(
+      '\nNOTE: The "horizons" setting has been renamed to "autoSampleConditions".\n' +
+        'Please rename it.\n'
+    );
+    validated.autoSampleConditions = validated.horizons;
   }
 
   return {
     root,
     sampleSize: validated.sampleSize,
     timeout: validated.timeout,
-    horizons: validated.horizons !== undefined ?
-        parseHorizons(validated.horizons) :
-        undefined,
+    autoSampleConditions:
+      validated.autoSampleConditions !== undefined
+        ? parseAutoSampleConditions(validated.autoSampleConditions)
+        : undefined,
     benchmarks,
     resolveBareModules: validated.resolveBareModules,
     collate: validated.collate,
@@ -316,15 +406,22 @@ export async function parseConfigFile(parsedJson: unknown):
  * [schema2]" etc.
  */
 function customizeJsonSchemaError(error: jsonschema.ValidationError): string {
-  if (error.property.match(/^config\.benchmarks\[\d+\]\.measurement$/)) {
-    return `${error.property} is not one of: ${[...measurements].join(', ')}` +
-        ' or an object like `performanceEntry: string`';
+  let str;
+  if (error.property.match(/^instance\.benchmarks\[\d+\]\.measurement$/)) {
+    str =
+      `${error.property} is not any of: ${[...measurements].join(', ')}` +
+      ' or an object like `performanceEntry: string`';
+  } else {
+    str = error.toString();
   }
-  return error.toString();
+  return str.replace(/^instance/, 'config');
 }
 
-async function parseBenchmark(benchmark: ConfigFileBenchmark, root: string):
-    Promise<Partial<BenchmarkSpec>> {
+async function parseBenchmark(
+  benchmark: ConfigFileBenchmark,
+  root: string,
+  configFilePath: string
+): Promise<Partial<BenchmarkSpec>> {
   const spec: Partial<BenchmarkSpec> = {};
 
   if (benchmark.name !== undefined) {
@@ -349,20 +446,26 @@ async function parseBenchmark(benchmark: ConfigFileBenchmark, root: string):
   }
 
   if (benchmark.measurement === 'callback') {
-    spec.measurement = [{
-      mode: 'callback',
-    }];
+    spec.measurement = [
+      {
+        mode: 'callback',
+      },
+    ];
   } else if (benchmark.measurement === 'fcp') {
-    spec.measurement = [{
-      mode: 'performance',
-      entryName: 'first-contentful-paint',
-    }];
+    spec.measurement = [
+      {
+        mode: 'performance',
+        entryName: 'first-contentful-paint',
+      },
+    ];
   } else if (benchmark.measurement === 'global') {
-    spec.measurement = [{
-      mode: 'expression',
-      expression:
+    spec.measurement = [
+      {
+        mode: 'expression',
+        expression:
           benchmark.measurementExpression || defaults.measurementExpression,
-    }];
+      },
+    ];
   } else if (Array.isArray(benchmark.measurement)) {
     spec.measurement = benchmark.measurement;
   } else if (benchmark.measurement !== undefined) {
@@ -386,10 +489,12 @@ async function parseBenchmark(benchmark: ConfigFileBenchmark, root: string):
         urlPath = url;
         queryString = '';
       }
-
       spec.url = {
         kind: 'local',
-        urlPath: await urlFromLocalPath(root, urlPath),
+        urlPath: await urlFromLocalPath(
+          root,
+          path.resolve(path.dirname(configFilePath), urlPath)
+        ),
         queryString,
       };
 
@@ -432,6 +537,27 @@ function parseBrowserObject(config: BrowserConfigs): BrowserConfig {
   }
   if ('preferences' in config && config.preferences) {
     parsed.preferences = config.preferences;
+  }
+  if ('trace' in config && config.trace !== undefined) {
+    if (config.trace === true) {
+      parsed.trace = {
+        categories: defaults.traceCategories,
+        logDir: defaults.traceLogDir,
+      };
+    } else if (typeof config.trace === 'object') {
+      parsed.trace = {
+        categories: config.trace.categories ?? defaults.traceCategories,
+        logDir:
+          config.trace.logDir === undefined
+            ? defaults.traceLogDir
+            : path.isAbsolute(config.trace.logDir)
+            ? config.trace.logDir
+            : path.join(process.cwd(), config.trace.logDir),
+      };
+    }
+  }
+  if ('profile' in config && config.profile !== undefined) {
+    parsed.profile = config.profile;
   }
   return parsed;
 }
@@ -487,13 +613,15 @@ function applyDefaults(partialSpec: Partial<BenchmarkSpec>): BenchmarkSpec {
 }
 
 export async function writeBackSchemaIfNeeded(
-    rawConfigObj: Partial<ConfigFile>, configFile: string) {
+  rawConfigObj: Partial<ConfigFile>,
+  configFile: string
+) {
   // Add the $schema field to the original config file if it's absent.
   // We only want to do this if the file validated though, so we don't mutate
   // a file that's not actually a tachometer config file.
   if (!('$schema' in rawConfigObj)) {
     const $schema =
-        'https://raw.githubusercontent.com/Polymer/tachometer/master/config.schema.json';
+      'https://raw.githubusercontent.com/Polymer/tachometer/master/config.schema.json';
     // Extra IDE features can be activated if the config file has a schema.
     const withSchema = {
       $schema,

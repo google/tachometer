@@ -1,25 +1,33 @@
 /**
  * @license
- * Copyright (c) 2019 The Polymer Project Authors. All rights reserved.
- * This code may only be used under the BSD style license found at
- * http://polymer.github.io/LICENSE.txt The complete set of authors may be found
- * at http://polymer.github.io/AUTHORS.txt The complete set of contributors may
- * be found at http://polymer.github.io/CONTRIBUTORS.txt Code distributed by
- * Google as part of the polymer project is also subject to an additional IP
- * rights grant found at http://polymer.github.io/PATENTS.txt
+ * Copyright 2019 Google LLC
+ * SPDX-License-Identifier: BSD-3-Clause
  */
 
 import * as path from 'path';
 
-import {applyDefaults} from '../config';
-import {ConfigFile, parseConfigFile} from '../configfile';
-import {computeDifferences, ResultStatsWithDifferences, summaryStats} from '../stats';
+import {applyDefaults} from '../config.js';
+import {ConfigFile, parseConfigFile} from '../configfile.js';
+import {
+  computeDifferences,
+  ResultStatsWithDifferences,
+  summaryStats,
+} from '../stats.js';
+
+import * as url from 'url';
+const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
 /**
  * Absolute location on disk of our test data directory.
  */
-export const testData =
-    path.resolve(__dirname, '..', '..', 'src', 'test', 'data');
+export const testData = path.resolve(
+  __dirname,
+  '..',
+  '..',
+  'src',
+  'test',
+  'data'
+);
 
 const userAgents = new Map([
   [
@@ -37,9 +45,12 @@ const userAgents = new Map([
  * measurement and byte size for each benchmark is based on its index in the
  * list of benchmarks (+10ms and +1KiB for each index).
  */
-export async function fakeResults(configFile: ConfigFile):
-    Promise<ResultStatsWithDifferences[]> {
-  const config = applyDefaults(await parseConfigFile(configFile));
+export async function fakeResults(
+  configFile: ConfigFile
+): Promise<ResultStatsWithDifferences[]> {
+  const config = applyDefaults(
+    await parseConfigFile(configFile, 'tachometer.json')
+  );
   const results = [];
   for (let i = 0; i < config.benchmarks.length; i++) {
     const {name, url, browser, measurement} = config.benchmarks[i];
@@ -51,11 +62,15 @@ export async function fakeResults(configFile: ConfigFile):
       ...new Array(Math.floor(config.sampleSize / 2)).fill(averageMillis - 5),
       ...new Array(Math.ceil(config.sampleSize / 2)).fill(averageMillis + 5),
     ];
-    for (let measurementIndex = 0; measurementIndex < measurement.length;
-         measurementIndex++) {
-      const resultName = measurement.length === 1 ?
-          name :
-          `${name} [${measurement[measurementIndex].name}]`;
+    for (
+      let measurementIndex = 0;
+      measurementIndex < measurement.length;
+      measurementIndex++
+    ) {
+      const resultName =
+        measurement.length === 1
+          ? name
+          : `${name} [${measurement[measurementIndex].name}]`;
       results.push({
         stats: summaryStats(millis),
         result: {
@@ -63,9 +78,10 @@ export async function fakeResults(configFile: ConfigFile):
           measurement: measurement[measurementIndex],
           measurementIndex,
           queryString: url.kind === 'local' ? url.queryString : '',
-          version: url.kind === 'local' && url.version !== undefined ?
-              url.version.label :
-              '',
+          version:
+            url.kind === 'local' && url.version !== undefined
+              ? url.version.label
+              : '',
           millis,
           bytesSent,
           browser,

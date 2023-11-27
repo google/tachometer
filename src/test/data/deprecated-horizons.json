@@ -4,5 +4,6 @@
     {
       "url": "random-global.html"
     }
-  ]
+  ],
+  "horizons": ["0%", "10%"]
 }

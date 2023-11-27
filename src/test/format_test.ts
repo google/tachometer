@@ -1,22 +1,22 @@
 /**
  * @license
- * Copyright (c) 2019 The Polymer Project Authors. All rights reserved.
- * This code may only be used under the BSD style license found at
- * http://polymer.github.io/LICENSE.txt The complete set of authors may be found
- * at http://polymer.github.io/AUTHORS.txt The complete set of contributors may
- * be found at http://polymer.github.io/CONTRIBUTORS.txt Code distributed by
- * Google as part of the polymer project is also subject to an additional IP
- * rights grant found at http://polymer.github.io/PATENTS.txt
+ * Copyright 2019 Google LLC
+ * SPDX-License-Identifier: BSD-3-Clause
  */
 
 import {assert} from 'chai';
 import {suite, suiteSetup, suiteTeardown, test} from 'mocha';
 import * as path from 'path';
-import stripAnsi = require('strip-ansi');
+import stripAnsi from 'strip-ansi';
 
-import {ConfigFile} from '../configfile';
-import {automaticResultTable, verticalTermResultTable, collatedResultTables} from '../format';
-import {fakeResults, testData} from './test_helpers';
+import {ConfigFile} from '../configfile.js';
+import {
+  automaticResultTable,
+  horizontalTermResultTable,
+  verticalTermResultTable,
+  collatedResultTables,
+} from '../format.js';
+import {fakeResults, testData} from './test_helpers.js';
 
 /**
  * Given a config file object, generates fake measurement results, and returns
@@ -25,8 +25,10 @@ import {fakeResults, testData} from './test_helpers';
  */
 async function fakeResultTable(configFile: ConfigFile): Promise<string> {
   const results = await fakeResults(configFile);
-  const resultTable = automaticResultTable(results).unfixed;
-  return stripAnsi(verticalTermResultTable(resultTable));
+  const {fixed, unfixed} = automaticResultTable(results);
+  return stripAnsi(
+    horizontalTermResultTable(fixed) + '\n' + verticalTermResultTable(unfixed)
+  );
 }
 
 /**
@@ -43,6 +45,7 @@ async function fakeCollatedResultTable(configFile: ConfigFile):
       })
       .join('\n');
 }
+
 
 suite('format', () => {
   let prevCwd: string;
@@ -69,6 +72,19 @@ suite('format', () => {
 
     const actual = await fakeResultTable(config);
     const expected = `
+┌─────────────┬────────────────────┐
+│   Benchmark │ http://example.com │
+├─────────────┼────────────────────┤
+│     Version │ <none>             │
+├─────────────┼────────────────────┤
+│     Browser │ chrome             │
+│             │ 75.0.3770.100      │
+├─────────────┼────────────────────┤
+│ Sample size │ 50                 │
+├─────────────┼────────────────────┤
+│       Bytes │ 1.00 KiB           │
+└─────────────┴────────────────────┘
+
 ┌──────────────────┐
 │         Avg time │
 ├──────────────────┤
@@ -98,6 +114,14 @@ suite('format', () => {
 
     const actual = await fakeResultTable(config);
     const expected = `
+┌─────────────┬────────────────────┐
+│   Benchmark │ http://example.com │
+├─────────────┼────────────────────┤
+│     Version │ <none>             │
+├─────────────┼────────────────────┤
+│ Sample size │ 50                 │
+└─────────────┴────────────────────┘
+
 ┌───────────────┬──────────┬───────────────────┬──────────────────┬──────────────────┐
 │ Browser       │ Bytes    │          Avg time │        vs chrome │       vs firefox │
 ├───────────────┼──────────┼───────────────────┼──────────────────┼──────────────────┤
@@ -133,6 +157,15 @@ suite('format', () => {
 
     const actual = await fakeResultTable(config);
     const expected = `
+┌─────────────┬───────────────┐
+│     Version │ <none>        │
+├─────────────┼───────────────┤
+│     Browser │ chrome        │
+│             │ 75.0.3770.100 │
+├─────────────┼───────────────┤
+│ Sample size │ 50            │
+└─────────────┴───────────────┘
+
 ┌───────────────────────────┬──────────┬───────────────────┬─────────────────────────────┬──────────────────────────────┐
 │ Benchmark                 │ Bytes    │          Avg time │ vs http://example.com?p=bar │ vs /mybench/index.html?p=bar │
 ├───────────────────────────┼──────────┼───────────────────┼─────────────────────────────┼──────────────────────────────┤
@@ -170,6 +203,15 @@ suite('format', () => {
 
     const actual = await fakeResultTable(config);
     const expected = `
+┌─────────────┬───────────────┐
+│     Version │ <none>        │
+├─────────────┼───────────────┤
+│     Browser │ chrome        │
+│             │ 75.0.3770.100 │
+├─────────────┼───────────────┤
+│ Sample size │ 50            │
+└─────────────┴───────────────┘
+
 ┌───────────┬──────────┬───────────────────┬──────────────────┬──────────────────┐
 │ Benchmark │ Bytes    │          Avg time │           vs foo │           vs bar │
 ├───────────┼──────────┼───────────────────┼──────────────────┼──────────────────┤

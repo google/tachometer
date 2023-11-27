@@ -1,12 +1,7 @@
 /**
  * @license
- * Copyright (c) 2019 The Polymer Project Authors. All rights reserved.
- * This code may only be used under the BSD style license found at
- * http://polymer.github.io/LICENSE.txt The complete set of authors may be found
- * at http://polymer.github.io/AUTHORS.txt The complete set of contributors may
- * be found at http://polymer.github.io/CONTRIBUTORS.txt Code distributed by
- * Google as part of the polymer project is also subject to an additional IP
- * rights grant found at http://polymer.github.io/PATENTS.txt
+ * Copyright 2019 Google LLC
+ * SPDX-License-Identifier: BSD-3-Clause
  */
 
 import * as chai from 'chai';
@@ -14,20 +9,23 @@ import chaiAsPromised from 'chai-as-promised';
 import {suite, suiteSetup, suiteTeardown, test} from 'mocha';
 import * as path from 'path';
 
-import * as defaults from '../defaults';
-import {optDefs, Opts} from '../flags';
-import {specsFromOpts} from '../specs';
-import {BenchmarkSpec} from '../types';
+import * as defaults from '../defaults.js';
+import {optDefs, Opts} from '../flags.js';
+import {specsFromOpts} from '../specs.js';
+import {BenchmarkSpec} from '../types.js';
 
-import {testData} from './test_helpers';
+import {testData} from './test_helpers.js';
 
-import commandLineArgs = require('command-line-args');
+import commandLineArgs from 'command-line-args';
+
+import * as url from 'url';
+const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
 chai.use(chaiAsPromised);
 const {assert} = chai;
 
 const parse = (argv: string[]) =>
-    commandLineArgs(optDefs, {argv, partial: true}) as Opts;
+  commandLineArgs(optDefs, {argv, partial: true}) as Opts;
 
 const defaultBrowser = {
   name: defaults.browserName,
@@ -297,19 +295,25 @@ suite('specsFromOpts', () => {
     test('not accessible from server root', async () => {
       const argv = [path.resolve(__dirname, '..', '..')];
       await assert.isRejected(
-          specsFromOpts(parse(argv)), /not accessible from server root/i);
+        specsFromOpts(parse(argv)),
+        /not accessible from server root/i
+      );
     });
 
     test('did not contain an index.html', async () => {
       const argv = ['noindex'];
       await assert.isRejected(
-          specsFromOpts(parse(argv)), /did not contain an index\.html/i);
+        specsFromOpts(parse(argv)),
+        /did not contain an index\.html/i
+      );
     });
 
     test('browser not supported', async () => {
       const argv = ['mybench', '--browser=potato'];
       await assert.isRejected(
-          specsFromOpts(parse(argv)), /browser potato is not supported/i);
+        specsFromOpts(parse(argv)),
+        /browser potato is not supported/i
+      );
     });
   });
 });

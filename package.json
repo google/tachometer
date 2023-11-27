@@ -1,11 +1,12 @@
 {
   "name": "tachometer",
-  "version": "0.5.5",
+  "version": "0.7.0",
   "description": "Web benchmark runner",
   "main": "lib/cli.js",
   "directories": {
     "lib": "lib"
   },
+  "type": "module",
   "bin": {
     "tach": "bin/tach.js",
     "tachometer": "bin/tach.js"
@@ -15,15 +16,18 @@
     "build": "rimraf lib/ client/lib/ && mkdir lib && npm run generate-json-schema && tsc && tsc -p client/ && npm run lint",
     "build:watch": "tsc --watch",
     "generate-json-schema": "typescript-json-schema tsconfig.json ConfigFile --include src/configfile.ts --required --noExtraProps > config.schema.json",
-    "lint": "tslint --project . --format stylish",
-    "format": "clang-format --style=file -i \"--glob=./{client,}/src/**/*.ts\"",
-    "test": "npm run build && mocha 'lib/test/**/*.js'"
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "npm run test:unit && npm run test:e2e",
+    "test:unit": "mocha \"lib/test/**/*_test.js\" --grep \".*e2e.*\" --invert",
+    "test:e2e": "mocha \"lib/test/**/*_test.js\" --grep \".*e2e.*\""
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Polymer/tachometer.git"
   },
-  "author": "The Polymer Project Authors",
+  "author": "Google LLC",
   "license": "BSD-3-Clause",
   "bugs": {
     "url": "https://github.com/Polymer/tachometer/issues"
@@ -35,17 +39,14 @@
     "chromedriver"
   ],
   "dependencies": {
-    "@types/command-line-usage": "^5.0.1",
-    "@types/selenium-webdriver": "^4.0.5",
-    "@types/table": "^6.0.0",
-    "ansi-escape-sequences": "^5.0.0",
+    "ansi-escape-sequences": "^6.0.1",
     "command-line-args": "^5.0.2",
     "command-line-usage": "^6.1.0",
-    "csv-stringify": "^5.3.0",
-    "fs-extra": "^9.0.1",
+    "csv-stringify": "^6.2.0",
+    "fs-extra": "^10.0.0",
     "get-stream": "^6.0.0",
-    "got": "^11.5.0",
-    "jsonschema": "^1.2.4",
+    "got": "^12.1.0",
+    "jsonschema": "^1.4.0",
     "jsonwebtoken": "^8.5.1",
     "jstat": "^1.9.2",
     "koa": "^2.11.0",
@@ -55,15 +56,16 @@
     "koa-send": "^5.0.0",
     "koa-static": "^5.0.0",
     "pkg-install": "^1.0.0",
-    "pkg-up": "^3.1.0",
+    "pkg-up": "^4.0.0",
     "progress": "^2.0.3",
-    "selenium-webdriver": "^4.0.0-alpha.1",
+    "sanitize-filename": "^1.6.3",
+    "selenium-webdriver": "^4.0.0-alpha.8",
     "semver": "^7.1.1",
     "source-map-support": "^0.5.16",
-    "strip-ansi": "^6.0.0",
-    "systeminformation": "^4.14.17",
-    "table": "^6.0.3",
-    "ua-parser-js": "^0.7.19"
+    "strip-ansi": "^7.0.1",
+    "systeminformation": "^5.3.3",
+    "table": "^6.0.7",
+    "ua-parser-js": "^1.0.2"
   },
   "devDependencies": {
     "@types/ansi-escape-sequences": "^4.0.0",
@@ -71,9 +73,8 @@
     "@types/chai": "^4.2.4",
     "@types/chai-as-promised": "^7.1.2",
     "@types/command-line-args": "^5.0.0",
-    "@types/csv-stringify": "^3.1.0",
+    "@types/command-line-usage": "^5.0.1",
     "@types/fs-extra": "^9.0.1",
-    "@types/get-stream": "^3.0.2",
     "@types/got": "^9.6.8",
     "@types/jsonwebtoken": "^8.3.5",
     "@types/koa": "^2.0.51",
@@ -81,20 +82,25 @@
     "@types/koa-mount": "^4.0.0",
     "@types/koa-send": "^4.1.2",
     "@types/koa-static": "^4.0.0",
-    "@types/mocha": "^8.0.3",
+    "@types/mocha": "^9.0.0",
     "@types/node-fetch": "^2.5.3",
     "@types/progress": "^2.0.3",
+    "@types/rimraf": "^3.0.0",
+    "@types/selenium-webdriver": "^4.0.11",
     "@types/semver": "^7.3.1",
-    "@types/systeminformation": "^3.54.1",
+    "@types/source-map-support": "^0.5.4",
     "@types/ua-parser-js": "^0.7.32",
+    "@typescript-eslint/eslint-plugin": "^5.30.6",
+    "@typescript-eslint/parser": "^5.30.6",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
-    "clang-format": "^1.3.0",
-    "mocha": "^8.0.1",
-    "node-fetch": "^2.6.0",
+    "eslint": "^8.19.0",
+    "eslint-plugin-no-only-tests": "^2.6.0",
+    "mocha": "^10.0.0",
+    "node-fetch": "^3.2.8",
+    "prettier": "^2.4.1",
     "rimraf": "^3.0.2",
-    "tslint": "^6.1.2",
     "typescript": "^4.0.2",
-    "typescript-json-schema": "^0.43.0"
+    "typescript-json-schema": "^0.54.0"
   }
 }

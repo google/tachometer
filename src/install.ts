@@ -1,19 +1,20 @@
 /**
  * @license
- * Copyright (c) 2020 The Polymer Project Authors. All rights reserved.
- * This code may only be used under the BSD style license found at
- * http://polymer.github.io/LICENSE.txt The complete set of authors may be found
- * at http://polymer.github.io/AUTHORS.txt The complete set of contributors may
- * be found at http://polymer.github.io/CONTRIBUTORS.txt Code distributed by
- * Google as part of the polymer project is also subject to an additional IP
- * rights grant found at http://polymer.github.io/PATENTS.txt
+ * Copyright 2020 Google LLC
+ * SPDX-License-Identifier: BSD-3-Clause
  */
 
 import {exec} from 'child_process';
+import {promisify} from 'util';
 import {promises as fs} from 'fs';
 import path from 'path';
 import {install} from 'pkg-install';
-import pkgUp from 'pkg-up';
+import {pkgUp} from 'pkg-up';
+
+const execPromise = promisify(exec);
+
+import * as url from 'url';
+const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
 export type OnDemandDependencies = Map<string, string>;
 
@@ -26,21 +27,13 @@ export type OnDemandDependencies = Map<string, string>;
  * @see https://github.com/nodejs/node/issues/31803
  */
 export const assertResolvable = async (id: string) => {
-  await new Promise(async (resolve, reject) => {
-    exec(
-        `${process.execPath} -e "require.resolve(process.env.ID)"`,
-        {
-          cwd: await getPackageRoot() || process.cwd(),
-          env: {...process.env, ID: id}
-        },
-        (error) => {
-          if (error != null) {
-            reject(error);
-            return;
-          }
-          resolve();
-        });
-  });
+  await execPromise(
+    `"${process.execPath}" -e "require.resolve(process.env.ID)"`,
+    {
+      cwd: (await getPackageRoot()) || process.cwd(),
+      env: {...process.env, ID: id},
+    }
+  );
 };
 
 export interface ContainsOnDemandDependencies {
@@ -48,7 +41,7 @@ export interface ContainsOnDemandDependencies {
   installsOnDemand?: string[];
 }
 
-export const getPackageJSONPath = async(): Promise<string|null> => {
+export const getPackageJSONPath = async (): Promise<string | undefined> => {
   // NOTE: This used to search starting with module.path, but module.path was
   // not added until Node.js v11. In order to preserve Node.js v10 compatibility
   // we use __dirname instead, which should be mostly the same thing (docs are
@@ -58,7 +51,7 @@ export const getPackageJSONPath = async(): Promise<string|null> => {
   return pkgUp({cwd: __dirname});
 };
 
-export const getPackageRoot = async(): Promise<string|null> => {
+export const getPackageRoot = async (): Promise<string | null> => {
   const packageJSONPath = await getPackageJSONPath();
   return packageJSONPath != null ? path.dirname(packageJSONPath) : null;
 };
@@ -67,18 +60,19 @@ export const getPackageRoot = async(): Promise<string|null> => {
  * Extract a map of allowed "on-demand" dependencies from a given
  * package.json-shaped object.
  */
-export const onDemandDependenciesFromPackageJSON =
-    (packageJSON: ContainsOnDemandDependencies): OnDemandDependencies => {
-      const onDemandDependencies = new Map<string, string>();
+export const onDemandDependenciesFromPackageJSON = (
+  packageJSON: ContainsOnDemandDependencies
+): OnDemandDependencies => {
+  const onDemandDependencies = new Map<string, string>();
 
-      const onDemandList: string[] = packageJSON?.installsOnDemand || [];
+  const onDemandList: string[] = packageJSON?.installsOnDemand || [];
 
-      for (const packageName of onDemandList) {
-        onDemandDependencies.set(packageName, '*');
-      }
+  for (const packageName of onDemandList) {
+    onDemandDependencies.set(packageName, '*');
+  }
 
-      return onDemandDependencies;
-    };
+  return onDemandDependencies;
+};
 
 /**
  * So-called "on-demand" dependencies are any packages that match the
@@ -91,8 +85,8 @@ export const onDemandDependenciesFromPackageJSON =
  * packages that match these requirements.
  */
 export const getOnDemandDependencies = (() => {
-  let cached: OnDemandDependencies|null = null;
-  return async(): Promise<OnDemandDependencies> => {
+  let cached: OnDemandDependencies | null = null;
+  return async (): Promise<OnDemandDependencies> => {
     if (cached == null) {
       const packageJSONPath = await getPackageJSONPath();
 
@@ -100,8 +94,9 @@ export const getOnDemandDependencies = (() => {
         const rawPackageJSON = await fs.readFile(packageJSONPath, {
           encoding: 'utf-8',
         });
-        const packageJSON = JSON.parse(rawPackageJSON.toString()) as
-            ContainsOnDemandDependencies;
+        const packageJSON = JSON.parse(
+          rawPackageJSON.toString()
+        ) as ContainsOnDemandDependencies;
 
         cached = onDemandDependenciesFromPackageJSON(packageJSON);
       }
@@ -125,8 +120,7 @@ export const installOnDemand = async (packageName: string) => {
   try {
     await assertResolvable(packageName);
     return;
-  } catch (_error) {
-  }
+  } catch (_error) {}
 
   let dependencies = new Map();
   try {
@@ -136,17 +130,21 @@ export const installOnDemand = async (packageName: string) => {
   }
 
   if (!dependencies.has(packageName)) {
-    throw new Error(`Package "${packageName}" cannot be installed on demand. ${
-        dependencies}`);
+    throw new Error(
+      `Package "${packageName}" cannot be installed on demand. ${dependencies}`
+    );
   }
 
   const version = dependencies.get(packageName);
 
-  await install({[packageName]: version}, {
-    stdio: 'inherit',
-    cwd: (await getPackageRoot()) || process.cwd(),
-    noSave: true,
-  });
+  await install(
+    {[packageName]: version},
+    {
+      stdio: 'inherit',
+      cwd: (await getPackageRoot()) || process.cwd(),
+      noSave: true,
+    }
+  );
 
   console.log(`Package "${packageName}@${version} installed."`);
 };

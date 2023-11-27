@@ -1,17 +1,11 @@
 /**
  * @license
- * Copyright (c) 2019 The Polymer Project Authors. All rights reserved.
- * This code may only be used under the BSD style license found at
- * http://polymer.github.io/LICENSE.txt The complete set of authors may be found
- * at http://polymer.github.io/AUTHORS.txt The complete set of contributors may
- * be found at http://polymer.github.io/CONTRIBUTORS.txt Code distributed by
- * Google as part of the polymer project is also subject to an additional IP
- * rights grant found at http://polymer.github.io/PATENTS.txt
+ * Copyright 2019 Google LLC
+ * SPDX-License-Identifier: BSD-3-Clause
  */
 
-import {BenchmarkResult} from './types';
-
-const jstat = require('jstat');  // TODO Contribute typings.
+import {BenchmarkResult} from './types.js';
+import jstat from 'jstat';
 
 interface Distribution {
   mean: number;
@@ -38,7 +32,7 @@ export interface ResultStats {
 }
 
 export interface ResultStatsWithDifferences extends ResultStats {
-  differences: Array<Difference|null>;
+  differences: Array<Difference | null>;
 }
 
 export interface Difference {
@@ -58,7 +52,9 @@ export function summaryStats(data: number[]): SummaryStats {
     size,
     mean,
     meanCI: confidenceInterval95(
-        samplingDistributionOfTheMean({mean, variance}, size), size),
+      samplingDistributionOfTheMean({mean, variance}, size),
+      size
+    ),
     variance,
     standardDeviation: stdDev,
     // aka coefficient of variation
@@ -70,9 +66,11 @@ export function summaryStats(data: number[]): SummaryStats {
  * Compute a 95% confidence interval for the given distribution.
  */
 function confidenceInterval95(
-    {mean, variance}: Distribution, size: number): ConfidenceInterval {
+  {mean, variance}: Distribution,
+  size: number
+): ConfidenceInterval {
   // http://www.stat.yale.edu/Courses/1997-98/101/confint.htm
-  const t = jstat.studentt.inv(1 - (.05 / 2), size - 1);
+  const t = jstat.studentt.inv(1 - 0.05 / 2, size - 1);
   const stdDev = Math.sqrt(variance);
   const margin = t * stdDev;
   return {
@@ -85,20 +83,22 @@ function confidenceInterval95(
  * Return whether the given confidence interval contains a value.
  */
 export function intervalContains(
-    interval: ConfidenceInterval, value: number): boolean {
+  interval: ConfidenceInterval,
+  value: number
+): boolean {
   return value >= interval.low && value <= interval.high;
 }
 
-export interface Horizons {
+export interface AutoSampleConditions {
   absolute: number[];
   relative: number[];
 }
 
 /**
  * Return whether all difference confidence intervals are unambiguously located
- * on one side or the other of all given horizon values.
+ * on one side or the other of all given auto sample conditions.
  *
- * For example, given the horizons 0 and 1:
+ * For example, given the conditions 0 and 1:
  *
  *    <--->                   true
  *        <--->               false
@@ -110,26 +110,28 @@ export interface Horizons {
  *  |-------|-------|-------| ms difference
  * -1       0       1       2
  */
-export function horizonsResolved(
-    resultStats: ResultStatsWithDifferences[], horizons: Horizons): boolean {
+export function autoSampleConditionsResolved(
+  resultStats: ResultStatsWithDifferences[],
+  conditions: AutoSampleConditions
+): boolean {
   for (const {differences} of resultStats) {
     if (differences === undefined) {
       continue;
     }
     // TODO We may want to offer more control over which particular set of
-    // differences we care about resolving. For the moment, a horizon of 1%
+    // differences we care about resolving. For the moment, a condition of 1%
     // means we'll try to resolve a 1% difference pairwise in both directions.
     for (const diff of differences) {
       if (diff === null) {
         continue;
       }
-      for (const horizon of horizons.absolute) {
-        if (intervalContains(diff.absolute, horizon)) {
+      for (const condition of conditions.absolute) {
+        if (intervalContains(diff.absolute, condition)) {
           return false;
         }
       }
-      for (const horizon of horizons.relative) {
-        if (intervalContains(diff.relative, horizon)) {
+      for (const condition of conditions.relative) {
+        if (intervalContains(diff.relative, condition)) {
           return false;
         }
       }
@@ -146,21 +148,23 @@ function sumOf(data: number[]): number {
  * Given an array of results, return a new array of results where each result
  * has additional statistics describing how it compares to each other result.
  */
-export function computeDifferences(stats: ResultStats[]):
-    ResultStatsWithDifferences[] {
+export function computeDifferences(
+  stats: ResultStats[]
+): ResultStatsWithDifferences[] {
   return stats.map((result) => {
     return {
       ...result,
-      differences: stats.map(
-          (other) => other === result ?
-              null :
-              computeDifference(other.stats, result.stats)),
+      differences: stats.map((other) =>
+        other === result ? null : computeDifference(other.stats, result.stats)
+      ),
     };
   });
 }
 
 export function computeDifference(
-    a: SummaryStats, b: SummaryStats): Difference {
+  a: SummaryStats,
+  b: SummaryStats
+): Difference {
   const meanA = samplingDistributionOfTheMean(a, a.size);
   const meanB = samplingDistributionOfTheMean(b, b.size);
   const diffAbs = samplingDistributionOfAbsoluteDifferenceOfMeans(meanA, meanB);
@@ -180,7 +184,9 @@ export function computeDifference(
  * of the means that we would compute under repeated samples of the given size.
  */
 function samplingDistributionOfTheMean(
-    dist: Distribution, sampleSize: number): Distribution {
+  dist: Distribution,
+  sampleSize: number
+): Distribution {
   // http://onlinestatbook.com/2/sampling_distributions/samp_dist_mean.html
   // http://www.stat.yale.edu/Courses/1997-98/101/sampmn.htm
   return {
@@ -197,7 +203,9 @@ function samplingDistributionOfTheMean(
  * means.
  */
 function samplingDistributionOfAbsoluteDifferenceOfMeans(
-    a: Distribution, b: Distribution): Distribution {
+  a: Distribution,
+  b: Distribution
+): Distribution {
   // http://onlinestatbook.com/2/sampling_distributions/samplingdist_diff_means.html
   // http://www.stat.yale.edu/Courses/1997-98/101/meancomp.htm
   return {
@@ -214,7 +222,9 @@ function samplingDistributionOfAbsoluteDifferenceOfMeans(
  * sampling distributions of means.
  */
 function samplingDistributionOfRelativeDifferenceOfMeans(
-    a: Distribution, b: Distribution): Distribution {
+  a: Distribution,
+  b: Distribution
+): Distribution {
   // http://blog.analytics-toolkit.com/2018/confidence-intervals-p-values-percent-change-relative-difference/
   // Note that the above article also prevents an alternative calculation for a
   // confidence interval for relative differences, but the one chosen here is
@@ -222,6 +232,6 @@ function samplingDistributionOfRelativeDifferenceOfMeans(
   return {
     mean: (b.mean - a.mean) / a.mean,
     variance:
-        (a.variance * b.mean ** 2 + b.variance * a.mean ** 2) / a.mean ** 4,
+      (a.variance * b.mean ** 2 + b.variance * a.mean ** 2) / a.mean ** 4,
   };
 }

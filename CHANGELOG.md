@@ -5,10 +5,93 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](http://semver.org/).
 
-<!-- ## Unreleased -->
+## Unreleased
 
 - Add `collate` option for collating results tables by measurement (when
   multiple measurements are in use).
+
+## [0.7.0] 2022-07-15
+
+- [**BREAKING**] Tachometer is now an ES module binary, so it requires Node 12
+  or higher.
+- Upgraded dependencies and removed unnecessary ones.
+
+## [0.6.0] 2022-07-01
+
+- [**BREAKING**] Benchmark and `root` paths are now interpreted relative to the
+  location of the config file, instead of the current working directory.
+
+  For example, a config at path `<repo>/benchmarks/foo/tachometer.json` that
+  used to look as follows, and had to be run with `<repo>` as the cwd:
+
+  ```json
+  {
+    "root": ".",
+    "benchmarks": [
+      {
+        "url": "benchmarks/foo/index.html"
+      }
+    ]
+  }
+  ```
+
+  Should now look like this, and can be run from any cwd:
+
+  ```json
+  {
+    "root": "../..",
+    "benchmarks": [
+      {
+        "url": "foo.html"
+      }
+    ]
+  }
+  ```
+
+## [0.5.10] 2021-09-27
+
+- The `--horizons` flag and `horizon` config setting has been replaced with
+  `--auto-sample-conditions` and `autoSampleConditions`. `--horizon` will
+  continue to work for backwards compatibility, but please do update to the new
+  name.
+
+- Copyright notice owner changed from "The Polymer Project Authors" to "Google
+  LLC". Trivial reformatting for `LICENSE` file to match spdx.org version.
+  Source license headers replaced with concise SPDX-style.
+
+- Fix bug where log files would be created with '\' backslash names instead of
+  nested directories.
+
+- Fix bug where `browser.addArguments` JSON config setting did not work for
+  Firefox.
+
+- Add `browser.profile` JSON config setting that sets the browser profile
+  directory. Currently supported in Chrome and Firefox.
+
+- Upgrade dependencies.
+
+## [0.5.9] 2021-04-22
+
+- Fix bug where git URLs like `git@github.com/MyOrg/my-repo.git` were treated as
+  local paths.
+
+- Bump dependencies.
+
+## [0.5.8] 2021-02-16
+
+- Upgrade `systeminformation` dependency with security vulnerability alert.
+
+## [0.5.7] 2021-02-11
+
+- Add `trace` config to capture performance logs from browsers (currently only
+  Chromium based browsers).
+
+## [0.5.6] 2021-02-03
+
+- Fix bug in dependency swapping where local file paths in `git` dependencies
+  would fail to install if they were relative.
+
+- Fix "should be object" exception during result table formatting.
 
 ## [0.5.5] 2020-09-21
 
