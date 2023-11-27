@@ -16,7 +16,7 @@ import {
   ResultStatsWithDifferences,
 } from './stats.js';
 import {BenchmarkSpec, BenchmarkResult} from './types.js';
-import {measurementName} from './measure';
+import {measurementName} from './measure.js';
 
 export const spinner = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'].map(
   (frame) => ansi.format(`[blue]{${frame}}`)
