@@ -36,7 +36,7 @@ export interface Config {
   forceCleanNpmInstall: boolean;
   csvFileStats: string;
   csvFileRaw: string;
-  collate?: boolean;
+  partition?: 'measurement';
 }
 
 export async function makeConfig(opts: Opts): Promise<Config> {
@@ -86,8 +86,8 @@ export async function makeConfig(opts: Opts): Promise<Config> {
     if (opts['window-size'] !== undefined) {
       throw new Error('--window-size cannot be specified when using --config');
     }
-    if (opts['collate'] !== undefined) {
-      throw new Error('--collate cannot be specified when using --config');
+    if (opts['partition'] !== undefined) {
+      throw new Error('--partition cannot be specified when using --config');
     }
     const rawConfigObj = await fsExtra.readJson(opts.config);
     const validatedConfigObj = await parseConfigFile(rawConfigObj, opts.config);
@@ -176,7 +176,7 @@ export function applyDefaults(partial: Partial<Config>): Config {
         : defaults.resolveBareModules,
     root: partial.root !== undefined ? partial.root : defaults.root,
     timeout: partial.timeout !== undefined ? partial.timeout : defaults.timeout,
-    collate: partial.collate !== undefined ? partial.collate : defaults.collate,
+    partition: partial.partition,
   };
 }
 

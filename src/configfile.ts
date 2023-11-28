@@ -63,10 +63,10 @@ export interface ConfigFile {
   horizons?: string[];
 
   /**
-   * Whether to collate result table by measurement (when multiple measurements
-   * are in use)
+   * What to partition the results table by. Use "measurement" when multiple
+   * measurements are in use and you want multiple smaller results tables.
    */
-  collate?: boolean;
+  partition?: string;
 
   /**
    * Benchmarks to run.
@@ -386,6 +386,14 @@ export async function parseConfigFile(
     validated.autoSampleConditions = validated.horizons;
   }
 
+  if (validated.partition !== undefined) {
+    if (validated.partition !== 'measurement') {
+      throw new Error(
+        `The "partition" setting only accepts "measurement" as an option.`
+      );
+    }
+  }
+
   return {
     root,
     sampleSize: validated.sampleSize,
@@ -396,7 +404,7 @@ export async function parseConfigFile(
         : undefined,
     benchmarks,
     resolveBareModules: validated.resolveBareModules,
-    collate: validated.collate,
+    partition: validated.partition,
   };
 }
 

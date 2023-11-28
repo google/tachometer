@@ -33,7 +33,7 @@ import {
   automaticResultTable,
   spinner,
   benchmarkOneLiner,
-  collatedResultTables,
+  partitionResultTableByMeasurement,
 } from './format.js';
 import {Config} from './config.js';
 import * as github from './github.js';
@@ -421,8 +421,10 @@ export class Runner {
     console.log();
     const {fixed, unfixed} = automaticResultTable(withDifferences);
     console.log(horizontalTermResultTable(fixed));
-    if (config.collate) {
-      for (const {unfixed} of collatedResultTables(withDifferences)) {
+    if (config.partition === 'measurement') {
+      for (const {unfixed} of partitionResultTableByMeasurement(
+        withDifferences
+      )) {
         console.log(verticalTermResultTable(unfixed));
       }
     } else {

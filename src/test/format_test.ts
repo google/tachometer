@@ -14,7 +14,7 @@ import {
   automaticResultTable,
   horizontalTermResultTable,
   verticalTermResultTable,
-  collatedResultTables,
+  partitionResultTableByMeasurement,
 } from '../format.js';
 import {fakeResults, testData} from './test_helpers.js';
 
@@ -33,19 +33,19 @@ async function fakeResultTable(configFile: ConfigFile): Promise<string> {
 
 /**
  * Given a config file object, generates fake measurement results, and returns
- * the collated terminal formatted result table that would be printed (minus
- * color etc. formatting).
+ * the partitioned formatted result tables that would be printed (minus color
+ * etc. formatting).
  */
-async function fakeCollatedResultTable(configFile: ConfigFile):
-    Promise<string> {
+async function fakePartitionedResultTablesByMeasurement(
+  configFile: ConfigFile
+): Promise<string> {
   const results = await fakeResults(configFile);
-  return collatedResultTables(results)
-      .map((result) => {
-        return stripAnsi(verticalTermResultTable(result.unfixed));
-      })
-      .join('\n');
+  return partitionResultTableByMeasurement(results)
+    .map((result) => {
+      return stripAnsi(verticalTermResultTable(result.unfixed));
+    })
+    .join('\n');
 }
-
 
 suite('format', () => {
   let prevCwd: string;
@@ -227,7 +227,7 @@ suite('format', () => {
     assert.equal(actual, expected.trim() + '\n');
   });
 
-  test('multiple measurements, collate: false', async () => {
+  test('multiple measurements, partition: undefined', async () => {
     const config: ConfigFile = {
       benchmarks: [
         {
@@ -235,7 +235,7 @@ suite('format', () => {
           url: 'http://foo.com',
           measurement: [
             {name: 'render', mode: 'performance', entryName: 'render'},
-            {name: 'update', mode: 'performance', entryName: 'update'}
+            {name: 'update', mode: 'performance', entryName: 'update'},
           ],
         },
         {
@@ -243,7 +243,7 @@ suite('format', () => {
           url: 'http://bar.com',
           measurement: [
             {name: 'render', mode: 'performance', entryName: 'render'},
-            {name: 'update', mode: 'performance', entryName: 'update'}
+            {name: 'update', mode: 'performance', entryName: 'update'},
           ],
         },
       ],
@@ -283,7 +283,7 @@ suite('format', () => {
     assert.equal(actual, expected.trim() + '\n');
   });
 
-  test('multiple measurements, collate: true', async () => {
+  test('multiple measurements, partition: "measurement"', async () => {
     const config: ConfigFile = {
       benchmarks: [
         {
@@ -291,7 +291,7 @@ suite('format', () => {
           url: 'http://foo.com',
           measurement: [
             {name: 'render', mode: 'performance', entryName: 'render'},
-            {name: 'update', mode: 'performance', entryName: 'update'}
+            {name: 'update', mode: 'performance', entryName: 'update'},
           ],
         },
         {
@@ -299,13 +299,13 @@ suite('format', () => {
           url: 'http://bar.com',
           measurement: [
             {name: 'render', mode: 'performance', entryName: 'render'},
-            {name: 'update', mode: 'performance', entryName: 'update'}
+            {name: 'update', mode: 'performance', entryName: 'update'},
           ],
         },
       ],
     };
 
-    const actual = await fakeCollatedResultTable(config);
+    const actual = await fakePartitionedResultTablesByMeasurement(config);
     const expected = `
 ┌──────────────┬──────────┬───────────────────┬──────────────────┬──────────────────┐
 │ Benchmark    │ Bytes    │          Avg time │  vs foo [render] │  vs bar [render] │

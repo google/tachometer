@@ -48,7 +48,7 @@ suite('config', () => {
         timeout: 7,
         autoSampleConditions: ['0ms', '1ms', '2%', '+3%'],
         resolveBareModules: false,
-        collate: true,
+        partition: 'measurement',
         benchmarks: [
           {
             name: 'remote',
@@ -102,7 +102,7 @@ suite('config', () => {
           relative: [-0.02, 0.02, 0.03],
         },
         resolveBareModules: false,
-        collate: true,
+        partition: 'measurement',
         benchmarks: [
           {
             name: 'remote',
@@ -186,7 +186,7 @@ suite('config', () => {
         timeout: undefined,
         autoSampleConditions: undefined,
         resolveBareModules: undefined,
-        collate: undefined,
+        partition: undefined,
         benchmarks: [
           {
             name: 'http://example.com?foo=bar',
@@ -236,7 +236,7 @@ suite('config', () => {
         sampleSize: undefined,
         timeout: undefined,
         autoSampleConditions: undefined,
-        collate: undefined,
+        partition: undefined,
         resolveBareModules: undefined,
         benchmarks: [
           {
@@ -290,7 +290,7 @@ suite('config', () => {
         timeout: undefined,
         autoSampleConditions: undefined,
         resolveBareModules: undefined,
-        collate: undefined,
+        partition: undefined,
         benchmarks: [
           {
             name: '/mybench/index.html?foo=a',
@@ -370,7 +370,7 @@ suite('config', () => {
         timeout: undefined,
         autoSampleConditions: undefined,
         resolveBareModules: undefined,
-        collate: undefined,
+        partition: undefined,
         benchmarks: [
           {
             name: 'http://example.com',
@@ -446,7 +446,7 @@ suite('config', () => {
         timeout: undefined,
         autoSampleConditions: undefined,
         resolveBareModules: undefined,
-        collate: undefined,
+        partition: undefined,
         benchmarks: [
           {
             name: 'http://example.com?foo=bar',
@@ -496,7 +496,7 @@ suite('config', () => {
         sampleSize: undefined,
         timeout: undefined,
         autoSampleConditions: undefined,
-        collate: undefined,
+        partition: undefined,
         resolveBareModules: undefined,
         benchmarks: [
           {
@@ -583,7 +583,7 @@ suite('config', () => {
         sampleSize: undefined,
         timeout: undefined,
         autoSampleConditions: undefined,
-        collate: undefined,
+        partition: undefined,
         resolveBareModules: undefined,
         benchmarks: [
           {

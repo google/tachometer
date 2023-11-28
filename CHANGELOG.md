@@ -7,8 +7,8 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
-- Add `collate` option for collating results tables by measurement (when
-  multiple measurements are in use).
+- Add `partition: "measurement"` option for collating results tables by
+  measurement (when multiple measurements are in use).
 
 ## [0.7.0] 2022-07-15
 

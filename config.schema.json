@@ -476,16 +476,16 @@
             "minItems": 1,
             "type": "array"
         },
-        "collate": {
-            "description": "Whether to collate result table by measurement (when multiple measurements\nare in use)",
-            "type": "boolean"
-        },
         "horizons": {
             "description": "Deprecated alias for autoSampleConditions.",
             "items": {
                 "type": "string"
             },
             "type": "array"
+        },
+        "partition": {
+            "description": "What to partition the results table by. Use \"measurement\" when multiple\nmeasurements are in use and you want multiple smaller results tables.",
+            "type": "string"
         },
         "resolveBareModules": {
             "description": "Whether to automatically convert ES module imports with bare module\nspecifiers to paths.",

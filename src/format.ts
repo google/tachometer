@@ -103,14 +103,17 @@ export function automaticResultTable(results: ResultStats[]): AutomaticResults {
   return {fixed: fixedTable, unfixed: unfixedTable};
 }
 
-export function collatedResultTables(results: ResultStatsWithDifferences[]) {
+export function partitionResultTableByMeasurement(
+  results: ResultStatsWithDifferences[]
+) {
   const collated: {[index: string]: ResultStatsWithDifferences[]} = {};
   results.forEach((result) => {
     const meas = measurementName(result.result.measurement);
     (collated[meas] || (collated[meas] = [])).push({
       ...result,
       differences: result.differences.filter(
-          (_, i) => measurementName(results[i].result.measurement) === meas)
+        (_, i) => measurementName(results[i].result.measurement) === meas
+      ),
     });
   });
   const tables: AutomaticResults[] = [];
