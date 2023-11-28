@@ -387,9 +387,12 @@ export async function parseConfigFile(
   }
 
   if (validated.partition !== undefined) {
-    if (validated.partition !== 'measurement') {
+    if (
+      validated.partition !== 'measurement' &&
+      validated.partition !== 'none'
+    ) {
       throw new Error(
-        `The "partition" setting only accepts "measurement" as an option.`
+        `The "partition" setting only accepts "measurement" or "none" as an option.`
       );
     }
   }

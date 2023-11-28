@@ -227,7 +227,7 @@ suite('format', () => {
     assert.equal(actual, expected.trim() + '\n');
   });
 
-  test('multiple measurements, partition: undefined', async () => {
+  test('multiple measurements, partition: "none"', async () => {
     const config: ConfigFile = {
       benchmarks: [
         {

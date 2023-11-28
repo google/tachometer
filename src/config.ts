@@ -36,7 +36,7 @@ export interface Config {
   forceCleanNpmInstall: boolean;
   csvFileStats: string;
   csvFileRaw: string;
-  partition?: 'measurement';
+  partition: 'none' | 'measurement';
 }
 
 export async function makeConfig(opts: Opts): Promise<Config> {
@@ -176,7 +176,8 @@ export function applyDefaults(partial: Partial<Config>): Config {
         : defaults.resolveBareModules,
     root: partial.root !== undefined ? partial.root : defaults.root,
     timeout: partial.timeout !== undefined ? partial.timeout : defaults.timeout,
-    partition: partial.partition,
+    partition:
+      partial.partition !== undefined ? partial.partition : defaults.partition,
   };
 }
 
