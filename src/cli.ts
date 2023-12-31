@@ -145,7 +145,7 @@ $ tach http://example.com
   for (const {npmInstalls, mountPoints, specs} of plans) {
     promises.push(
       ...npmInstalls.map((install) =>
-        prepareVersionDirectory(install, config.forceCleanNpmInstall)
+        prepareVersionDirectory(install, config.forceCleanNpmInstall, config.npmrc)
       )
     );
     promises.push(
