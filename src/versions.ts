@@ -326,7 +326,11 @@ export async function prepareVersionDirectory(
     JSON.stringify(packageJson, null, 2)
   );
   if (npmrc) {
-    await fsExtra.copySync(path.resolve(npmrc), path.join(installDir, '.npmrc'), {});
+    await fsExtra.copy(
+      path.resolve(npmrc),
+      path.join(installDir, '.npmrc'),
+      {}
+    );
   }
   await runNpm(['install'], {cwd: installDir});
   await fsExtra.writeFile(path.join(installDir, installSuccessFile), '');
