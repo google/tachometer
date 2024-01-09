@@ -93,6 +93,12 @@ export const optDefs: commandLineUsage.OptionDefinition[] = [
     defaultValue: false,
   },
   {
+    name: 'npmrc',
+    description: `.npmrc file to copy into the test install directory.`,
+    type: String,
+    defaultValue: '',
+  },
+  {
     name: 'browser',
     description:
       'Which browsers to launch in automatic mode, ' +
@@ -253,6 +259,7 @@ export interface Opts {
   'remote-accessible-host': string;
   'window-size': string;
   'force-clean-npm-install': boolean;
+  npmrc?: string;
   'csv-file': string;
   'csv-file-raw': string;
   'json-file': string;

@@ -304,7 +304,8 @@ const installSuccessFile = '__TACHOMETER_INSTALL_SUCCESS__';
  */
 export async function prepareVersionDirectory(
   {installDir, packageJson}: NpmInstall,
-  forceCleanInstall: boolean
+  forceCleanInstall: boolean,
+  npmrc?: string
 ): Promise<void> {
   if (forceCleanInstall) {
     await fsExtra.remove(installDir);
@@ -324,6 +325,13 @@ export async function prepareVersionDirectory(
     path.join(installDir, 'package.json'),
     JSON.stringify(packageJson, null, 2)
   );
+  if (npmrc) {
+    await fsExtra.copy(
+      path.resolve(npmrc),
+      path.join(installDir, '.npmrc'),
+      {}
+    );
+  }
   await runNpm(['install'], {cwd: installDir});
   await fsExtra.writeFile(path.join(installDir, installSuccessFile), '');
 }

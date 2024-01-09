@@ -34,6 +34,7 @@ export interface Config {
   resolveBareModules: boolean;
   remoteAccessibleHost: string;
   forceCleanNpmInstall: boolean;
+  npmrc?: string;
   csvFileStats: string;
   csvFileRaw: string;
 }
@@ -49,6 +50,7 @@ export async function makeConfig(opts: Opts): Promise<Config> {
     csvFileStats: opts['csv-file'],
     csvFileRaw: opts['csv-file-raw'],
     forceCleanNpmInstall: opts['force-clean-npm-install'],
+    npmrc: opts['npmrc'],
     githubCheck: opts['github-check']
       ? parseGithubCheckFlag(opts['github-check'])
       : undefined,
@@ -149,6 +151,7 @@ export function applyDefaults(partial: Partial<Config>): Config {
       partial.forceCleanNpmInstall !== undefined
         ? partial.forceCleanNpmInstall
         : defaults.forceCleanNpmInstall,
+    npmrc: partial.npmrc !== undefined ? partial.npmrc : '',
     githubCheck: partial.githubCheck,
     autoSampleConditions:
       partial.autoSampleConditions !== undefined
