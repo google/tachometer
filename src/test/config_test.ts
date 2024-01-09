@@ -33,7 +33,7 @@ suite('makeConfig', function () {
     const argv = ['random-global.html'];
     const expected: Config = {
       mode: 'automatic',
-      npmrc: "",
+      npmrc: '',
       sampleSize: 50,
       timeout: 3,
       root: '.',
@@ -78,7 +78,7 @@ suite('makeConfig', function () {
     const argv = ['--config=random-global.json'];
     const expected: Config = {
       mode: 'automatic',
-      npmrc: "",
+      npmrc: '',
       sampleSize: 50,
       timeout: 3,
       root: testData,
@@ -124,7 +124,7 @@ suite('makeConfig', function () {
     const argv = ['--config=random-global.json', '--manual'];
     const expected: Config = {
       mode: 'manual',
-      npmrc: "",
+      npmrc: '',
       sampleSize: 50,
       timeout: 3,
       root: testData,
@@ -175,7 +175,7 @@ suite('makeConfig', function () {
     ];
     const expected: Config = {
       mode: 'automatic',
-      npmrc: "",
+      npmrc: '',
       csvFileStats: 'stats.csv',
       csvFileRaw: 'raw.csv',
       jsonFile: 'out.json',
@@ -222,7 +222,7 @@ suite('makeConfig', function () {
     const argv = ['--config=deprecated-horizons.json'];
     const expected: Config = {
       mode: 'automatic',
-      npmrc: "",
+      npmrc: '',
       csvFileStats: '',
       csvFileRaw: '',
       jsonFile: '',
