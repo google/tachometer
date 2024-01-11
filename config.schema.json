@@ -483,6 +483,10 @@
             },
             "type": "array"
         },
+        "partition": {
+            "description": "What to partition the results table by. Use \"measurement\" when multiple\nmeasurements are in use and you want multiple smaller results tables.",
+            "type": "string"
+        },
         "resolveBareModules": {
             "description": "Whether to automatically convert ES module imports with bare module\nspecifiers to paths.",
             "type": "boolean"

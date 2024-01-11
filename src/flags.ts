@@ -235,6 +235,14 @@ export const optDefs: commandLineUsage.OptionDefinition[] = [
     type: String,
     defaultValue: defaults.traceCategories.join(','),
   },
+  {
+    name: 'partition',
+    description:
+      `What to partition the results table by. Use "measurement" ` +
+      `when multiple measurements are in use and you want multiple ` +
+      `smaller results tables.`,
+    type: String,
+  },
 ];
 
 export interface Opts {
@@ -266,6 +274,7 @@ export interface Opts {
   trace: boolean;
   'trace-log-dir': string;
   'trace-cat': string;
+  partition: string;
 
   // Extra arguments not associated with a flag are put here. These are our
   // benchmark names/URLs.
