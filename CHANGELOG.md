@@ -7,6 +7,10 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 <!-- ## Unreleased -->
 
+## [0.7.1] 2024-07-18
+
+- Update jsonwebtoken dependency.
+
 ## [0.7.0] 2022-07-15
 
 - [**BREAKING**] Tachometer is now an ES module binary, so it requires Node 12
