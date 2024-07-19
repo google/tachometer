@@ -63,6 +63,12 @@ export interface ConfigFile {
   horizons?: string[];
 
   /**
+   * What to partition the results table by. Use "measurement" when multiple
+   * measurements are in use and you want multiple smaller results tables.
+   */
+  partition?: string;
+
+  /**
    * Benchmarks to run.
    * @TJS-minItems 1
    */
@@ -380,6 +386,17 @@ export async function parseConfigFile(
     validated.autoSampleConditions = validated.horizons;
   }
 
+  if (validated.partition !== undefined) {
+    if (
+      validated.partition !== 'measurement' &&
+      validated.partition !== 'none'
+    ) {
+      throw new Error(
+        `The "partition" setting only accepts "measurement" or "none" as an option.`
+      );
+    }
+  }
+
   return {
     root,
     sampleSize: validated.sampleSize,
@@ -390,6 +407,7 @@ export async function parseConfigFile(
         : undefined,
     benchmarks,
     resolveBareModules: validated.resolveBareModules,
+    partition: validated.partition,
   };
 }
 

@@ -46,6 +46,7 @@ suite('makeConfig', function () {
       csvFileStats: '',
       csvFileRaw: '',
       githubCheck: undefined,
+      partition: 'none',
       benchmarks: [
         {
           browser: {
@@ -92,6 +93,7 @@ suite('makeConfig', function () {
       csvFileRaw: '',
       // TODO(aomarks) Be consistent about undefined vs unset.
       githubCheck: undefined,
+      partition: 'none',
       benchmarks: [
         {
           browser: {
@@ -137,6 +139,7 @@ suite('makeConfig', function () {
       csvFileStats: '',
       csvFileRaw: '',
       githubCheck: undefined,
+      partition: 'none',
       benchmarks: [
         {
           browser: {
@@ -190,6 +193,7 @@ suite('makeConfig', function () {
       remoteAccessibleHost: '',
       // TODO(aomarks) Be consistent about undefined vs unset.
       githubCheck: undefined,
+      partition: 'none',
       benchmarks: [
         {
           browser: {
@@ -224,6 +228,7 @@ suite('makeConfig', function () {
       mode: 'automatic',
       npmrc: '',
       csvFileStats: '',
+      partition: 'none',
       csvFileRaw: '',
       jsonFile: '',
       legacyJsonFile: '',

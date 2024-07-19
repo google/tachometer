@@ -16,6 +16,7 @@ import {
   ResultStatsWithDifferences,
 } from './stats.js';
 import {BenchmarkSpec, BenchmarkResult} from './types.js';
+import {measurementName} from './measure.js';
 
 export const spinner = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'].map(
   (frame) => ansi.format(`[blue]{${frame}}`)
@@ -100,6 +101,26 @@ export function automaticResultTable(results: ResultStats[]): AutomaticResults {
   const fixedTable = {dimensions: fixed, results: [results[0]]};
   const unfixedTable = {dimensions: unfixed, results};
   return {fixed: fixedTable, unfixed: unfixedTable};
+}
+
+export function partitionResultTableByMeasurement(
+  results: ResultStatsWithDifferences[]
+) {
+  const collated: {[index: string]: ResultStatsWithDifferences[]} = {};
+  results.forEach((result) => {
+    const meas = measurementName(result.result.measurement);
+    (collated[meas] || (collated[meas] = [])).push({
+      ...result,
+      differences: result.differences.filter(
+        (_, i) => measurementName(results[i].result.measurement) === meas
+      ),
+    });
+  });
+  const tables: AutomaticResults[] = [];
+  for (const results of Object.values(collated)) {
+    tables.push(automaticResultTable(results));
+  }
+  return tables;
 }
 
 /**
