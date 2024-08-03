@@ -87,6 +87,7 @@ export interface CallbackMeasurement extends MeasurementBase {
 export interface PerformanceEntryMeasurement extends MeasurementBase {
   mode: 'performance';
   entryName: string;
+  entryType?: 'mark' | 'measure' | 'paint';
 }
 
 export interface ExpressionMeasurement extends MeasurementBase {

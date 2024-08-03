@@ -70,7 +70,12 @@ async function queryForPerformanceEntry(
 ): Promise<number | undefined> {
   const escaped = escapeStringLiteral(measurement.entryName);
   const script = `return window.performance.getEntriesByName(\`${escaped}\`);`;
-  const entries = (await driver.executeScript(script)) as PerformanceEntry[];
+  let entries = (await driver.executeScript(script)) as PerformanceEntry[];
+  if (typeof measurement.entryType === 'string') {
+    entries = entries.filter(
+      (entry) => entry.entryType === measurement.entryType
+    );
+  }
   if (entries.length === 0) {
     return undefined;
   }

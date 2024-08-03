@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<!--
+This test benchmark sets a performance API measurement after a delay.
+-->
+<html>
+  <head>
+    <title>performance measure test with specific entryType</title>
+  </head>
+  <body>
+    <script>
+      const params = new URL(document.location).searchParams;
+      const wait = Number(params.get('wait'));
+      const start = performance.mark('foo');
+      setTimeout(() => {
+        performance.measure('foo', 'foo');
+      }, wait);
+    </script>
+  </body>
+</html>

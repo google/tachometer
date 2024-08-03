@@ -252,6 +252,21 @@ The following performance entry types are supported:
   Retrieve the `startTime` of a built-in paint measurement (e.g.
   `first-contentful-paint`).
 
+If you have multiple entries with the same name (for example, a `mark` and `measure` both named `foo`),
+then you can specify a particular `entryType` to narrow it down:
+
+```json
+"benchmarks": [
+  {
+    "measurement": {
+      "mode": "performance",
+      "entryName": "foo",
+      "entryType": "measure"
+    }
+  }
+]
+```
+
 #### Callback
 
 By default with local (non-URL) benchmarks, or when the `--measure` flag is set
