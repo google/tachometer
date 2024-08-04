@@ -1,3 +1,8 @@
+/**
+ * @license
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: BSD-3-Clause
+ */
 import {Middleware} from 'koa';
 
 // Enable cross-origin isolation for more precise timers:

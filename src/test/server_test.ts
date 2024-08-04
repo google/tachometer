@@ -17,20 +17,25 @@ import {testData} from './test_helpers.js';
 suite('server', () => {
   let server: Server;
 
+  const defaultOptions = {
+    host: 'localhost',
+    ports: [0], // random
+    root: testData,
+    resolveBareModules: true,
+    npmInstalls: [],
+    mountPoints: [
+      {
+        diskPath: testData,
+        urlPath: '/',
+      },
+    ],
+    cache: true,
+    crossOriginIsolated: false,
+  };
+
   setup(async () => {
     server = await Server.start({
-      host: 'localhost',
-      ports: [0], // random
-      root: testData,
-      resolveBareModules: true,
-      npmInstalls: [],
-      mountPoints: [
-        {
-          diskPath: testData,
-          urlPath: '/',
-        },
-      ],
-      cache: true,
+      ...defaultOptions,
     });
   });
 
@@ -88,18 +93,8 @@ suite('server', () => {
       await server.close();
 
       server = await Server.start({
-        host: 'localhost',
-        ports: [0], // random
-        root: testData,
-        resolveBareModules: true,
+        ...defaultOptions,
         npmInstalls: [{installDir, packageJson}],
-        mountPoints: [
-          {
-            diskPath: testData,
-            urlPath: '/',
-          },
-        ],
-        cache: true,
       });
     });
 
@@ -138,13 +133,35 @@ suite('server', () => {
     assert.equal(session.bytesSent, 0);
   });
 
-  test('enables cross-origin isolation', async () => {
+  test('cross-origin isolation is disabled by default', async () => {
     const res = await fetch(`${server.url}/import-bare-module.html`);
 
-    assert.equal(res.headers.get('Cross-Origin-Opener-Policy'), 'same-origin');
-    assert.equal(
-      res.headers.get('Cross-Origin-Embedder-Policy'),
-      'require-corp'
-    );
+    assert.equal(res.headers.get('Cross-Origin-Opener-Policy'), null);
+    assert.equal(res.headers.get('Cross-Origin-Embedder-Policy'), null);
+  });
+
+  suite('cross origin isolation enabled', async () => {
+    setup(async () => {
+      // Close the base server and replace it with a custom server that is
+      // configured with crossOriginIsolated=true
+      await server.close();
+      server = await Server.start({
+        ...defaultOptions,
+        crossOriginIsolated: true,
+      });
+    });
+
+    test('cross-origin isolation can be enabled', async () => {
+      const res = await fetch(`${server.url}/import-bare-module.html`);
+
+      assert.equal(
+        res.headers.get('Cross-Origin-Opener-Policy'),
+        'same-origin'
+      );
+      assert.equal(
+        res.headers.get('Cross-Origin-Embedder-Policy'),
+        'require-corp'
+      );
+    });
   });
 });

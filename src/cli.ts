@@ -162,6 +162,7 @@ $ tach http://example.com
           mountPoints,
           resolveBareModules: config.resolveBareModules,
           cache: config.mode !== 'manual',
+          crossOriginIsolated: config.crossOriginIsolated,
         });
         for (const spec of specs) {
           servers.set(spec, server);

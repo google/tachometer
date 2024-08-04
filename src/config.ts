@@ -37,6 +37,7 @@ export interface Config {
   npmrc?: string;
   csvFileStats: string;
   csvFileRaw: string;
+  crossOriginIsolated: boolean;
 }
 
 export async function makeConfig(opts: Opts): Promise<Config> {
@@ -55,6 +56,7 @@ export async function makeConfig(opts: Opts): Promise<Config> {
       ? parseGithubCheckFlag(opts['github-check'])
       : undefined,
     remoteAccessibleHost: opts['remote-accessible-host'],
+    crossOriginIsolated: opts['cross-origin-isolated'],
   };
 
   let config: Config;
@@ -175,6 +177,10 @@ export function applyDefaults(partial: Partial<Config>): Config {
         : defaults.resolveBareModules,
     root: partial.root !== undefined ? partial.root : defaults.root,
     timeout: partial.timeout !== undefined ? partial.timeout : defaults.timeout,
+    crossOriginIsolated:
+      partial.crossOriginIsolated !== undefined
+        ? partial.crossOriginIsolated
+        : defaults.crossOriginIsolated,
   };
 }
 
