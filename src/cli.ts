@@ -9,23 +9,26 @@ sourceMapSupport.install();
 
 import * as path from 'path';
 import ansi from 'ansi-escape-sequences';
-import * as semver from 'semver';
+import semver from 'semver';
 
 import commandLineUsage from 'command-line-usage';
 
-import {optDefs, parseFlags} from './flags';
-import {BenchmarkSpec} from './types';
-import {makeConfig} from './config';
-import {Server} from './server';
-import {ResultStatsWithDifferences} from './stats';
+import {optDefs, parseFlags} from './flags.js';
+import {BenchmarkSpec} from './types.js';
+import {makeConfig} from './config.js';
+import {Server} from './server.js';
+import {ResultStatsWithDifferences} from './stats.js';
 import {
   prepareVersionDirectory,
   makeServerPlans,
   installGitDependency,
-} from './versions';
-import {manualMode} from './manual';
-import {Runner} from './runner';
-import {runNpm} from './util';
+} from './versions.js';
+import {manualMode} from './manual.js';
+import {Runner} from './runner.js';
+import {runNpm} from './util.js';
+
+import {createRequire} from 'module';
+const require = createRequire(import.meta.url);
 
 const installedVersion = (): string =>
   // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -142,7 +145,11 @@ $ tach http://example.com
   for (const {npmInstalls, mountPoints, specs} of plans) {
     promises.push(
       ...npmInstalls.map((install) =>
-        prepareVersionDirectory(install, config.forceCleanNpmInstall)
+        prepareVersionDirectory(
+          install,
+          config.forceCleanNpmInstall,
+          config.npmrc
+        )
       )
     );
     promises.push(

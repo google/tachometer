@@ -7,10 +7,10 @@
 import {assert} from 'chai';
 import {suite, suiteSetup, suiteTeardown, test} from 'mocha';
 
-import {Config, makeConfig, parseAutoSampleConditions} from '../config';
-import {parseFlags} from '../flags';
+import {Config, makeConfig, parseAutoSampleConditions} from '../config.js';
+import {parseFlags} from '../flags.js';
 
-import {testData} from './test_helpers';
+import {testData} from './test_helpers.js';
 
 suite('makeConfig', function () {
   let prevCwd: string;
@@ -33,6 +33,7 @@ suite('makeConfig', function () {
     const argv = ['random-global.html'];
     const expected: Config = {
       mode: 'automatic',
+      npmrc: '',
       sampleSize: 50,
       timeout: 3,
       root: '.',
@@ -77,9 +78,10 @@ suite('makeConfig', function () {
     const argv = ['--config=random-global.json'];
     const expected: Config = {
       mode: 'automatic',
+      npmrc: '',
       sampleSize: 50,
       timeout: 3,
-      root: '.',
+      root: testData,
       resolveBareModules: true,
       forceCleanNpmInstall: false,
       autoSampleConditions: {absolute: [], relative: [0]},
@@ -122,10 +124,10 @@ suite('makeConfig', function () {
     const argv = ['--config=random-global.json', '--manual'];
     const expected: Config = {
       mode: 'manual',
-
+      npmrc: '',
       sampleSize: 50,
       timeout: 3,
-      root: '.',
+      root: testData,
       resolveBareModules: true,
       forceCleanNpmInstall: false,
       autoSampleConditions: {absolute: [], relative: [0]},
@@ -173,6 +175,7 @@ suite('makeConfig', function () {
     ];
     const expected: Config = {
       mode: 'automatic',
+      npmrc: '',
       csvFileStats: 'stats.csv',
       csvFileRaw: 'raw.csv',
       jsonFile: 'out.json',
@@ -181,7 +184,7 @@ suite('makeConfig', function () {
 
       sampleSize: 50,
       timeout: 3,
-      root: '.',
+      root: testData,
       resolveBareModules: true,
       autoSampleConditions: {absolute: [], relative: [0]},
       remoteAccessibleHost: '',
@@ -219,6 +222,7 @@ suite('makeConfig', function () {
     const argv = ['--config=deprecated-horizons.json'];
     const expected: Config = {
       mode: 'automatic',
+      npmrc: '',
       csvFileStats: '',
       csvFileRaw: '',
       jsonFile: '',
@@ -227,7 +231,7 @@ suite('makeConfig', function () {
 
       sampleSize: 50,
       timeout: 3,
-      root: '.',
+      root: testData,
       resolveBareModules: true,
       autoSampleConditions: {absolute: [], relative: [-0.1, 0, 0.1]},
       remoteAccessibleHost: '',

@@ -9,14 +9,17 @@ import chaiAsPromised from 'chai-as-promised';
 import {suite, suiteSetup, suiteTeardown, test} from 'mocha';
 import * as path from 'path';
 
-import * as defaults from '../defaults';
-import {optDefs, Opts} from '../flags';
-import {specsFromOpts} from '../specs';
-import {BenchmarkSpec} from '../types';
+import * as defaults from '../defaults.js';
+import {optDefs, Opts} from '../flags.js';
+import {specsFromOpts} from '../specs.js';
+import {BenchmarkSpec} from '../types.js';
 
-import {testData} from './test_helpers';
+import {testData} from './test_helpers.js';
 
-import commandLineArgs = require('command-line-args');
+import commandLineArgs from 'command-line-args';
+
+import * as url from 'url';
+const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
 chai.use(chaiAsPromised);
 const {assert} = chai;

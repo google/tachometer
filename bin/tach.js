@@ -6,5 +6,5 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-require('../lib/cli.js').main(process.argv);
+import {main} from '../lib/cli.js';
+main(process.argv);

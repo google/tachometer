@@ -4,23 +4,27 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-import * as fsExtra from 'fs-extra';
+import fsExtra from 'fs-extra';
 import * as webdriver from 'selenium-webdriver';
 
-import ProgressBar = require('progress');
-import ansi = require('ansi-escape-sequences');
+import ProgressBar from 'progress';
+import ansi from 'ansi-escape-sequences';
 
-import {jsonOutput, legacyJsonOutput} from './json-output';
-import {browserSignature, makeDriver, openAndSwitchToNewTab} from './browser';
-import {measure, measurementName} from './measure';
-import {BenchmarkResult, BenchmarkSpec} from './types';
-import {formatCsvStats, formatCsvRaw} from './csv';
+import {jsonOutput, legacyJsonOutput} from './json-output.js';
+import {
+  browserSignature,
+  makeDriver,
+  openAndSwitchToNewTab,
+} from './browser.js';
+import {measure, measurementName} from './measure.js';
+import {BenchmarkResult, BenchmarkSpec} from './types.js';
+import {formatCsvStats, formatCsvRaw} from './csv.js';
 import {
   ResultStatsWithDifferences,
   autoSampleConditionsResolved,
   summaryStats,
   computeDifferences,
-} from './stats';
+} from './stats.js';
 import {
   verticalTermResultTable,
   horizontalTermResultTable,
@@ -29,12 +33,12 @@ import {
   automaticResultTable,
   spinner,
   benchmarkOneLiner,
-} from './format';
-import {Config} from './config';
-import * as github from './github';
-import {Server, Session} from './server';
-import {specUrl} from './specs';
-import {wait} from './util';
+} from './format.js';
+import {Config} from './config.js';
+import * as github from './github.js';
+import {Server, Session} from './server.js';
+import {specUrl} from './specs.js';
+import {wait} from './util.js';
 import * as pathlib from 'path';
 
 interface Browser {

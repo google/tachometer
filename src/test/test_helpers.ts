@@ -6,13 +6,16 @@
 
 import * as path from 'path';
 
-import {applyDefaults} from '../config';
-import {ConfigFile, parseConfigFile} from '../configfile';
+import {applyDefaults} from '../config.js';
+import {ConfigFile, parseConfigFile} from '../configfile.js';
 import {
   computeDifferences,
   ResultStatsWithDifferences,
   summaryStats,
-} from '../stats';
+} from '../stats.js';
+
+import * as url from 'url';
+const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
 /**
  * Absolute location on disk of our test data directory.
@@ -45,7 +48,9 @@ const userAgents = new Map([
 export async function fakeResults(
   configFile: ConfigFile
 ): Promise<ResultStatsWithDifferences[]> {
-  const config = applyDefaults(await parseConfigFile(configFile));
+  const config = applyDefaults(
+    await parseConfigFile(configFile, 'tachometer.json')
+  );
   const results = [];
   for (let i = 0; i < config.benchmarks.length; i++) {
     const {name, url, browser, measurement} = config.benchmarks[i];

@@ -7,9 +7,9 @@
 import {assert} from 'chai';
 import {suite, test} from 'mocha';
 
-import {ConfigFile} from '../configfile';
-import {formatCsvRaw, formatCsvStats} from '../csv';
-import {fakeResults} from './test_helpers';
+import {ConfigFile} from '../configfile.js';
+import {formatCsvRaw, formatCsvStats} from '../csv.js';
+import {fakeResults} from './test_helpers.js';
 
 /**
  * It's hard to visually verify raw CSV output, so this lets us align the

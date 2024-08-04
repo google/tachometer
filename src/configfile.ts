@@ -4,27 +4,29 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-import * as fsExtra from 'fs-extra';
+import fsExtra from 'fs-extra';
 import * as jsonschema from 'jsonschema';
 import * as path from 'path';
 import sanitizeFileName from 'sanitize-filename';
+import {createRequire} from 'module';
+const require = createRequire(import.meta.url);
 
 import {
   BrowserConfig,
   BrowserName,
   parseBrowserConfigString,
   validateBrowserConfig,
-} from './browser';
-import {Config, parseAutoSampleConditions, urlFromLocalPath} from './config';
-import * as defaults from './defaults';
-import {makeUniqueSpecLabelFn} from './format';
+} from './browser.js';
+import {Config, parseAutoSampleConditions, urlFromLocalPath} from './config.js';
+import * as defaults from './defaults.js';
+import {makeUniqueSpecLabelFn} from './format.js';
 import {
   BenchmarkSpec,
   ExtendedPackageDependencyMap,
   Measurement,
   measurements,
-} from './types';
-import {isHttpUrl} from './util';
+} from './types.js';
+import {isHttpUrl} from './util.js';
 
 /**
  * Expected format of the top-level JSON config file. Note this interface is
@@ -329,7 +331,8 @@ interface ConfigFilePackageVersion {
  * a fully specified configuration.
  */
 export async function parseConfigFile(
-  parsedJson: unknown
+  parsedJson: unknown,
+  configFilePath: string
 ): Promise<Partial<Config>> {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const schema = require('../config.schema.json');
@@ -340,11 +343,16 @@ export async function parseConfigFile(
     );
   }
   const validated = parsedJson as ConfigFile;
-  const root = validated.root || '.';
+  const root = path.resolve(
+    path.dirname(configFilePath),
+    validated.root || '.'
+  );
   const benchmarks: BenchmarkSpec[] = [];
   for (const benchmark of validated.benchmarks) {
     for (const expanded of applyExpansions(benchmark)) {
-      benchmarks.push(applyDefaults(await parseBenchmark(expanded, root)));
+      benchmarks.push(
+        applyDefaults(await parseBenchmark(expanded, root, configFilePath))
+      );
     }
   }
 
@@ -404,7 +412,8 @@ function customizeJsonSchemaError(error: jsonschema.ValidationError): string {
 
 async function parseBenchmark(
   benchmark: ConfigFileBenchmark,
-  root: string
+  root: string,
+  configFilePath: string
 ): Promise<Partial<BenchmarkSpec>> {
   const spec: Partial<BenchmarkSpec> = {};
 
@@ -473,10 +482,12 @@ async function parseBenchmark(
         urlPath = url;
         queryString = '';
       }
-
       spec.url = {
         kind: 'local',
-        urlPath: await urlFromLocalPath(root, urlPath),
+        urlPath: await urlFromLocalPath(
+          root,
+          path.resolve(path.dirname(configFilePath), urlPath)
+        ),
         queryString,
       };
 

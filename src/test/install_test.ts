@@ -13,7 +13,7 @@ import * as path from 'path';
 import {
   assertResolvable,
   onDemandDependenciesFromPackageJSON,
-} from '../install';
+} from '../install.js';
 
 suite('install', () => {
   suite('onDemandDependenciesFromPackageJSON', () => {

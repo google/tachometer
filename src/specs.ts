@@ -11,20 +11,20 @@ import {
   TraceConfig,
   validateBrowserConfig,
   WindowSize,
-} from './browser';
-import {Config, urlFromLocalPath} from './config';
-import * as defaults from './defaults';
-import {Opts} from './flags';
-import {Server} from './server';
+} from './browser.js';
+import {Config, urlFromLocalPath} from './config.js';
+import * as defaults from './defaults.js';
+import {Opts} from './flags.js';
+import {Server} from './server.js';
 import {
   BenchmarkSpec,
   LocalUrl,
   Measurement,
   PackageVersion,
   RemoteUrl,
-} from './types';
-import {isHttpUrl, throwUnreachable} from './util';
-import {parsePackageVersions} from './versions';
+} from './types.js';
+import {isHttpUrl, throwUnreachable} from './util.js';
+import {parsePackageVersions} from './versions.js';
 
 /**
  * Derive the set of benchmark specifications we should run according to the

@@ -11,8 +11,8 @@ import {
   BrowserName,
   parseBrowserConfigString,
   validateBrowserConfig,
-} from '../browser';
-import * as defaults from '../defaults';
+} from '../browser.js';
+import * as defaults from '../defaults.js';
 
 suite('browser', () => {
   suite('parseBrowserConfigString', () => {

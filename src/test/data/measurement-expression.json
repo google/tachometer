@@ -2,10 +2,11 @@
   "$schema": "https://raw.githubusercontent.com/Polymer/tachometer/master/config.schema.json",
   "sampleSize": 10,
   "timeout": 0,
+  "root": "..",
   "benchmarks": [
     {
       "name": "one-plus-one",
-      "url": "src/test/data/for-loop.html",
+      "url": "for-loop.html",
       "measurement": "global",
       "measurementExpression": "1+1",
       "browser": {
@@ -15,7 +16,7 @@
     },
     {
       "name": "two-plus-two",
-      "url": "src/test/data/for-loop.html",
+      "url": "for-loop.html",
       "measurement": "global",
       "measurementExpression": "2+2",
       "browser": {

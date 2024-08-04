@@ -1,8 +1,8 @@
 {
   "extends": "./tsconfig-base.json",
   "compilerOptions": {
-    "module": "commonjs",
-    "outDir": "./lib"
+    "outDir": "./lib",
+    "typeRoots": ["./src/types"]
   },
   "include": ["src/**/*.ts"]
 }

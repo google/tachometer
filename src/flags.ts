@@ -7,12 +7,12 @@
 import * as os from 'os';
 import * as path from 'path';
 
-import {supportedBrowsers} from './browser';
-import * as defaults from './defaults';
-import {CommandLineMeasurements, measurements} from './types';
+import {supportedBrowsers} from './browser.js';
+import * as defaults from './defaults.js';
+import {CommandLineMeasurements, measurements} from './types.js';
 
-import commandLineArgs = require('command-line-args');
-import commandLineUsage = require('command-line-usage');
+import commandLineArgs from 'command-line-args';
+import commandLineUsage from 'command-line-usage';
 
 export const defaultInstallDir = path.join(
   os.tmpdir(),
@@ -91,6 +91,12 @@ export const optDefs: commandLineUsage.OptionDefinition[] = [
       `will be re-used as long as the dependency versions haven't changed.`,
     type: Boolean,
     defaultValue: false,
+  },
+  {
+    name: 'npmrc',
+    description: `.npmrc file to copy into the test install directory.`,
+    type: String,
+    defaultValue: '',
   },
   {
     name: 'browser',
@@ -253,6 +259,7 @@ export interface Opts {
   'remote-accessible-host': string;
   'window-size': string;
   'force-clean-npm-install': boolean;
+  npmrc?: string;
   'csv-file': string;
   'csv-file-raw': string;
   'json-file': string;

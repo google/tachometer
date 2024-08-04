@@ -4,18 +4,18 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-import * as fsExtra from 'fs-extra';
+import fsExtra from 'fs-extra';
 import * as path from 'path';
 
-import {fcpBrowsers} from './browser';
-import {parseConfigFile, writeBackSchemaIfNeeded} from './configfile';
-import * as defaults from './defaults';
-import {Opts} from './flags';
-import {CheckConfig, parseGithubCheckFlag} from './github';
-import {specsFromOpts} from './specs';
-import {AutoSampleConditions} from './stats';
-import {BenchmarkSpec} from './types';
-import {fileKind} from './util';
+import {fcpBrowsers} from './browser.js';
+import {parseConfigFile, writeBackSchemaIfNeeded} from './configfile.js';
+import * as defaults from './defaults.js';
+import {Opts} from './flags.js';
+import {CheckConfig, parseGithubCheckFlag} from './github.js';
+import {specsFromOpts} from './specs.js';
+import {AutoSampleConditions} from './stats.js';
+import {BenchmarkSpec} from './types.js';
+import {fileKind} from './util.js';
 
 /**
  * Validated and fully specified configuration.
@@ -34,6 +34,7 @@ export interface Config {
   resolveBareModules: boolean;
   remoteAccessibleHost: string;
   forceCleanNpmInstall: boolean;
+  npmrc?: string;
   csvFileStats: string;
   csvFileRaw: string;
 }
@@ -49,6 +50,7 @@ export async function makeConfig(opts: Opts): Promise<Config> {
     csvFileStats: opts['csv-file'],
     csvFileRaw: opts['csv-file-raw'],
     forceCleanNpmInstall: opts['force-clean-npm-install'],
+    npmrc: opts['npmrc'],
     githubCheck: opts['github-check']
       ? parseGithubCheckFlag(opts['github-check'])
       : undefined,
@@ -86,7 +88,7 @@ export async function makeConfig(opts: Opts): Promise<Config> {
       throw new Error('--window-size cannot be specified when using --config');
     }
     const rawConfigObj = await fsExtra.readJson(opts.config);
-    const validatedConfigObj = await parseConfigFile(rawConfigObj);
+    const validatedConfigObj = await parseConfigFile(rawConfigObj, opts.config);
 
     await writeBackSchemaIfNeeded(rawConfigObj, opts.config);
 
@@ -149,6 +151,7 @@ export function applyDefaults(partial: Partial<Config>): Config {
       partial.forceCleanNpmInstall !== undefined
         ? partial.forceCleanNpmInstall
         : defaults.forceCleanNpmInstall,
+    npmrc: partial.npmrc !== undefined ? partial.npmrc : '',
     githubCheck: partial.githubCheck,
     autoSampleConditions:
       partial.autoSampleConditions !== undefined

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-import {BrowserConfig} from './browser';
+import {BrowserConfig} from './browser.js';
 
 export class Deferred<T> {
   readonly promise: Promise<T>;

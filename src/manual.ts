@@ -4,12 +4,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-import ansi = require('ansi-escape-sequences');
-
-import {Server} from './server';
-import {Config} from './config';
-import {specUrl} from './specs';
-import {BenchmarkSpec} from './types';
+import ansi from 'ansi-escape-sequences';
+import {Server} from './server.js';
+import {Config} from './config.js';
+import {specUrl} from './specs.js';
+import {BenchmarkSpec} from './types.js';
 
 /**
  * Let the user run benchmarks manually. This process will not exit until

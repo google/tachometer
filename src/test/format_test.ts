@@ -7,15 +7,15 @@
 import {assert} from 'chai';
 import {suite, suiteSetup, suiteTeardown, test} from 'mocha';
 import * as path from 'path';
-import stripAnsi = require('strip-ansi');
+import stripAnsi from 'strip-ansi';
 
-import {ConfigFile} from '../configfile';
+import {ConfigFile} from '../configfile.js';
 import {
   automaticResultTable,
   horizontalTermResultTable,
   verticalTermResultTable,
-} from '../format';
-import {fakeResults, testData} from './test_helpers';
+} from '../format.js';
+import {fakeResults, testData} from './test_helpers.js';
 
 /**
  * Given a config file object, generates fake measurement results, and returns

@@ -5,14 +5,14 @@
  */
 
 import {assert} from 'chai';
-import {readJSONSync} from 'fs-extra';
+import fsExtra from 'fs-extra';
 import {setup, suite, teardown, test} from 'mocha';
 import fetch from 'node-fetch';
 import * as path from 'path';
 
-import {Server} from '../server';
+import {Server} from '../server.js';
 
-import {testData} from './test_helpers';
+import {testData} from './test_helpers.js';
 
 suite('server', () => {
   let server: Server;
@@ -79,7 +79,9 @@ suite('server', () => {
   suite('bare modules with custom npm installs', async () => {
     setup(async () => {
       const installDir = path.join(testData, 'alt_npm_install_dir');
-      const packageJson = readJSONSync(path.join(installDir, 'package.json'));
+      const packageJson = fsExtra.readJSONSync(
+        path.join(installDir, 'package.json')
+      );
 
       // Close the base server and replace it with a custom server that is
       // configured with a custom npm install directory
