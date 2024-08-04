@@ -235,6 +235,11 @@ export const optDefs: commandLineUsage.OptionDefinition[] = [
     type: String,
     defaultValue: defaults.traceCategories.join(','),
   },
+  {
+    name: 'cross-origin-isolated',
+    description: 'Add HTTP headers to enable cross-origin isolation',
+    type: Boolean,
+  },
 ];
 
 export interface Opts {
