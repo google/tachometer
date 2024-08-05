@@ -376,6 +376,14 @@
                 "entryName": {
                     "type": "string"
                 },
+                "entryType": {
+                    "enum": [
+                        "mark",
+                        "measure",
+                        "paint"
+                    ],
+                    "type": "string"
+                },
                 "mode": {
                     "enum": [
                         "performance"
