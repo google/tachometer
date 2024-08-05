@@ -46,6 +46,7 @@ suite('makeConfig', function () {
       csvFileStats: '',
       csvFileRaw: '',
       githubCheck: undefined,
+      crossOriginIsolated: false,
       benchmarks: [
         {
           browser: {
@@ -92,6 +93,7 @@ suite('makeConfig', function () {
       csvFileRaw: '',
       // TODO(aomarks) Be consistent about undefined vs unset.
       githubCheck: undefined,
+      crossOriginIsolated: false,
       benchmarks: [
         {
           browser: {
@@ -137,6 +139,7 @@ suite('makeConfig', function () {
       csvFileStats: '',
       csvFileRaw: '',
       githubCheck: undefined,
+      crossOriginIsolated: false,
       benchmarks: [
         {
           browser: {
@@ -190,6 +193,7 @@ suite('makeConfig', function () {
       remoteAccessibleHost: '',
       // TODO(aomarks) Be consistent about undefined vs unset.
       githubCheck: undefined,
+      crossOriginIsolated: false,
       benchmarks: [
         {
           browser: {
@@ -237,6 +241,7 @@ suite('makeConfig', function () {
       remoteAccessibleHost: '',
       // TODO(aomarks) Be consistent about undefined vs unset.
       githubCheck: undefined,
+      crossOriginIsolated: false,
       benchmarks: [
         {
           browser: {

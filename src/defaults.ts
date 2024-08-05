@@ -20,6 +20,7 @@ export const mode = 'automatic';
 export const resolveBareModules = true;
 export const forceCleanNpmInstall = false;
 export const measurementExpression = 'window.tachometerResult';
+export const crossOriginIsolated = false;
 export const traceLogDir = path.join(process.cwd(), 'logs');
 export const traceCategories = [
   'blink',

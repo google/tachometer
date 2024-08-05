@@ -19,6 +19,7 @@ import {nodeResolve} from 'koa-node-resolve';
 
 import {BenchmarkResponse, Deferred} from './types.js';
 import {NpmInstall} from './versions.js';
+import {crossOriginIsolation} from './cross-origin-isolation.js';
 
 import * as url from 'url';
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
@@ -31,6 +32,7 @@ export interface ServerOpts {
   mountPoints: MountPoint[];
   resolveBareModules: boolean;
   cache: boolean;
+  crossOriginIsolated: boolean;
 }
 
 export interface MountPoint {
@@ -91,6 +93,9 @@ export class Server {
     this.server = server;
     const app = new Koa();
 
+    if (opts.crossOriginIsolated) {
+      app.use(crossOriginIsolation());
+    }
     app.use(bodyParser());
     app.use(mount('/submitResults', this.submitResults.bind(this)));
     app.use(this.instrumentRequests.bind(this));

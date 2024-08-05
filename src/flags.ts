@@ -235,6 +235,11 @@ export const optDefs: commandLineUsage.OptionDefinition[] = [
     type: String,
     defaultValue: defaults.traceCategories.join(','),
   },
+  {
+    name: 'cross-origin-isolated',
+    description: 'Add HTTP headers to enable cross-origin isolation',
+    type: Boolean,
+  },
 ];
 
 export interface Opts {
@@ -266,6 +271,7 @@ export interface Opts {
   trace: boolean;
   'trace-log-dir': string;
   'trace-cat': string;
+  'cross-origin-isolated': boolean;
 
   // Extra arguments not associated with a flag are put here. These are our
   // benchmark names/URLs.
