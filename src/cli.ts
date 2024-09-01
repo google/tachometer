@@ -60,7 +60,7 @@ export async function main(
 }
 
 async function latestVersionFromNpm(): Promise<string> {
-  const stdout = await runNpm(['info', 'tachometer@latest', 'version']);
+  const stdout = await runNpm(['info', 'tachometer@latest', 'version'], { shell: true });
   return stdout.toString('utf8').trim();
 }
 
