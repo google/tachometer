@@ -243,7 +243,7 @@ export class Runner {
           );
           const mins = Math.floor(remainingSecs / 60);
           const secs = remainingSecs % 60;
-          process.stdout.write(
+          process.stderr.write(
             `\r${spinner[run % spinner.length]} Auto-sample ${sample} ` +
               `(timeout in ${mins}m${secs}s)` +
               ansi.erase.inLine(0)
