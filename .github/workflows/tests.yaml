@@ -13,16 +13,16 @@ jobs:
             browsers: chrome-headless, firefox-headless
 
           - job: macos
-            os: macos-12
+            os: macos-15
             browsers: safari
 
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 16
+          node-version: 22
           cache: npm
 
       - run: npm ci
@@ -36,10 +36,10 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 16
+          node-version: 22
           cache: npm
       - run: npm ci
       - run: npm run lint
@@ -47,10 +47,10 @@ jobs:
   check-format:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 16
+          node-version: 22
           cache: npm
       - run: npm ci
       - run: npm run format:check
