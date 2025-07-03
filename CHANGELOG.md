@@ -7,6 +7,11 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 <!-- ## Unreleased -->
 
+## [0.7.2] 2025-07-02
+
+- The auto-sample progress indicator is now logged to stderr instead of stdout,
+  so that it is easier to distinguish the result output from the status output.
+
 ## [0.7.1] 2024-07-18
 
 - Update jsonwebtoken dependency.
